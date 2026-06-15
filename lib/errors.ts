@@ -16,6 +16,7 @@ export type Surface =
   | "vote"
   | "document"
   | "suggestions"
+  | "subscription"
   | "activate_gateway";
 
 export type ErrorCode = `${ErrorType}:${Surface}`;
@@ -32,6 +33,7 @@ export const visibilityBySurface: Record<Surface, ErrorVisibility> = {
   vote: "response",
   document: "response",
   suggestions: "response",
+  subscription: "response",
   activate_gateway: "response",
 };
 
@@ -102,6 +104,9 @@ export function getMessageByErrorCode(errorCode: ErrorCode): string {
       return "You need to sign in to view this chat. Please sign in and try again.";
     case "offline:chat":
       return "We're having trouble sending your message. Please check your internet connection and try again.";
+
+    case "forbidden:subscription":
+      return "Your Chad membership isn't active right now. Start your free trial to keep training with Chad.";
 
     case "not_found:document":
       return "The requested document was not found. Please check the document ID and try again.";

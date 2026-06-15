@@ -32,6 +32,7 @@ import {
   getChatById,
   getMessageCountByUserId,
   getMessagesByChatId,
+  getUserById,
   saveChat,
   saveMessages,
   updateChatTitleById,
@@ -39,6 +40,7 @@ import {
 } from "@/lib/db/queries";
 import type { DBMessage } from "@/lib/db/schema";
 import { ChatbotError } from "@/lib/errors";
+import { hasActiveAccess } from "@/lib/subscription";
 import { checkIpRateLimit } from "@/lib/ratelimit";
 import type { ChatMessage } from "@/lib/types";
 import { convertToUIMessages, generateUUID } from "@/lib/utils";
@@ -78,6 +80,13 @@ export async function POST(request: Request) {
 
     if (!session?.user) {
       return new ChatbotError("unauthorized:chat").toResponse();
+    }
+
+    // Paywall: only members with an active trial/subscription can talk to Chad.
+    // This is the hard enforcement point (the page redirect is just for UX).
+    const dbUser = await getUserById(session.user.id);
+    if (!(dbUser && hasActiveAccess(dbUser))) {
+      return new ChatbotError("forbidden:subscription").toResponse();
     }
 
     const chatModel = allowedModelIds.has(selectedChatModel)
