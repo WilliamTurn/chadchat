@@ -322,14 +322,67 @@ export type MessageResponseProps = ComponentProps<typeof Streamdown>;
 
 const streamdownPlugins = { cjk, code, math, mermaid };
 
+// biome-ignore lint/suspicious/noExplicitAny: minimal mdast node shapes
+type MdastNode = { type: string; value?: string; children?: any[] };
+
+/**
+ * Lets Chad emphasize crucial points in blood red, sparingly: he wraps text in
+ * [[double brackets]] and it renders as <span class="chad-red">. Works on the
+ * parsed tree (text nodes), so the brackets never reach the user; combining
+ * with bold (e.g. **[[TEXT]]**) keeps the red and adds weight.
+ */
+const RED_TOKEN = /\[\[([\s\S]+?)\]\]/g;
+function remarkChadRed() {
+  const walk = (node: MdastNode) => {
+    if (!node || !Array.isArray(node.children)) {
+      return;
+    }
+    const next: MdastNode[] = [];
+    for (const child of node.children as MdastNode[]) {
+      if (
+        child.type === "text" &&
+        typeof child.value === "string" &&
+        child.value.includes("[[")
+      ) {
+        const value = child.value;
+        let lastIndex = 0;
+        let match: RegExpExecArray | null;
+        RED_TOKEN.lastIndex = 0;
+        // biome-ignore lint/suspicious/noAssignInExpressions: standard regex loop
+        while ((match = RED_TOKEN.exec(value)) !== null) {
+          if (match.index > lastIndex) {
+            next.push({ type: "text", value: value.slice(lastIndex, match.index) });
+          }
+          next.push({
+            type: "chadRed",
+            // @ts-expect-error mdast→hast uses data.hName/hProperties
+            data: { hName: "span", hProperties: { className: "chad-red" } },
+            children: [{ type: "text", value: match[1] }],
+          });
+          lastIndex = match.index + match[0].length;
+        }
+        if (lastIndex < value.length) {
+          next.push({ type: "text", value: value.slice(lastIndex) });
+        }
+      } else {
+        walk(child);
+        next.push(child);
+      }
+    }
+    node.children = next;
+  };
+  return (tree: MdastNode) => walk(tree);
+}
+
 export const MessageResponse = memo(
-  ({ className, ...props }: MessageResponseProps) => (
+  ({ className, remarkPlugins, ...props }: MessageResponseProps) => (
     <Streamdown
       className={cn(
         "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
         className
       )}
       plugins={streamdownPlugins}
+      remarkPlugins={[remarkChadRed, ...(remarkPlugins ?? [])]}
       {...props}
     />
   ),

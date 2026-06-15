@@ -1,5 +1,6 @@
 "use client";
 
+import { X } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { toast as sonnerToast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -11,9 +12,14 @@ const iconsByType: Record<"success" | "error", ReactNode> = {
 };
 
 export function toast(props: Omit<ToastProps, "id">) {
-  return sonnerToast.custom((id) => (
-    <Toast description={props.description} id={id} type={props.type} />
-  ));
+  return sonnerToast.custom(
+    (id) => (
+      <Toast description={props.description} id={id} type={props.type} />
+    ),
+    // Errors (e.g. hitting the daily message limit) stay until the user
+    // dismisses them, so the message can't vanish before it's read.
+    props.type === "error" ? { duration: Number.POSITIVE_INFINITY } : undefined
+  );
 }
 
 function Toast(props: ToastProps) {
@@ -42,10 +48,10 @@ function Toast(props: ToastProps) {
   }, []);
 
   return (
-    <div className="flex toast-mobile:w-[356px] w-full justify-center">
+    <div className="flex toast-mobile:w-[420px] w-full justify-center">
       <div
         className={cn(
-          "flex toast-mobile:w-fit w-full flex-row gap-3 rounded-lg bg-card border border-border/50 shadow-[var(--shadow-float)] p-3",
+          "flex toast-mobile:w-full w-full flex-row gap-3 rounded-xl bg-card border border-border/50 shadow-[var(--shadow-float)] p-4",
           multiLine ? "items-start" : "items-center"
         )}
         data-testid="toast"
@@ -54,15 +60,26 @@ function Toast(props: ToastProps) {
         <div
           className={cn(
             "data-[type=error]:text-red-600 data-[type=success]:text-green-600",
-            { "pt-1": multiLine }
+            { "pt-0.5": multiLine }
           )}
           data-type={type}
         >
           {iconsByType[type]}
         </div>
-        <div className="text-sm text-foreground" ref={descriptionRef}>
+        <div
+          className="flex-1 text-[15px] leading-relaxed text-foreground"
+          ref={descriptionRef}
+        >
           {description}
         </div>
+        <button
+          aria-label="Dismiss"
+          className="-mr-1 -mt-1 shrink-0 self-start rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          onClick={() => sonnerToast.dismiss(id)}
+          type="button"
+        >
+          <X className="size-4" />
+        </button>
       </div>
     </div>
   );

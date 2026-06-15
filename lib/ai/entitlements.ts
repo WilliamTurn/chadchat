@@ -16,16 +16,19 @@ export type Entitlements = {
 // Deliberately generous on paid plans and tighter on the free trial. These are
 // high enough that real users rarely notice — they exist to stop abuse and
 // bound API cost, not to nickel-and-dime. Safe to tune anytime.
-const TRIAL_MAX_MESSAGES_PER_DAY = 20;
+// NOTE: these are *user messages* per rolling 24h (Chad's replies don't count).
+const TRIAL_MAX_MESSAGES_PER_DAY = 50;
 
 export const entitlementsByTier: Record<PlanTier, Entitlements> = {
   basic: {
-    maxMessagesPerDay: 50,
+    maxMessagesPerDay: 200,
     photoAnalysis: false,
     photoMessageCost: 5,
   },
   pro: {
-    maxMessagesPerDay: 200,
+    // Effectively "unlimited" — matches the Pro "no message caps" promise while
+    // still bounding runaway abuse.
+    maxMessagesPerDay: 1000,
     photoAnalysis: true,
     photoMessageCost: 5,
   },
