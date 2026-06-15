@@ -3,12 +3,27 @@ import "server-only";
 import Stripe from "stripe";
 import type { PlanTier } from "./subscription";
 
-// Pinned to the API version this SDK (stripe@22) ships with. Pin explicitly so
-// upgrading the package never silently changes API behavior.
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
-  apiVersion: "2026-05-27.dahlia",
-  typescript: true,
-});
+let cachedStripe: Stripe | null = null;
+
+/**
+ * Lazily create (and cache) the Stripe client. Done on first use rather than at
+ * module load so a missing key never crashes the build — only an actual Stripe
+ * call will surface a clear error. Pinned to the API version this SDK (stripe@22)
+ * ships with so upgrading the package never silently changes behavior.
+ */
+export function getStripe(): Stripe {
+  if (!cachedStripe) {
+    const apiKey = process.env.STRIPE_SECRET_KEY;
+    if (!apiKey) {
+      throw new Error("STRIPE_SECRET_KEY is not set.");
+    }
+    cachedStripe = new Stripe(apiKey, {
+      apiVersion: "2026-05-27.dahlia",
+      typescript: true,
+    });
+  }
+  return cachedStripe;
+}
 
 // Length of the free trial, in days. (Card is collected up front.)
 export const TRIAL_DAYS = 3;

@@ -107,6 +107,8 @@ export function getMessageByErrorCode(errorCode: ErrorCode): string {
 
     case "forbidden:subscription":
       return "Your Chad membership isn't active right now. Start your free trial to keep training with Chad.";
+    case "rate_limit:subscription":
+      return "That's a wrap for today — you've made the most of your time with Chad. Your messages refresh tomorrow, and Chad will be right here ready to pick up where you left off.";
 
     case "not_found:document":
       return "The requested document was not found. Please check the document ID and try again.";

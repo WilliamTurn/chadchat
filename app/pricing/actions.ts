@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/app/(auth)/auth";
 import { getUserById, setUserStripeCustomerId } from "@/lib/db/queries";
-import { getAppUrl, PLANS, stripe, TRIAL_DAYS } from "@/lib/stripe";
+import { getAppUrl, getStripe, PLANS, TRIAL_DAYS } from "@/lib/stripe";
 import type { PlanTier } from "@/lib/subscription";
 
 /**
@@ -19,7 +19,7 @@ async function getOrCreateStripeCustomer(
     return existing.stripeCustomerId;
   }
 
-  const customer = await stripe.customers.create({
+  const customer = await getStripe().customers.create({
     email: email || undefined,
     metadata: { userId },
   });
@@ -51,7 +51,7 @@ export async function createCheckoutSession(tier: PlanTier) {
 
   const appUrl = getAppUrl();
 
-  const checkout = await stripe.checkout.sessions.create({
+  const checkout = await getStripe().checkout.sessions.create({
     mode: "subscription",
     customer: customerId,
     client_reference_id: session.user.id,

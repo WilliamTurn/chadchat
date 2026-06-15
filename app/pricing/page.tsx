@@ -1,20 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { auth } from "@/app/(auth)/auth";
 import { PricingPlans } from "@/components/billing/pricing-plans";
 import { Button } from "@/components/ui/button";
 import { getUserById } from "@/lib/db/queries";
 import { hasActiveAccess } from "@/lib/subscription";
 
-export default async function PricingPage() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  const user = await getUserById(session.user.id);
-  const hasAccess = user ? hasActiveAccess(user) : false;
-
+export default function PricingPage() {
   return (
     <main className="flex min-h-dvh flex-col items-center px-4 py-16">
       <div className="mb-10 flex max-w-2xl flex-col items-center text-center">
@@ -25,25 +18,49 @@ export default async function PricingPage() {
           Start your 3-day free trial today. Chad's in your corner from day one —
           cancel anytime, no hard feelings.
         </p>
-
-        {hasAccess && (
-          <div className="mt-6 flex items-center gap-3">
-            <Button asChild>
-              <Link href="/">Open Chad</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/account">Manage billing</Link>
-            </Button>
-          </div>
-        )}
       </div>
 
-      <PricingPlans currentTier={user?.subscriptionTier ?? null} />
+      <Suspense
+        fallback={
+          <div className="grid w-full max-w-3xl gap-5 sm:grid-cols-2">
+            <div className="h-80 animate-pulse rounded-2xl border border-border bg-card" />
+            <div className="h-80 animate-pulse rounded-2xl border border-border bg-card" />
+          </div>
+        }
+      >
+        <PricingContent />
+      </Suspense>
 
       <p className="mt-8 max-w-md text-balance text-center text-muted-foreground text-xs">
         3 days free, then $19 or $39 per month. Cancel in a couple of clicks
         whenever you like.
       </p>
     </main>
+  );
+}
+
+async function PricingContent() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  const user = await getUserById(session.user.id);
+  const hasAccess = user ? hasActiveAccess(user) : false;
+
+  return (
+    <>
+      {hasAccess && (
+        <div className="mb-8 flex items-center gap-3">
+          <Button asChild>
+            <Link href="/">Open Chad</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/account">Manage billing</Link>
+          </Button>
+        </div>
+      )}
+      <PricingPlans currentTier={user?.subscriptionTier ?? null} />
+    </>
   );
 }

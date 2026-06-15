@@ -1,10 +1,11 @@
 import type Stripe from "stripe";
 import { updateUserSubscriptionByCustomerId } from "@/lib/db/queries";
-import { stripe, tierFromPriceId } from "@/lib/stripe";
+import { getStripe, tierFromPriceId } from "@/lib/stripe";
 
-// stripe-node needs Node's crypto for signature verification — never Edge.
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+// Note: this route relies on Node's crypto for Stripe signature verification.
+// Next.js 16 route handlers default to the Node.js runtime (Edge is opt-in), and
+// POST handlers are never cached, so no runtime/dynamic segment config is needed
+// (and Cache Components disallows it anyway).
 
 // The subscription.* events carry the full subscription object and are our
 // source of truth for access — including the `past_due` status that a failed
@@ -60,7 +61,7 @@ export async function POST(request: Request) {
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    event = getStripe().webhooks.constructEvent(body, signature, webhookSecret);
   } catch (error) {
     const message = error instanceof Error ? error.message : "invalid payload";
     return new Response(`Webhook signature verification failed: ${message}`, {

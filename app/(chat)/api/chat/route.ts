@@ -10,8 +10,8 @@ import {
 import { checkBotId } from "botid/server";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
-import { auth, type UserType } from "@/app/(auth)/auth";
-import { entitlementsByUserType } from "@/lib/ai/entitlements";
+import { auth } from "@/app/(auth)/auth";
+import { getEntitlements } from "@/lib/ai/entitlements";
 import {
   allowedModelIds,
   chatModels,
@@ -95,15 +95,15 @@ export async function POST(request: Request) {
 
     await checkIpRateLimit(ipAddress(request));
 
-    const userType: UserType = session.user.type;
-
+    // Daily usage cap based on the member's plan (trial caps are smaller).
+    const entitlements = getEntitlements(dbUser);
     const messageCount = await getMessageCountByUserId({
       id: session.user.id,
-      differenceInHours: 1,
+      differenceInHours: 24,
     });
 
-    if (messageCount > entitlementsByUserType[userType].maxMessagesPerHour) {
-      return new ChatbotError("rate_limit:chat").toResponse();
+    if (messageCount >= entitlements.maxMessagesPerDay) {
+      return new ChatbotError("rate_limit:subscription").toResponse();
     }
 
     const isToolApprovalFlow = Boolean(messages);
