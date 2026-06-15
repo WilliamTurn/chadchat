@@ -41,7 +41,7 @@ export const PLANS: Record<PlanTier, PlanConfig> = {
     tier: "basic",
     name: "Chad Basic",
     priceId: process.env.STRIPE_PRICE_BASIC ?? "",
-    monthlyPriceLabel: "$19",
+    monthlyPriceLabel: "$29",
   },
   pro: {
     tier: "pro",

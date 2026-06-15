@@ -1,5 +1,5 @@
 /**
- * One-time (idempotent) Stripe setup: creates the Chad Basic ($19/mo) and
+ * One-time (idempotent) Stripe setup: creates the Chad Basic ($29/mo) and
  * Chad Pro ($39/mo) products + recurring monthly prices in whatever Stripe
  * account STRIPE_SECRET_KEY points at. Safe to re-run — it reuses prices by
  * lookup_key instead of creating duplicates.
@@ -25,7 +25,7 @@ const PLANS: PlanSpec[] = [
     tier: "basic",
     name: "Chad Basic",
     description: "Your always-on AI fitness coach.",
-    amount: 1900,
+    amount: 2900,
     lookupKey: "chad_basic_monthly",
   },
   {
