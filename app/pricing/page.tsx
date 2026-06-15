@@ -5,7 +5,7 @@ import { auth } from "@/app/(auth)/auth";
 import { PricingPlans } from "@/components/billing/pricing-plans";
 import { Button } from "@/components/ui/button";
 import { getUserById } from "@/lib/db/queries";
-import { hasActiveAccess } from "@/lib/subscription";
+import { hasActiveAccess, hasUsedTrial } from "@/lib/subscription";
 
 export default function PricingPage() {
   return (
@@ -32,7 +32,7 @@ export default function PricingPage() {
       </Suspense>
 
       <p className="mt-8 max-w-md text-balance text-center text-muted-foreground text-xs">
-        3 days free, then $19 or $39 per month. Cancel in a couple of clicks
+        3 days free, then $29 or $39 per month. Cancel in a couple of clicks
         whenever you like.
       </p>
     </main>
@@ -47,6 +47,9 @@ async function PricingContent() {
 
   const user = await getUserById(session.user.id);
   const hasAccess = user ? hasActiveAccess(user) : false;
+  const alreadyTrialed = user
+    ? hasUsedTrial({ stripeSubscriptionId: user.stripeSubscriptionId })
+    : false;
 
   return (
     <>
@@ -60,7 +63,10 @@ async function PricingContent() {
           </Button>
         </div>
       )}
-      <PricingPlans currentTier={user?.subscriptionTier ?? null} />
+      <PricingPlans
+        alreadyTrialed={alreadyTrialed}
+        currentTier={user?.subscriptionTier ?? null}
+      />
     </>
   );
 }

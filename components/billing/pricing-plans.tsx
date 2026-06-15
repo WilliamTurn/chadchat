@@ -24,7 +24,7 @@ const PLANS: Plan[] = [
   {
     tier: "basic",
     name: "Chad Basic",
-    price: "$19",
+    price: "$29",
     tagline: "Your always-on coach.",
     features: [
       { label: "Chat with Chad anytime, day or night" },
@@ -48,7 +48,13 @@ const PLANS: Plan[] = [
   },
 ];
 
-export function PricingPlans({ currentTier }: { currentTier?: PlanTier | null }) {
+export function PricingPlans({
+  currentTier,
+  alreadyTrialed = false,
+}: {
+  currentTier?: PlanTier | null;
+  alreadyTrialed?: boolean;
+}) {
   const [isPending, startTransition] = useTransition();
   const [loadingTier, setLoadingTier] = useState<PlanTier | null>(null);
 
@@ -125,8 +131,12 @@ export function PricingPlans({ currentTier }: { currentTier?: PlanTier | null })
               {isCurrent
                 ? "Your current plan"
                 : isLoading
-                  ? "Starting your free trial…"
-                  : "Start 3-day free trial"}
+                  ? alreadyTrialed
+                    ? "Starting checkout…"
+                    : "Starting your free trial…"
+                  : alreadyTrialed
+                    ? `Subscribe — ${plan.price}/mo`
+                    : "Start 3-day free trial"}
             </Button>
           </div>
         );

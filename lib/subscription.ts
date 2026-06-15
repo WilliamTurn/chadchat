@@ -49,3 +49,14 @@ export function hasActiveAccess(u: SubscriptionFields): boolean {
 export function isTrialing(u: { subscriptionStatus: string | null }): boolean {
   return u.subscriptionStatus === "trialing";
 }
+
+/**
+ * Has this customer already used their one free trial? Every first subscription
+ * in our flow starts with a trial, and the subscription id is kept even after a
+ * cancellation, so any prior subscription means the trial is spent. Returning
+ * customers therefore resubscribe and are charged immediately — no second free
+ * trial per customer.
+ */
+export function hasUsedTrial(u: { stripeSubscriptionId: string | null }): boolean {
+  return u.stripeSubscriptionId != null;
+}
