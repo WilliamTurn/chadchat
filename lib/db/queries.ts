@@ -74,6 +74,76 @@ export async function createGuestUser() {
   }
 }
 
+export async function getUserById(id: string): Promise<User | undefined> {
+  try {
+    const [found] = await db.select().from(user).where(eq(user.id, id));
+    return found;
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get user by id");
+  }
+}
+
+export async function getUserByStripeCustomerId(
+  stripeCustomerId: string
+): Promise<User | undefined> {
+  try {
+    const [found] = await db
+      .select()
+      .from(user)
+      .where(eq(user.stripeCustomerId, stripeCustomerId));
+    return found;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get user by Stripe customer id"
+    );
+  }
+}
+
+export async function setUserStripeCustomerId(
+  userId: string,
+  stripeCustomerId: string
+) {
+  try {
+    return await db
+      .update(user)
+      .set({ stripeCustomerId, updatedAt: new Date() })
+      .where(eq(user.id, userId));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to set Stripe customer id"
+    );
+  }
+}
+
+type SubscriptionUpdate = {
+  stripeSubscriptionId: string | null;
+  subscriptionStatus: string | null;
+  subscriptionTier: "basic" | "pro" | null;
+  currentPeriodEnd: Date | null;
+  cancelAtPeriodEnd: boolean;
+  trialEndsAt: Date | null;
+};
+
+/** Sync a user's subscription columns from a Stripe webhook, keyed by customer id. */
+export async function updateUserSubscriptionByCustomerId(
+  stripeCustomerId: string,
+  data: SubscriptionUpdate
+) {
+  try {
+    return await db
+      .update(user)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(user.stripeCustomerId, stripeCustomerId));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to update subscription"
+    );
+  }
+}
+
 export async function saveChat({
   id,
   userId,

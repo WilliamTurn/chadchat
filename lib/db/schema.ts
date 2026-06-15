@@ -21,6 +21,22 @@ export const user = pgTable("User", {
   isAnonymous: boolean("isAnonymous").notNull().default(false),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  // --- Stripe subscription (Phase 2) ---
+  // The user's Stripe Customer id (created on first checkout, reused after).
+  stripeCustomerId: text("stripeCustomerId"),
+  // The active/most-recent Stripe Subscription id.
+  stripeSubscriptionId: text("stripeSubscriptionId"),
+  // Raw Stripe subscription status: trialing | active | past_due | canceled
+  // | unpaid | paused | incomplete | incomplete_expired. Null = never subscribed.
+  subscriptionStatus: text("subscriptionStatus"),
+  // Which plan they're on, derived from the Stripe price id.
+  subscriptionTier: varchar("subscriptionTier", { enum: ["basic", "pro"] }),
+  // When the current paid/trial period ends (drives access + renewal display).
+  currentPeriodEnd: timestamp("currentPeriodEnd"),
+  // True if they've asked to cancel but still have access until period end.
+  cancelAtPeriodEnd: boolean("cancelAtPeriodEnd").notNull().default(false),
+  // When the free trial ends (for trial-specific messaging).
+  trialEndsAt: timestamp("trialEndsAt"),
 });
 
 export type User = InferSelectModel<typeof user>;

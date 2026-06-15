@@ -21,17 +21,30 @@ export async function proxy(request: NextRequest) {
 
   const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
+  // Paywall: no anonymous guests. Unauthenticated visitors must sign in /
+  // register. Auth pages stay public so people can actually do that, and API
+  // routes are left to return their own 401 instead of an HTML redirect.
+  const isAuthPage = pathname === "/login" || pathname === "/register";
+
   if (!token) {
+    if (isAuthPage) {
+      return NextResponse.next();
+    }
+
+    if (pathname.startsWith("/api")) {
+      return NextResponse.next();
+    }
+
     const redirectUrl = encodeURIComponent(new URL(request.url).pathname);
 
     return NextResponse.redirect(
-      new URL(`${base}/api/auth/guest?redirectUrl=${redirectUrl}`, request.url)
+      new URL(`${base}/login?redirectUrl=${redirectUrl}`, request.url)
     );
   }
 
   const isGuest = guestRegex.test(token?.email ?? "");
 
-  if (token && !isGuest && ["/login", "/register"].includes(pathname)) {
+  if (token && !isGuest && isAuthPage) {
     return NextResponse.redirect(new URL(`${base}/`, request.url));
   }
 
