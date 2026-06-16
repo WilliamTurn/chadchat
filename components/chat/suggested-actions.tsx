@@ -12,22 +12,28 @@ type SuggestedActionsProps = {
   chatId: string;
   sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
   selectedVisibilityType: VisibilityType;
+  onHide?: () => void;
 };
 
-function PureSuggestedActions({ chatId, sendMessage }: SuggestedActionsProps) {
+function PureSuggestedActions({
+  chatId,
+  sendMessage,
+  onHide,
+}: SuggestedActionsProps) {
   const suggestedActions = suggestions;
 
   return (
-    <div
-      className="flex w-full gap-2.5 overflow-x-auto pb-1 sm:grid sm:grid-cols-2 sm:overflow-visible"
-      data-testid="suggested-actions"
-      style={{
-        scrollbarWidth: "none",
-        WebkitOverflowScrolling: "touch",
-        msOverflowStyle: "none",
-      }}
-    >
-      {suggestedActions.map((suggestedAction, index) => (
+    <div className="flex w-full flex-col gap-2">
+      <div
+        className="flex w-full gap-2.5 overflow-x-auto pb-1 sm:grid sm:grid-cols-2 sm:overflow-visible"
+        data-testid="suggested-actions"
+        style={{
+          scrollbarWidth: "none",
+          WebkitOverflowScrolling: "touch",
+          msOverflowStyle: "none",
+        }}
+      >
+        {suggestedActions.map((suggestedAction, index) => (
         <motion.div
           animate={{ opacity: 1, y: 0 }}
           className="min-w-[200px] shrink-0 sm:min-w-0 sm:shrink"
@@ -58,7 +64,17 @@ function PureSuggestedActions({ chatId, sendMessage }: SuggestedActionsProps) {
             {suggestedAction}
           </Suggestion>
         </motion.div>
-      ))}
+        ))}
+      </div>
+      {onHide && (
+        <button
+          className="self-center text-[11px] text-muted-foreground/40 transition-colors hover:text-muted-foreground"
+          onClick={onHide}
+          type="button"
+        >
+          Hide suggestions
+        </button>
+      )}
     </div>
   );
 }

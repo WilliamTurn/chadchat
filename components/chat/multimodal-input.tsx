@@ -127,6 +127,13 @@ function PureMultimodalInput({
     ""
   );
 
+  // Lets users permanently dismiss the empty-state example prompts. A "show
+  // again" toggle will live in the Settings menu (task #10) once that exists.
+  const [hideSuggestions, setHideSuggestions] = useLocalStorage(
+    "chad-hide-suggestions",
+    false
+  );
+
   useEffect(() => {
     if (textareaRef.current) {
       const domValue = textareaRef.current.value;
@@ -222,6 +229,15 @@ function PureMultimodalInput({
       `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/chat/${chatId}`
     );
 
+    // Allow photo-only sends: if files are attached but no text was typed,
+    // send a neutral default so Chad always has a text part to react to.
+    const messageText =
+      input.trim().length > 0
+        ? input
+        : attachments.length > 0
+          ? "Take a look at this."
+          : input;
+
     sendMessage({
       role: "user",
       parts: [
@@ -233,7 +249,7 @@ function PureMultimodalInput({
         })),
         {
           type: "text",
-          text: input,
+          text: messageText,
         },
       ],
     });
@@ -388,11 +404,13 @@ function PureMultimodalInput({
 
       {!editingMessage &&
         !isLoading &&
+        !hideSuggestions &&
         messages.length === 0 &&
         attachments.length === 0 &&
         uploadQueue.length === 0 && (
           <SuggestedActions
             chatId={chatId}
+            onHide={() => setHideSuggestions(true)}
             selectedVisibilityType={selectedVisibilityType}
             sendMessage={sendMessage}
           />
@@ -531,12 +549,15 @@ function PureMultimodalInput({
             <PromptInputSubmit
               className={cn(
                 "h-7 w-7 rounded-xl transition-all duration-200",
-                input.trim()
+                input.trim() || attachments.length > 0
                   ? "bg-foreground text-background hover:opacity-85 active:scale-95"
                   : "bg-muted text-muted-foreground/25 cursor-not-allowed"
               )}
               data-testid="send-button"
-              disabled={!input.trim() || uploadQueue.length > 0}
+              disabled={
+                (!input.trim() && attachments.length === 0) ||
+                uploadQueue.length > 0
+              }
               status={status}
               variant="secondary"
             >

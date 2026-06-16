@@ -107,7 +107,7 @@ export function ChatShell() {
               votes={votes}
             />
 
-            <div className="sticky bottom-0 z-1 mx-auto flex w-full max-w-4xl gap-2 border-t-0 bg-background px-2 pb-3 md:px-4 md:pb-4">
+            <div className="sticky bottom-0 z-1 mx-auto flex w-full max-w-4xl flex-col gap-1.5 border-t-0 bg-background px-2 pb-3 md:px-4 md:pb-4">
               {!isReadonly && (
                 <MultimodalInput
                   attachments={attachments}
@@ -145,6 +145,10 @@ export function ChatShell() {
                   stop={stop}
                 />
               )}
+              <p className="px-2 text-center text-[10px] leading-snug text-muted-foreground/40">
+                Chad is an AI and can make mistakes. This isn&apos;t medical
+                advice — double-check anything important.
+              </p>
             </div>
           </div>
         </div>
