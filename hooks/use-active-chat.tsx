@@ -20,6 +20,7 @@ import { unstable_serialize } from "swr/infinite";
 import { useDataStream } from "@/components/chat/data-stream-provider";
 import { getChatHistoryPaginationKey } from "@/components/chat/sidebar-history";
 import { toast } from "@/components/chat/toast";
+import { usageWarningMessage } from "@/components/chat/usage-warning";
 import type { VisibilityType } from "@/components/chat/visibility-selector";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
@@ -153,6 +154,14 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
     }),
     onData: (dataPart) => {
       setDataStream((ds) => (ds ? [...ds, dataPart] : []));
+      // Warm heads-up as the member nears their daily cap (the server emits this
+      // once per milestone, so it won't nag on every message).
+      if (dataPart.type === "data-usage-warning") {
+        toast({
+          type: "warning",
+          description: usageWarningMessage(dataPart.data),
+        });
+      }
     },
     onFinish: () => {
       mutate(unstable_serialize(getChatHistoryPaginationKey));

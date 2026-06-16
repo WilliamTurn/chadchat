@@ -6,9 +6,12 @@ import { toast as sonnerToast } from "sonner";
 import { cn } from "@/lib/utils";
 import { CheckCircleFillIcon, WarningIcon } from "./icons";
 
-const iconsByType: Record<"success" | "error", ReactNode> = {
+type ToastType = "success" | "error" | "warning";
+
+const iconsByType: Record<ToastType, ReactNode> = {
   success: <CheckCircleFillIcon />,
   error: <WarningIcon />,
+  warning: <WarningIcon />,
 };
 
 export function toast(props: Omit<ToastProps, "id">) {
@@ -16,9 +19,18 @@ export function toast(props: Omit<ToastProps, "id">) {
     (id) => (
       <Toast description={props.description} id={id} type={props.type} />
     ),
-    // Errors (e.g. hitting the daily message limit) stay until the user
-    // dismisses them, so the message can't vanish before it's read.
-    props.type === "error" ? { duration: Number.POSITIVE_INFINITY } : undefined
+    {
+      // Errors (e.g. hitting the daily message limit) stay until the user
+      // dismisses them, so the message can't vanish before it's read. Warmer
+      // heads-ups (e.g. approaching the limit) linger long enough to read, then
+      // fade on their own so they don't nag.
+      duration:
+        props.type === "error"
+          ? Number.POSITIVE_INFINITY
+          : props.type === "warning"
+            ? 12_000
+            : undefined,
+    }
   );
 }
 
@@ -59,7 +71,7 @@ function Toast(props: ToastProps) {
       >
         <div
           className={cn(
-            "data-[type=error]:text-red-600 data-[type=success]:text-green-600",
+            "data-[type=error]:text-red-600 data-[type=success]:text-green-600 data-[type=warning]:text-amber-500",
             { "pt-0.5": multiLine }
           )}
           data-type={type}
@@ -87,6 +99,6 @@ function Toast(props: ToastProps) {
 
 type ToastProps = {
   id: string | number;
-  type: "success" | "error";
+  type: ToastType;
   description: string;
 };

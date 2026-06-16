@@ -11,7 +11,7 @@ import { checkBotId } from "botid/server";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { auth } from "@/app/(auth)/auth";
-import { getEntitlements } from "@/lib/ai/entitlements";
+import { getEntitlements, getUsageWarning } from "@/lib/ai/entitlements";
 import {
   allowedModelIds,
   chatModels,
@@ -105,6 +105,16 @@ export async function POST(request: Request) {
     if (messageCount >= entitlements.maxMessagesPerDay) {
       return new ChatbotError("rate_limit:subscription").toResponse();
     }
+
+    // A warm heads-up as the member nears their daily cap (computed on the
+    // count *including* this message), so the at-limit wall is never a surprise.
+    const usageWarning = getUsageWarning({
+      used: messageCount + 1,
+      limit: entitlements.maxMessagesPerDay,
+      tier: dbUser.subscriptionTier,
+      status: dbUser.subscriptionStatus,
+      isNewUserMessage: message?.role === "user",
+    });
 
     const isToolApprovalFlow = Boolean(messages);
 
@@ -251,6 +261,10 @@ export async function POST(request: Request) {
         dataStream.merge(
           result.toUIMessageStream({ sendReasoning: isReasoningModel })
         );
+
+        if (usageWarning) {
+          dataStream.write({ type: "data-usage-warning", data: usageWarning });
+        }
 
         if (titlePromise) {
           try {
