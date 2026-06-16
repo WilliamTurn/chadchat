@@ -26,8 +26,9 @@ export const entitlementsByTier: Record<PlanTier, Entitlements> = {
     photoMessageCost: 5,
   },
   pro: {
-    // Effectively "unlimited" — matches the Pro "no message caps" promise while
-    // still bounding runaway abuse.
+    // Effectively "unlimited" — a silent fair-use backstop behind the Pro
+    // "unlimited" promise. High enough no real user notices, low enough to
+    // bound runaway abuse/cost.
     maxMessagesPerDay: 1000,
     photoAnalysis: true,
     photoMessageCost: 5,
