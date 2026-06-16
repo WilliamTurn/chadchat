@@ -210,6 +210,87 @@ export async function updateUserSubscriptionByCustomerId(
   }
 }
 
+// --- Admin: manual (comped) access grants, not tied to Stripe ---
+
+export type ManualGrantResult =
+  | { ok: true; user: User }
+  | { ok: false; reason: "not_found" };
+
+/**
+ * Manually set a user's access by email, bypassing Stripe — for comping
+ * friends, testers, or fixing a botched signup from the admin dashboard.
+ *
+ * - tier "basic" | "pro": marks the subscription "active" with no period end
+ *   (an indefinite comp). hasActiveAccess() then returns true, so the paywall
+ *   lets them in. Stripe ids are left untouched, so if they later subscribe for
+ *   real, the webhook simply takes over.
+ * - tier null: revokes access (status + tier cleared). Their chat history and
+ *   any Stripe customer id are kept.
+ *
+ * Returns the updated user, or not_found if no account has that email.
+ */
+export async function setManualSubscriptionByEmail(
+  email: string,
+  tier: "basic" | "pro" | null
+): Promise<ManualGrantResult> {
+  try {
+    const normalized = email.trim().toLowerCase();
+    const [existing] = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, normalized));
+
+    if (!existing) {
+      return { ok: false, reason: "not_found" };
+    }
+
+    const [updated] = await db
+      .update(user)
+      .set({
+        subscriptionTier: tier,
+        subscriptionStatus: tier ? "active" : null,
+        currentPeriodEnd: null,
+        cancelAtPeriodEnd: false,
+        updatedAt: new Date(),
+      })
+      .where(eq(user.id, existing.id))
+      .returning();
+
+    return { ok: true, user: updated };
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to set manual subscription"
+    );
+  }
+}
+
+/** High-level counts for the admin dashboard's "monitor users" strip. */
+export async function getUserStats(): Promise<{
+  totalUsers: number;
+  paidMembers: number;
+}> {
+  try {
+    const [[totalRow], [paidRow]] = await Promise.all([
+      db
+        .select({ value: count() })
+        .from(user)
+        .where(eq(user.isAnonymous, false)),
+      db
+        .select({ value: count() })
+        .from(user)
+        .where(inArray(user.subscriptionStatus, ["active", "trialing", "past_due"])),
+    ]);
+
+    return {
+      totalUsers: totalRow?.value ?? 0,
+      paidMembers: paidRow?.value ?? 0,
+    };
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get user stats");
+  }
+}
+
 export async function saveChat({
   id,
   userId,
