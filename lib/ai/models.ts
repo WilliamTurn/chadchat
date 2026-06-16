@@ -8,6 +8,17 @@ export const titleModel = {
   gatewayOrder: ["fireworks", "bedrock"],
 };
 
+// Background memory extraction. A reliable Google Flash model — Chad's memory is
+// a crucial task that needs trustworthy fact-handling, but doesn't need the full
+// flagship brain (and runs after every chat, so cost matters). Deliberately NOT
+// the cheap title model.
+export const memoryModel = {
+  id: "google/gemini-3.5-flash",
+  name: "Gemini 3.5 Flash",
+  provider: "google",
+  description: "Reliable, low-cost model for background memory extraction",
+};
+
 export type ModelCapabilities = {
   tools: boolean;
   vision: boolean;

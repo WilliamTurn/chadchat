@@ -2,12 +2,13 @@ import "server-only";
 
 import { generateText } from "ai";
 import { getUserMemory, upsertUserMemory } from "@/lib/db/queries";
-import { titleModel } from "./models";
+import { memoryModel } from "./models";
 import { getLanguageModel } from "./providers";
 
-// Cheap, fast model for the background memory update (same one used for chat
-// titles). Memory extraction never needs Chad's flagship brain.
-const MEMORY_MODEL_ID = titleModel.id;
+// Reliable Google Flash model for the background memory update. Memory is a
+// crucial, accuracy-sensitive task — we deliberately do NOT use the cheap title
+// model here, but we also don't need Chad's full flagship brain.
+const MEMORY_MODEL_ID = memoryModel.id;
 
 // Throttle: once a user has a profile, don't re-run extraction more often than
 // this. Caps cost for heavy chatters; tune freely. (First-ever extraction for a
@@ -22,27 +23,42 @@ const MAX_PROFILE_CHARS = 4000;
 // cumulative, so we only need the latest exchange(s) plus the existing profile.
 const RECENT_MESSAGE_WINDOW = 12;
 
-const MEMORY_SYSTEM_PROMPT = `You maintain a long-term memory profile of a fitness coaching client for a coach named Chad.
+const MEMORY_SYSTEM_PROMPT = `You maintain a long-term memory profile of a fitness-coaching client for a coach named Chad.
 
 You are given the EXISTING PROFILE (may be empty) and the RECENT CONVERSATION between the client and Chad. Output an UPDATED PROFILE that merges any new, durable facts from the conversation into the existing profile.
 
-Capture ONLY stable, useful-across-sessions facts, such as:
-- Name, age, sex, height, weight, body composition
-- Goals (e.g. lose fat, build muscle, run a 5k) and deadlines
-- Injuries, medical constraints, dietary restrictions/preferences
-- Current workout plan and diet plan Chad has them on
-- Training experience/level, equipment/gym access, schedule
-- Notable progress, milestones, PRs, and the week/phase they're in
-- Strong behavioral patterns Chad should remember (e.g. tends to skip leg day)
+OUTPUT FORMAT — always return exactly these two sections, in this order, with these exact headers:
 
-Rules:
-- Keep it concise: short bullet points under simple headers. No fluff, no conversation transcript.
+## Client file
+- Name: <value or Unknown>
+- Age: <value or Unknown>
+- Sex: <value or Unknown>
+- Height: <value or Unknown>
+- Weight: <value or Unknown>
+- Current physique: <value or Unknown>
+- Family / dependents: <value or Unknown>
+- Primary goal: <value or Unknown>
+- Target / deadline: <value or Unknown>
+- Training experience: <value or Unknown>
+- Equipment / gym access: <value or Unknown>
+- Weekly schedule: <value or Unknown>
+- Injuries / medical constraints: <value or Unknown>
+- Dietary restrictions / preferences: <value or Unknown>
+- Current workout plan: <value or Unknown>
+- Current diet plan: <value or Unknown>
+- Week / phase: <value or Unknown>
+
+## Notes
+<Short bullet points for durable facts that don't fit a field above: standing orders or advice Chad gave, behavioral patterns, progress / PRs / milestones, life context the client stated, and anything else useful next session. Keep this header even if there are no bullets yet.>
+
+RULES:
+- Fill EVERY "Client file" field. Use exactly "Unknown" when the client has not provided it. Never guess or invent a value to fill a field.
+- Only record what the client actually STATED or what Chad established in the conversation. Do NOT infer or assume facts that were not stated (e.g. do not assume the client has children, a job, etc.).
+- Record Chad's orders and advice FAITHFULLY and precisely — never strengthen, escalate, or paraphrase them into something stronger than what he said. Example: if Chad criticized the client for wasting money on supplements, record "Chad criticized the client for spending on supplements" — do NOT write "Chad told the client to throw out / trash the supplements" unless Chad literally gave that order.
 - UPDATE facts that changed (e.g. new weight) rather than keeping both. Remove anything proven wrong.
-- Do NOT invent facts. Only record what the client actually stated or Chad established.
-- Do NOT include one-off chit-chat, momentary feelings, or anything not useful next session.
-- Write in plain third-person notes (e.g. "Goal: lose 20 lbs by August").
+- Keep it concise: short values, short bullets. No conversation transcript, no chit-chat, no momentary feelings.
 - If the conversation adds nothing new, return the existing profile unchanged.
-- Output ONLY the profile text itself. No preamble, no explanation, no code fences.
+- Output ONLY the profile (the two sections above). No preamble, no explanation, no code fences.
 - Keep the whole profile under ${MAX_PROFILE_CHARS} characters.`;
 
 type TextualMessage = {
