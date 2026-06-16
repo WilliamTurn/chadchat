@@ -1,5 +1,18 @@
+import { PencilIcon } from "lucide-react";
 import Link from "next/link";
-import { memo } from "react";
+import { memo, useState } from "react";
+import { toast } from "sonner";
+import { renameChat } from "@/app/(chat)/actions";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Chat } from "@/lib/db/schema";
 import {
@@ -30,17 +43,42 @@ const PureChatItem = ({
   chat,
   isActive,
   onDelete,
+  onRename,
   setOpenMobile,
 }: {
   chat: Chat;
   isActive: boolean;
   onDelete: (chatId: string) => void;
+  onRename: (chatId: string, title: string) => void;
   setOpenMobile: (open: boolean) => void;
 }) => {
   const { visibilityType, setVisibilityType } = useChatVisibility({
     chatId: chat.id,
     initialVisibilityType: chat.visibility,
   });
+
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
+  const [renameValue, setRenameValue] = useState(chat.title);
+  const [isRenaming, setIsRenaming] = useState(false);
+
+  const handleRenameSubmit = async () => {
+    const next = renameValue.trim();
+    if (!next || next === chat.title) {
+      setShowRenameDialog(false);
+      return;
+    }
+
+    setIsRenaming(true);
+    try {
+      const saved = await renameChat({ chatId: chat.id, title: next });
+      onRename(chat.id, saved);
+      setShowRenameDialog(false);
+    } catch {
+      toast.error("Couldn't rename that chat. Try again.");
+    } finally {
+      setIsRenaming(false);
+    }
+  };
 
   return (
     <SidebarMenuItem>
@@ -66,6 +104,17 @@ const PureChatItem = ({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end" side="bottom">
+          <DropdownMenuItem
+            className="cursor-pointer"
+            onSelect={() => {
+              setRenameValue(chat.title);
+              setShowRenameDialog(true);
+            }}
+          >
+            <PencilIcon size={14} />
+            <span>Rename</span>
+          </DropdownMenuItem>
+
           <DropdownMenuSub>
             <DropdownMenuSubTrigger className="cursor-pointer">
               <ShareIcon />
@@ -112,12 +161,55 @@ const PureChatItem = ({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <Dialog onOpenChange={setShowRenameDialog} open={showRenameDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Rename chat</DialogTitle>
+            <DialogDescription>
+              Give this conversation a name you'll recognize later.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            autoFocus
+            maxLength={100}
+            onChange={(e) => setRenameValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleRenameSubmit();
+              }
+            }}
+            placeholder="Chat name"
+            value={renameValue}
+          />
+          <DialogFooter>
+            <Button
+              onClick={() => setShowRenameDialog(false)}
+              type="button"
+              variant="outline"
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={isRenaming || !renameValue.trim()}
+              onClick={handleRenameSubmit}
+              type="button"
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SidebarMenuItem>
   );
 };
 
 export const ChatItem = memo(PureChatItem, (prevProps, nextProps) => {
   if (prevProps.isActive !== nextProps.isActive) {
+    return false;
+  }
+  if (prevProps.chat.title !== nextProps.chat.title) {
     return false;
   }
   return true;

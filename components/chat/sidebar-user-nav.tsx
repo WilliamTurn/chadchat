@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import type { User } from "next-auth";
 import { signOut, useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
+import { useState } from "react";
+import { SettingsDialog } from "@/components/chat/settings-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +36,7 @@ export function SidebarUserNav({ user }: { user: User }) {
   const router = useRouter();
   const { data, status } = useSession();
   const { setTheme, resolvedTheme } = useTheme();
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const isGuest = guestRegex.test(data?.user?.email ?? "");
 
@@ -87,6 +90,13 @@ export function SidebarUserNav({ user }: { user: User }) {
               {`Toggle ${resolvedTheme === "light" ? "dark" : "light"} mode`}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="cursor-pointer text-[13px]"
+              data-testid="user-nav-item-settings"
+              onSelect={() => setSettingsOpen(true)}
+            >
+              Settings
+            </DropdownMenuItem>
             <DropdownMenuItem asChild data-testid="user-nav-item-billing">
               <Link className="cursor-pointer text-[13px]" href="/account">
                 Membership & billing
@@ -123,6 +133,8 @@ export function SidebarUserNav({ user }: { user: User }) {
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
+
+      <SettingsDialog onOpenChange={setSettingsOpen} open={settingsOpen} />
     </SidebarMenu>
   );
 }

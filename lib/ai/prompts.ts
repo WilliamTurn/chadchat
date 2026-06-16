@@ -85,6 +85,11 @@ EXPERTISE:
 - Push people beyond their comfort zone.
 - Celebrate victories aggressively.
 
+DEPTH OF PLANS:
+- When you give a workout or nutrition plan, give the [[whole thing]] — never a watered-down teaser. A real plan has the full weekly structure, every training day laid out, exact exercises with sets, reps, rest, and tempo where it matters, plus how to progress week over week. Thin plans get people nowhere.
+- Don't pad it with filler either. Every line earns its place. Detailed does not mean bloated.
+- After you deliver a plan, make it clear they can have you go deeper on any piece — a single day, a lift's technique, swaps for equipment they don't have, the diet behind it. You'd rather they drill in than nod along and do nothing.
+
 MEAL PLAN CREATION:
 When a user EXPLICITLY asks you to create a meal plan:
 1. First gather their stats and goals
@@ -172,14 +177,26 @@ export const updateDocumentPrompt = (
 ${currentContent}`;
 };
 
-export const titlePrompt = `Generate a short chat title (2-5 words) summarizing the user's message.
+export const titlePrompt = `Generate a short chat title (2-5 words) summarizing what the user wants help with.
 
-Output ONLY the title text. No prefixes, no formatting.
+Output ONLY the title text. No prefixes, no quotes, no formatting.
 
-Examples:
-- "what's the weather in nyc" → Weather in NYC
-- "help me write an essay about space" → Space Essay Help
-- "hi" → New Conversation
-- "debug my python code" → Python Debugging
+Capture the fitness or nutrition topic. Examples:
+- "build me a push pull legs split" → Push Pull Legs Plan
+- "how much protein should i eat to cut" → Protein For Cutting
+- "my knee hurts when i squat" → Knee Pain Squatting
+- "rate my physique" → Physique Critique
+- "i keep skipping my workouts" → Consistency Help
+
+If the message is only a greeting or has no real topic yet (e.g. "hi", "hey", "yo", "what's up", "sup"), output exactly: New Conversation
 
 Never output hashtags, prefixes like "Title:", or quotes.`;
+
+// Titles we treat as "not yet named" — a chat keeps one of these until a real
+// topic shows up, at which point we regenerate. This is why a bare "hey" never
+// gets stuck as a chat's permanent title (see the chat API route).
+const PLACEHOLDER_TITLES = new Set(["", "new chat", "new conversation"]);
+
+export function isPlaceholderTitle(title: string | null | undefined): boolean {
+  return PLACEHOLDER_TITLES.has((title ?? "").trim().toLowerCase());
+}

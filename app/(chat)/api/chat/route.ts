@@ -19,7 +19,7 @@ import {
   DEFAULT_CHAT_MODEL,
   getCapabilities,
 } from "@/lib/ai/models";
-import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
+import { isPlaceholderTitle, type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
 import { editDocument } from "@/lib/ai/tools/edit-document";
@@ -129,6 +129,12 @@ export async function POST(request: Request) {
         return new ChatbotError("forbidden:chat").toResponse();
       }
       messagesFromDb = await getMessagesByChatId({ id });
+
+      // The chat's opening message was a bare greeting, so it's still unnamed.
+      // Now that a real message has arrived, take another shot at titling it.
+      if (message?.role === "user" && isPlaceholderTitle(chat.title)) {
+        titlePromise = generateTitleFromUserMessage({ message });
+      }
     } else if (message?.role === "user") {
       await saveChat({
         id,
@@ -280,8 +286,12 @@ export async function POST(request: Request) {
         if (titlePromise) {
           try {
             const title = await titlePromise;
-            dataStream.write({ type: "data-chat-title", data: title });
-            updateChatTitleById({ chatId: id, title });
+            // A greeting yields a placeholder title — keep the chat "unnamed"
+            // so the next real message gets another chance to name it.
+            if (title && !isPlaceholderTitle(title)) {
+              dataStream.write({ type: "data-chat-title", data: title });
+              updateChatTitleById({ chatId: id, title });
+            }
           } catch (_) {
             /* non-fatal */
           }
