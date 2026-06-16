@@ -37,9 +37,30 @@ export const user = pgTable("User", {
   cancelAtPeriodEnd: boolean("cancelAtPeriodEnd").notNull().default(false),
   // When the free trial ends (for trial-specific messaging).
   trialEndsAt: timestamp("trialEndsAt"),
+  // --- Memory layer (Phase 3) ---
+  // When true, Chad remembers this user across chats (a durable profile is
+  // maintained and injected into his prompt). Default on — it's the
+  // recommended experience; users can turn it off from /account.
+  memoryEnabled: boolean("memoryEnabled").notNull().default(true),
 });
 
 export type User = InferSelectModel<typeof user>;
+
+// One durable "what Chad knows about you" profile per user. Populated by a
+// cheap background LLM call after chats (see lib/ai/memory.ts) and injected
+// into Chad's system prompt at the start of every chat when memoryEnabled.
+export const userMemory = pgTable("UserMemory", {
+  userId: uuid("userId")
+    .primaryKey()
+    .notNull()
+    .references(() => user.id),
+  // Free-form markdown summary Chad maintains himself (stats, goals, injuries,
+  // current plan, progress). Capped in code; never trained on.
+  profile: text("profile").notNull().default(""),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+export type UserMemory = InferSelectModel<typeof userMemory>;
 
 export const chat = pgTable("Chat", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),

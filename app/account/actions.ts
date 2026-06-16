@@ -1,8 +1,13 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/app/(auth)/auth";
-import { getUserById } from "@/lib/db/queries";
+import {
+  clearUserMemory,
+  getUserById,
+  setMemoryEnabled,
+} from "@/lib/db/queries";
 import { getAppUrl, getStripe } from "@/lib/stripe";
 
 /**
@@ -26,4 +31,26 @@ export async function openBillingPortal() {
   });
 
   redirect(portal.url);
+}
+
+/** Turn Chad's cross-chat memory on or off for the current user. */
+export async function setChadMemoryEnabled(enabled: boolean) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  await setMemoryEnabled(session.user.id, enabled);
+  revalidatePath("/account");
+}
+
+/** Wipe everything Chad remembers about the current user. */
+export async function clearChadMemory() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  await clearUserMemory(session.user.id);
+  revalidatePath("/account");
 }

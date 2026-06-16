@@ -115,17 +115,22 @@ About the origin of user's request:
 export const systemPrompt = ({
   requestHints,
   supportsTools,
+  memory,
 }: {
   requestHints: RequestHints;
   supportsTools: boolean;
+  // Pre-formatted memory block (see lib/ai/memory.ts). Empty/undefined when the
+  // user has memory turned off or has no profile yet.
+  memory?: string;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
+  const memoryBlock = memory ? `\n\n${memory}` : "";
 
   if (!supportsTools) {
-    return `${regularPrompt}\n\n${requestPrompt}`;
+    return `${regularPrompt}${memoryBlock}\n\n${requestPrompt}`;
   }
 
-  return `${regularPrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}`;
+  return `${regularPrompt}${memoryBlock}\n\n${requestPrompt}\n\n${artifactsPrompt}`;
 };
 
 export const codePrompt = `

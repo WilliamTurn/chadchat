@@ -12,6 +12,7 @@ import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { auth } from "@/app/(auth)/auth";
 import { getEntitlements, getUsageWarning } from "@/lib/ai/entitlements";
+import { formatMemoryForPrompt, maybeUpdateUserMemory } from "@/lib/ai/memory";
 import {
   allowedModelIds,
   chatModels,
@@ -33,6 +34,7 @@ import {
   getMessageCountByUserId,
   getMessagesByChatId,
   getUserById,
+  getUserMemory,
   saveChat,
   saveMessages,
   updateChatTitleById,
@@ -184,6 +186,15 @@ export async function POST(request: Request) {
       country,
     };
 
+    // Memory layer: when the member has it on, load their durable profile and
+    // inject it so Chad remembers them across chats. Off → cold start as usual.
+    const memoryEnabled = dbUser.memoryEnabled;
+    let memoryBlock = "";
+    if (memoryEnabled) {
+      const memoryRecord = await getUserMemory(session.user.id);
+      memoryBlock = formatMemoryForPrompt(memoryRecord?.profile);
+    }
+
     if (message?.role === "user") {
       await saveMessages({
         messages: [
@@ -212,7 +223,7 @@ export async function POST(request: Request) {
       execute: async ({ writer: dataStream }) => {
         const result = streamText({
           model: getLanguageModel(chatModel),
-          system: systemPrompt({ requestHints, supportsTools }),
+          system: systemPrompt({ requestHints, supportsTools, memory: memoryBlock }),
           messages: modelMessages,
           stopWhen: stepCountIs(5),
           experimental_activeTools:
@@ -312,6 +323,20 @@ export async function POST(request: Request) {
               chatId: id,
             })),
           });
+        }
+
+        // Memory layer: after the reply is saved, update the user's durable
+        // profile in the background (non-blocking, throttled, best-effort).
+        if (memoryEnabled) {
+          const recentMessages = [...uiMessages, ...finishedMessages].map(
+            (m) => ({ role: m.role, parts: m.parts })
+          );
+          after(() =>
+            maybeUpdateUserMemory({
+              userId: session.user.id,
+              recentMessages,
+            })
+          );
         }
       },
       onError: (error) => {

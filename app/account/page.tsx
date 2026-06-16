@@ -4,7 +4,8 @@ import { Suspense } from "react";
 import { auth } from "@/app/(auth)/auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getUserById } from "@/lib/db/queries";
+import { MemorySettings } from "@/components/account/memory-settings";
+import { getUserById, getUserMemory } from "@/lib/db/queries";
 import { PLANS } from "@/lib/stripe";
 import { hasActiveAccess } from "@/lib/subscription";
 import { openBillingPortal } from "./actions";
@@ -59,6 +60,9 @@ async function MembershipCard() {
     redirect("/login");
   }
 
+  const memoryRecord = await getUserMemory(session.user.id);
+  const hasMemory = Boolean(memoryRecord?.profile?.trim());
+
   const hasAccess = hasActiveAccess(user);
   const tier = user.subscriptionTier;
   const planName = tier ? PLANS[tier].name : "No active plan";
@@ -80,6 +84,7 @@ async function MembershipCard() {
   }
 
   return (
+    <>
     <div className="rounded-2xl border border-border bg-card p-6">
       <div className="mb-3 flex items-center gap-3">
         <span className="font-medium text-lg">{planName}</span>
@@ -116,5 +121,8 @@ async function MembershipCard() {
         )}
       </div>
     </div>
+
+      <MemorySettings hasMemory={hasMemory} initialEnabled={user.memoryEnabled} />
+    </>
   );
 }

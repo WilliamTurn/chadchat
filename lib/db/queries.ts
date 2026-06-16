@@ -29,6 +29,8 @@ import {
   suggestion,
   type User,
   user,
+  type UserMemory,
+  userMemory,
   vote,
 } from "./schema";
 import { generateHashedPassword } from "./utils";
@@ -113,6 +115,70 @@ export async function setUserStripeCustomerId(
     throw new ChatbotError(
       "bad_request:database",
       "Failed to set Stripe customer id"
+    );
+  }
+}
+
+// --- Memory layer (Phase 3) ---
+
+/** The user's durable memory profile, or undefined if none yet. */
+export async function getUserMemory(
+  userId: string
+): Promise<UserMemory | undefined> {
+  try {
+    const [found] = await db
+      .select()
+      .from(userMemory)
+      .where(eq(userMemory.userId, userId));
+    return found;
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get user memory");
+  }
+}
+
+/** Insert or replace the user's memory profile (one row per user). */
+export async function upsertUserMemory(userId: string, profile: string) {
+  try {
+    return await db
+      .insert(userMemory)
+      .values({ userId, profile, updatedAt: new Date() })
+      .onConflictDoUpdate({
+        target: userMemory.userId,
+        set: { profile, updatedAt: new Date() },
+      });
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to save user memory"
+    );
+  }
+}
+
+/** Flip the per-user memory toggle. */
+export async function setMemoryEnabled(userId: string, enabled: boolean) {
+  try {
+    return await db
+      .update(user)
+      .set({ memoryEnabled: enabled, updatedAt: new Date() })
+      .where(eq(user.id, userId));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to update memory setting"
+    );
+  }
+}
+
+/** Wipe the user's stored profile (privacy / reset). Leaves the toggle as-is. */
+export async function clearUserMemory(userId: string) {
+  try {
+    return await db
+      .delete(userMemory)
+      .where(eq(userMemory.userId, userId));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to clear user memory"
     );
   }
 }
