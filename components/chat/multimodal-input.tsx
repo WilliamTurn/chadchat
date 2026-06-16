@@ -600,18 +600,34 @@ function PureAttachmentsButton({
     modelsResponse?.capabilities ?? modelsResponse;
   const hasVision = caps?.[selectedModelId]?.vision ?? false;
 
+  // Photo analysis is a Chad Pro feature. Basic/trial members still see the
+  // button (so they discover the perk) but a click nudges them to upgrade
+  // instead of opening the picker. The upload route enforces this server-side.
+  const { data: entitlements } = useSWR<{ photoAnalysis: boolean }>(
+    `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/entitlements`,
+    (url: string) => fetch(url).then((r) => r.json()),
+    { revalidateOnFocus: false, dedupingInterval: 3_600_000 }
+  );
+  const photoAnalysis = entitlements?.photoAnalysis ?? false;
+  const canSendPhotos = hasVision && photoAnalysis;
+
   return (
     <Button
       className={cn(
         "h-7 w-7 rounded-lg border border-border/40 p-1 transition-colors",
-        hasVision
+        canSendPhotos
           ? "text-foreground hover:border-border hover:text-foreground"
-          : "text-muted-foreground/30 cursor-not-allowed"
+          : "text-muted-foreground/30",
+        hasVision ? "" : "cursor-not-allowed"
       )}
       data-testid="attachments-button"
       disabled={status !== "ready" || !hasVision}
       onClick={(event) => {
         event.preventDefault();
+        if (!photoAnalysis) {
+          toast.info("Photos are a Chad Pro feature — upgrade to send Chad a photo.");
+          return;
+        }
         fileInputRef.current?.click();
       }}
       variant="ghost"
