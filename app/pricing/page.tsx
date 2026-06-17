@@ -47,6 +47,9 @@ async function PricingContent() {
 
   const user = await getUserById(session.user.id);
   const hasAccess = user ? hasActiveAccess(user) : false;
+  // A returning customer already has a Stripe customer record (their card,
+  // history, and — if cancelled/lapsed — a subscription they can restart).
+  const isReturningCustomer = user?.stripeCustomerId != null;
   const alreadyTrialed = user
     ? hasUsedTrial({ stripeSubscriptionId: user.stripeSubscriptionId })
     : false;
@@ -61,6 +64,17 @@ async function PricingContent() {
           <Button asChild variant="outline">
             <Link href="/account">Manage billing</Link>
           </Button>
+        </div>
+      )}
+      {!hasAccess && isReturningCustomer && (
+        <div className="mb-8 flex flex-col items-center gap-2">
+          <Button asChild variant="outline">
+            <Link href="/account">Manage billing & payment</Link>
+          </Button>
+          <p className="max-w-sm text-balance text-center text-muted-foreground text-xs">
+            Already a member before? Update your card or pick up where you left
+            off from your billing page.
+          </p>
         </div>
       )}
       <PricingPlans

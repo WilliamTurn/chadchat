@@ -41,7 +41,7 @@ const PLANS: Plan[] = [
     highlighted: true,
     features: [
       { label: "Everything in Basic" },
-      { label: "Progress photo analysis — Chad reviews your form", soon: true },
+      { label: "Progress photo analysis — Chad reviews your form" },
       { label: "Custom workout & nutrition plans built for you", soon: true },
       { label: "Highest-priority access to Chad" },
     ],
