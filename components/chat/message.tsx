@@ -372,7 +372,7 @@ export const ThinkingMessage = () => {
       <div className="flex items-start gap-3">
         <div className="flex h-[calc(13px*1.65)] shrink-0 items-center">
           <div className="flex size-7 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground ring-1 ring-border/50">
-            <Dumbbell className="text-[#ff453a]" size={14} strokeWidth={2.5} />
+            <Dumbbell className="text-blood" size={14} strokeWidth={2.5} />
           </div>
         </div>
 

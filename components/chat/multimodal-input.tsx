@@ -113,7 +113,7 @@ function PureMultimodalInput({
   const { width } = useWindowSize();
   const hasAutoFocused = useRef(false);
   useEffect(() => {
-    if (!hasAutoFocused.current && width) {
+    if (!hasAutoFocused.current && width && width > 768) {
       const timer = setTimeout(() => {
         textareaRef.current?.focus();
         hasAutoFocused.current = true;
