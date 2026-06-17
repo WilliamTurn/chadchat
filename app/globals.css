@@ -19,9 +19,9 @@
   --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 
-  /* Brand accent — blood red (#ff453a). */
-  --color-blood: #ff453a;
-  --color-blood-dim: rgba(255, 69, 58, 0.14);
+  /* Brand accent — deep blood red (#a4161a). */
+  --color-blood: #a4161a;
+  --color-blood-dim: rgba(164, 22, 26, 0.16);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -74,7 +74,7 @@
   --destructive: oklch(0.55 0.15 25);
   --border: oklch(0.9 0 0);
   --input: oklch(0.9 0 0);
-  --ring: #ff453a;
+  --ring: #a4161a;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -87,7 +87,7 @@
   --sidebar-accent: oklch(0.12 0 0 / 0.06);
   --sidebar-accent-foreground: oklch(0.12 0 0);
   --sidebar-border: oklch(0.88 0 0);
-  --sidebar-ring: #ff453a;
+  --sidebar-ring: #a4161a;
 
   --shadow-card: 0 1px 3px oklch(0 0 0 / 0.05), 0 1px 1px oklch(0 0 0 / 0.03);
   --shadow-float:
@@ -124,7 +124,7 @@
   --destructive: oklch(0.7 0.15 25);
   --border: rgba(216, 231, 242, 0.08);
   --input: rgba(216, 231, 242, 0.1);
-  --ring: #ff453a;
+  --ring: #a4161a;
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -137,7 +137,7 @@
   --sidebar-accent: oklch(0.94 0 0 / 0.06);
   --sidebar-accent-foreground: oklch(0.94 0 0);
   --sidebar-border: rgba(216, 231, 242, 0.08);
-  --sidebar-ring: #ff453a;
+  --sidebar-ring: #a4161a;
 
   --shadow-card:
     inset 0 1px 0 oklch(1 0 0 / 0.04), 0 1px 2px oklch(0 0 0 / 0.2),
@@ -393,7 +393,30 @@ textarea:focus-visible {
 
 /* Chad's sparing blood-red emphasis (from [[ ]] in his replies). */
 .chad-red {
-  color: #ff453a;
+  color: #a4161a;
+}
+
+/* Industrial texture on the user's message bubble — a faint brushed-metal
+   diagonal hatch laid over the existing metallic gradient (dark mode only).
+   Pseudo-element so it doesn't fight the Tailwind from-secondary→to-muted
+   gradient; clipped by the bubble's own overflow-hidden + rounded corners. */
+.chad-user-bubble {
+  position: relative;
+}
+
+.dark .chad-user-bubble::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(216, 231, 242, 0.028) 0px,
+    rgba(216, 231, 242, 0.028) 1px,
+    transparent 1px,
+    transparent 5px
+  );
 }
 
 /* Composer "chrome" — a static metallic (top-lit silver) stroke around the

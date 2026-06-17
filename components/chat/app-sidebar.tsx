@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  MessageSquareIcon,
+  Dumbbell,
   PanelLeftIcon,
   PenSquareIcon,
   TrashIcon,
@@ -70,14 +70,18 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         <SidebarHeader className="pb-0 pt-3">
           <SidebarMenu>
             <SidebarMenuItem className="flex flex-row items-center justify-between">
+              <div className="flex items-center gap-2">
               <div className="group/logo relative flex items-center justify-center">
                 <SidebarMenuButton
                   asChild
                   className="size-8 !px-0 items-center justify-center group-data-[collapsible=icon]:group-hover/logo:opacity-0"
-                  tooltip="Chatbot"
+                  tooltip="Chad"
                 >
                   <Link href="/" onClick={() => setOpenMobile(false)}>
-                    <MessageSquareIcon className="size-4 text-sidebar-foreground/50" />
+                    <Dumbbell
+                      className="size-4 text-blood"
+                      strokeWidth={2.5}
+                    />
                   </Link>
                 </SidebarMenuButton>
                 <Tooltip>
@@ -93,6 +97,14 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                     Open sidebar
                   </TooltipContent>
                 </Tooltip>
+              </div>
+              <Link
+                className="font-display font-bold text-[15px] text-sidebar-foreground tracking-[0.14em] group-data-[collapsible=icon]:hidden"
+                href="/"
+                onClick={() => setOpenMobile(false)}
+              >
+                CHAD
+              </Link>
               </div>
               <div className="group-data-[collapsible=icon]:hidden">
                 <SidebarTrigger className="text-sidebar-foreground/60 transition-colors duration-150 hover:text-sidebar-foreground" />
