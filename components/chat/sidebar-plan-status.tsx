@@ -1,6 +1,6 @@
 "use client";
 
-import { LineChart, Sparkles } from "lucide-react";
+import { Camera, LineChart, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { upgradeToPro } from "@/app/account/actions";
 import { Button } from "@/components/ui/button";
@@ -39,17 +39,30 @@ export function SidebarPlanStatus({ plan }: { plan: PlanStatusSummary }) {
         </p>
       )}
       {isPro && (
-        <Button
-          asChild
-          className="h-8 w-full justify-start gap-1.5 text-[13px]"
-          size="sm"
-          variant="ghost"
-        >
-          <Link href="/progress">
-            <LineChart className="size-3.5" />
-            Progress
-          </Link>
-        </Button>
+        <>
+          <Button
+            asChild
+            className="h-8 w-full justify-start gap-1.5 text-[13px]"
+            size="sm"
+            variant="ghost"
+          >
+            <Link href="/nutrition">
+              <Camera className="size-3.5" />
+              Nutrition
+            </Link>
+          </Button>
+          <Button
+            asChild
+            className="h-8 w-full justify-start gap-1.5 text-[13px]"
+            size="sm"
+            variant="ghost"
+          >
+            <Link href="/progress">
+              <LineChart className="size-3.5" />
+              Progress
+            </Link>
+          </Button>
+        </>
       )}
       {canUpgrade && (
         // A form with the server action keeps the Stripe redirect working

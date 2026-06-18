@@ -3,6 +3,7 @@ import {
   boolean,
   doublePrecision,
   foreignKey,
+  integer,
   json,
   pgTable,
   primaryKey,
@@ -86,6 +87,54 @@ export const progressEntry = pgTable("ProgressEntry", {
 });
 
 export type ProgressEntry = InferSelectModel<typeof progressEntry>;
+
+// --- Nutrition: meal / fridge / pantry photo analysis (Pro) ---
+// One row per analyzed photo. Chad estimates macros and grades the food, with a
+// blunt verdict in his voice. `kind` distinguishes a plate you ate (a "meal",
+// which counts toward the day's intake) from an inventory shot of a "fridge" or
+// "pantry" (judged for what to keep/toss/buy, not counted as eaten).
+export const mealAnalysis = pgTable("MealAnalysis", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  kind: varchar("kind", { enum: ["meal", "fridge", "pantry"] })
+    .notNull()
+    .default("meal"),
+  // The analyzed photo (Vercel Blob URL).
+  photoUrl: text("photoUrl").notNull(),
+  // Short label Chad gives the shot ("Double cheeseburger + fries").
+  title: text("title").notNull(),
+  // Estimated totals for a meal; rough or null for a fridge/pantry inventory.
+  calories: doublePrecision("calories"),
+  protein: doublePrecision("protein"),
+  carbs: doublePrecision("carbs"),
+  fat: doublePrecision("fat"),
+  // 1 (garbage) … 10 (elite) — drives the at-a-glance grade.
+  healthScore: integer("healthScore"),
+  // Chad's blunt verdict + the foods he identified + concrete fixes.
+  verdict: text("verdict").notNull(),
+  items: json("items").notNull(),
+  tips: json("tips").notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type MealAnalysis = InferSelectModel<typeof mealAnalysis>;
+
+// One daily-intake target per user (calories + protein), set on the dashboard.
+// Lets the "Today's fuel" rings show progress toward a goal. Both nullable so a
+// user can set just one.
+export const nutritionTarget = pgTable("NutritionTarget", {
+  userId: uuid("userId")
+    .primaryKey()
+    .notNull()
+    .references(() => user.id),
+  calories: integer("calories"),
+  protein: integer("protein"),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+export type NutritionTarget = InferSelectModel<typeof nutritionTarget>;
 
 // --- Auth email flows (Phase 4): short-lived, single-use tokens ---
 // Tokens are stored hashed (sha256); the raw token only ever lives in the

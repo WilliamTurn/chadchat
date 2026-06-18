@@ -2,6 +2,7 @@
 
 import {
   Dumbbell,
+  LayoutDashboard,
   PanelLeftIcon,
   PenSquareIcon,
   TrashIcon,
@@ -124,6 +125,18 @@ export function AppSidebar({
           <SidebarGroup className="pt-1">
             <SidebarGroupContent>
               <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    className="h-8 rounded-lg text-[13px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    tooltip="Dashboard"
+                  >
+                    <Link href="/today" onClick={() => setOpenMobile(false)}>
+                      <LayoutDashboard className="size-4" />
+                      <span className="font-medium">Dashboard</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     className="h-8 rounded-lg border border-sidebar-border text-[13px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"

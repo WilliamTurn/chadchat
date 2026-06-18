@@ -26,7 +26,11 @@ import {
   type DBMessage,
   document,
   emailVerificationToken,
+  type MealAnalysis,
+  mealAnalysis,
   message,
+  type NutritionTarget,
+  nutritionTarget,
   passwordResetToken,
   type ProgressEntry,
   progressEntry,
@@ -468,6 +472,10 @@ export async function deleteUserByEmail(
       // Progress-tracking entries (weight log + photos).
       await tx.delete(progressEntry).where(eq(progressEntry.userId, userId));
 
+      // Nutrition: photo analyses + the daily target.
+      await tx.delete(mealAnalysis).where(eq(mealAnalysis.userId, userId));
+      await tx.delete(nutritionTarget).where(eq(nutritionTarget.userId, userId));
+
       // Any outstanding auth-email tokens.
       await tx
         .delete(emailVerificationToken)
@@ -692,6 +700,157 @@ export async function deleteProgressEntry({
     throw new ChatbotError(
       "bad_request:database",
       "Failed to delete progress entry"
+    );
+  }
+}
+
+// --- Nutrition: meal / fridge / pantry analyses (Pro) ---
+
+export async function createMealAnalysis(entry: {
+  userId: string;
+  kind: "meal" | "fridge" | "pantry";
+  photoUrl: string;
+  title: string;
+  calories: number | null;
+  protein: number | null;
+  carbs: number | null;
+  fat: number | null;
+  healthScore: number | null;
+  verdict: string;
+  items: unknown;
+  tips: unknown;
+}): Promise<MealAnalysis> {
+  try {
+    const [created] = await db
+      .insert(mealAnalysis)
+      .values({
+        userId: entry.userId,
+        kind: entry.kind,
+        photoUrl: entry.photoUrl,
+        title: entry.title,
+        calories: entry.calories,
+        protein: entry.protein,
+        carbs: entry.carbs,
+        fat: entry.fat,
+        healthScore: entry.healthScore,
+        verdict: entry.verdict,
+        items: entry.items,
+        tips: entry.tips,
+      })
+      .returning();
+    return created;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to save meal analysis"
+    );
+  }
+}
+
+/** A user's analyses, newest first. Capped — this backs a scrollable feed. */
+export async function getMealAnalysesByUserId(
+  userId: string,
+  limit = 60
+): Promise<MealAnalysis[]> {
+  try {
+    return await db
+      .select()
+      .from(mealAnalysis)
+      .where(eq(mealAnalysis.userId, userId))
+      .orderBy(desc(mealAnalysis.createdAt))
+      .limit(limit);
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get meal analyses"
+    );
+  }
+}
+
+/** Meals (only) logged since `since` — used for the day's running macro totals. */
+export async function getMealsSince(
+  userId: string,
+  since: Date
+): Promise<MealAnalysis[]> {
+  try {
+    return await db
+      .select()
+      .from(mealAnalysis)
+      .where(
+        and(
+          eq(mealAnalysis.userId, userId),
+          eq(mealAnalysis.kind, "meal"),
+          gte(mealAnalysis.createdAt, since)
+        )
+      )
+      .orderBy(desc(mealAnalysis.createdAt));
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get today's meals");
+  }
+}
+
+/** Delete one analysis, scoped to its owner. */
+export async function deleteMealAnalysis({
+  id,
+  userId,
+}: {
+  id: string;
+  userId: string;
+}): Promise<void> {
+  try {
+    await db
+      .delete(mealAnalysis)
+      .where(and(eq(mealAnalysis.id, id), eq(mealAnalysis.userId, userId)));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to delete meal analysis"
+    );
+  }
+}
+
+export async function getNutritionTarget(
+  userId: string
+): Promise<NutritionTarget | undefined> {
+  try {
+    const [found] = await db
+      .select()
+      .from(nutritionTarget)
+      .where(eq(nutritionTarget.userId, userId));
+    return found;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get nutrition target"
+    );
+  }
+}
+
+export async function upsertNutritionTarget(
+  userId: string,
+  target: { calories: number | null; protein: number | null }
+): Promise<void> {
+  try {
+    await db
+      .insert(nutritionTarget)
+      .values({
+        userId,
+        calories: target.calories,
+        protein: target.protein,
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: nutritionTarget.userId,
+        set: {
+          calories: target.calories,
+          protein: target.protein,
+          updatedAt: new Date(),
+        },
+      });
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to save nutrition target"
     );
   }
 }
