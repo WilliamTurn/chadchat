@@ -4,10 +4,12 @@ import {
   and,
   asc,
   count,
+  countDistinct,
   desc,
   eq,
   gt,
   gte,
+  ilike,
   inArray,
   lt,
   type SQL,
@@ -26,6 +28,8 @@ import {
   emailVerificationToken,
   message,
   passwordResetToken,
+  type ProgressEntry,
+  progressEntry,
   type Suggestion,
   stream,
   suggestion,
@@ -461,6 +465,9 @@ export async function deleteUserByEmail(
       // The durable memory profile.
       await tx.delete(userMemory).where(eq(userMemory.userId, userId));
 
+      // Progress-tracking entries (weight log + photos).
+      await tx.delete(progressEntry).where(eq(progressEntry.userId, userId));
+
       // Any outstanding auth-email tokens.
       await tx
         .delete(emailVerificationToken)
@@ -502,6 +509,190 @@ export async function getUserStats(): Promise<{
     };
   } catch (_error) {
     throw new ChatbotError("bad_request:database", "Failed to get user stats");
+  }
+}
+
+export type AdminUserRow = {
+  id: string;
+  email: string;
+  name: string | null;
+  subscriptionTier: "basic" | "pro" | null;
+  subscriptionStatus: string | null;
+  createdAt: Date;
+  chatCount: number;
+  messageCount: number;
+};
+
+/**
+ * The admin user directory: real (non-anonymous) members, newest first, with a
+ * count of their chats and messages. An optional case-insensitive email search
+ * narrows the list. Capped by `limit` — this backs an admin lookup screen, not
+ * a public listing.
+ */
+export async function getUserDirectory({
+  search,
+  limit = 50,
+}: {
+  search?: string;
+  limit?: number;
+}): Promise<AdminUserRow[]> {
+  try {
+    const trimmed = search?.trim();
+    const whereCondition = trimmed
+      ? and(eq(user.isAnonymous, false), ilike(user.email, `%${trimmed}%`))
+      : eq(user.isAnonymous, false);
+
+    return await db
+      .select({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        subscriptionTier: user.subscriptionTier,
+        subscriptionStatus: user.subscriptionStatus,
+        createdAt: user.createdAt,
+        chatCount: countDistinct(chat.id),
+        messageCount: count(message.id),
+      })
+      .from(user)
+      .leftJoin(chat, eq(chat.userId, user.id))
+      .leftJoin(message, eq(message.chatId, chat.id))
+      .where(whereCondition)
+      .groupBy(user.id)
+      .orderBy(desc(user.createdAt))
+      .limit(limit);
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get user directory"
+    );
+  }
+}
+
+/** Activity + membership-mix stats for the admin dashboard. */
+export async function getUsageStats(): Promise<{
+  messagesLast24h: number;
+  signups7d: number;
+  trialing: number;
+  basic: number;
+  pro: number;
+}> {
+  try {
+    const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    const [[msgRow], [signupRow], tierRows] = await Promise.all([
+      db
+        .select({ value: count() })
+        .from(message)
+        .where(and(eq(message.role, "user"), gte(message.createdAt, since24h))),
+      db
+        .select({ value: count() })
+        .from(user)
+        .where(and(eq(user.isAnonymous, false), gte(user.createdAt, since7d))),
+      db
+        .select({
+          tier: user.subscriptionTier,
+          status: user.subscriptionStatus,
+          value: count(),
+        })
+        .from(user)
+        .where(
+          inArray(user.subscriptionStatus, ["active", "trialing", "past_due"])
+        )
+        .groupBy(user.subscriptionTier, user.subscriptionStatus),
+    ]);
+
+    let trialing = 0;
+    let basic = 0;
+    let pro = 0;
+    for (const row of tierRows) {
+      if (row.status === "trialing") {
+        trialing += row.value;
+      } else if (row.tier === "pro") {
+        pro += row.value;
+      } else {
+        basic += row.value;
+      }
+    }
+
+    return {
+      messagesLast24h: msgRow?.value ?? 0,
+      signups7d: signupRow?.value ?? 0,
+      trialing,
+      basic,
+      pro,
+    };
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get usage stats");
+  }
+}
+
+// --- Progress tracking (Pro dashboard) ---
+
+export async function createProgressEntry(entry: {
+  userId: string;
+  recordedAt: Date;
+  weight: number | null;
+  unit: "lb" | "kg";
+  photoUrl: string | null;
+  note: string | null;
+}): Promise<ProgressEntry> {
+  try {
+    const [created] = await db
+      .insert(progressEntry)
+      .values({
+        userId: entry.userId,
+        recordedAt: entry.recordedAt,
+        weight: entry.weight,
+        unit: entry.unit,
+        photoUrl: entry.photoUrl,
+        note: entry.note,
+      })
+      .returning();
+    return created;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to create progress entry"
+    );
+  }
+}
+
+/** A user's progress log, oldest first (so a weight chart reads left→right). */
+export async function getProgressEntriesByUserId(
+  userId: string
+): Promise<ProgressEntry[]> {
+  try {
+    return await db
+      .select()
+      .from(progressEntry)
+      .where(eq(progressEntry.userId, userId))
+      .orderBy(asc(progressEntry.recordedAt));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get progress entries"
+    );
+  }
+}
+
+/** Delete one entry, scoped to its owner so a user can't delete another's. */
+export async function deleteProgressEntry({
+  id,
+  userId,
+}: {
+  id: string;
+  userId: string;
+}): Promise<void> {
+  try {
+    await db
+      .delete(progressEntry)
+      .where(and(eq(progressEntry.id, id), eq(progressEntry.userId, userId)));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to delete progress entry"
+    );
   }
 }
 

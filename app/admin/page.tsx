@@ -7,21 +7,11 @@ import { GrantAccessForm } from "@/components/admin/grant-access-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { isAdminEmail } from "@/lib/admin";
-import { getUserById, getUserStats } from "@/lib/db/queries";
+import { getUsageStats, getUserById, getUserStats } from "@/lib/db/queries";
 
 // Placeholder controls — visible so the dashboard reflects the full intended
 // surface, but not yet wired. Each becomes a real card as it's built.
 const COMING_SOON: { title: string; description: string }[] = [
-  {
-    title: "User search & directory",
-    description:
-      "Look up any member, see their plan, signup date, last activity, and message usage.",
-  },
-  {
-    title: "Usage & message stats",
-    description:
-      "Daily active users, messages per tier, who's near their cap, and trends over time.",
-  },
   {
     title: "Revenue & MRR",
     description:
@@ -81,15 +71,39 @@ async function AdminContent() {
     notFound();
   }
 
-  const stats = await getUserStats();
+  const [stats, usage] = await Promise.all([getUserStats(), getUsageStats()]);
 
   return (
     <div className="flex flex-col gap-8">
       {/* Live stats strip */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard label="Total users" value={stats.totalUsers} />
         <StatCard label="Paid members" value={stats.paidMembers} />
+        <StatCard label="Messages (24h)" value={usage.messagesLast24h} />
+        <StatCard label="New signups (7d)" value={usage.signups7d} />
       </div>
+
+      {/* Membership mix */}
+      <div className="grid grid-cols-3 gap-4">
+        <StatCard label="On trial" value={usage.trialing} />
+        <StatCard label="Basic" value={usage.basic} />
+        <StatCard label="Pro" value={usage.pro} />
+      </div>
+
+      {/* Members directory + abuse review */}
+      <section className="rounded-2xl border border-border bg-card p-6">
+        <div className="mb-1 flex items-center gap-3">
+          <h2 className="font-medium text-lg">Members</h2>
+          <Badge variant="secondary">Live</Badge>
+        </div>
+        <p className="mb-5 text-muted-foreground text-sm">
+          Search members, see each one's plan and activity, and review their
+          conversations with Chad — for safety and abuse checks.
+        </p>
+        <Button asChild>
+          <Link href="/admin/users">Open member directory</Link>
+        </Button>
+      </section>
 
       {/* The one working control */}
       <section className="rounded-2xl border border-border bg-card p-6">

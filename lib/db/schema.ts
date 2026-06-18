@@ -1,6 +1,7 @@
 import type { InferSelectModel } from "drizzle-orm";
 import {
   boolean,
+  doublePrecision,
   foreignKey,
   json,
   pgTable,
@@ -61,6 +62,30 @@ export const userMemory = pgTable("UserMemory", {
 });
 
 export type UserMemory = InferSelectModel<typeof userMemory>;
+
+// --- Progress tracking (Pro dashboard) ---
+// A dated log of body weight and/or a progress photo, surfaced on /progress.
+// One row per logged entry; an entry can be weight-only, photo-only, or both.
+export const progressEntry = pgTable("ProgressEntry", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  // The day this entry is for (user-chosen; defaults to today in the UI).
+  recordedAt: timestamp("recordedAt").notNull(),
+  // Body weight in `unit`. Null when the entry is photo-only.
+  weight: doublePrecision("weight"),
+  unit: varchar("unit", { enum: ["lb", "kg"] })
+    .notNull()
+    .default("lb"),
+  // A progress photo for this entry (Vercel Blob URL). Null when weight-only.
+  photoUrl: text("photoUrl"),
+  // Optional free-text note ("felt strong", "post-holiday", …).
+  note: text("note"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type ProgressEntry = InferSelectModel<typeof progressEntry>;
 
 // --- Auth email flows (Phase 4): short-lived, single-use tokens ---
 // Tokens are stored hashed (sha256); the raw token only ever lives in the

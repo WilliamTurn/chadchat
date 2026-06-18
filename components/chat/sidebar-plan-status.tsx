@@ -1,6 +1,7 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
+import { LineChart, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { upgradeToPro } from "@/app/account/actions";
 import { Button } from "@/components/ui/button";
 import type { PlanStatusSummary } from "@/lib/subscription";
@@ -24,8 +25,9 @@ function trialLabel(days: number): string {
 export function SidebarPlanStatus({ plan }: { plan: PlanStatusSummary }) {
   const isTrialing = plan.status === "trialing";
   const canUpgrade = plan.tier === "basic";
+  const isPro = plan.tier === "pro";
 
-  if (!(isTrialing || canUpgrade)) {
+  if (!(isTrialing || canUpgrade || isPro)) {
     return null;
   }
 
@@ -35,6 +37,19 @@ export function SidebarPlanStatus({ plan }: { plan: PlanStatusSummary }) {
         <p className="px-1 text-[12px] text-sidebar-foreground/60">
           {trialLabel(plan.trialDaysLeft)}
         </p>
+      )}
+      {isPro && (
+        <Button
+          asChild
+          className="h-8 w-full justify-start gap-1.5 text-[13px]"
+          size="sm"
+          variant="ghost"
+        >
+          <Link href="/progress">
+            <LineChart className="size-3.5" />
+            Progress
+          </Link>
+        </Button>
       )}
       {canUpgrade && (
         // A form with the server action keeps the Stripe redirect working
