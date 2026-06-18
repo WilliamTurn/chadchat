@@ -33,6 +33,36 @@ export async function openBillingPortal() {
   redirect(portal.url);
 }
 
+/**
+ * Sends a member straight into Stripe's hosted plan-change flow for their
+ * existing subscription (pre-selected to the update screen). Stripe shows the
+ * exact proration and handles the charge, so there's no second subscription and
+ * no custom billing UI to maintain. The result syncs back via the webhook.
+ */
+export async function upgradeToPro() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  const user = await getUserById(session.user.id);
+  if (!(user?.stripeCustomerId && user.stripeSubscriptionId)) {
+    // No live subscription to upgrade — send them to choose a plan instead.
+    redirect("/pricing");
+  }
+
+  const portal = await getStripe().billingPortal.sessions.create({
+    customer: user.stripeCustomerId,
+    return_url: `${getAppUrl()}/account`,
+    flow_data: {
+      type: "subscription_update",
+      subscription_update: { subscription: user.stripeSubscriptionId },
+    },
+  });
+
+  redirect(portal.url);
+}
+
 /** Turn Chad's cross-chat memory on or off for the current user. */
 export async function setChadMemoryEnabled(enabled: boolean) {
   const session = await auth();

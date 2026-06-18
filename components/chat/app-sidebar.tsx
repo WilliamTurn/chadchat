@@ -17,6 +17,7 @@ import {
   getChatHistoryPaginationKey,
   SidebarHistory,
 } from "@/components/chat/sidebar-history";
+import { SidebarPlanStatus } from "@/components/chat/sidebar-plan-status";
 import { SidebarUserNav } from "@/components/chat/sidebar-user-nav";
 import {
   Sidebar,
@@ -43,8 +44,15 @@ import {
   AlertDialogTitle,
 } from "../ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import type { PlanStatusSummary } from "@/lib/subscription";
 
-export function AppSidebar({ user }: { user: User | undefined }) {
+export function AppSidebar({
+  user,
+  plan,
+}: {
+  user: User | undefined;
+  plan?: PlanStatusSummary | null;
+}) {
   const router = useRouter();
   const { setOpenMobile, toggleSidebar } = useSidebar();
   const { mutate } = useSWRConfig();
@@ -147,6 +155,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
           <SidebarHistory user={user} />
         </SidebarContent>
         <SidebarFooter className="border-t border-sidebar-border pt-2 pb-3">
+          {plan && <SidebarPlanStatus plan={plan} />}
           {user && <SidebarUserNav user={user} />}
         </SidebarFooter>
         <SidebarRail />

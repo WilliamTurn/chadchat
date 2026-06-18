@@ -60,3 +60,44 @@ export function isTrialing(u: { subscriptionStatus: string | null }): boolean {
 export function hasUsedTrial(u: { stripeSubscriptionId: string | null }): boolean {
   return u.stripeSubscriptionId != null;
 }
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Compact subscription summary for the in-app chrome (the sidebar trial line +
+ * upgrade button). Derived once on the server and passed down as a prop so the
+ * client never recomputes a day count (which would risk a hydration mismatch).
+ */
+export type PlanStatusSummary = {
+  status: string | null;
+  tier: PlanTier | null;
+  /** Whole days left in the trial, or null when not trialing. */
+  trialDaysLeft: number | null;
+  cancelAtPeriodEnd: boolean;
+};
+
+export function toPlanStatusSummary(u: {
+  subscriptionStatus: string | null;
+  subscriptionTier: PlanTier | null;
+  trialEndsAt: Date | null;
+  currentPeriodEnd: Date | null;
+  cancelAtPeriodEnd: boolean | null;
+}): PlanStatusSummary {
+  let trialDaysLeft: number | null = null;
+  if (u.subscriptionStatus === "trialing") {
+    // During a trial Stripe's period end is the trial end; trialEndsAt is the
+    // explicit value, with currentPeriodEnd as a fallback.
+    const end = u.trialEndsAt ?? u.currentPeriodEnd;
+    if (end) {
+      const ms = end.getTime() - Date.now();
+      trialDaysLeft = ms <= 0 ? 0 : Math.ceil(ms / DAY_MS);
+    }
+  }
+
+  return {
+    status: u.subscriptionStatus,
+    tier: u.subscriptionTier,
+    trialDaysLeft,
+    cancelAtPeriodEnd: u.cancelAtPeriodEnd ?? false,
+  };
+}

@@ -9,7 +9,11 @@ import { ChatShell } from "@/components/chat/shell";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ActiveChatProvider } from "@/hooks/use-active-chat";
 import { getUserById } from "@/lib/db/queries";
-import { hasActiveAccess } from "@/lib/subscription";
+import {
+  hasActiveAccess,
+  type PlanStatusSummary,
+  toPlanStatusSummary,
+} from "@/lib/subscription";
 import { auth } from "../(auth)/auth";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -33,18 +37,20 @@ async function SidebarShell({ children }: { children: React.ReactNode }) {
 
   // Paywall: send anyone without an active trial/subscription to pricing.
   // (Unauthenticated users are already redirected to /login by proxy.ts.)
+  let plan: PlanStatusSummary | null = null;
   if (session?.user?.id) {
     const dbUser = await getUserById(session.user.id);
     if (!(dbUser && hasActiveAccess(dbUser))) {
       redirect("/pricing");
     }
+    plan = toPlanStatusSummary(dbUser);
   }
 
   const isCollapsed = cookieStore.get("sidebar_state")?.value !== "true";
 
   return (
     <SidebarProvider defaultOpen={!isCollapsed}>
-      <AppSidebar user={session?.user} />
+      <AppSidebar plan={plan} user={session?.user} />
       <SidebarInset>
         <Toaster
           position="top-center"

@@ -69,7 +69,7 @@ export function PricingPlans({
         toast({
           type: "error",
           description:
-            "We couldn't start checkout just now. Please try again in a moment.",
+            "Something went wrong starting checkout. Please try again in a moment.",
         });
       }
     });
@@ -80,6 +80,25 @@ export function PricingPlans({
       {PLANS.map((plan) => {
         const isCurrent = currentTier === plan.tier;
         const isLoading = isPending && loadingTier === plan.tier;
+
+        // One clear action per card. New customers start the free trial;
+        // returning/cancelled customers (trial already spent) subscribe and are
+        // charged today. The price + terms live in a single line under the
+        // button so a card never reads as two competing offers.
+        let cta: string;
+        if (isCurrent) {
+          cta = "Your current plan";
+        } else if (isLoading) {
+          cta = alreadyTrialed ? "Starting checkout…" : "Starting your trial…";
+        } else if (alreadyTrialed) {
+          cta = "Subscribe";
+        } else {
+          cta = "Start free trial";
+        }
+
+        const terms = alreadyTrialed
+          ? `${plan.price}/month · Cancel anytime`
+          : `3 days free, then ${plan.price}/month · Cancel anytime`;
 
         return (
           <div
@@ -128,16 +147,14 @@ export function PricingPlans({
               size="lg"
               variant={plan.highlighted ? "default" : "outline"}
             >
-              {isCurrent
-                ? "Your current plan"
-                : isLoading
-                  ? alreadyTrialed
-                    ? "Starting checkout…"
-                    : "Starting your free trial…"
-                  : alreadyTrialed
-                    ? `Subscribe — ${plan.price}/mo`
-                    : "Start 3-day free trial"}
+              {cta}
             </Button>
+
+            {!isCurrent && (
+              <p className="mt-3 text-center text-muted-foreground text-xs">
+                {terms}
+              </p>
+            )}
           </div>
         );
       })}

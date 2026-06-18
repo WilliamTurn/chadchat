@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { PricingPlans } from "@/components/billing/pricing-plans";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,17 @@ import { hasActiveAccess, hasUsedTrial } from "@/lib/subscription";
 export default function PricingPage() {
   return (
     <main className="flex min-h-dvh flex-col items-center px-4 py-16">
+      {/* Without this, sonner toasts (e.g. a checkout error) never render
+          because /pricing lives outside the (chat) layout that mounts one —
+          which made a failed checkout look like a "dead" button. */}
+      <Toaster
+        position="top-center"
+        theme="system"
+        toastOptions={{
+          className:
+            "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
+        }}
+      />
       <div className="mb-10 flex max-w-2xl flex-col items-center text-center">
         <h1 className="font-semibold text-3xl tracking-tight sm:text-4xl">
           Train with Chad
