@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { auth } from "@/app/(auth)/auth";
+import { DeleteUserForm } from "@/components/admin/delete-user-form";
 import { GrantAccessForm } from "@/components/admin/grant-access-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -102,6 +103,21 @@ async function AdminContent() {
           remove it. They must have signed up first.
         </p>
         <GrantAccessForm />
+      </section>
+
+      {/* Delete a user — built for clearing out throwaway test accounts */}
+      <section className="rounded-2xl border border-border bg-card p-6">
+        <div className="mb-1 flex items-center gap-3">
+          <h2 className="font-medium text-lg">Delete user</h2>
+          <Badge variant="secondary">Live</Badge>
+        </div>
+        <p className="mb-5 text-muted-foreground text-sm">
+          Permanently remove a user and everything they own — chats, memory, the
+          lot — and free up their email to register again. Made for clearing out
+          throwaway test accounts. This can’t be undone, and it doesn’t touch
+          Stripe (cancel a real subscriber there first).
+        </p>
+        <DeleteUserForm />
       </section>
 
       {/* Placeholder controls */}

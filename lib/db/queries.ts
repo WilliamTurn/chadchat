@@ -265,6 +265,70 @@ export async function setManualSubscriptionByEmail(
   }
 }
 
+export type DeleteUserResult =
+  | { ok: true; email: string }
+  | { ok: false; reason: "not_found" };
+
+/**
+ * Permanently delete a user and everything they own: their chats (and the
+ * votes, messages, and streams under those chats), documents, suggestions, and
+ * memory profile, then the User row itself. Children are removed before parents
+ * to satisfy the foreign keys, and the whole thing runs in one transaction so a
+ * failure can never leave a half-deleted account behind.
+ *
+ * NOTE: this is DB-only — it does NOT touch Stripe. A real subscriber should be
+ * cancelled in Stripe first; for throwaway test accounts (the main use) there's
+ * usually nothing in Stripe to clean up. Deleting frees the email to register
+ * again.
+ */
+export async function deleteUserByEmail(
+  email: string
+): Promise<DeleteUserResult> {
+  try {
+    const normalized = email.trim().toLowerCase();
+    const [existing] = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, normalized));
+
+    if (!existing) {
+      return { ok: false, reason: "not_found" };
+    }
+
+    const userId = existing.id;
+
+    await db.transaction(async (tx) => {
+      // The user's chats and everything hanging off them, in FK-safe order.
+      const userChats = await tx
+        .select({ id: chat.id })
+        .from(chat)
+        .where(eq(chat.userId, userId));
+      const chatIds = userChats.map((c) => c.id);
+
+      if (chatIds.length > 0) {
+        await tx.delete(vote).where(inArray(vote.chatId, chatIds));
+        await tx.delete(message).where(inArray(message.chatId, chatIds));
+        await tx.delete(stream).where(inArray(stream.chatId, chatIds));
+        await tx.delete(chat).where(eq(chat.userId, userId));
+      }
+
+      // Suggestions reference both the user and documents — remove them first.
+      await tx.delete(suggestion).where(eq(suggestion.userId, userId));
+      await tx.delete(document).where(eq(document.userId, userId));
+
+      // The durable memory profile.
+      await tx.delete(userMemory).where(eq(userMemory.userId, userId));
+
+      // Finally the account itself.
+      await tx.delete(user).where(eq(user.id, userId));
+    });
+
+    return { ok: true, email: normalized };
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to delete user");
+  }
+}
+
 /** High-level counts for the admin dashboard's "monitor users" strip. */
 export async function getUserStats(): Promise<{
   totalUsers: number;
