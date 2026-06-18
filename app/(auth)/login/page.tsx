@@ -69,6 +69,14 @@ export default function Page() {
           )}
         </Button>
         <p className="text-center text-[13px] text-muted-foreground">
+          <Link
+            className="text-foreground underline-offset-4 hover:underline"
+            href="/forgot-password"
+          >
+            Forgot password?
+          </Link>
+        </p>
+        <p className="text-center text-[13px] text-muted-foreground">
           {"No account? "}
           <Link
             className="text-foreground underline-offset-4 hover:underline"

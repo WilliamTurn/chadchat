@@ -23,7 +23,9 @@ import {
   chat,
   type DBMessage,
   document,
+  emailVerificationToken,
   message,
+  passwordResetToken,
   type Suggestion,
   stream,
   suggestion,
@@ -82,6 +84,146 @@ export async function getUserById(id: string): Promise<User | undefined> {
     return found;
   } catch (_error) {
     throw new ChatbotError("bad_request:database", "Failed to get user by id");
+  }
+}
+
+export async function updateUserPassword(
+  userId: string,
+  newPassword: string
+): Promise<void> {
+  const hashedPassword = generateHashedPassword(newPassword);
+  try {
+    await db
+      .update(user)
+      .set({ password: hashedPassword, updatedAt: new Date() })
+      .where(eq(user.id, userId));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to update password"
+    );
+  }
+}
+
+export async function markEmailVerified(userId: string): Promise<void> {
+  try {
+    await db
+      .update(user)
+      .set({ emailVerified: true, updatedAt: new Date() })
+      .where(eq(user.id, userId));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to mark email verified"
+    );
+  }
+}
+
+// --- Email verification tokens ---
+
+export async function createEmailVerificationToken(
+  userId: string,
+  tokenHash: string,
+  expiresAt: Date
+): Promise<void> {
+  try {
+    // One active token per user — clear any prior one first.
+    await db
+      .delete(emailVerificationToken)
+      .where(eq(emailVerificationToken.userId, userId));
+    await db
+      .insert(emailVerificationToken)
+      .values({ userId, tokenHash, expiresAt });
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to create verification token"
+    );
+  }
+}
+
+/** Look up + delete a verification token; returns the userId only if unexpired. */
+export async function consumeEmailVerificationToken(
+  tokenHash: string
+): Promise<string | null> {
+  try {
+    const [row] = await db
+      .select()
+      .from(emailVerificationToken)
+      .where(eq(emailVerificationToken.tokenHash, tokenHash));
+
+    if (!row) {
+      return null;
+    }
+
+    // Single-use: delete whether or not it was still valid.
+    await db
+      .delete(emailVerificationToken)
+      .where(eq(emailVerificationToken.id, row.id));
+
+    if (row.expiresAt.getTime() < Date.now()) {
+      return null;
+    }
+
+    return row.userId;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to consume verification token"
+    );
+  }
+}
+
+// --- Password reset tokens ---
+
+export async function createPasswordResetToken(
+  userId: string,
+  tokenHash: string,
+  expiresAt: Date
+): Promise<void> {
+  try {
+    await db
+      .delete(passwordResetToken)
+      .where(eq(passwordResetToken.userId, userId));
+    await db
+      .insert(passwordResetToken)
+      .values({ userId, tokenHash, expiresAt });
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to create reset token"
+    );
+  }
+}
+
+/** Look up + delete a reset token; returns the userId only if unexpired. */
+export async function consumePasswordResetToken(
+  tokenHash: string
+): Promise<string | null> {
+  try {
+    const [row] = await db
+      .select()
+      .from(passwordResetToken)
+      .where(eq(passwordResetToken.tokenHash, tokenHash));
+
+    if (!row) {
+      return null;
+    }
+
+    await db
+      .delete(passwordResetToken)
+      .where(eq(passwordResetToken.id, row.id));
+
+    if (row.expiresAt.getTime() < Date.now()) {
+      return null;
+    }
+
+    return row.userId;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to consume reset token"
+    );
   }
 }
 
@@ -318,6 +460,14 @@ export async function deleteUserByEmail(
 
       // The durable memory profile.
       await tx.delete(userMemory).where(eq(userMemory.userId, userId));
+
+      // Any outstanding auth-email tokens.
+      await tx
+        .delete(emailVerificationToken)
+        .where(eq(emailVerificationToken.userId, userId));
+      await tx
+        .delete(passwordResetToken)
+        .where(eq(passwordResetToken.userId, userId));
 
       // Finally the account itself.
       await tx.delete(user).where(eq(user.id, userId));

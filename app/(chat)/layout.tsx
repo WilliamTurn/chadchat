@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import { AppSidebar } from "@/components/chat/app-sidebar";
 import { DataStreamProvider } from "@/components/chat/data-stream-provider";
 import { ChatShell } from "@/components/chat/shell";
+import { VerifyEmailBanner } from "@/components/chat/verify-email-banner";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ActiveChatProvider } from "@/hooks/use-active-chat";
 import { getUserById } from "@/lib/db/queries";
@@ -38,12 +39,15 @@ async function SidebarShell({ children }: { children: React.ReactNode }) {
   // Paywall: send anyone without an active trial/subscription to pricing.
   // (Unauthenticated users are already redirected to /login by proxy.ts.)
   let plan: PlanStatusSummary | null = null;
+  let showVerifyBanner = false;
   if (session?.user?.id) {
     const dbUser = await getUserById(session.user.id);
     if (!(dbUser && hasActiveAccess(dbUser))) {
       redirect("/pricing");
     }
     plan = toPlanStatusSummary(dbUser);
+    // Soft verification: nudge unverified real accounts without blocking them.
+    showVerifyBanner = !(dbUser.emailVerified || dbUser.isAnonymous);
   }
 
   const isCollapsed = cookieStore.get("sidebar_state")?.value !== "true";
@@ -52,6 +56,7 @@ async function SidebarShell({ children }: { children: React.ReactNode }) {
     <SidebarProvider defaultOpen={!isCollapsed}>
       <AppSidebar plan={plan} user={session?.user} />
       <SidebarInset>
+        {showVerifyBanner && <VerifyEmailBanner />}
         <Toaster
           position="top-center"
           theme="system"

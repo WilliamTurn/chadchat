@@ -62,6 +62,36 @@ export const userMemory = pgTable("UserMemory", {
 
 export type UserMemory = InferSelectModel<typeof userMemory>;
 
+// --- Auth email flows (Phase 4): short-lived, single-use tokens ---
+// Tokens are stored hashed (sha256); the raw token only ever lives in the
+// emailed link. A row is deleted as soon as it's used, when it expires, and
+// when the account is deleted. One active token per user per flow.
+export const emailVerificationToken = pgTable("EmailVerificationToken", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  tokenHash: text("tokenHash").notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type EmailVerificationToken = InferSelectModel<
+  typeof emailVerificationToken
+>;
+
+export const passwordResetToken = pgTable("PasswordResetToken", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  tokenHash: text("tokenHash").notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type PasswordResetToken = InferSelectModel<typeof passwordResetToken>;
+
 export const chat = pgTable("Chat", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   createdAt: timestamp("createdAt").notNull(),

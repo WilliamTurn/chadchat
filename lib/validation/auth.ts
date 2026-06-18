@@ -29,5 +29,21 @@ export const registerFormSchema = z.object({
     .min(PASSWORD_MIN_LENGTH, PASSWORD_REQUIREMENT),
 });
 
+// Forgot password: just the email to send a reset link to.
+export const requestResetSchema = z.object({
+  email: emailField,
+});
+
+// Reset password: the emailed token plus the new password (same 8+ rule).
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, "Reset token is required"),
+  password: z
+    .string()
+    .min(1, "Password is required")
+    .min(PASSWORD_MIN_LENGTH, PASSWORD_REQUIREMENT),
+});
+
 export type LoginFormValues = z.infer<typeof loginFormSchema>;
 export type RegisterFormValues = z.infer<typeof registerFormSchema>;
+export type RequestResetValues = z.infer<typeof requestResetSchema>;
+export type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
