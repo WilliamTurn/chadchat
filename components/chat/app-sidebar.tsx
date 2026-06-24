@@ -2,6 +2,7 @@
 
 import {
   Dumbbell,
+  HelpCircle,
   LayoutDashboard,
   PanelLeftIcon,
   PenSquareIcon,
@@ -148,6 +149,18 @@ export function AppSidebar({
                   >
                     <PenSquareIcon className="size-4" />
                     <span className="font-medium">New chat</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    className="h-8 rounded-lg text-[13px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    tooltip="Help"
+                  >
+                    <Link href="/help" onClick={() => setOpenMobile(false)}>
+                      <HelpCircle className="size-4" />
+                      <span className="font-medium">Help</span>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 {user && (

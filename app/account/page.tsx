@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { auth } from "@/app/(auth)/auth";
+import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getUserById } from "@/lib/db/queries";
@@ -23,13 +24,12 @@ function formatDate(date: Date | null): string {
 export default function AccountPage() {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col px-4 py-16">
-      <div className="mb-8 flex items-center justify-between">
+      <StandaloneHeader active="/account" />
+
+      <div className="mb-8">
         <h1 className="font-semibold text-2xl tracking-tight">
           Your membership
         </h1>
-        <Button asChild size="sm" variant="ghost">
-          <Link href="/">Back to Chad</Link>
-        </Button>
       </div>
 
       <Suspense

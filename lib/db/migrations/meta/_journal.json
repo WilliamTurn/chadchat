@@ -43,6 +43,13 @@
       "when": 1781780079814,
       "tag": "0005_complex_sumo",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1782300771112,
+      "tag": "0006_reflective_swarm",
+      "breakpoints": true
     }
   ]
 }

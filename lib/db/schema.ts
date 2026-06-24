@@ -131,6 +131,8 @@ export const nutritionTarget = pgTable("NutritionTarget", {
     .references(() => user.id),
   calories: integer("calories"),
   protein: integer("protein"),
+  carbs: integer("carbs"),
+  fat: integer("fat"),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 });
 

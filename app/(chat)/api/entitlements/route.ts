@@ -1,5 +1,5 @@
 import { auth } from "@/app/(auth)/auth";
-import { getEntitlements } from "@/lib/ai/entitlements";
+import { canAccessProFeatures } from "@/lib/admin";
 import { getUserById } from "@/lib/db/queries";
 
 /**
@@ -20,7 +20,7 @@ export async function GET() {
     return Response.json({ photoAnalysis: false }, { status: 401 });
   }
 
-  const { photoAnalysis } = getEntitlements(user);
-
-  return Response.json({ photoAnalysis });
+  // Mirror the upload route's gate exactly (admins are comped) so the UI
+  // affordance and the server-side enforcement never disagree.
+  return Response.json({ photoAnalysis: canAccessProFeatures(user) });
 }

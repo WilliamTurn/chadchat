@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { AnalysisCard } from "@/components/nutrition/analysis-card";
 import { AnalyzeForm } from "@/components/nutrition/analyze-form";
+import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
@@ -22,22 +23,19 @@ export default function NutritionPage() {
         }}
       />
 
-      <div className="mb-8 flex items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="font-semibold text-2xl tracking-tight">
-              Nutrition check
-            </h1>
-            <Badge variant="secondary">Pro</Badge>
-          </div>
-          <p className="mt-1 text-muted-foreground text-sm">
-            Photograph a meal, your fridge, or your pantry. Chad grades it — no
-            sugar-coating.
-          </p>
+      <StandaloneHeader active="/nutrition" />
+
+      <div className="mb-8">
+        <div className="flex items-center gap-3">
+          <h1 className="font-semibold text-2xl tracking-tight">
+            Nutrition check
+          </h1>
+          <Badge variant="secondary">Pro</Badge>
         </div>
-        <Button asChild size="sm" variant="ghost">
-          <Link href="/today">Dashboard</Link>
-        </Button>
+        <p className="mt-1 text-muted-foreground text-sm">
+          Photograph a meal, your fridge, or your pantry. Chad grades it — no
+          sugar-coating.
+        </p>
       </div>
 
       <Suspense

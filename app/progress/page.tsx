@@ -6,6 +6,7 @@ import { auth } from "@/app/(auth)/auth";
 import { DeleteEntryButton } from "@/components/progress/delete-entry-button";
 import { LogEntryForm } from "@/components/progress/log-entry-form";
 import { WeightChart } from "@/components/progress/weight-chart";
+import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
@@ -37,21 +38,18 @@ export default function ProgressPage() {
         }}
       />
 
-      <div className="mb-8 flex items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="font-semibold text-2xl tracking-tight">
-              Your progress
-            </h1>
-            <Badge variant="secondary">Pro</Badge>
-          </div>
-          <p className="mt-1 text-muted-foreground text-sm">
-            Track your weight and progress photos over time.
-          </p>
+      <StandaloneHeader active="/progress" />
+
+      <div className="mb-8">
+        <div className="flex items-center gap-3">
+          <h1 className="font-semibold text-2xl tracking-tight">
+            Your progress
+          </h1>
+          <Badge variant="secondary">Pro</Badge>
         </div>
-        <Button asChild size="sm" variant="ghost">
-          <Link href="/">Back to Chad</Link>
-        </Button>
+        <p className="mt-1 text-muted-foreground text-sm">
+          Track your weight and progress photos over time.
+        </p>
       </div>
 
       <Suspense

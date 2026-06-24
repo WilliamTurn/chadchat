@@ -61,16 +61,44 @@ export async function POST(request: Request) {
     const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
     const fileBuffer = await file.arrayBuffer();
 
+    // Blob storage needs a write token. If it's missing the platform throws a
+    // cryptic error — catch that case explicitly so the failure is obvious in
+    // the logs (it's a deploy/config gap, not a user error).
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      console.error(
+        "[files/upload] BLOB_READ_WRITE_TOKEN is not set — photo storage is unconfigured."
+      );
+      return NextResponse.json(
+        {
+          error:
+            "Photo storage isn't set up yet. We've been notified — try again shortly.",
+        },
+        { status: 503 }
+      );
+    }
+
     try {
       const data = await put(`${safeName}`, fileBuffer, {
         access: "public",
+        // Two members (or one member twice) can upload files with the same
+        // name — keep every blob at a unique path so an upload never collides
+        // with an existing one. (Default, but pinned so a dep bump can't change
+        // it under us.)
+        addRandomSuffix: true,
       });
 
       return NextResponse.json(data);
-    } catch (_error) {
-      return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+    } catch (error) {
+      // Surface the real reason in the server logs; keep the client message
+      // generic but actionable.
+      console.error("[files/upload] Blob put() failed:", error);
+      return NextResponse.json(
+        { error: "Couldn't save your photo. Please try again." },
+        { status: 500 }
+      );
     }
-  } catch (_error) {
+  } catch (error) {
+    console.error("[files/upload] Failed to process request:", error);
     return NextResponse.json(
       { error: "Failed to process request" },
       { status: 500 }

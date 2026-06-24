@@ -16,6 +16,9 @@ import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { MacroRings } from "@/components/nutrition/macro-rings";
 import { WeightChart } from "@/components/progress/weight-chart";
+import { StandaloneHeader } from "@/components/nav/standalone-header";
+import { GoalEditor } from "@/components/today/goal-editor";
+import { PlanViewer } from "@/components/today/plan-viewer";
 import { TargetEditor } from "@/components/today/target-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -88,6 +91,7 @@ export default function TodayPage() {
             "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
         }}
       />
+      <StandaloneHeader active="/today" />
       <Suspense
         fallback={
           <div className="h-[600px] animate-pulse rounded-2xl border border-border bg-card" />
@@ -160,12 +164,20 @@ async function TodayContent() {
   // Today's intake (Pro).
   const caloriesToday = todaysMeals.reduce((sum, m) => sum + (m.calories ?? 0), 0);
   const proteinToday = todaysMeals.reduce((sum, m) => sum + (m.protein ?? 0), 0);
+  const carbsToday = todaysMeals.reduce((sum, m) => sum + (m.carbs ?? 0), 0);
+  const fatToday = todaysMeals.reduce((sum, m) => sum + (m.fat ?? 0), 0);
 
   // Streak from logged actions (progress + meals).
   const streak = computeStreak([
     ...entries.map((e) => e.recordedAt),
     ...todaysMeals.map((m) => m.createdAt),
   ]);
+
+  // First-run: a brand-new member with no profile and nothing logged yet. We
+  // show a "welcome / get started" header instead of "Welcome back" (which is
+  // illogical the very first time they sign in).
+  const isReturning =
+    Boolean(profile) || entries.length > 0 || todaysMeals.length > 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -177,12 +189,16 @@ async function TodayContent() {
         />
         <div className="relative flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-muted-foreground text-sm">Welcome back</p>
+            <p className="text-muted-foreground text-sm">
+              {isReturning ? "Welcome back" : "Welcome to Chad"}
+            </p>
             <h1 className="mt-1 font-display font-bold text-3xl tracking-tight sm:text-4xl">
-              {firstName ?? "Let's work"}
+              {firstName ?? (isReturning ? "Let's work" : "Let's get started")}
             </h1>
             <p className="mt-2 max-w-md text-muted-foreground text-sm">
-              Here's where you stand today. No excuses — just the numbers.
+              {isReturning
+                ? "Here's where you stand today. No excuses — just the numbers."
+                : "Set your goal below, then tell Chad about yourself in chat. He'll build the plan from there."}
             </p>
           </div>
           <div className="flex flex-col items-end gap-2">
@@ -228,9 +244,14 @@ async function TodayContent() {
       {/* Goal + Training */}
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
-          <CardTitle icon={<Target className="size-4 text-blood" />}>
-            Your goal
-          </CardTitle>
+          <div className="flex items-start justify-between">
+            <CardTitle icon={<Target className="size-4 text-blood" />}>
+              Your goal
+            </CardTitle>
+            {goal && (
+              <GoalEditor deadline={deadline} goal={goal} phase={phase} />
+            )}
+          </div>
           {goal ? (
             <>
               <p className="font-medium text-lg leading-snug">{goal}</p>
@@ -246,10 +267,18 @@ async function TodayContent() {
               )}
             </>
           ) : (
-            <EmptyHint
-              cta="Set your goal with Chad"
-              text="Chad doesn't know your goal yet. Tell him what you're chasing and he'll build the plan."
-            />
+            <div className="flex flex-col items-start gap-3">
+              <p className="text-muted-foreground text-sm">
+                Chad doesn't know your goal yet. Set it here, or tell him in chat
+                and he'll build the plan.
+              </p>
+              <GoalEditor
+                deadline={deadline}
+                goal={goal}
+                phase={phase}
+                variant="cta"
+              />
+            </div>
           )}
         </Card>
 
@@ -258,9 +287,12 @@ async function TodayContent() {
             Your training
           </CardTitle>
           {workoutPlan ? (
-            <p className="line-clamp-5 whitespace-pre-line text-sm leading-relaxed">
-              {workoutPlan}
-            </p>
+            <>
+              <p className="line-clamp-5 whitespace-pre-line text-sm leading-relaxed">
+                {workoutPlan}
+              </p>
+              <PlanViewer plan={workoutPlan} />
+            </>
           ) : (
             <EmptyHint
               cta="Get your plan"
@@ -280,6 +312,8 @@ async function TodayContent() {
               </CardTitle>
               <TargetEditor
                 calories={target?.calories ?? null}
+                carbs={target?.carbs ?? null}
+                fat={target?.fat ?? null}
                 protein={target?.protein ?? null}
               />
             </div>
@@ -287,6 +321,10 @@ async function TodayContent() {
               <MacroRings
                 caloriesConsumed={caloriesToday}
                 caloriesTarget={target?.calories ?? null}
+                carbsConsumed={carbsToday}
+                carbsTarget={target?.carbs ?? null}
+                fatConsumed={fatToday}
+                fatTarget={target?.fat ?? null}
                 proteinConsumed={proteinToday}
                 proteinTarget={target?.protein ?? null}
               />

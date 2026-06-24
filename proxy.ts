@@ -25,9 +25,12 @@ export async function proxy(request: NextRequest) {
   // register. Auth pages stay public so people can actually do that, and API
   // routes are left to return their own 401 instead of an HTML redirect.
   const isAuthPage = pathname === "/login" || pathname === "/register";
+  // Public share links must work for logged-out visitors (the page itself only
+  // renders chats whose visibility is "public").
+  const isPublicShare = pathname.startsWith("/share/");
 
   if (!token) {
-    if (isAuthPage) {
+    if (isAuthPage || isPublicShare) {
       return NextResponse.next();
     }
 
@@ -44,8 +47,10 @@ export async function proxy(request: NextRequest) {
 
   const isGuest = guestRegex.test(token?.email ?? "");
 
+  // After signing in, land members on the dashboard (a populated home screen)
+  // rather than a bare chat box — it reads as a real product, not just a chat.
   if (token && !isGuest && isAuthPage) {
-    return NextResponse.redirect(new URL(`${base}/`, request.url));
+    return NextResponse.redirect(new URL(`${base}/today`, request.url));
   }
 
   return NextResponse.next();

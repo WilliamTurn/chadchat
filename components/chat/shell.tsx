@@ -80,6 +80,7 @@ export function ChatShell() {
         >
           <ChatHeader
             chatId={chatId}
+            hasMessages={messages.length > 0}
             isReadonly={isReadonly}
             selectedVisibilityType={visibilityType}
           />

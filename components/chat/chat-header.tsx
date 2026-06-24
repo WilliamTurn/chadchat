@@ -5,16 +5,19 @@ import Link from "next/link";
 import { memo } from "react";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
-import { VisibilitySelector, type VisibilityType } from "./visibility-selector";
+import { ShareButton } from "./share-button";
+import type { VisibilityType } from "./visibility-selector";
 
 function PureChatHeader({
   chatId,
   selectedVisibilityType,
   isReadonly,
+  hasMessages,
 }: {
   chatId: string;
   selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
+  hasMessages: boolean;
 }) {
   const { state, toggleSidebar, isMobile } = useSidebar();
 
@@ -47,11 +50,13 @@ function PureChatHeader({
       </Link>
 
       {!isReadonly && (
-        <VisibilitySelector
-          chatId={chatId}
-          className="ml-1"
-          selectedVisibilityType={selectedVisibilityType}
-        />
+        <div className="ml-auto">
+          <ShareButton
+            chatId={chatId}
+            hasMessages={hasMessages}
+            selectedVisibilityType={selectedVisibilityType}
+          />
+        </div>
       )}
     </header>
   );
@@ -61,6 +66,7 @@ export const ChatHeader = memo(PureChatHeader, (prevProps, nextProps) => {
   return (
     prevProps.chatId === nextProps.chatId &&
     prevProps.selectedVisibilityType === nextProps.selectedVisibilityType &&
-    prevProps.isReadonly === nextProps.isReadonly
+    prevProps.isReadonly === nextProps.isReadonly &&
+    prevProps.hasMessages === nextProps.hasMessages
   );
 });

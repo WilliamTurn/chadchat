@@ -11,10 +11,12 @@ export const analyzeMealSchema = z.object({
 
 export type AnalyzeMealInput = z.infer<typeof analyzeMealSchema>;
 
-/** Daily intake targets set on the dashboard. Either can be cleared (null). */
+/** Daily intake targets set on the dashboard. Any can be cleared (null). */
 export const nutritionTargetSchema = z.object({
   calories: z.number().int().positive().max(20_000).nullable(),
   protein: z.number().int().positive().max(1000).nullable(),
+  carbs: z.number().int().positive().max(2000).nullable(),
+  fat: z.number().int().positive().max(1000).nullable(),
 });
 
 export type NutritionTargetInput = z.infer<typeof nutritionTargetSchema>;

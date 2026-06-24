@@ -11,6 +11,10 @@ type RingProps = {
   caloriesTarget: number | null;
   proteinConsumed: number;
   proteinTarget: number | null;
+  carbsConsumed: number;
+  carbsTarget: number | null;
+  fatConsumed: number;
+  fatTarget: number | null;
 };
 
 const SIZE = 168;
@@ -70,6 +74,10 @@ export function MacroRings({
   caloriesTarget,
   proteinConsumed,
   proteinTarget,
+  carbsConsumed,
+  carbsTarget,
+  fatConsumed,
+  fatTarget,
 }: RingProps) {
   const outerR = CENTER - STROKE / 2 - 2;
   const innerR = outerR - STROKE - GAP;
@@ -130,6 +138,26 @@ export function MacroRings({
               {proteinTarget ? `/ ${proteinTarget} g` : "g"}
             </span>
           </dd>
+        </div>
+        <div className="flex gap-5">
+          <div>
+            <dt className="text-muted-foreground text-xs">Carbs</dt>
+            <dd className="font-display font-semibold">
+              {Math.round(carbsConsumed)}
+              <span className="ml-1 text-muted-foreground text-xs">
+                {carbsTarget ? `/ ${carbsTarget} g` : "g"}
+              </span>
+            </dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground text-xs">Fat</dt>
+            <dd className="font-display font-semibold">
+              {Math.round(fatConsumed)}
+              <span className="ml-1 text-muted-foreground text-xs">
+                {fatTarget ? `/ ${fatTarget} g` : "g"}
+              </span>
+            </dd>
+          </div>
         </div>
       </dl>
     </div>

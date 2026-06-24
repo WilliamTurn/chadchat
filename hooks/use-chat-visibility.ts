@@ -41,11 +41,13 @@ export function useChatVisibility({
     return chat.visibility;
   }, [history, chatId, localVisibility]);
 
+  // Optimistically flip the local UI, then persist. Returns the server promise
+  // so callers (e.g. the Share dialog) can await it and surface success/errors.
   const setVisibilityType = (updatedVisibilityType: VisibilityType) => {
     setLocalVisibility(updatedVisibilityType);
     mutate(unstable_serialize(getChatHistoryPaginationKey));
 
-    updateChatVisibility({
+    return updateChatVisibility({
       chatId,
       visibility: updatedVisibilityType,
     });

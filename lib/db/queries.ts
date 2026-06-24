@@ -835,7 +835,12 @@ export async function getNutritionTarget(
 
 export async function upsertNutritionTarget(
   userId: string,
-  target: { calories: number | null; protein: number | null }
+  target: {
+    calories: number | null;
+    protein: number | null;
+    carbs: number | null;
+    fat: number | null;
+  }
 ): Promise<void> {
   try {
     await db
@@ -844,6 +849,8 @@ export async function upsertNutritionTarget(
         userId,
         calories: target.calories,
         protein: target.protein,
+        carbs: target.carbs,
+        fat: target.fat,
         updatedAt: new Date(),
       })
       .onConflictDoUpdate({
@@ -851,6 +858,8 @@ export async function upsertNutritionTarget(
         set: {
           calories: target.calories,
           protein: target.protein,
+          carbs: target.carbs,
+          fat: target.fat,
           updatedAt: new Date(),
         },
       });
