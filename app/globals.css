@@ -200,6 +200,16 @@
   p {
     line-height: 1.6;
   }
+
+  /* Tailwind v4 no longer forces a pointer cursor on buttons (it follows the
+     browser default, which is an arrow). Restore the expected hand cursor for
+     clickable controls; links get it natively. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  label[for],
+  summary {
+    cursor: pointer;
+  }
 }
 
 button:focus-visible,
