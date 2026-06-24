@@ -41,8 +41,8 @@ import {
   updateMessage,
 } from "@/lib/db/queries";
 import type { DBMessage } from "@/lib/db/schema";
+import { canAccessChad } from "@/lib/admin";
 import { ChatbotError } from "@/lib/errors";
-import { hasActiveAccess } from "@/lib/subscription";
 import { checkIpRateLimit } from "@/lib/ratelimit";
 import type { ChatMessage } from "@/lib/types";
 import { convertToUIMessages, generateUUID } from "@/lib/utils";
@@ -87,7 +87,8 @@ export async function POST(request: Request) {
     // Paywall: only members with an active trial/subscription can talk to Chad.
     // This is the hard enforcement point (the page redirect is just for UX).
     const dbUser = await getUserById(session.user.id);
-    if (!(dbUser && hasActiveAccess(dbUser))) {
+    // Admins are comped (canAccessChad) so the owner can always use the app.
+    if (!(dbUser && canAccessChad(dbUser))) {
       return new ChatbotError("forbidden:subscription").toResponse();
     }
 

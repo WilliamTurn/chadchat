@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { auth } from "@/app/(auth)/auth";
 import { isAdminEmail } from "@/lib/admin";
 import {
@@ -127,4 +128,56 @@ export async function deleteUserAction(
     status: "success",
     message: `Deleted ${result.email} and all their data. The email is free to register again.`,
   };
+}
+
+/**
+ * Delete a member by their user id, for the "Danger zone" on a member's detail
+ * page — so an admin can review a user's chats and delete them in context,
+ * without going back to the dashboard and re-typing their email. Confirm-gated,
+ * refuses admin accounts, and on success sends the admin back to the directory.
+ */
+export async function deleteMemberAction(
+  _prev: GrantState,
+  formData: FormData
+): Promise<GrantState> {
+  if (!(await assertAdmin())) {
+    return { status: "error", message: "Not authorized." };
+  }
+
+  const id = String(formData.get("id") ?? "").trim();
+  const confirmed = formData.get("confirm") === "on";
+
+  if (!id) {
+    return { status: "error", message: "Missing user id." };
+  }
+
+  if (!confirmed) {
+    return {
+      status: "error",
+      message: "Tick the confirm box first — deleting a user is permanent.",
+    };
+  }
+
+  const target = await getUserById(id);
+  if (!target) {
+    return { status: "error", message: "User not found. Nothing was deleted." };
+  }
+
+  // Never delete an admin account from this tool.
+  if (isAdminEmail(target.email)) {
+    return {
+      status: "error",
+      message: "That's an admin account — it can't be deleted from here.",
+    };
+  }
+
+  const result = await deleteUserByEmail(target.email);
+  if (!result.ok) {
+    return { status: "error", message: "Nothing was deleted." };
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/users");
+  // The member no longer exists — return to the directory.
+  redirect("/admin/users");
 }

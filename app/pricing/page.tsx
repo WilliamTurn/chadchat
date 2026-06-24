@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
+import { LogoutButton } from "@/components/billing/logout-button";
 import { PricingPlans } from "@/components/billing/pricing-plans";
 import { Button } from "@/components/ui/button";
 import { getUserById } from "@/lib/db/queries";
@@ -22,6 +23,21 @@ export default function PricingPage() {
             "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
         }}
       />
+      {/* Escape hatch: a logged-in member with no active plan would otherwise be
+          stranded here (every app route redirects back to /pricing). The logo
+          goes to the marketing site; signed-in users can also log out. */}
+      <header className="mb-12 flex w-full max-w-5xl items-center justify-between">
+        <a
+          className="font-semibold text-lg tracking-tight"
+          href="https://chadcoach.ai"
+        >
+          Chad
+        </a>
+        <Suspense fallback={null}>
+          <AccountControls />
+        </Suspense>
+      </header>
+
       <div className="mb-10 flex max-w-2xl flex-col items-center text-center">
         <h1 className="font-semibold text-3xl tracking-tight sm:text-4xl">
           Train with Chad
@@ -48,6 +64,26 @@ export default function PricingPage() {
         whenever you like.
       </p>
     </main>
+  );
+}
+
+async function AccountControls() {
+  const session = await auth();
+  const email = session?.user?.email;
+  if (!email) {
+    return (
+      <Button asChild size="sm" variant="ghost">
+        <Link href="/login">Sign in</Link>
+      </Button>
+    );
+  }
+  return (
+    <div className="flex items-center gap-2">
+      <span className="hidden text-muted-foreground text-sm sm:inline">
+        Signed in as {email}
+      </span>
+      <LogoutButton />
+    </div>
   );
 }
 

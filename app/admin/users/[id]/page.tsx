@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { PlanBadge } from "@/app/admin/users/page";
+import { DeleteMemberButton } from "@/components/admin/delete-member-button";
 import { Button } from "@/components/ui/button";
+import { isAdminEmail } from "@/lib/admin";
 import { requireAdmin } from "@/lib/admin-guard";
 import {
   getChatsByUserId,
@@ -110,6 +112,24 @@ async function Detail({ params }: { params: Promise<{ id: string }> }) {
               </Link>
             ))}
           </div>
+        )}
+      </section>
+
+      {/* Danger zone — delete this member in context (no re-typing their email). */}
+      <section className="rounded-2xl border border-destructive/30 bg-card p-6">
+        <h2 className="mb-1 font-medium text-destructive text-lg">
+          Danger zone
+        </h2>
+        <p className="mb-4 text-muted-foreground text-sm">
+          Permanently delete this member and all their data — chats, messages,
+          progress, nutrition, and memory. This cannot be undone.
+        </p>
+        {isAdminEmail(member.email) ? (
+          <p className="text-muted-foreground text-sm">
+            This is an admin account — it can't be deleted from here.
+          </p>
+        ) : (
+          <DeleteMemberButton email={member.email} id={member.id} />
         )}
       </section>
     </div>

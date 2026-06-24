@@ -9,9 +9,9 @@ import { ChatShell } from "@/components/chat/shell";
 import { VerifyEmailBanner } from "@/components/chat/verify-email-banner";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ActiveChatProvider } from "@/hooks/use-active-chat";
+import { canAccessChad } from "@/lib/admin";
 import { getUserById } from "@/lib/db/queries";
 import {
-  hasActiveAccess,
   type PlanStatusSummary,
   toPlanStatusSummary,
 } from "@/lib/subscription";
@@ -42,7 +42,8 @@ async function SidebarShell({ children }: { children: React.ReactNode }) {
   let showVerifyBanner = false;
   if (session?.user?.id) {
     const dbUser = await getUserById(session.user.id);
-    if (!(dbUser && hasActiveAccess(dbUser))) {
+    // Admins are comped (canAccessChad) — the owner is never trapped on /pricing.
+    if (!(dbUser && canAccessChad(dbUser))) {
       redirect("/pricing");
     }
     plan = toPlanStatusSummary(dbUser);

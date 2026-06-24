@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { auth } from "@/app/(auth)/auth";
-import { getEntitlements } from "@/lib/ai/entitlements";
+import { canAccessProFeatures } from "@/lib/admin";
 import { getUserById } from "@/lib/db/queries";
 
 const FileSchema = z.object({
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   // non-Pro member can't reach Blob storage by calling the route directly.
   const user = await getUserById(session.user.id);
 
-  if (!(user && getEntitlements(user).photoAnalysis)) {
+  if (!(user && canAccessProFeatures(user))) {
     return NextResponse.json(
       { error: "Photos are a Chad Pro feature. Upgrade to send Chad a photo." },
       { status: 403 }

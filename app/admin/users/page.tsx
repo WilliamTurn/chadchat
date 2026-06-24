@@ -54,7 +54,7 @@ async function Directory({
           autoComplete="off"
           defaultValue={q ?? ""}
           name="q"
-          placeholder="Search by email…"
+          placeholder="Search by email or name…"
           type="search"
         />
         <Button type="submit" variant="secondary">
@@ -86,7 +86,14 @@ function UserRow({ user, first }: { user: AdminUserRow; first: boolean }) {
       href={`/admin/users/${user.id}`}
     >
       <div className="min-w-0">
-        <div className="truncate font-medium text-sm">{user.email}</div>
+        <div className="truncate font-medium text-sm">
+          {user.email}
+          {user.name ? (
+            <span className="ml-2 font-normal text-muted-foreground">
+              {user.name}
+            </span>
+          ) : null}
+        </div>
         <div className="mt-0.5 text-muted-foreground text-xs">
           Joined {user.createdAt.toLocaleDateString()} · {user.chatCount} chats ·{" "}
           {user.messageCount} messages

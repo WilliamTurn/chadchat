@@ -7,9 +7,8 @@ import { AnalysisCard } from "@/components/nutrition/analysis-card";
 import { AnalyzeForm } from "@/components/nutrition/analyze-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getEntitlements } from "@/lib/ai/entitlements";
+import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import { getMealAnalysesByUserId, getUserById } from "@/lib/db/queries";
-import { hasActiveAccess } from "@/lib/subscription";
 
 export default function NutritionPage() {
   return (
@@ -62,11 +61,11 @@ async function NutritionContent() {
   if (!user) {
     redirect("/login");
   }
-  if (!hasActiveAccess(user)) {
+  if (!canAccessChad(user)) {
     redirect("/pricing");
   }
 
-  const isPro = getEntitlements(user).photoAnalysis;
+  const isPro = canAccessProFeatures(user);
   return isPro ? <Feed userId={user.id} /> : <UpgradePrompt />;
 }
 

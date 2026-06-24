@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@/app/(auth)/auth";
-import { getEntitlements } from "@/lib/ai/entitlements";
+import { canAccessProFeatures } from "@/lib/admin";
 import {
   createProgressEntry,
   deleteProgressEntry,
@@ -26,7 +26,7 @@ async function requirePro() {
     return null;
   }
   const user = await getUserById(session.user.id);
-  if (!(user && getEntitlements(user).photoAnalysis)) {
+  if (!(user && canAccessProFeatures(user))) {
     return null;
   }
   return user;

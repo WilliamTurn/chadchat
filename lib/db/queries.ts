@@ -12,6 +12,7 @@ import {
   ilike,
   inArray,
   lt,
+  or,
   type SQL,
 } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
@@ -533,9 +534,9 @@ export type AdminUserRow = {
 
 /**
  * The admin user directory: real (non-anonymous) members, newest first, with a
- * count of their chats and messages. An optional case-insensitive email search
- * narrows the list. Capped by `limit` — this backs an admin lookup screen, not
- * a public listing.
+ * count of their chats and messages. An optional case-insensitive search over
+ * email and name narrows the list. Capped by `limit` — this backs an admin
+ * lookup screen, not a public listing.
  */
 export async function getUserDirectory({
   search,
@@ -547,7 +548,13 @@ export async function getUserDirectory({
   try {
     const trimmed = search?.trim();
     const whereCondition = trimmed
-      ? and(eq(user.isAnonymous, false), ilike(user.email, `%${trimmed}%`))
+      ? and(
+          eq(user.isAnonymous, false),
+          or(
+            ilike(user.email, `%${trimmed}%`),
+            ilike(user.name, `%${trimmed}%`)
+          )
+        )
       : eq(user.isAnonymous, false);
 
     return await db

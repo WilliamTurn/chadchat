@@ -8,10 +8,9 @@ import { LogEntryForm } from "@/components/progress/log-entry-form";
 import { WeightChart } from "@/components/progress/weight-chart";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getEntitlements } from "@/lib/ai/entitlements";
+import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import { getProgressEntriesByUserId, getUserById } from "@/lib/db/queries";
 import type { ProgressEntry } from "@/lib/db/schema";
-import { hasActiveAccess } from "@/lib/subscription";
 
 const LB_PER_KG = 2.204_62;
 
@@ -76,11 +75,11 @@ async function ProgressContent() {
   if (!user) {
     redirect("/login");
   }
-  if (!hasActiveAccess(user)) {
+  if (!canAccessChad(user)) {
     redirect("/pricing");
   }
 
-  const isPro = getEntitlements(user).photoAnalysis;
+  const isPro = canAccessProFeatures(user);
 
   return isPro ? <Dashboard userId={user.id} /> : <UpgradePrompt />;
 }

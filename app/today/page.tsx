@@ -19,7 +19,7 @@ import { WeightChart } from "@/components/progress/weight-chart";
 import { TargetEditor } from "@/components/today/target-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getEntitlements } from "@/lib/ai/entitlements";
+import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import {
   getMealsSince,
   getNutritionTarget,
@@ -28,7 +28,7 @@ import {
   getUserMemory,
 } from "@/lib/db/queries";
 import type { ProgressEntry } from "@/lib/db/schema";
-import { hasActiveAccess, toPlanStatusSummary } from "@/lib/subscription";
+import { toPlanStatusSummary } from "@/lib/subscription";
 
 const LB_PER_KG = 2.204_62;
 
@@ -109,11 +109,11 @@ async function TodayContent() {
   if (!user) {
     redirect("/login");
   }
-  if (!hasActiveAccess(user)) {
+  if (!canAccessChad(user)) {
     redirect("/pricing");
   }
 
-  const isPro = getEntitlements(user).photoAnalysis;
+  const isPro = canAccessProFeatures(user);
   const plan = toPlanStatusSummary(user);
 
   const startOfToday = new Date();
