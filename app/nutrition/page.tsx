@@ -3,9 +3,9 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
+import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { AnalysisCard } from "@/components/nutrition/analysis-card";
 import { AnalyzeForm } from "@/components/nutrition/analyze-form";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
@@ -16,6 +16,7 @@ import {
   getUserById,
 } from "@/lib/db/queries";
 import type { MealAnalysis, NutritionTarget } from "@/lib/db/schema";
+import { deriveRecentFoods } from "@/lib/nutrition/recent-foods";
 import { MEAL_CATEGORIES, type MealCategory } from "@/lib/validation/nutrition";
 
 const MEAL_LABEL: Record<MealCategory, string> = {
@@ -91,7 +92,9 @@ async function NutritionContent() {
 function UpgradePrompt() {
   return (
     <div className="rounded-2xl border border-border bg-card p-8 text-center">
-      <h2 className="font-medium text-lg">Meal logging is a Chad Pro feature</h2>
+      <h2 className="font-medium text-lg">
+        Meal logging is a Chad Pro feature
+      </h2>
       <p className="mx-auto mt-2 max-w-md text-muted-foreground text-sm">
         Upgrade to Pro to log meals by photo or by hand. Chad estimates the
         macros, grades each plate out of 10, and keeps a running diary of your
@@ -116,7 +119,10 @@ function mealDay(m: MealAnalysis): Date {
   return m.recordedAt ?? m.createdAt;
 }
 
-function sumMacro(meals: MealAnalysis[], key: "calories" | "protein" | "carbs" | "fat") {
+function sumMacro(
+  meals: MealAnalysis[],
+  key: "calories" | "protein" | "carbs" | "fat"
+) {
   return meals.reduce((s, m) => s + (m[key] ?? 0), 0);
 }
 
@@ -129,11 +135,12 @@ async function Feed({ userId }: { userId: string }) {
   const since = startOfToday();
   const todays = meals.filter((m) => mealDay(m) >= since);
   const earlier = meals.filter((m) => mealDay(m) < since);
+  const recentFoods = deriveRecentFoods(meals);
 
   return (
     <div className="flex flex-col gap-8">
       <section className="rounded-2xl border border-border bg-card p-6">
-        <AnalyzeForm />
+        <AnalyzeForm recentFoods={recentFoods} />
       </section>
 
       <TodaySection meals={todays} target={target} />
@@ -171,7 +178,9 @@ function MacroStat({
       </div>
       <div className="text-muted-foreground text-[11px]">{label}</div>
       {remaining != null && (
-        <div className={`text-[11px] ${over ? "text-blood" : "text-emerald-500"}`}>
+        <div
+          className={`text-[11px] ${over ? "text-blood" : "text-emerald-500"}`}
+        >
           {over
             ? `${Math.round(-remaining)}${unit} over`
             : `${Math.round(remaining)}${unit} left`}

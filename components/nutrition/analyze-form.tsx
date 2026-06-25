@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, Loader2, PencilLine } from "lucide-react";
+import { Camera, History, Loader2, PencilLine, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -15,15 +15,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { todayLocalISO } from "@/lib/date";
+import {
+  formatMacroSummary,
+  type RecentFood,
+} from "@/lib/nutrition/recent-foods";
 import type { MealCategory } from "@/lib/validation/nutrition";
 
-type Mode = "photo" | "manual";
+type Mode = "photo" | "manual" | "recent";
 
-export function AnalyzeForm() {
+export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
   const [mode, setMode] = useState<Mode>("photo");
+  const [loggingFood, setLoggingFood] = useState<string | null>(null);
   const [meal, setMeal] = useState<MealCategory>(defaultMealForNow());
   const [date, setDate] = useState(todayLocalISO);
   const [note, setNote] = useState("");
@@ -155,11 +160,34 @@ export function AnalyzeForm() {
     });
   }
 
+  function logRecent(food: RecentFood) {
+    setLoggingFood(food.title);
+    startTransition(async () => {
+      const result = await logMealManually({
+        title: food.title,
+        meal,
+        recordedAt: date,
+        calories: food.calories,
+        protein: food.protein,
+        carbs: food.carbs,
+        fat: food.fat,
+        note: null,
+      });
+      setLoggingFood(null);
+      if (result.ok) {
+        toast.success(`Logged ${food.title}.`);
+        router.refresh();
+      } else {
+        toast.error(result.error ?? "Couldn't log that.");
+      }
+    });
+  }
+
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (mode === "photo") {
       submitPhoto();
-    } else {
+    } else if (mode === "manual") {
       submitManual();
     }
   }
@@ -171,12 +199,12 @@ export function AnalyzeForm() {
         <p className="mt-1 text-muted-foreground text-sm">
           Snap your plate and Chad reads the photo — calories, macros, and a
           straight verdict on what it's doing to your goal. Or type the numbers
-          yourself.
+          yourself, or re-log something you've eaten before in one tap.
         </p>
       </div>
 
       {/* Mode toggle */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         <button
           className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 font-medium text-sm transition-colors ${
             mode === "photo"
@@ -199,7 +227,19 @@ export function AnalyzeForm() {
           type="button"
         >
           <PencilLine className="size-4" />
-          Log manually
+          Manual
+        </button>
+        <button
+          className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 font-medium text-sm transition-colors ${
+            mode === "recent"
+              ? "border-blood bg-blood/10"
+              : "border-border bg-background/40 text-muted-foreground hover:bg-accent/50"
+          }`}
+          onClick={() => setMode("recent")}
+          type="button"
+        >
+          <History className="size-4" />
+          Recent
         </button>
       </div>
 
@@ -261,7 +301,7 @@ export function AnalyzeForm() {
             value={note}
           />
         </>
-      ) : (
+      ) : mode === "manual" ? (
         <>
           <div className="flex flex-col gap-2">
             <Label htmlFor="m-title">What did you eat?</Label>
@@ -316,25 +356,66 @@ export function AnalyzeForm() {
             </div>
           </div>
         </>
+      ) : recentFoods.length === 0 ? (
+        <p className="rounded-xl border border-border border-dashed bg-background/40 px-4 py-8 text-center text-muted-foreground text-sm">
+          No recent meals yet. Log a few by photo or by hand and they'll show up
+          here for one-tap re-logging.
+        </p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <p className="text-muted-foreground text-xs">
+            Tap to log it again under the meal and date above.
+          </p>
+          {recentFoods.map((food) => {
+            const summary = formatMacroSummary(food);
+            return (
+              <button
+                className="flex items-center gap-3 rounded-xl border border-border bg-background/40 px-3 py-2.5 text-left transition-colors hover:bg-accent/50 disabled:opacity-60"
+                disabled={busy}
+                key={food.title}
+                onClick={() => logRecent(food)}
+                type="button"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-medium text-sm">
+                    {food.title}
+                  </div>
+                  {summary && (
+                    <div className="truncate text-muted-foreground text-xs">
+                      {summary}
+                    </div>
+                  )}
+                </div>
+                {pending && loggingFood === food.title ? (
+                  <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" />
+                ) : (
+                  <Plus className="size-4 shrink-0 text-muted-foreground" />
+                )}
+              </button>
+            );
+          })}
+        </div>
       )}
 
-      <Button
-        className="gap-2"
-        disabled={busy || (mode === "photo" && !file)}
-        size="lg"
-        type="submit"
-      >
-        {busy && <Loader2 className="size-4 animate-spin" />}
-        {mode === "photo"
-          ? uploading
-            ? "Uploading…"
+      {mode !== "recent" && (
+        <Button
+          className="gap-2"
+          disabled={busy || (mode === "photo" && !file)}
+          size="lg"
+          type="submit"
+        >
+          {busy && <Loader2 className="size-4 animate-spin" />}
+          {mode === "photo"
+            ? uploading
+              ? "Uploading…"
+              : pending
+                ? "Chad's analyzing…"
+                : "Analyze with Chad"
             : pending
-              ? "Chad's analyzing…"
-              : "Analyze with Chad"
-          : pending
-            ? "Logging…"
-            : "Log meal"}
-      </Button>
+              ? "Logging…"
+              : "Log meal"}
+        </Button>
+      )}
     </form>
   );
 }
