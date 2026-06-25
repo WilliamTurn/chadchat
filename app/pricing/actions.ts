@@ -81,7 +81,10 @@ export async function createCheckoutSession(tier: PlanTier) {
     payment_method_collection: "always",
     allow_promotion_codes: true,
     subscription_data: subscriptionData,
-    success_url: `${appUrl}/?checkout=success`,
+    // Route the return through /checkout/success, which retrieves this session
+    // and syncs the subscription into our DB synchronously — so the user isn't
+    // bounced to /pricing in the window before the webhook lands.
+    success_url: `${appUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${appUrl}/pricing?checkout=cancelled`,
   });
 
