@@ -11,6 +11,8 @@ import {
   gte,
   ilike,
   inArray,
+  isNotNull,
+  isNull,
   lt,
   or,
   type SQL,
@@ -1161,9 +1163,20 @@ export async function getMealsSince(
         and(
           eq(mealAnalysis.userId, userId),
           eq(mealAnalysis.kind, "meal"),
-          gte(
-            sql`coalesce(${mealAnalysis.recordedAt}, ${mealAnalysis.createdAt})`,
-            since
+          // Effective day = recordedAt ?? createdAt. Expressed via typed columns
+          // (not `coalesce(...) >= since`) so drizzle maps the Date param: a raw
+          // coalesce() operand has no column type, so postgres-js receives an
+          // unmapped Date and throws on serialization. Logically identical to
+          // `coalesce(recordedAt, createdAt) >= since`.
+          or(
+            and(
+              isNotNull(mealAnalysis.recordedAt),
+              gte(mealAnalysis.recordedAt, since)
+            ),
+            and(
+              isNull(mealAnalysis.recordedAt),
+              gte(mealAnalysis.createdAt, since)
+            )
           )
         )
       )
