@@ -20,6 +20,7 @@ import {
 } from "@/lib/db/queries";
 import {
   computePersonalRecords,
+  exercise1RMTrend,
   type WorkoutData,
   workoutVolumeLb,
   volumeTrend,
@@ -136,7 +137,12 @@ async function Dashboard({ userId }: { userId: string }) {
     equipment: e.equipment,
   }));
 
-  const records = computePersonalRecords(workouts).slice(0, 6);
+  const records = computePersonalRecords(workouts)
+    .slice(0, 6)
+    .map((r) => ({
+      ...r,
+      trend: exercise1RMTrend(workouts, r.exerciseName),
+    }));
   const trend = volumeTrend(workouts);
 
   const now = Date.now();
