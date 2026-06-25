@@ -56,6 +56,23 @@ export function verificationEmailTemplate(url: string): {
   };
 }
 
+export function paymentFailedEmailTemplate(url: string): {
+  subject: string;
+  html: string;
+} {
+  return {
+    subject: "Your Chad payment didn't go through",
+    html: layout({
+      heading: "Update your payment method",
+      body: "We tried to charge your card for Chad and it didn't go through. We'll keep retrying for a little while, but to avoid losing your access, update your payment method now. It takes about a minute.",
+      buttonLabel: "Update payment method",
+      buttonUrl: url,
+      footer:
+        "If you've already fixed this, you can ignore this email. Manage your billing anytime from your account page.",
+    }),
+  };
+}
+
 export function passwordResetEmailTemplate(url: string): {
   subject: string;
   html: string;

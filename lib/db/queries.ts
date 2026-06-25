@@ -26,8 +26,8 @@ import {
   type BodyMeasurement,
   bodyMeasurement,
   type Chat,
-  chat,
   type CustomExercise,
+  chat,
   customExercise,
   type DBMessage,
   document,
@@ -39,25 +39,25 @@ import {
   message,
   type NutritionTarget,
   nutritionTarget,
-  passwordResetToken,
   type Plan,
-  plan,
   type ProgressEntry,
+  passwordResetToken,
+  plan,
   progressEntry,
   type Suggestion,
   stream,
   suggestion,
   type User,
-  user,
   type UserMemory,
+  user,
   userMemory,
   vote,
-  waterLog,
   type Workout,
-  workout,
   type WorkoutExercise,
-  workoutExercise,
   type WorkoutSet,
+  waterLog,
+  workout,
+  workoutExercise,
   workoutSet,
 } from "./schema";
 import { generateHashedPassword } from "./utils";
@@ -123,10 +123,7 @@ export async function updateUserPassword(
       .set({ password: hashedPassword, updatedAt: new Date() })
       .where(eq(user.id, userId));
   } catch (_error) {
-    throw new ChatbotError(
-      "bad_request:database",
-      "Failed to update password"
-    );
+    throw new ChatbotError("bad_request:database", "Failed to update password");
   }
 }
 
@@ -339,9 +336,7 @@ export async function setMemoryEnabled(userId: string, enabled: boolean) {
 /** Wipe the user's stored profile (privacy / reset). Leaves the toggle as-is. */
 export async function clearUserMemory(userId: string) {
   try {
-    return await db
-      .delete(userMemory)
-      .where(eq(userMemory.userId, userId));
+    return await db.delete(userMemory).where(eq(userMemory.userId, userId));
   } catch (_error) {
     throw new ChatbotError(
       "bad_request:database",
@@ -359,16 +354,46 @@ type SubscriptionUpdate = {
   trialEndsAt: Date | null;
 };
 
-/** Sync a user's subscription columns from a Stripe webhook, keyed by customer id. */
+/**
+ * Sync a user's subscription columns from a Stripe webhook, keyed by customer
+ * id. Returns the number of rows updated so the caller can fall back to
+ * matching by user id when the customer id isn't on any row yet (the
+ * checkout↔webhook race).
+ */
 export async function updateUserSubscriptionByCustomerId(
   stripeCustomerId: string,
   data: SubscriptionUpdate
-) {
+): Promise<number> {
   try {
-    return await db
+    const result = await db
       .update(user)
       .set({ ...data, updatedAt: new Date() })
       .where(eq(user.stripeCustomerId, stripeCustomerId));
+    return result.count ?? 0;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to update subscription"
+    );
+  }
+}
+
+/**
+ * Fallback sync keyed by our own user id (from `subscription.metadata.userId`,
+ * stamped at checkout). Used when a `subscription.*` webhook arrives before the
+ * customer id is persisted on the user row. Also backfills the customer id so
+ * later webhooks match the fast path. Returns rows updated.
+ */
+export async function updateUserSubscriptionById(
+  userId: string,
+  data: SubscriptionUpdate & { stripeCustomerId: string }
+): Promise<number> {
+  try {
+    const result = await db
+      .update(user)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(user.id, userId));
+    return result.count ?? 0;
   } catch (_error) {
     throw new ChatbotError(
       "bad_request:database",
@@ -491,7 +516,9 @@ export async function deleteUserByEmail(
 
       // Nutrition: photo analyses + the daily target + water log.
       await tx.delete(mealAnalysis).where(eq(mealAnalysis.userId, userId));
-      await tx.delete(nutritionTarget).where(eq(nutritionTarget.userId, userId));
+      await tx
+        .delete(nutritionTarget)
+        .where(eq(nutritionTarget.userId, userId));
       await tx.delete(waterLog).where(eq(waterLog.userId, userId));
 
       // Goals, plans, and body measurements.
@@ -541,7 +568,9 @@ export async function getUserStats(): Promise<{
       db
         .select({ value: count() })
         .from(user)
-        .where(inArray(user.subscriptionStatus, ["active", "trialing", "past_due"])),
+        .where(
+          inArray(user.subscriptionStatus, ["active", "trialing", "past_due"])
+        ),
     ]);
 
     return {
@@ -1086,7 +1115,10 @@ export async function updateMealAnalysis(entry: {
         fat: entry.fat,
       })
       .where(
-        and(eq(mealAnalysis.id, entry.id), eq(mealAnalysis.userId, entry.userId))
+        and(
+          eq(mealAnalysis.id, entry.id),
+          eq(mealAnalysis.userId, entry.userId)
+        )
       );
   } catch (_error) {
     throw new ChatbotError(
@@ -1129,12 +1161,18 @@ export async function getMealsSince(
         and(
           eq(mealAnalysis.userId, userId),
           eq(mealAnalysis.kind, "meal"),
-          gte(sql`coalesce(${mealAnalysis.recordedAt}, ${mealAnalysis.createdAt})`, since)
+          gte(
+            sql`coalesce(${mealAnalysis.recordedAt}, ${mealAnalysis.createdAt})`,
+            since
+          )
         )
       )
       .orderBy(desc(mealAnalysis.createdAt));
   } catch (_error) {
-    throw new ChatbotError("bad_request:database", "Failed to get today's meals");
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get today's meals"
+    );
   }
 }
 
@@ -1151,7 +1189,9 @@ export async function getMealLogByUserId(
         and(eq(mealAnalysis.userId, userId), eq(mealAnalysis.kind, "meal"))
       )
       .orderBy(
-        desc(sql`coalesce(${mealAnalysis.recordedAt}, ${mealAnalysis.createdAt})`),
+        desc(
+          sql`coalesce(${mealAnalysis.recordedAt}, ${mealAnalysis.createdAt})`
+        ),
         desc(mealAnalysis.createdAt)
       )
       .limit(limit);
@@ -1939,7 +1979,9 @@ async function insertWorkoutChildren(
   }
 }
 
-export async function createWorkout(input: WorkoutWriteInput): Promise<Workout> {
+export async function createWorkout(
+  input: WorkoutWriteInput
+): Promise<Workout> {
   try {
     return await db.transaction(async (tx) => {
       const [created] = await tx
@@ -2124,10 +2166,7 @@ export async function createCustomExercise(entry: {
   equipment: CustomExercise["equipment"];
 }): Promise<CustomExercise> {
   try {
-    const [created] = await db
-      .insert(customExercise)
-      .values(entry)
-      .returning();
+    const [created] = await db.insert(customExercise).values(entry).returning();
     return created;
   } catch (_error) {
     throw new ChatbotError(

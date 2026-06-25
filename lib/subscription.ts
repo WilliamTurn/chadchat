@@ -16,6 +16,11 @@ const ACCESS_STATUSES = new Set(["trialing", "active", "past_due"]);
 // free access forever).
 const PERIOD_END_GRACE_MS = 24 * 60 * 60 * 1000; // 1 day
 
+// Dunning grace for past_due: keep access while Stripe retries the failed card,
+// but bound it so a dropped terminal (canceled/unpaid) webhook can't grant Pro
+// forever. Covers Stripe's Smart Retries window (~2 weeks) past the period end.
+const PAST_DUE_GRACE_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
+
 export type SubscriptionFields = {
   subscriptionStatus: string | null;
   currentPeriodEnd: Date | null;
@@ -29,8 +34,14 @@ export function hasActiveAccess(u: SubscriptionFields): boolean {
     return false;
   }
 
-  // past_due stays in regardless of period end (active dunning).
+  // past_due: keep them in while Stripe retries the card, but bounded. Once we
+  // know the period end, cut access PAST_DUE_GRACE_MS after it — so if the
+  // terminal canceled/unpaid webhook is ever dropped, access still ends instead
+  // of granting Pro forever. With no period end (e.g. a comped row), stay in.
   if (status === "past_due") {
+    if (u.currentPeriodEnd) {
+      return u.currentPeriodEnd.getTime() + PAST_DUE_GRACE_MS >= Date.now();
+    }
     return true;
   }
 
@@ -57,7 +68,9 @@ export function isTrialing(u: { subscriptionStatus: string | null }): boolean {
  * customers therefore resubscribe and are charged immediately — no second free
  * trial per customer.
  */
-export function hasUsedTrial(u: { stripeSubscriptionId: string | null }): boolean {
+export function hasUsedTrial(u: {
+  stripeSubscriptionId: string | null;
+}): boolean {
   return u.stripeSubscriptionId != null;
 }
 
