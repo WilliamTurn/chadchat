@@ -6,6 +6,7 @@ import {
   LineChart,
   Lock,
   MessageSquare,
+  Refrigerator,
   Target,
   Utensils,
 } from "lucide-react";
@@ -20,6 +21,7 @@ import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { GoalEditor } from "@/components/today/goal-editor";
 import { PlanViewer } from "@/components/today/plan-viewer";
 import { TargetEditor } from "@/components/today/target-editor";
+import { WaterCounter } from "@/components/today/water-counter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
@@ -29,6 +31,7 @@ import {
   getProgressEntriesByUserId,
   getUserById,
   getUserMemory,
+  getWaterMlSince,
 } from "@/lib/db/queries";
 import type { ProgressEntry } from "@/lib/db/schema";
 import { toPlanStatusSummary } from "@/lib/subscription";
@@ -123,11 +126,12 @@ async function TodayContent() {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
-  const [memory, entries, todaysMeals, target] = await Promise.all([
+  const [memory, entries, todaysMeals, target, waterMl] = await Promise.all([
     getUserMemory(user.id),
     isPro ? getProgressEntriesByUserId(user.id) : Promise.resolve([]),
     isPro ? getMealsSince(user.id, startOfToday) : Promise.resolve([]),
     isPro ? getNutritionTarget(user.id) : Promise.resolve(undefined),
+    isPro ? getWaterMlSince(user.id, startOfToday) : Promise.resolve(0),
   ]);
 
   const profile = memory?.profile ?? null;
@@ -334,10 +338,11 @@ async function TodayContent() {
                 ? `${todaysMeals.length} meal${todaysMeals.length === 1 ? "" : "s"} logged today`
                 : "No meals logged today."}
             </p>
+            <WaterCounter totalMl={waterMl} />
             <Button asChild className="mt-3 gap-1.5" size="sm" variant="outline">
               <Link href="/nutrition">
                 <Camera className="size-3.5" />
-                Analyze a meal
+                Log a meal
               </Link>
             </Button>
           </Card>
@@ -399,9 +404,10 @@ async function TodayContent() {
       </div>
 
       {/* Quick actions */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         <QuickAction href="/" icon={<MessageSquare className="size-4" />} label="Talk to Chad" />
-        <QuickAction href="/nutrition" icon={<Camera className="size-4" />} label="Nutrition check" />
+        <QuickAction href="/nutrition" icon={<Camera className="size-4" />} label="Nutrition" />
+        <QuickAction href="/kitchen" icon={<Refrigerator className="size-4" />} label="Kitchen" />
         <QuickAction href="/progress" icon={<LineChart className="size-4" />} label="Progress" />
         <QuickAction href="/account" icon={<CreditCard className="size-4" />} label="Account" />
       </div>

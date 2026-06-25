@@ -1,5 +1,7 @@
 import { Check } from "lucide-react";
 import { DeleteAnalysisButton } from "@/components/nutrition/delete-analysis-button";
+import { EditMealButton } from "@/components/nutrition/edit-meal-button";
+import { LogAgainButton } from "@/components/nutrition/log-again-button";
 import { Badge } from "@/components/ui/badge";
 import type { MealAnalysis } from "@/lib/db/schema";
 
@@ -9,6 +11,13 @@ const KIND_LABEL: Record<string, string> = {
   meal: "Meal",
   fridge: "Fridge",
   pantry: "Pantry",
+};
+
+const MEAL_LABEL: Record<string, string> = {
+  breakfast: "Breakfast",
+  lunch: "Lunch",
+  dinner: "Dinner",
+  snack: "Snack",
 };
 
 function scoreColor(score: number | null): string {
@@ -42,6 +51,8 @@ function Macro({ label, value, unit }: { label: string; value: number | null; un
 export function AnalysisCard({ entry }: { entry: MealAnalysis }) {
   const items = (Array.isArray(entry.items) ? entry.items : []) as Item[];
   const tips = (Array.isArray(entry.tips) ? entry.tips : []) as string[];
+  const isMeal = entry.kind === "meal";
+  const mealLabel = entry.meal ? MEAL_LABEL[entry.meal] : null;
   const hasMacros =
     entry.calories != null ||
     entry.protein != null ||
@@ -76,17 +87,29 @@ export function AnalysisCard({ entry }: { entry: MealAnalysis }) {
               <h3 className="font-semibold text-base leading-tight">
                 {entry.title}
               </h3>
-              <p className="mt-0.5 text-muted-foreground text-xs">
-                {entry.createdAt.toLocaleDateString(undefined, {
-                  month: "short",
-                  day: "numeric",
-                })}{" "}
-                ·{" "}
-                {entry.createdAt.toLocaleTimeString(undefined, {
-                  hour: "numeric",
-                  minute: "2-digit",
-                })}
-              </p>
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                {mealLabel && (
+                  <Badge className="text-[11px]" variant="secondary">
+                    {mealLabel}
+                  </Badge>
+                )}
+                {entry.source === "manual" && (
+                  <Badge className="text-[11px]" variant="outline">
+                    Manual
+                  </Badge>
+                )}
+                <span className="text-muted-foreground text-xs">
+                  {entry.createdAt.toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                  })}{" "}
+                  ·{" "}
+                  {entry.createdAt.toLocaleTimeString(undefined, {
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </div>
             </div>
             {entry.healthScore != null && (
               <div className="shrink-0 text-right">
@@ -144,7 +167,9 @@ export function AnalysisCard({ entry }: { entry: MealAnalysis }) {
             </ul>
           )}
 
-          <div className="mt-auto flex justify-end pt-1">
+          <div className="mt-auto flex items-center justify-end gap-1 pt-1">
+            {isMeal && <LogAgainButton entry={entry} />}
+            {isMeal && <EditMealButton entry={entry} />}
             <DeleteAnalysisButton id={entry.id} />
           </div>
         </div>

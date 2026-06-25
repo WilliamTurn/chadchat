@@ -1,9 +1,9 @@
 /**
- * Apple-style activity rings for the day's intake, pure dependency-free SVG so
- * it renders on the server and matches Chad's theme via currentColor. Outer ring
- * = calories, inner ring = protein. When a target is set the ring fills toward
- * it (and turns blood-red once exceeded); with no target it shows the running
- * total against a neutral track.
+ * Apple-style activity rings for the day's intake — pure dependency-free SVG so
+ * it renders on the server and matches Chad's theme. Four concentric rings,
+ * color-coded: calories (red), protein (blue), carbs (amber), fat (violet).
+ * When a target is set the ring fills toward it and turns blood-red once
+ * exceeded; with no target it shows the running total against a neutral track.
  */
 
 type RingProps = {
@@ -17,10 +17,10 @@ type RingProps = {
   fatTarget: number | null;
 };
 
-const SIZE = 168;
+const SIZE = 180;
 const CENTER = SIZE / 2;
-const STROKE = 13;
-const GAP = 6;
+const STROKE = 12;
+const GAP = 4;
 
 function arc(radius: number, fraction: number) {
   const c = 2 * Math.PI * radius;
@@ -31,17 +31,19 @@ function arc(radius: number, fraction: number) {
 function Ring({
   radius,
   fraction,
+  color,
   over,
 }: {
   radius: number;
   fraction: number | null;
+  color: string;
   over: boolean;
 }) {
   const { c, offset } = arc(radius, fraction ?? 0);
   return (
     <>
       <circle
-        className="text-border/60"
+        className="text-border/50"
         cx={CENTER}
         cy={CENTER}
         fill="none"
@@ -51,7 +53,7 @@ function Ring({
       />
       {fraction !== null && (
         <circle
-          className={over ? "text-blood" : "text-foreground"}
+          className={over ? "text-blood" : color}
           cx={CENTER}
           cy={CENTER}
           fill="none"
@@ -69,6 +71,35 @@ function Ring({
   );
 }
 
+function Stat({
+  label,
+  color,
+  consumed,
+  target,
+  unit,
+}: {
+  label: string;
+  color: string;
+  consumed: number;
+  target: number | null;
+  unit: string;
+}) {
+  return (
+    <div>
+      <dt className="flex items-center gap-1.5 text-muted-foreground text-xs">
+        <span className={`size-2 rounded-full ${color}`} />
+        {label}
+      </dt>
+      <dd className="font-display font-semibold text-lg">
+        {Math.round(consumed)}
+        <span className="ml-1 text-muted-foreground text-xs">
+          {target ? `/ ${target}${unit}` : unit || "g"}
+        </span>
+      </dd>
+    </div>
+  );
+}
+
 export function MacroRings({
   caloriesConsumed,
   caloriesTarget,
@@ -79,86 +110,102 @@ export function MacroRings({
   fatConsumed,
   fatTarget,
 }: RingProps) {
-  const outerR = CENTER - STROKE / 2 - 2;
-  const innerR = outerR - STROKE - GAP;
+  const rCal = CENTER - STROKE / 2 - 2;
+  const rPro = rCal - STROKE - GAP;
+  const rCarb = rPro - STROKE - GAP;
+  const rFat = rCarb - STROKE - GAP;
 
   const calFrac = caloriesTarget ? caloriesConsumed / caloriesTarget : null;
   const proFrac = proteinTarget ? proteinConsumed / proteinTarget : null;
+  const carbFrac = carbsTarget ? carbsConsumed / carbsTarget : null;
+  const fatFrac = fatTarget ? fatConsumed / fatTarget : null;
 
   return (
-    <div className="flex items-center gap-5">
+    <div className="flex flex-wrap items-center gap-5">
       <svg
-        aria-label="Today's calories and protein"
+        aria-label="Today's calories and macros"
         className="shrink-0"
         height={SIZE}
         role="img"
         viewBox={`0 0 ${SIZE} ${SIZE}`}
         width={SIZE}
       >
-        <title>Today's calories and protein</title>
-        <Ring fraction={calFrac} over={(calFrac ?? 0) > 1} radius={outerR} />
-        <Ring fraction={proFrac} over={(proFrac ?? 0) > 1} radius={innerR} />
+        <title>Today's calories and macros</title>
+        <Ring
+          color="text-blood"
+          fraction={calFrac}
+          over={(calFrac ?? 0) > 1}
+          radius={rCal}
+        />
+        <Ring
+          color="text-sky-400"
+          fraction={proFrac}
+          over={(proFrac ?? 0) > 1}
+          radius={rPro}
+        />
+        <Ring
+          color="text-amber-400"
+          fraction={carbFrac}
+          over={(carbFrac ?? 0) > 1}
+          radius={rCarb}
+        />
+        <Ring
+          color="text-violet-400"
+          fraction={fatFrac}
+          over={(fatFrac ?? 0) > 1}
+          radius={rFat}
+        />
         <text
           className="fill-foreground font-display font-bold"
           dominantBaseline="middle"
-          fontSize="30"
+          fontSize="22"
           textAnchor="middle"
           x={CENTER}
-          y={CENTER - 8}
+          y={CENTER - 6}
         >
           {Math.round(caloriesConsumed)}
         </text>
         <text
           className="fill-muted-foreground"
           dominantBaseline="middle"
-          fontSize="11"
+          fontSize="10"
           textAnchor="middle"
           x={CENTER}
-          y={CENTER + 14}
+          y={CENTER + 13}
         >
           {caloriesTarget ? `/ ${caloriesTarget} kcal` : "kcal today"}
         </text>
       </svg>
 
-      <dl className="flex flex-col gap-3 text-sm">
-        <div>
-          <dt className="text-muted-foreground text-xs">Calories</dt>
-          <dd className="font-display font-semibold text-lg">
-            {Math.round(caloriesConsumed)}
-            <span className="ml-1 text-muted-foreground text-xs">
-              {caloriesTarget ? `/ ${caloriesTarget}` : "kcal"}
-            </span>
-          </dd>
-        </div>
-        <div>
-          <dt className="text-muted-foreground text-xs">Protein</dt>
-          <dd className="font-display font-semibold text-lg">
-            {Math.round(proteinConsumed)}
-            <span className="ml-1 text-muted-foreground text-xs">
-              {proteinTarget ? `/ ${proteinTarget} g` : "g"}
-            </span>
-          </dd>
-        </div>
-        <div className="flex gap-5">
-          <div>
-            <dt className="text-muted-foreground text-xs">Carbs</dt>
-            <dd className="font-display font-semibold">
-              {Math.round(carbsConsumed)}
-              <span className="ml-1 text-muted-foreground text-xs">
-                {carbsTarget ? `/ ${carbsTarget} g` : "g"}
-              </span>
-            </dd>
-          </div>
-          <div>
-            <dt className="text-muted-foreground text-xs">Fat</dt>
-            <dd className="font-display font-semibold">
-              {Math.round(fatConsumed)}
-              <span className="ml-1 text-muted-foreground text-xs">
-                {fatTarget ? `/ ${fatTarget} g` : "g"}
-              </span>
-            </dd>
-          </div>
-        </div>
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+        <Stat
+          color="bg-blood"
+          consumed={caloriesConsumed}
+          label="Calories"
+          target={caloriesTarget}
+          unit=""
+        />
+        <Stat
+          color="bg-sky-400"
+          consumed={proteinConsumed}
+          label="Protein"
+          target={proteinTarget}
+          unit="g"
+        />
+        <Stat
+          color="bg-amber-400"
+          consumed={carbsConsumed}
+          label="Carbs"
+          target={carbsTarget}
+          unit="g"
+        />
+        <Stat
+          color="bg-violet-400"
+          consumed={fatConsumed}
+          label="Fat"
+          target={fatTarget}
+          unit="g"
+        />
       </dl>
     </div>
   );

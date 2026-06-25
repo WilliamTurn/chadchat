@@ -827,17 +827,21 @@ export async function deleteBodyMeasurement({
 
 // --- Nutrition: meal / fridge / pantry analyses (Pro) ---
 
+type MealCategoryValue = "breakfast" | "lunch" | "dinner" | "snack";
+
 export async function createMealAnalysis(entry: {
   userId: string;
   kind: "meal" | "fridge" | "pantry";
-  photoUrl: string;
+  source?: "photo" | "manual";
+  meal?: MealCategoryValue | null;
+  photoUrl: string | null;
   title: string;
   calories: number | null;
   protein: number | null;
   carbs: number | null;
   fat: number | null;
   healthScore: number | null;
-  verdict: string;
+  verdict: string | null;
   items: unknown;
   tips: unknown;
 }): Promise<MealAnalysis> {
@@ -847,6 +851,8 @@ export async function createMealAnalysis(entry: {
       .values({
         userId: entry.userId,
         kind: entry.kind,
+        source: entry.source ?? "photo",
+        meal: entry.meal ?? null,
         photoUrl: entry.photoUrl,
         title: entry.title,
         calories: entry.calories,
@@ -864,6 +870,39 @@ export async function createMealAnalysis(entry: {
     throw new ChatbotError(
       "bad_request:database",
       "Failed to save meal analysis"
+    );
+  }
+}
+
+/** Correct a logged meal's title/category/macros (manual edit). Scoped to owner. */
+export async function updateMealAnalysis(entry: {
+  id: string;
+  userId: string;
+  title: string;
+  meal: MealCategoryValue | null;
+  calories: number | null;
+  protein: number | null;
+  carbs: number | null;
+  fat: number | null;
+}): Promise<void> {
+  try {
+    await db
+      .update(mealAnalysis)
+      .set({
+        title: entry.title,
+        meal: entry.meal,
+        calories: entry.calories,
+        protein: entry.protein,
+        carbs: entry.carbs,
+        fat: entry.fat,
+      })
+      .where(
+        and(eq(mealAnalysis.id, entry.id), eq(mealAnalysis.userId, entry.userId))
+      );
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to update meal analysis"
     );
   }
 }
@@ -907,6 +946,50 @@ export async function getMealsSince(
       .orderBy(desc(mealAnalysis.createdAt));
   } catch (_error) {
     throw new ChatbotError("bad_request:database", "Failed to get today's meals");
+  }
+}
+
+/** A user's logged MEALS only (no fridge/pantry), newest first — backs the diary. */
+export async function getMealLogByUserId(
+  userId: string,
+  limit = 120
+): Promise<MealAnalysis[]> {
+  try {
+    return await db
+      .select()
+      .from(mealAnalysis)
+      .where(
+        and(eq(mealAnalysis.userId, userId), eq(mealAnalysis.kind, "meal"))
+      )
+      .orderBy(desc(mealAnalysis.createdAt))
+      .limit(limit);
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get meal log");
+  }
+}
+
+/** A user's fridge/pantry analyses, newest first — backs "Rate My Kitchen". */
+export async function getKitchenAnalysesByUserId(
+  userId: string,
+  limit = 60
+): Promise<MealAnalysis[]> {
+  try {
+    return await db
+      .select()
+      .from(mealAnalysis)
+      .where(
+        and(
+          eq(mealAnalysis.userId, userId),
+          inArray(mealAnalysis.kind, ["fridge", "pantry"])
+        )
+      )
+      .orderBy(desc(mealAnalysis.createdAt))
+      .limit(limit);
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get kitchen analyses"
+    );
   }
 }
 
@@ -982,6 +1065,65 @@ export async function upsertNutritionTarget(
       "bad_request:database",
       "Failed to save nutrition target"
     );
+  }
+}
+
+// --- Water log (lightweight daily counter on /today) ---
+
+/** Total ml logged since `since` (clamped at 0). */
+export async function getWaterMlSince(
+  userId: string,
+  since: Date
+): Promise<number> {
+  try {
+    const rows = await db
+      .select({ amountMl: waterLog.amountMl })
+      .from(waterLog)
+      .where(and(eq(waterLog.userId, userId), gte(waterLog.recordedAt, since)));
+    return Math.max(
+      0,
+      rows.reduce((sum, r) => sum + (r.amountMl ?? 0), 0)
+    );
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get water total");
+  }
+}
+
+export async function addWaterLog(entry: {
+  userId: string;
+  amountMl: number;
+}): Promise<void> {
+  try {
+    await db.insert(waterLog).values({
+      userId: entry.userId,
+      amountMl: entry.amountMl,
+      recordedAt: new Date(),
+    });
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to log water");
+  }
+}
+
+/** Remove the most recent water increment logged today (the undo for "−"). */
+export async function deleteLatestWaterLog({
+  userId,
+  since,
+}: {
+  userId: string;
+  since: Date;
+}): Promise<void> {
+  try {
+    const [latest] = await db
+      .select({ id: waterLog.id })
+      .from(waterLog)
+      .where(and(eq(waterLog.userId, userId), gte(waterLog.recordedAt, since)))
+      .orderBy(desc(waterLog.recordedAt))
+      .limit(1);
+    if (latest) {
+      await db.delete(waterLog).where(eq(waterLog.id, latest.id));
+    }
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to update water");
   }
 }
 
