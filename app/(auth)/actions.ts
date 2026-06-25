@@ -46,6 +46,15 @@ async function issueVerificationEmail(userId: string, email: string) {
   await sendVerificationEmail(email, token);
 }
 
+/**
+ * Kick off the Google OAuth flow. This redirects to Google and back, so it
+ * never returns normally — it throws the framework's redirect. Used by the
+ * "Continue with Google" button on the login and register screens.
+ */
+export const signInWithGoogle = async (): Promise<void> => {
+  await signIn("google", { redirectTo: "/today" });
+};
+
 export type LoginActionState = {
   status: "idle" | "in_progress" | "success" | "failed" | "invalid_data";
 };

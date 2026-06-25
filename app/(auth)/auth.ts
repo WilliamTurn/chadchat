@@ -2,8 +2,13 @@ import { compare } from "bcrypt-ts";
 import NextAuth, { type DefaultSession } from "next-auth";
 import type { DefaultJWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import { DUMMY_PASSWORD } from "@/lib/constants";
-import { createGuestUser, getUser } from "@/lib/db/queries";
+import {
+  createGuestUser,
+  getOrCreateGoogleUser,
+  getUser,
+} from "@/lib/db/queries";
 import { authConfig } from "./auth.config";
 
 export type UserType = "guest" | "regular";
@@ -38,6 +43,7 @@ export const {
 } = NextAuth({
   ...authConfig,
   providers: [
+    Google({ allowDangerousEmailAccountLinking: true }),
     Credentials({
       credentials: {
         email: { label: "Email", type: "email" },
@@ -79,6 +85,26 @@ export const {
     }),
   ],
   callbacks: {
+    // Google sign-in has no DB adapter, so resolve (or create) our own User row
+    // by email here and re-point the session identity at it before the JWT is
+    // minted. Deny the sign-in if Google returned no email or the DB call fails.
+    async signIn({ user, account }) {
+      if (account?.provider === "google") {
+        const email = user.email;
+        if (!email) {
+          return false;
+        }
+        const dbUser = await getOrCreateGoogleUser({
+          email,
+          name: user.name,
+          image: user.image,
+        });
+        user.id = dbUser.id;
+        (user as { type: UserType }).type = "regular";
+      }
+
+      return true;
+    },
     jwt({ token, user }) {
       if (user) {
         token.id = user.id as string;

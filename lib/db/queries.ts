@@ -88,6 +88,68 @@ export async function createUser(email: string, password: string) {
   }
 }
 
+/**
+ * Find-or-create the local User row for a Google sign-in. There is no NextAuth
+ * DB adapter, so account linking is done here by email: a Google login lands on
+ * the existing email/password account when one exists (Google has verified the
+ * address, so this is safe), otherwise a fresh password-less row is created.
+ * Either way the email is marked verified and name/image are backfilled.
+ */
+export async function getOrCreateGoogleUser({
+  email,
+  name,
+  image,
+}: {
+  email: string;
+  name?: string | null;
+  image?: string | null;
+}): Promise<User> {
+  try {
+    const [existing] = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, email));
+
+    if (existing) {
+      const patch: Partial<User> = {};
+      if (!existing.emailVerified) {
+        patch.emailVerified = true;
+      }
+      if (!existing.name && name) {
+        patch.name = name;
+      }
+      if (!existing.image && image) {
+        patch.image = image;
+      }
+      if (Object.keys(patch).length === 0) {
+        return existing;
+      }
+      const [updated] = await db
+        .update(user)
+        .set({ ...patch, updatedAt: new Date() })
+        .where(eq(user.id, existing.id))
+        .returning();
+      return updated;
+    }
+
+    const [created] = await db
+      .insert(user)
+      .values({
+        email,
+        name: name ?? null,
+        image: image ?? null,
+        emailVerified: true,
+      })
+      .returning();
+    return created;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get or create Google user"
+    );
+  }
+}
+
 export async function createGuestUser() {
   const email = `guest-${Date.now()}`;
   const password = generateHashedPassword(generateUUID());

@@ -8,6 +8,7 @@ import { useActionState, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { AuthForm } from "@/components/chat/auth-form";
+import { GoogleSignIn } from "@/components/chat/google-sign-in";
 import { LoaderIcon } from "@/components/chat/icons";
 import { toast } from "@/components/chat/toast";
 import { Button } from "@/components/ui/button";
@@ -64,6 +65,7 @@ export default function Page() {
     <>
       <h1 className="text-2xl font-semibold tracking-tight">Create account</h1>
       <p className="text-sm text-muted-foreground">Get started for free</p>
+      <GoogleSignIn />
       <AuthForm form={form} onSubmit={onSubmit} showPasswordRequirement>
         <Button
           className="relative"
