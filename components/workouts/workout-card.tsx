@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, Clock, Dumbbell, Pencil, Trash2 } from "lucide-react";
+import { Calendar, Clock, Dumbbell, Pencil, Repeat, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -77,6 +77,22 @@ export function WorkoutCard({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
+          <WorkoutBuilder
+            customExercises={customExercises}
+            initial={workout}
+            mode="repeat"
+            trigger={
+              <Button
+                aria-label="Repeat this workout"
+                className="size-8 text-muted-foreground"
+                size="icon"
+                title="Repeat this workout"
+                variant="ghost"
+              >
+                <Repeat className="size-3.5" />
+              </Button>
+            }
+          />
           <WorkoutBuilder
             customExercises={customExercises}
             initial={workout}

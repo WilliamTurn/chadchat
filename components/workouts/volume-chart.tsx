@@ -1,7 +1,7 @@
 /**
- * Dependency-free per-workout volume bar chart. Pure presentational SVG so it
- * renders on the server. Each bar is one workout's total volume (lb) over time;
- * the most recent bar is highlighted with its value labelled.
+ * Dependency-free volume bar chart. Pure presentational SVG so it renders on
+ * the server. Each bar is one day's total volume (lb) over time; the most
+ * recent bar is highlighted with its value labelled.
  */
 
 function fmtDate(t: number): string {
@@ -67,7 +67,7 @@ export function VolumeChart({
         const yTop = H - pad.b - h;
         const isLast = i === n - 1;
         return (
-          <g key={p.t}>
+          <g key={`bar-${i}`}>
             <rect
               fill="currentColor"
               fillOpacity={isLast ? 0.9 : 0.35}
@@ -98,7 +98,7 @@ export function VolumeChart({
           <text
             className="fill-muted-foreground"
             fontSize="11"
-            key={points[idx].t}
+            key={`tick-${idx}`}
             textAnchor={idx === 0 ? "start" : idx === n - 1 ? "end" : "middle"}
             x={Math.min(Math.max(cx, pad.l), W - pad.r)}
             y={H - 9}

@@ -1,4 +1,4 @@
-import { Dumbbell, Plus, TrendingUp, Trophy } from "lucide-react";
+import { Dumbbell, Plus, Repeat, TrendingUp, Trophy } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -160,16 +160,31 @@ async function Dashboard({ userId }: { userId: string }) {
               }
             />
           </div>
-          <WorkoutBuilder
-            customExercises={customExercises}
-            mode="create"
-            trigger={
-              <Button className="gap-1.5">
-                <Plus className="size-4" />
-                Log a workout
-              </Button>
-            }
-          />
+          <div className="flex items-center gap-2">
+            {workouts.length > 0 && (
+              <WorkoutBuilder
+                customExercises={customExercises}
+                initial={workouts[0]}
+                mode="repeat"
+                trigger={
+                  <Button className="gap-1.5" variant="outline">
+                    <Repeat className="size-4" />
+                    Repeat last
+                  </Button>
+                }
+              />
+            )}
+            <WorkoutBuilder
+              customExercises={customExercises}
+              mode="create"
+              trigger={
+                <Button className="gap-1.5">
+                  <Plus className="size-4" />
+                  Log a workout
+                </Button>
+              }
+            />
+          </div>
         </div>
       </div>
 

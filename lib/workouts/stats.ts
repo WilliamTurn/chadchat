@@ -203,16 +203,28 @@ export function computePersonalRecords(workouts: WorkoutData[]): PersonalRecord[
     .sort((a, b) => (b.bestEst1RM ?? 0) - (a.bestEst1RM ?? 0));
 }
 
-/** Per-workout total volume over time, oldest first, for the trend chart. */
+/**
+ * Total volume per day over time, oldest first, for the trend chart. Workouts
+ * on the same calendar day are summed into one point — so two sessions in a
+ * day (e.g. a repeated workout) render as a single bar rather than colliding
+ * on an identical timestamp. Bucketed by UTC day to match how date-only
+ * `performedAt` values are stored (midnight UTC).
+ */
 export function volumeTrend(
   workouts: WorkoutData[]
 ): { t: number; volume: number }[] {
-  return workouts
-    .map((w) => ({
-      t: new Date(w.performedAt).getTime(),
-      volume: workoutVolumeLb(w),
-    }))
-    .filter((p) => p.volume > 0)
+  const byDay = new Map<number, number>();
+  for (const w of workouts) {
+    const volume = workoutVolumeLb(w);
+    if (volume <= 0) {
+      continue;
+    }
+    const d = new Date(w.performedAt);
+    const dayKey = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+    byDay.set(dayKey, (byDay.get(dayKey) ?? 0) + volume);
+  }
+  return [...byDay.entries()]
+    .map(([t, volume]) => ({ t, volume }))
     .sort((a, b) => a.t - b.t);
 }
 

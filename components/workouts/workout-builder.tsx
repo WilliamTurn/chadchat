@@ -103,37 +103,44 @@ export function WorkoutBuilder({
   customExercises,
   trigger,
 }: {
-  mode: "create" | "edit";
+  // "repeat" prefills exercises/sets from `initial` but saves a NEW workout
+  // dated today — the "repeat last workout" flow.
+  mode: "create" | "edit" | "repeat";
   initial?: WorkoutData;
   customExercises: CustomExerciseRow[];
   trigger: ReactNode;
 }) {
   const router = useRouter();
+  const isRepeat = mode === "repeat";
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const [title, setTitle] = useState(initial?.title ?? "");
   const [date, setDate] = useState(
-    initial ? initial.performedAt.slice(0, 10) : todayISO()
+    initial && !isRepeat ? initial.performedAt.slice(0, 10) : todayISO()
   );
   const [durationMin, setDurationMin] = useState(
-    initial?.durationSeconds ? String(Math.round(initial.durationSeconds / 60)) : ""
+    initial?.durationSeconds && !isRepeat
+      ? String(Math.round(initial.durationSeconds / 60))
+      : ""
   );
-  const [notes, setNotes] = useState(initial?.notes ?? "");
+  const [notes, setNotes] = useState(isRepeat ? "" : (initial?.notes ?? ""));
   const [exercises, setExercises] = useState<EditorExercise[]>(
     initial ? fromWorkout(initial) : []
   );
 
   function reset() {
     setTitle(initial?.title ?? "");
-    setDate(initial ? initial.performedAt.slice(0, 10) : todayISO());
+    setDate(
+      initial && !isRepeat ? initial.performedAt.slice(0, 10) : todayISO()
+    );
     setDurationMin(
-      initial?.durationSeconds
+      initial?.durationSeconds && !isRepeat
         ? String(Math.round(initial.durationSeconds / 60))
         : ""
     );
-    setNotes(initial?.notes ?? "");
+    setNotes(isRepeat ? "" : (initial?.notes ?? ""));
     setExercises(initial ? fromWorkout(initial) : []);
   }
 
@@ -261,7 +268,7 @@ export function WorkoutBuilder({
       if (result.ok) {
         toast.success(mode === "edit" ? "Workout updated." : "Workout logged.");
         setOpen(false);
-        if (mode === "create") {
+        if (mode !== "edit") {
           reset();
         }
         router.refresh();
@@ -276,7 +283,7 @@ export function WorkoutBuilder({
       <Dialog
         onOpenChange={(o) => {
           setOpen(o);
-          if (o && mode === "create") {
+          if (o && mode !== "edit") {
             reset();
           }
         }}
@@ -286,7 +293,11 @@ export function WorkoutBuilder({
         <DialogContent className="max-h-[90vh] gap-0 overflow-hidden p-0 sm:max-w-2xl">
           <DialogHeader className="border-border border-b px-5 py-4">
             <DialogTitle>
-              {mode === "edit" ? "Edit workout" : "Log a workout"}
+              {mode === "edit"
+                ? "Edit workout"
+                : mode === "repeat"
+                  ? "Repeat workout"
+                  : "Log a workout"}
             </DialogTitle>
           </DialogHeader>
 
