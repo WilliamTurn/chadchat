@@ -1,11 +1,14 @@
 "use client";
 
 import {
+  Camera,
   Dumbbell,
   HelpCircle,
   LayoutDashboard,
+  LineChart,
   PanelLeftIcon,
   PenSquareIcon,
+  Refrigerator,
   TrashIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -149,6 +152,54 @@ export function AppSidebar({
                   >
                     <PenSquareIcon className="size-4" />
                     <span className="font-medium">New chat</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    className="h-8 rounded-lg text-[13px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    tooltip="Workouts"
+                  >
+                    <Link href="/workouts" onClick={() => setOpenMobile(false)}>
+                      <Dumbbell className="size-4" />
+                      <span className="font-medium">Workouts</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    className="h-8 rounded-lg text-[13px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    tooltip="Nutrition"
+                  >
+                    <Link href="/nutrition" onClick={() => setOpenMobile(false)}>
+                      <Camera className="size-4" />
+                      <span className="font-medium">Nutrition</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    className="h-8 rounded-lg text-[13px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    tooltip="Kitchen"
+                  >
+                    <Link href="/kitchen" onClick={() => setOpenMobile(false)}>
+                      <Refrigerator className="size-4" />
+                      <span className="font-medium">Kitchen</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    className="h-8 rounded-lg text-[13px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    tooltip="Progress"
+                  >
+                    <Link href="/progress" onClick={() => setOpenMobile(false)}>
+                      <LineChart className="size-4" />
+                      <span className="font-medium">Progress</span>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
