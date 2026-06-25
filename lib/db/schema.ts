@@ -101,8 +101,15 @@ export const mealAnalysis = pgTable("MealAnalysis", {
   kind: varchar("kind", { enum: ["meal", "fridge", "pantry"] })
     .notNull()
     .default("meal"),
-  // The analyzed photo (Vercel Blob URL).
-  photoUrl: text("photoUrl").notNull(),
+  // How this row was created: a photo Chad analyzed, or a manual macro entry.
+  source: varchar("source", { enum: ["photo", "manual"] })
+    .notNull()
+    .default("photo"),
+  // Which meal of the day this is, for the diary buckets. Null for fridge/pantry
+  // shots and for older rows logged before meal categories existed.
+  meal: varchar("meal", { enum: ["breakfast", "lunch", "dinner", "snack"] }),
+  // The analyzed photo (Vercel Blob URL). Null for manual entries.
+  photoUrl: text("photoUrl"),
   // Short label Chad gives the shot ("Double cheeseburger + fries").
   title: text("title").notNull(),
   // Estimated totals for a meal; rough or null for a fridge/pantry inventory.
@@ -112,8 +119,9 @@ export const mealAnalysis = pgTable("MealAnalysis", {
   fat: doublePrecision("fat"),
   // 1 (garbage) … 10 (elite) — drives the at-a-glance grade.
   healthScore: integer("healthScore"),
-  // Chad's blunt verdict + the foods he identified + concrete fixes.
-  verdict: text("verdict").notNull(),
+  // Chad's blunt verdict + the foods he identified + concrete fixes. Null for
+  // manual entries (the user typed their own macros, Chad didn't grade them).
+  verdict: text("verdict"),
   items: json("items").notNull(),
   tips: json("tips").notNull(),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
@@ -277,3 +285,98 @@ export const stream = pgTable(
 );
 
 export type Stream = InferSelectModel<typeof stream>;
+
+// --- Goals & Plans (structured, multiple, Chad-aware) ---
+// The full goal/plan text Chad (or the user) writes is stored here so the
+// dashboard can show, edit, and export the real document — not just the
+// one-line summary that lands in Chad's memory profile. Chad reads active
+// rows in every chat (see lib/ai/memory.ts formatGoalsForPrompt).
+export const goal = pgTable("Goal", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  // Short label ("Lose 15 lb by summer").
+  title: text("title").notNull(),
+  // The full goal document (the real thing Chad wrote, not a summary).
+  detail: text("detail").notNull().default(""),
+  // Free-text target date ("Aug 2026", "12 weeks"). Nullable.
+  targetDate: text("targetDate"),
+  status: varchar("status", { enum: ["active", "achieved", "archived"] })
+    .notNull()
+    .default("active"),
+  // Who created it. A Chad-made goal records the chat it came from.
+  source: varchar("source", { enum: ["user", "chad"] })
+    .notNull()
+    .default("user"),
+  sourceChatId: uuid("sourceChatId"),
+  // Measurable target (optional) — lets a goal render live progress.
+  metric: varchar("metric", {
+    enum: ["weight", "bodyfat", "measurement", "custom"],
+  }),
+  startValue: doublePrecision("startValue"),
+  targetValue: doublePrecision("targetValue"),
+  unit: text("unit"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+export type Goal = InferSelectModel<typeof goal>;
+
+export const plan = pgTable("Plan", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  title: text("title").notNull(),
+  // The full plan document (e.g. the actual 4-day split Chad wrote).
+  detail: text("detail").notNull().default(""),
+  kind: varchar("kind", { enum: ["training", "diet"] })
+    .notNull()
+    .default("training"),
+  status: varchar("status", { enum: ["active", "achieved", "archived"] })
+    .notNull()
+    .default("active"),
+  source: varchar("source", { enum: ["user", "chad"] })
+    .notNull()
+    .default("user"),
+  sourceChatId: uuid("sourceChatId"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+export type Plan = InferSelectModel<typeof plan>;
+
+// --- Body measurements (a progress dimension beyond bodyweight) ---
+// One row per recorded measurement; a per-metric trend is built from the rows.
+export const bodyMeasurement = pgTable("BodyMeasurement", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  recordedAt: timestamp("recordedAt").notNull(),
+  kind: varchar("kind", {
+    enum: ["waist", "chest", "arms", "hips", "thighs", "shoulders", "neck"],
+  }).notNull(),
+  value: doublePrecision("value").notNull(),
+  unit: varchar("unit", { enum: ["in", "cm"] })
+    .notNull()
+    .default("in"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type BodyMeasurement = InferSelectModel<typeof bodyMeasurement>;
+
+// --- Water log (a lightweight daily diary staple) ---
+// One row per increment logged; summed per day for the counter on /today.
+export const waterLog = pgTable("WaterLog", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  recordedAt: timestamp("recordedAt").notNull(),
+  amountMl: integer("amountMl").notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type WaterLog = InferSelectModel<typeof waterLog>;

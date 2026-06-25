@@ -4,14 +4,25 @@ import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { DeleteEntryButton } from "@/components/progress/delete-entry-button";
+import { EditEntryButton } from "@/components/progress/edit-entry-button";
 import { LogEntryForm } from "@/components/progress/log-entry-form";
+import { MeasurementsSection } from "@/components/progress/measurements-section";
+import { PhotoCompare } from "@/components/progress/photo-compare";
 import { WeightChart } from "@/components/progress/weight-chart";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
-import { getProgressEntriesByUserId, getUserById } from "@/lib/db/queries";
+import {
+  getBodyMeasurementsByUserId,
+  getProgressEntriesByUserId,
+  getUserById,
+} from "@/lib/db/queries";
 import type { ProgressEntry } from "@/lib/db/schema";
+
+function isoDate(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
 
 const LB_PER_KG = 2.204_62;
 
@@ -100,7 +111,10 @@ function UpgradePrompt() {
 }
 
 async function Dashboard({ userId }: { userId: string }) {
-  const entries = await getProgressEntriesByUserId(userId);
+  const [entries, measurements] = await Promise.all([
+    getProgressEntriesByUserId(userId),
+    getBodyMeasurementsByUserId(userId),
+  ]);
 
   const weighed = entries.filter(
     (e): e is ProgressEntry & { weight: number } => e.weight != null
@@ -146,7 +160,7 @@ async function Dashboard({ userId }: { userId: string }) {
       <section className="rounded-2xl border border-border bg-card p-6">
         <h2 className="mb-4 font-medium text-lg">Weight trend</h2>
         {points.length > 0 ? (
-          <WeightChart points={points} unit={displayUnit} />
+          <WeightChart goalWeight={null} points={points} unit={displayUnit} />
         ) : (
           <p className="text-muted-foreground text-sm">
             Log a weight below and your trend shows up here.
@@ -159,6 +173,29 @@ async function Dashboard({ userId }: { userId: string }) {
         <h2 className="mb-4 font-medium text-lg">Log an entry</h2>
         <LogEntryForm defaultUnit={displayUnit} />
       </section>
+
+      {/* Body measurements */}
+      <MeasurementsSection
+        measurements={measurements.map((m) => ({
+          id: m.id,
+          recordedAt: isoDate(m.recordedAt),
+          kind: m.kind,
+          value: m.value,
+          unit: m.unit,
+        }))}
+      />
+
+      {/* Before / after compare */}
+      {photos.length >= 2 && (
+        <PhotoCompare
+          photos={[...photos]
+            .reverse()
+            .map((e) => ({
+              url: e.photoUrl ?? "",
+              date: e.recordedAt.toLocaleDateString(),
+            }))}
+        />
+      )}
 
       {/* Progress photos */}
       {photos.length > 0 && (
@@ -212,7 +249,16 @@ async function Dashboard({ userId }: { userId: string }) {
                     </p>
                   )}
                 </div>
-                <DeleteEntryButton id={e.id} />
+                <div className="flex shrink-0 items-center gap-1">
+                  <EditEntryButton
+                    id={e.id}
+                    note={e.note}
+                    recordedAt={isoDate(e.recordedAt)}
+                    unit={e.unit}
+                    weight={e.weight == null ? null : round1(e.weight)}
+                  />
+                  <DeleteEntryButton id={e.id} />
+                </div>
               </div>
             ))}
           </div>

@@ -51,21 +51,23 @@ export function AnalysisCard({ entry }: { entry: MealAnalysis }) {
   return (
     <article className="message-fade-in overflow-hidden rounded-2xl border border-border bg-card">
       <div className="flex flex-col gap-0 sm:flex-row">
-        {/* Photo */}
-        <div className="relative sm:w-48 sm:shrink-0">
-          {/* biome-ignore lint/performance/noImgElement: user-uploaded blob images, sizes vary */}
-          <img
-            alt={entry.title}
-            className="aspect-square w-full object-cover sm:h-full"
-            src={entry.photoUrl}
-          />
-          <Badge
-            className="absolute top-2 left-2 bg-background/80 backdrop-blur"
-            variant="secondary"
-          >
-            {KIND_LABEL[entry.kind] ?? "Photo"}
-          </Badge>
-        </div>
+        {/* Photo (absent for manual entries) */}
+        {entry.photoUrl && (
+          <div className="relative sm:w-48 sm:shrink-0">
+            {/* biome-ignore lint/performance/noImgElement: user-uploaded blob images, sizes vary */}
+            <img
+              alt={entry.title}
+              className="aspect-square w-full object-cover sm:h-full"
+              src={entry.photoUrl}
+            />
+            <Badge
+              className="absolute top-2 left-2 bg-background/80 backdrop-blur"
+              variant="secondary"
+            >
+              {KIND_LABEL[entry.kind] ?? "Photo"}
+            </Badge>
+          </div>
+        )}
 
         {/* Body */}
         <div className="flex min-w-0 flex-1 flex-col gap-3 p-5">
@@ -110,10 +112,12 @@ export function AnalysisCard({ entry }: { entry: MealAnalysis }) {
             </div>
           )}
 
-          {/* Chad's verdict */}
-          <blockquote className="border-blood border-l-2 pl-3 text-sm leading-relaxed">
-            {entry.verdict}
-          </blockquote>
+          {/* Chad's verdict (absent for manual entries) */}
+          {entry.verdict && (
+            <blockquote className="border-blood border-l-2 pl-3 text-sm leading-relaxed">
+              {entry.verdict}
+            </blockquote>
+          )}
 
           {items.length > 0 && (
             <div className="flex flex-wrap gap-1.5">

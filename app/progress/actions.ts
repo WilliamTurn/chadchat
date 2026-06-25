@@ -4,11 +4,18 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/app/(auth)/auth";
 import { canAccessProFeatures } from "@/lib/admin";
 import {
+  createBodyMeasurement,
   createProgressEntry,
+  deleteBodyMeasurement,
   deleteProgressEntry,
   getUserById,
+  updateProgressEntry,
 } from "@/lib/db/queries";
 import {
+  type BodyMeasurementInput,
+  bodyMeasurementSchema,
+  type EditProgressEntryInput,
+  editProgressEntrySchema,
   type ProgressEntryInput,
   progressEntrySchema,
 } from "@/lib/validation/progress";
@@ -65,6 +72,39 @@ export async function addProgressEntry(
   return { ok: true };
 }
 
+export async function editProgressEntry(
+  input: EditProgressEntryInput
+): Promise<ProgressActionState> {
+  const user = await requirePro();
+  if (!user) {
+    return { ok: false, error: "The progress dashboard is a Chad Pro feature." };
+  }
+
+  const parsed = editProgressEntrySchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.errors[0]?.message ?? "Couldn't update that entry.",
+    };
+  }
+
+  const { id, recordedAt, weight, unit, note } = parsed.data;
+  const when = recordedAt ? new Date(recordedAt) : new Date();
+  const recorded = Number.isNaN(when.getTime()) ? new Date() : when;
+
+  await updateProgressEntry({
+    id,
+    userId: user.id,
+    recordedAt: recorded,
+    weight: weight ?? null,
+    unit,
+    note: note?.trim() ? note.trim() : null,
+  });
+
+  revalidatePath("/progress");
+  return { ok: true };
+}
+
 export async function removeProgressEntry(
   id: string
 ): Promise<ProgressActionState> {
@@ -74,6 +114,51 @@ export async function removeProgressEntry(
   }
 
   await deleteProgressEntry({ id, userId: user.id });
+  revalidatePath("/progress");
+  return { ok: true };
+}
+
+export async function addBodyMeasurement(
+  input: BodyMeasurementInput
+): Promise<ProgressActionState> {
+  const user = await requirePro();
+  if (!user) {
+    return { ok: false, error: "The progress dashboard is a Chad Pro feature." };
+  }
+
+  const parsed = bodyMeasurementSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.errors[0]?.message ?? "Couldn't save that measurement.",
+    };
+  }
+
+  const { recordedAt, kind, value, unit } = parsed.data;
+  const when = recordedAt ? new Date(recordedAt) : new Date();
+  const recorded = Number.isNaN(when.getTime()) ? new Date() : when;
+
+  await createBodyMeasurement({
+    userId: user.id,
+    recordedAt: recorded,
+    kind,
+    value,
+    unit,
+  });
+
+  revalidatePath("/progress");
+  return { ok: true };
+}
+
+export async function removeBodyMeasurement(
+  id: string
+): Promise<ProgressActionState> {
+  const user = await requirePro();
+  if (!user) {
+    return { ok: false, error: "Not authorized." };
+  }
+
+  await deleteBodyMeasurement({ id, userId: user.id });
   revalidatePath("/progress");
   return { ok: true };
 }

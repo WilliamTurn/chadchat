@@ -22,17 +22,21 @@ import type { VisibilityType } from "@/components/chat/visibility-selector";
 import { ChatbotError } from "../errors";
 import { generateUUID } from "../utils";
 import {
+  type BodyMeasurement,
+  bodyMeasurement,
   type Chat,
   chat,
   type DBMessage,
   document,
   emailVerificationToken,
+  goal,
   type MealAnalysis,
   mealAnalysis,
   message,
   type NutritionTarget,
   nutritionTarget,
   passwordResetToken,
+  plan,
   type ProgressEntry,
   progressEntry,
   type Suggestion,
@@ -43,6 +47,7 @@ import {
   type UserMemory,
   userMemory,
   vote,
+  waterLog,
 } from "./schema";
 import { generateHashedPassword } from "./utils";
 
@@ -473,9 +478,17 @@ export async function deleteUserByEmail(
       // Progress-tracking entries (weight log + photos).
       await tx.delete(progressEntry).where(eq(progressEntry.userId, userId));
 
-      // Nutrition: photo analyses + the daily target.
+      // Nutrition: photo analyses + the daily target + water log.
       await tx.delete(mealAnalysis).where(eq(mealAnalysis.userId, userId));
       await tx.delete(nutritionTarget).where(eq(nutritionTarget.userId, userId));
+      await tx.delete(waterLog).where(eq(waterLog.userId, userId));
+
+      // Goals, plans, and body measurements.
+      await tx.delete(goal).where(eq(goal.userId, userId));
+      await tx.delete(plan).where(eq(plan.userId, userId));
+      await tx
+        .delete(bodyMeasurement)
+        .where(eq(bodyMeasurement.userId, userId));
 
       // Any outstanding auth-email tokens.
       await tx
@@ -707,6 +720,107 @@ export async function deleteProgressEntry({
     throw new ChatbotError(
       "bad_request:database",
       "Failed to delete progress entry"
+    );
+  }
+}
+
+/** Edit one entry (weight/unit/date/note), scoped to its owner. */
+export async function updateProgressEntry(entry: {
+  id: string;
+  userId: string;
+  recordedAt: Date;
+  weight: number | null;
+  unit: "lb" | "kg";
+  note: string | null;
+}): Promise<void> {
+  try {
+    await db
+      .update(progressEntry)
+      .set({
+        recordedAt: entry.recordedAt,
+        weight: entry.weight,
+        unit: entry.unit,
+        note: entry.note,
+      })
+      .where(
+        and(
+          eq(progressEntry.id, entry.id),
+          eq(progressEntry.userId, entry.userId)
+        )
+      );
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to update progress entry"
+    );
+  }
+}
+
+// --- Body measurements (waist/chest/arms/… over time) ---
+
+export async function createBodyMeasurement(entry: {
+  userId: string;
+  recordedAt: Date;
+  kind: BodyMeasurement["kind"];
+  value: number;
+  unit: "in" | "cm";
+}): Promise<BodyMeasurement> {
+  try {
+    const [created] = await db
+      .insert(bodyMeasurement)
+      .values({
+        userId: entry.userId,
+        recordedAt: entry.recordedAt,
+        kind: entry.kind,
+        value: entry.value,
+        unit: entry.unit,
+      })
+      .returning();
+    return created;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to save measurement"
+    );
+  }
+}
+
+/** A user's measurements, oldest first (so per-metric trends read left→right). */
+export async function getBodyMeasurementsByUserId(
+  userId: string
+): Promise<BodyMeasurement[]> {
+  try {
+    return await db
+      .select()
+      .from(bodyMeasurement)
+      .where(eq(bodyMeasurement.userId, userId))
+      .orderBy(asc(bodyMeasurement.recordedAt));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get measurements"
+    );
+  }
+}
+
+/** Delete one measurement, scoped to its owner. */
+export async function deleteBodyMeasurement({
+  id,
+  userId,
+}: {
+  id: string;
+  userId: string;
+}): Promise<void> {
+  try {
+    await db
+      .delete(bodyMeasurement)
+      .where(
+        and(eq(bodyMeasurement.id, id), eq(bodyMeasurement.userId, userId))
+      );
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to delete measurement"
     );
   }
 }

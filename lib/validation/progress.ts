@@ -25,3 +25,37 @@ export const progressEntrySchema = z
   );
 
 export type ProgressEntryInput = z.infer<typeof progressEntrySchema>;
+
+/**
+ * Editing an existing entry. Same fields as a new entry minus the photo (a
+ * photo is set once on creation), plus the row id. Weight/note can be cleared.
+ */
+export const editProgressEntrySchema = z.object({
+  id: z.string().uuid(),
+  recordedAt: z.string().optional(),
+  weight: z.number().positive().max(2000).nullable().optional(),
+  unit: z.enum(["lb", "kg"]).default("lb"),
+  note: z.string().trim().max(500).nullable().optional(),
+});
+
+export type EditProgressEntryInput = z.infer<typeof editProgressEntrySchema>;
+
+export const MEASUREMENT_KINDS = [
+  "waist",
+  "chest",
+  "arms",
+  "hips",
+  "thighs",
+  "shoulders",
+  "neck",
+] as const;
+
+/** A single body-measurement reading. */
+export const bodyMeasurementSchema = z.object({
+  recordedAt: z.string().optional(),
+  kind: z.enum(MEASUREMENT_KINDS),
+  value: z.number().positive().max(500),
+  unit: z.enum(["in", "cm"]).default("in"),
+});
+
+export type BodyMeasurementInput = z.infer<typeof bodyMeasurementSchema>;

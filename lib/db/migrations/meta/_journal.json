@@ -50,6 +50,13 @@
       "when": 1782300771112,
       "tag": "0006_reflective_swarm",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1782345275341,
+      "tag": "0007_handy_magdalene",
+      "breakpoints": true
     }
   ]
 }
