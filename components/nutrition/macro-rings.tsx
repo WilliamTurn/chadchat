@@ -1,10 +1,22 @@
+"use client";
+
 /**
- * Apple-style activity rings for the day's intake — pure dependency-free SVG so
- * it renders on the server and matches Chad's theme. Four concentric rings,
- * color-coded: calories (red), protein (blue), carbs (amber), fat (violet).
- * When a target is set the ring fills toward it and turns blood-red once
- * exceeded; with no target it shows the running total against a neutral track.
+ * Today's fuel — a single hero calorie dial plus three clearly-labeled macro
+ * bars (protein / carbs / fat), styled the way pro nutrition apps do it.
+ *
+ * - The calorie ring is the hero: its center shows calories REMAINING (or the
+ *   overage in blood red, or just the running total when no target is set).
+ * - Each macro is its own labeled row with a horizontal progress bar, its own
+ *   accent color, and an "Xg left" / "Xg over" hint.
+ * - Tapping the ring or any macro reveals an inline detail (consumed vs target
+ *   vs % of goal). Everything animates in on mount and respects reduced motion.
+ *
+ * Renders inside a parent card that already supplies chrome + a "Today's fuel"
+ * title, so the root is a plain <div> with no card/title of its own.
  */
+
+import { motion, useReducedMotion } from "motion/react";
+import { useId, useState } from "react";
 
 type RingProps = {
   caloriesConsumed: number;
@@ -17,88 +29,338 @@ type RingProps = {
   fatTarget: number | null;
 };
 
-const SIZE = 180;
+const EASE = [0.22, 1, 0.36, 1] as const;
+
+// Hero ring geometry.
+const SIZE = 168;
 const CENTER = SIZE / 2;
-const STROKE = 12;
-const GAP = 4;
+const STROKE = 14;
+const RADIUS = CENTER - STROKE / 2 - 2;
+const CIRC = 2 * Math.PI * RADIUS;
 
-function arc(radius: number, fraction: number) {
-  const c = 2 * Math.PI * radius;
-  const clamped = Math.max(0, Math.min(1, fraction));
-  return { c, offset: c * (1 - clamped) };
+const round = (n: number) => Math.round(n);
+
+function pct(consumed: number, target: number | null): number | null {
+  if (!target || target <= 0) {
+    return null;
+  }
+  return Math.round((consumed / target) * 100);
 }
 
-function Ring({
-  radius,
-  fraction,
-  color,
-  over,
-}: {
-  radius: number;
-  fraction: number | null;
-  color: string;
-  over: boolean;
-}) {
-  const { c, offset } = arc(radius, fraction ?? 0);
-  return (
-    <>
-      <circle
-        className="text-border/50"
-        cx={CENTER}
-        cy={CENTER}
-        fill="none"
-        r={radius}
-        stroke="currentColor"
-        strokeWidth={STROKE}
-      />
-      {fraction !== null && (
-        <circle
-          className={over ? "text-blood" : color}
-          cx={CENTER}
-          cy={CENTER}
-          fill="none"
-          r={radius}
-          stroke="currentColor"
-          strokeDasharray={c}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          strokeWidth={STROKE}
-          style={{ transition: "stroke-dashoffset 700ms var(--ease-spring)" }}
-          transform={`rotate(-90 ${CENTER} ${CENTER})`}
-        />
-      )}
-    </>
-  );
-}
+/* ------------------------------------------------------------------ */
+/* Hero calorie dial                                                  */
+/* ------------------------------------------------------------------ */
 
-function Stat({
-  label,
-  color,
+function CalorieDial({
   consumed,
   target,
-  unit,
+  reduced,
 }: {
-  label: string;
-  color: string;
   consumed: number;
   target: number | null;
-  unit: string;
+  reduced: boolean;
 }) {
+  const [open, setOpen] = useState(false);
+  const titleId = useId();
+
+  const hasTarget = target != null && target > 0;
+  const fraction = hasTarget ? consumed / (target as number) : 0;
+  const over = hasTarget && consumed > (target as number);
+  const remaining = hasTarget ? (target as number) - consumed : 0;
+  const percent = pct(consumed, target);
+
+  // Visible sweep is clamped to a full ring; overage is signaled by color.
+  const sweep = Math.max(0, Math.min(1, fraction));
+  const dashOffset = CIRC * (1 - sweep);
+
+  const ariaLabel = hasTarget
+    ? over
+      ? `Calories: ${round(consumed)} of ${round(target as number)} kcal, ${round(consumed - (target as number))} over target. Tap for details.`
+      : `Calories: ${round(consumed)} of ${round(target as number)} kcal, ${round(remaining)} remaining. Tap for details.`
+    : `Calories: ${round(consumed)} kcal logged today. Tap for details.`;
+
+  // Center copy.
+  let big: string;
+  let sub: string;
+  let bigClass = "fill-foreground";
+  if (!hasTarget) {
+    big = round(consumed).toLocaleString();
+    sub = "kcal today";
+  } else if (over) {
+    big = round(consumed - (target as number)).toLocaleString();
+    sub = "kcal over";
+    bigClass = "fill-blood";
+  } else {
+    big = round(remaining).toLocaleString();
+    sub = "remaining";
+  }
+
   return (
-    <div>
-      <dt className="flex items-center gap-1.5 text-muted-foreground text-xs">
-        <span className={`size-2 rounded-full ${color}`} />
-        {label}
-      </dt>
-      <dd className="font-display font-semibold text-lg">
-        {Math.round(consumed)}
-        <span className="ml-1 text-muted-foreground text-xs">
-          {target ? `/ ${target}${unit}` : unit || "g"}
-        </span>
-      </dd>
+    <div className="flex flex-col items-center">
+      <button
+        aria-expanded={open}
+        aria-label={ariaLabel}
+        className="group relative rounded-full outline-none transition-transform focus-visible:ring-2 focus-visible:ring-blood focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98]"
+        onClick={() => setOpen((v) => !v)}
+        type="button"
+      >
+        <svg
+          aria-labelledby={titleId}
+          height={SIZE}
+          role="img"
+          viewBox={`0 0 ${SIZE} ${SIZE}`}
+          width={SIZE}
+        >
+          <title id={titleId}>{ariaLabel}</title>
+          {/* Track */}
+          <circle
+            className="text-border/60"
+            cx={CENTER}
+            cy={CENTER}
+            fill="none"
+            r={RADIUS}
+            stroke="currentColor"
+            strokeWidth={STROKE}
+          />
+          {/* Fill */}
+          {(hasTarget || consumed > 0) && (
+            <motion.circle
+              animate={{
+                strokeDashoffset: hasTarget ? dashOffset : CIRC * 0.12,
+              }}
+              className="text-blood"
+              cx={CENTER}
+              cy={CENTER}
+              fill="none"
+              initial={{
+                strokeDashoffset: reduced
+                  ? hasTarget
+                    ? dashOffset
+                    : CIRC * 0.12
+                  : CIRC,
+              }}
+              r={RADIUS}
+              stroke="currentColor"
+              strokeDasharray={CIRC}
+              strokeLinecap="round"
+              strokeWidth={STROKE}
+              style={{ opacity: hasTarget ? 1 : 0.45 }}
+              transform={`rotate(-90 ${CENTER} ${CENTER})`}
+              transition={{ duration: reduced ? 0 : 1, ease: EASE }}
+            />
+          )}
+          {/* Center text */}
+          <text
+            className={`${bigClass} font-display font-bold`}
+            dominantBaseline="middle"
+            fontSize="34"
+            textAnchor="middle"
+            x={CENTER}
+            y={CENTER - 8}
+          >
+            {big}
+          </text>
+          <text
+            className="fill-muted-foreground"
+            dominantBaseline="middle"
+            fontSize="13"
+            textAnchor="middle"
+            x={CENTER}
+            y={CENTER + 18}
+          >
+            {sub}
+          </text>
+        </svg>
+        {/* hover/focus affordance dot */}
+        <span
+          aria-hidden
+          className="-bottom-0.5 -translate-x-1/2 absolute left-1/2 size-1.5 rounded-full bg-muted-foreground/40 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+        />
+      </button>
+
+      {/* Inline detail — calories */}
+      <motion.div
+        animate={{ height: open ? "auto" : 0, opacity: open ? 1 : 0 }}
+        className="overflow-hidden"
+        initial={false}
+        transition={{ duration: reduced ? 0 : 0.28, ease: EASE }}
+      >
+        <div className="mt-3 flex items-center gap-4 rounded-xl border border-border bg-background/60 px-4 py-2.5 text-sm">
+          <Detail label="Eaten" value={`${round(consumed).toLocaleString()}`} />
+          {hasTarget && (
+            <>
+              <Divider />
+              <Detail
+                label="Target"
+                value={`${round(target as number).toLocaleString()}`}
+              />
+              <Divider />
+              <Detail
+                accent={over ? "text-blood" : "text-emerald-500"}
+                label={over ? "Over" : "Left"}
+                value={`${round(Math.abs(remaining)).toLocaleString()}`}
+              />
+              {percent != null && (
+                <>
+                  <Divider />
+                  <Detail label="of goal" value={`${percent}%`} />
+                </>
+              )}
+            </>
+          )}
+        </div>
+      </motion.div>
     </div>
   );
 }
+
+function Detail({
+  label,
+  value,
+  accent = "text-foreground",
+}: {
+  label: string;
+  value: string;
+  accent?: string;
+}) {
+  return (
+    <div className="flex flex-col">
+      <span className={`font-display font-semibold text-base ${accent}`}>
+        {value}
+      </span>
+      <span className="text-muted-foreground text-xs">{label}</span>
+    </div>
+  );
+}
+
+function Divider() {
+  return <span aria-hidden className="h-7 w-px shrink-0 bg-border" />;
+}
+
+/* ------------------------------------------------------------------ */
+/* Macro row                                                          */
+/* ------------------------------------------------------------------ */
+
+function MacroBar({
+  label,
+  consumed,
+  target,
+  textColor,
+  barColor,
+  reduced,
+}: {
+  label: string;
+  consumed: number;
+  target: number | null;
+  textColor: string;
+  barColor: string;
+  reduced: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  const hasTarget = target != null && target > 0;
+  const fraction = hasTarget ? consumed / (target as number) : 0;
+  const over = hasTarget && consumed > (target as number);
+  const remaining = hasTarget ? (target as number) - consumed : 0;
+  const percent = pct(consumed, target);
+  const width = hasTarget
+    ? Math.max(0, Math.min(1, fraction)) * 100
+    : consumed > 0
+      ? 100
+      : 0;
+
+  const hint = hasTarget
+    ? over
+      ? `${round(consumed - (target as number))}g over`
+      : `${round(remaining)}g left`
+    : "no goal set";
+
+  const ariaLabel = hasTarget
+    ? `${label}: ${round(consumed)} of ${round(target as number)} grams, ${hint}. Tap for details.`
+    : `${label}: ${round(consumed)} grams logged. Tap for details.`;
+
+  return (
+    <button
+      aria-expanded={open}
+      aria-label={ariaLabel}
+      className="group block w-full rounded-xl px-2 py-2 text-left outline-none transition-colors hover:bg-background/60 focus-visible:ring-2 focus-visible:ring-blood/70"
+      onClick={() => setOpen((v) => !v)}
+      type="button"
+    >
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="flex items-center gap-2">
+          <span aria-hidden className={`size-2.5 rounded-full ${barColor}`} />
+          <span className="font-medium text-foreground text-sm">{label}</span>
+        </span>
+        <span className="font-display font-semibold text-base tabular-nums">
+          {round(consumed)}
+          <span className="text-muted-foreground text-xs">
+            {hasTarget ? ` / ${round(target as number)}g` : "g"}
+          </span>
+        </span>
+      </div>
+
+      {/* Track + fill */}
+      <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-border/60">
+        <motion.div
+          animate={{ width: `${width}%` }}
+          className={`h-full rounded-full ${over ? "bg-blood" : barColor}`}
+          initial={{ width: reduced ? `${width}%` : 0 }}
+          transition={{ duration: reduced ? 0 : 0.9, ease: EASE }}
+        />
+      </div>
+
+      <div className="mt-1.5 flex items-center justify-between">
+        <span
+          className={`text-xs ${
+            over
+              ? "text-blood"
+              : hasTarget
+                ? "text-emerald-500"
+                : "text-muted-foreground"
+          }`}
+        >
+          {hint}
+        </span>
+        {percent != null && (
+          <span
+            className={`text-xs tabular-nums ${over ? "text-blood" : textColor}`}
+          >
+            {percent}%
+          </span>
+        )}
+      </div>
+
+      {/* Inline detail */}
+      <motion.div
+        animate={{ height: open ? "auto" : 0, opacity: open ? 1 : 0 }}
+        className="overflow-hidden"
+        initial={false}
+        transition={{ duration: reduced ? 0 : 0.28, ease: EASE }}
+      >
+        <div className="mt-2 flex items-center gap-4 rounded-lg border border-border bg-background/60 px-3 py-2 text-sm">
+          <Detail label="Eaten" value={`${round(consumed)}g`} />
+          {hasTarget && (
+            <>
+              <Divider />
+              <Detail label="Target" value={`${round(target as number)}g`} />
+              <Divider />
+              <Detail
+                accent={over ? "text-blood" : "text-emerald-500"}
+                label={over ? "Over" : "Left"}
+                value={`${round(Math.abs(remaining))}g`}
+              />
+            </>
+          )}
+        </div>
+      </motion.div>
+    </button>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Public component                                                   */
+/* ------------------------------------------------------------------ */
 
 export function MacroRings({
   caloriesConsumed,
@@ -110,103 +372,44 @@ export function MacroRings({
   fatConsumed,
   fatTarget,
 }: RingProps) {
-  const rCal = CENTER - STROKE / 2 - 2;
-  const rPro = rCal - STROKE - GAP;
-  const rCarb = rPro - STROKE - GAP;
-  const rFat = rCarb - STROKE - GAP;
-
-  const calFrac = caloriesTarget ? caloriesConsumed / caloriesTarget : null;
-  const proFrac = proteinTarget ? proteinConsumed / proteinTarget : null;
-  const carbFrac = carbsTarget ? carbsConsumed / carbsTarget : null;
-  const fatFrac = fatTarget ? fatConsumed / fatTarget : null;
+  const reduced = useReducedMotion() ?? false;
 
   return (
-    <div className="flex flex-wrap items-center gap-5">
-      <svg
-        aria-label="Today's calories and macros"
-        className="shrink-0"
-        height={SIZE}
-        role="img"
-        viewBox={`0 0 ${SIZE} ${SIZE}`}
-        width={SIZE}
-      >
-        <title>Today's calories and macros</title>
-        <Ring
-          color="text-blood"
-          fraction={calFrac}
-          over={(calFrac ?? 0) > 1}
-          radius={rCal}
-        />
-        <Ring
-          color="text-sky-400"
-          fraction={proFrac}
-          over={(proFrac ?? 0) > 1}
-          radius={rPro}
-        />
-        <Ring
-          color="text-amber-400"
-          fraction={carbFrac}
-          over={(carbFrac ?? 0) > 1}
-          radius={rCarb}
-        />
-        <Ring
-          color="text-violet-400"
-          fraction={fatFrac}
-          over={(fatFrac ?? 0) > 1}
-          radius={rFat}
-        />
-        <text
-          className="fill-foreground font-display font-bold"
-          dominantBaseline="middle"
-          fontSize="22"
-          textAnchor="middle"
-          x={CENTER}
-          y={CENTER - 6}
-        >
-          {Math.round(caloriesConsumed)}
-        </text>
-        <text
-          className="fill-muted-foreground"
-          dominantBaseline="middle"
-          fontSize="10"
-          textAnchor="middle"
-          x={CENTER}
-          y={CENTER + 13}
-        >
-          {caloriesTarget ? `/ ${caloriesTarget} kcal` : "kcal today"}
-        </text>
-      </svg>
-
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-        <Stat
-          color="bg-blood"
+    <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-8">
+      <div className="flex shrink-0 justify-center sm:justify-start">
+        <CalorieDial
           consumed={caloriesConsumed}
-          label="Calories"
+          reduced={reduced}
           target={caloriesTarget}
-          unit=""
         />
-        <Stat
-          color="bg-sky-400"
+      </div>
+
+      <div className="flex w-full flex-col gap-1">
+        <MacroBar
+          barColor="bg-sky-400"
           consumed={proteinConsumed}
           label="Protein"
+          reduced={reduced}
           target={proteinTarget}
-          unit="g"
+          textColor="text-sky-400"
         />
-        <Stat
-          color="bg-amber-400"
+        <MacroBar
+          barColor="bg-amber-400"
           consumed={carbsConsumed}
           label="Carbs"
+          reduced={reduced}
           target={carbsTarget}
-          unit="g"
+          textColor="text-amber-400"
         />
-        <Stat
-          color="bg-violet-400"
+        <MacroBar
+          barColor="bg-violet-400"
           consumed={fatConsumed}
           label="Fat"
+          reduced={reduced}
           target={fatTarget}
-          unit="g"
+          textColor="text-violet-400"
         />
-      </dl>
+      </div>
     </div>
   );
 }

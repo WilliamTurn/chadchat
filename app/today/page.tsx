@@ -1,6 +1,7 @@
 import {
   Camera,
   CreditCard,
+  Droplet,
   Dumbbell,
   Flame,
   LineChart,
@@ -14,13 +15,13 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
+import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { MacroRings } from "@/components/nutrition/macro-rings";
 import { WeightChart } from "@/components/progress/weight-chart";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { GoalList } from "@/components/today/goal-list";
 import { PlanList } from "@/components/today/plan-list";
 import { TargetEditor } from "@/components/today/target-editor";
-import { WaterCounter } from "@/components/today/water-counter";
+import { WaterTracker } from "@/components/today/water-tracker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
@@ -44,7 +45,10 @@ function round1(n: number): number {
 }
 
 /** Pull a value from the "## Client file" block of Chad's memory profile. */
-function clientField(profile: string | null | undefined, label: string): string | null {
+function clientField(
+  profile: string | null | undefined,
+  label: string
+): string | null {
   if (!profile) {
     return null;
   }
@@ -206,8 +210,14 @@ async function TodayContent() {
         );
 
   // Today's intake (Pro).
-  const caloriesToday = todaysMeals.reduce((sum, m) => sum + (m.calories ?? 0), 0);
-  const proteinToday = todaysMeals.reduce((sum, m) => sum + (m.protein ?? 0), 0);
+  const caloriesToday = todaysMeals.reduce(
+    (sum, m) => sum + (m.calories ?? 0),
+    0
+  );
+  const proteinToday = todaysMeals.reduce(
+    (sum, m) => sum + (m.protein ?? 0),
+    0
+  );
   const carbsToday = todaysMeals.reduce((sum, m) => sum + (m.carbs ?? 0), 0);
   const fatToday = todaysMeals.reduce((sum, m) => sum + (m.fat ?? 0), 0);
 
@@ -269,14 +279,16 @@ async function TodayContent() {
         {/* Streak strip */}
         <div className="relative mt-6 flex items-center gap-3 rounded-xl border border-border bg-background/40 px-4 py-3">
           <Flame
-            className={streak > 0 ? "size-6 text-blood" : "size-6 text-muted-foreground"}
+            className={
+              streak > 0 ? "size-7 text-blood" : "size-7 text-muted-foreground"
+            }
             strokeWidth={2.5}
           />
           <div>
-            <div className="font-display font-bold text-xl leading-none">
+            <div className="font-display font-bold text-2xl leading-none">
               {streak} day{streak === 1 ? "" : "s"}
             </div>
-            <div className="text-muted-foreground text-xs">
+            <div className="mt-1 text-muted-foreground text-sm">
               {streak > 0
                 ? "Current streak — keep showing up."
                 : "No streak yet. Log something today to start one."}
@@ -300,51 +312,69 @@ async function TodayContent() {
         </Card>
       </div>
 
-      {/* Fuel + Weight (Pro) */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {isPro ? (
-          <Card>
-            <div className="flex items-center justify-between">
-              <CardTitle icon={<Utensils className="size-4 text-blood" />}>
-                Today's fuel
-              </CardTitle>
-              <TargetEditor
-                calories={target?.calories ?? null}
-                carbs={target?.carbs ?? null}
-                fat={target?.fat ?? null}
-                protein={target?.protein ?? null}
-              />
-            </div>
-            <div className="mt-2">
-              <MacroRings
-                caloriesConsumed={caloriesToday}
-                caloriesTarget={target?.calories ?? null}
-                carbsConsumed={carbsToday}
-                carbsTarget={target?.carbs ?? null}
-                fatConsumed={fatToday}
-                fatTarget={target?.fat ?? null}
-                proteinConsumed={proteinToday}
-                proteinTarget={target?.protein ?? null}
-              />
-            </div>
-            <p className="mt-3 text-muted-foreground text-xs">
+      {/* Today's fuel (Pro) — the daily centerpiece, full width */}
+      {isPro ? (
+        <Card>
+          <div className="flex items-center justify-between">
+            <CardTitle icon={<Utensils className="size-4 text-blood" />}>
+              Today's fuel
+            </CardTitle>
+            <TargetEditor
+              calories={target?.calories ?? null}
+              carbs={target?.carbs ?? null}
+              fat={target?.fat ?? null}
+              protein={target?.protein ?? null}
+            />
+          </div>
+          <div className="mt-2">
+            <MacroRings
+              caloriesConsumed={caloriesToday}
+              caloriesTarget={target?.calories ?? null}
+              carbsConsumed={carbsToday}
+              carbsTarget={target?.carbs ?? null}
+              fatConsumed={fatToday}
+              fatTarget={target?.fat ?? null}
+              proteinConsumed={proteinToday}
+              proteinTarget={target?.protein ?? null}
+            />
+          </div>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-muted-foreground text-sm">
               {todaysMeals.length > 0
                 ? `${todaysMeals.length} meal${todaysMeals.length === 1 ? "" : "s"} logged today`
-                : "No meals logged today."}
+                : "No meals logged yet today."}
             </p>
-            <WaterCounter totalMl={waterMl} />
-            <Button asChild className="mt-3 gap-1.5" size="sm" variant="outline">
+            <Button asChild className="gap-1.5" size="sm" variant="outline">
               <Link href="/nutrition">
-                <Camera className="size-3.5" />
+                <Camera className="size-4" />
                 Log a meal
               </Link>
             </Button>
-          </Card>
+          </div>
+          {target?.calories == null && (
+            <p className="mt-2 text-muted-foreground text-xs">
+              Tip: set a daily calorie & macro target (top-right) so your rings
+              fill toward a goal.
+            </p>
+          )}
+        </Card>
+      ) : (
+        <LockedCard
+          icon={<Utensils className="size-4" />}
+          text="Snap a meal, fridge, or pantry and Chad grades the macros, then tracks your calories and protein against a daily target. Pro only."
+          title="Today's fuel"
+        />
+      )}
+
+      {/* Hydration + Weight (Pro) */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {isPro ? (
+          <WaterTracker totalMl={waterMl} />
         ) : (
           <LockedCard
-            icon={<Utensils className="size-4" />}
-            text="Snap a meal, fridge, or pantry and Chad grades the macros. Pro only."
-            title="Today's fuel"
+            icon={<Droplet className="size-4" />}
+            text="Track your daily water against a goal with one-tap logging. Pro only."
+            title="Hydration"
           />
         )}
 
@@ -384,7 +414,12 @@ async function TodayContent() {
               )}
             </div>
             {points.length > 0 && (
-              <Button asChild className="mt-3 gap-1.5" size="sm" variant="outline">
+              <Button
+                asChild
+                className="mt-3 gap-1.5"
+                size="sm"
+                variant="outline"
+              >
                 <Link href="/progress">
                   <LineChart className="size-3.5" />
                   Log progress
@@ -403,12 +438,36 @@ async function TodayContent() {
 
       {/* Quick actions */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <QuickAction href="/" icon={<MessageSquare className="size-4" />} label="Talk to Chad" />
-        <QuickAction href="/workouts" icon={<Dumbbell className="size-4" />} label="Workouts" />
-        <QuickAction href="/nutrition" icon={<Camera className="size-4" />} label="Nutrition" />
-        <QuickAction href="/kitchen" icon={<Refrigerator className="size-4" />} label="Kitchen" />
-        <QuickAction href="/progress" icon={<LineChart className="size-4" />} label="Progress" />
-        <QuickAction href="/account" icon={<CreditCard className="size-4" />} label="Account" />
+        <QuickAction
+          href="/"
+          icon={<MessageSquare className="size-4" />}
+          label="Talk to Chad"
+        />
+        <QuickAction
+          href="/workouts"
+          icon={<Dumbbell className="size-4" />}
+          label="Workouts"
+        />
+        <QuickAction
+          href="/nutrition"
+          icon={<Camera className="size-4" />}
+          label="Nutrition"
+        />
+        <QuickAction
+          href="/kitchen"
+          icon={<Refrigerator className="size-4" />}
+          label="Kitchen"
+        />
+        <QuickAction
+          href="/progress"
+          icon={<LineChart className="size-4" />}
+          label="Progress"
+        />
+        <QuickAction
+          href="/account"
+          icon={<CreditCard className="size-4" />}
+          label="Account"
+        />
       </div>
     </div>
   );

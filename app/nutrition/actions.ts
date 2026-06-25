@@ -116,7 +116,8 @@ export async function logMealManually(
     };
   }
 
-  const { title, meal, recordedAt, calories, protein, carbs, fat } = parsed.data;
+  const { title, meal, recordedAt, calories, protein, carbs, fat } =
+    parsed.data;
 
   await createMealAnalysis({
     userId: user.id,
@@ -217,6 +218,31 @@ export async function removeWater(): Promise<NutritionActionState> {
     return { ok: false, error: "Not authorized." };
   }
   await deleteLatestWaterLog({ userId: user.id, since: startOfToday() });
+  revalidatePath("/today");
+  return { ok: true };
+}
+
+/** Largest single log the water tracker accepts (a 1 L jug). Guards against a
+ *  fat-fingered custom amount blowing out the day's total. */
+const MAX_WATER_ML = 2000;
+
+/**
+ * Log an arbitrary amount of water (in ml) for today — backs the water
+ * tracker's quick-add buttons (glass / bottle / custom). Amount is clamped to a
+ * sane single-serving range so a typo can't poison the daily total.
+ */
+export async function logWaterAmount(
+  amountMl: number
+): Promise<NutritionActionState> {
+  const user = await requirePro();
+  if (!user) {
+    return { ok: false, error: "Not authorized." };
+  }
+  if (!Number.isFinite(amountMl) || amountMl <= 0) {
+    return { ok: false, error: "Enter how much you drank." };
+  }
+  const clamped = Math.min(Math.round(amountMl), MAX_WATER_ML);
+  await addWaterLog({ userId: user.id, amountMl: clamped });
   revalidatePath("/today");
   return { ok: true };
 }
