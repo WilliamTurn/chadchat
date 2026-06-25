@@ -12,7 +12,11 @@ import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { auth } from "@/app/(auth)/auth";
 import { getEntitlements, getUsageWarning } from "@/lib/ai/entitlements";
-import { formatMemoryForPrompt, maybeUpdateUserMemory } from "@/lib/ai/memory";
+import {
+  formatGoalsForPrompt,
+  formatMemoryForPrompt,
+  maybeUpdateUserMemory,
+} from "@/lib/ai/memory";
 import {
   allowedModelIds,
   chatModels,
@@ -25,11 +29,15 @@ import { createDocument } from "@/lib/ai/tools/create-document";
 import { editDocument } from "@/lib/ai/tools/edit-document";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
+import { saveGoal } from "@/lib/ai/tools/save-goal";
+import { savePlan } from "@/lib/ai/tools/save-plan";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { isProductionEnvironment } from "@/lib/constants";
 import {
   createStreamId,
   deleteChatById,
+  getActiveGoalsByUserId,
+  getActivePlansByUserId,
   getChatById,
   getMessageCountByUserId,
   getMessagesByChatId,
@@ -202,6 +210,14 @@ export async function POST(request: Request) {
       memoryBlock = formatMemoryForPrompt(memoryRecord?.profile);
     }
 
+    // The client's saved goals & plans are explicit records (not memory), so
+    // Chad sees them in every chat regardless of the memory toggle.
+    const [activeGoals, activePlans] = await Promise.all([
+      getActiveGoalsByUserId(session.user.id),
+      getActivePlansByUserId(session.user.id),
+    ]);
+    const goalsBlock = formatGoalsForPrompt(activeGoals, activePlans);
+
     if (message?.role === "user") {
       await saveMessages({
         messages: [
@@ -230,7 +246,12 @@ export async function POST(request: Request) {
       execute: async ({ writer: dataStream }) => {
         const result = streamText({
           model: getLanguageModel(chatModel),
-          system: systemPrompt({ requestHints, supportsTools, memory: memoryBlock }),
+          system: systemPrompt({
+            requestHints,
+            supportsTools,
+            memory: memoryBlock,
+            goals: goalsBlock,
+          }),
           messages: modelMessages,
           stopWhen: stepCountIs(5),
           experimental_activeTools:
@@ -242,6 +263,8 @@ export async function POST(request: Request) {
                   "editDocument",
                   "updateDocument",
                   "requestSuggestions",
+                  "saveGoal",
+                  "savePlan",
                 ],
           providerOptions: {
             ...(modelConfig?.gatewayOrder && {
@@ -269,6 +292,8 @@ export async function POST(request: Request) {
               dataStream,
               modelId: chatModel,
             }),
+            saveGoal: saveGoal({ session, chatId: id }),
+            savePlan: savePlan({ session, chatId: id }),
           },
           experimental_telemetry: {
             isEnabled: isProductionEnvironment,

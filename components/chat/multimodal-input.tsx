@@ -10,7 +10,7 @@ import {
   LockIcon,
   WrenchIcon,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
   type ChangeEvent,
@@ -134,13 +134,26 @@ function PureMultimodalInput({
     false
   );
 
+  // "Discuss with Chad" links arrive as /?prompt=… — read the param as a stable
+  // string (not the searchParams object, whose identity changes every render and
+  // would re-run the seed effect and clobber the prefill).
+  const promptParam = useSearchParams().get("prompt");
+  const didPrefillFromUrl = useRef(false);
+
   useEffect(() => {
+    // Seed the composer with the URL prompt once, taking precedence over any
+    // saved draft.
+    if (promptParam && !didPrefillFromUrl.current) {
+      didPrefillFromUrl.current = true;
+      setInput(promptParam);
+      return;
+    }
     if (textareaRef.current) {
       const domValue = textareaRef.current.value;
       const finalValue = domValue || localStorageInput || "";
       setInput(finalValue);
     }
-  }, [localStorageInput, setInput]);
+  }, [localStorageInput, setInput, promptParam]);
 
   useEffect(() => {
     setLocalStorageInput(input);

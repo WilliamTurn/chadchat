@@ -1,13 +1,11 @@
 import {
   Camera,
   CreditCard,
-  Dumbbell,
   Flame,
   LineChart,
   Lock,
   MessageSquare,
   Refrigerator,
-  Target,
   Utensils,
 } from "lucide-react";
 import Link from "next/link";
@@ -18,14 +16,16 @@ import { auth } from "@/app/(auth)/auth";
 import { MacroRings } from "@/components/nutrition/macro-rings";
 import { WeightChart } from "@/components/progress/weight-chart";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
-import { GoalEditor } from "@/components/today/goal-editor";
-import { PlanViewer } from "@/components/today/plan-viewer";
+import { GoalList } from "@/components/today/goal-list";
+import { PlanList } from "@/components/today/plan-list";
 import { TargetEditor } from "@/components/today/target-editor";
 import { WaterCounter } from "@/components/today/water-counter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import {
+  getActiveGoalsByUserId,
+  getActivePlansByUserId,
   getMealsSince,
   getNutritionTarget,
   getProgressEntriesByUserId,
@@ -126,20 +126,41 @@ async function TodayContent() {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
-  const [memory, entries, todaysMeals, target, waterMl] = await Promise.all([
-    getUserMemory(user.id),
-    isPro ? getProgressEntriesByUserId(user.id) : Promise.resolve([]),
-    isPro ? getMealsSince(user.id, startOfToday) : Promise.resolve([]),
-    isPro ? getNutritionTarget(user.id) : Promise.resolve(undefined),
-    isPro ? getWaterMlSince(user.id, startOfToday) : Promise.resolve(0),
-  ]);
+  const [memory, entries, todaysMeals, target, waterMl, goals, plans] =
+    await Promise.all([
+      getUserMemory(user.id),
+      isPro ? getProgressEntriesByUserId(user.id) : Promise.resolve([]),
+      isPro ? getMealsSince(user.id, startOfToday) : Promise.resolve([]),
+      isPro ? getNutritionTarget(user.id) : Promise.resolve(undefined),
+      isPro ? getWaterMlSince(user.id, startOfToday) : Promise.resolve(0),
+      getActiveGoalsByUserId(user.id),
+      getActivePlansByUserId(user.id),
+    ]);
+
+  // Strip the DB rows down to the serializable shape the client cards need.
+  const goalItems = goals.map((g) => ({
+    id: g.id,
+    title: g.title,
+    detail: g.detail,
+    targetDate: g.targetDate,
+    status: g.status,
+    metric: g.metric,
+    startValue: g.startValue,
+    targetValue: g.targetValue,
+    unit: g.unit,
+  }));
+  const planItems = plans.map((p) => ({
+    id: p.id,
+    title: p.title,
+    detail: p.detail,
+    kind: p.kind,
+    status: p.status,
+  }));
 
   const profile = memory?.profile ?? null;
   const nameField = clientField(profile, "Name");
   const firstName = nameField ? nameField.split(/\s+/)[0] : null;
   const goal = clientField(profile, "Primary goal");
-  const deadline = clientField(profile, "Target / deadline");
-  const phase = clientField(profile, "Week / phase");
   const workoutPlan = clientField(profile, "Current workout plan");
 
   // Weight summary (Pro).
@@ -164,6 +185,24 @@ async function TodayContent() {
     currentWeight != null && startWeight != null
       ? round1(currentWeight - startWeight)
       : null;
+
+  // The target from an active weight goal, converted into the displayed unit,
+  // so the chart can draw the goal-weight line.
+  const weightGoal = goalItems.find(
+    (g) => g.metric === "weight" && g.targetValue != null
+  );
+  const goalWeight =
+    weightGoal?.targetValue == null
+      ? null
+      : round1(
+          (weightGoal.unit ?? "").trim().toLowerCase().startsWith("k")
+            ? displayUnit === "kg"
+              ? weightGoal.targetValue
+              : weightGoal.targetValue * LB_PER_KG
+            : displayUnit === "lb"
+              ? weightGoal.targetValue
+              : weightGoal.targetValue / LB_PER_KG
+        );
 
   // Today's intake (Pro).
   const caloriesToday = todaysMeals.reduce((sum, m) => sum + (m.calories ?? 0), 0);
@@ -248,61 +287,15 @@ async function TodayContent() {
       {/* Goal + Training */}
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
-          <div className="flex items-start justify-between">
-            <CardTitle icon={<Target className="size-4 text-blood" />}>
-              Your goal
-            </CardTitle>
-            {goal && (
-              <GoalEditor deadline={deadline} goal={goal} phase={phase} />
-            )}
-          </div>
-          {goal ? (
-            <>
-              <p className="font-medium text-lg leading-snug">{goal}</p>
-              {deadline && (
-                <p className="mt-1 text-muted-foreground text-sm">
-                  Target: {deadline}
-                </p>
-              )}
-              {phase && (
-                <Badge className="mt-3 w-fit" variant="secondary">
-                  {phase}
-                </Badge>
-              )}
-            </>
-          ) : (
-            <div className="flex flex-col items-start gap-3">
-              <p className="text-muted-foreground text-sm">
-                Chad doesn't know your goal yet. Set it here, or tell him in chat
-                and he'll build the plan.
-              </p>
-              <GoalEditor
-                deadline={deadline}
-                goal={goal}
-                phase={phase}
-                variant="cta"
-              />
-            </div>
-          )}
+          <GoalList
+            currentWeight={currentWeight}
+            goals={goalItems}
+            memoryGoalHint={goal}
+          />
         </Card>
 
         <Card>
-          <CardTitle icon={<Dumbbell className="size-4 text-blood" />}>
-            Your training
-          </CardTitle>
-          {workoutPlan ? (
-            <>
-              <p className="line-clamp-5 whitespace-pre-line text-sm leading-relaxed">
-                {workoutPlan}
-              </p>
-              <PlanViewer plan={workoutPlan} />
-            </>
-          ) : (
-            <EmptyHint
-              cta="Get your plan"
-              text="No training plan on file yet. Ask Chad to build your split."
-            />
-          )}
+          <PlanList memoryPlanHint={workoutPlan} plans={planItems} />
         </Card>
       </div>
 
@@ -376,7 +369,11 @@ async function TodayContent() {
             </div>
             <div className="mt-2">
               {points.length > 0 ? (
-                <WeightChart points={points} unit={displayUnit} />
+                <WeightChart
+                  goalWeight={goalWeight}
+                  points={points}
+                  unit={displayUnit}
+                />
               ) : (
                 <EmptyHint
                   cta="Log your weight"

@@ -22,6 +22,10 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_BASE_PATH: basePath,
   },
   cacheComponents: true,
+  // jspdf is a browser-only PDF lib (loaded lazily client-side for goal/plan
+  // export). Externalize it so its Node build — which pulls in a Web Worker
+  // path Turbopack can't bundle — isn't pulled into the server/SSR graph.
+  serverExternalPackages: ["jspdf"],
   devIndicators: false,
   poweredByHeader: false,
   reactCompiler: true,

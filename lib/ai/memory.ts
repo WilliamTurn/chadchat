@@ -2,8 +2,15 @@ import "server-only";
 
 import { generateText } from "ai";
 import { getUserMemory, upsertUserMemory } from "@/lib/db/queries";
+import type { Goal, Plan } from "@/lib/db/schema";
 import { memoryModel } from "./models";
 import { getLanguageModel } from "./providers";
+
+// Keep the injected goals/plans block tight so it never bloats the prompt:
+// only active records, capped count, each detail truncated.
+const MAX_GOALS_IN_PROMPT = 5;
+const MAX_PLANS_IN_PROMPT = 5;
+const MAX_DETAIL_CHARS_IN_PROMPT = 800;
 
 // Reliable Google Flash model for the background memory update. Memory is a
 // crucial, accuracy-sensitive task — we deliberately do NOT use the cheap title
@@ -105,6 +112,59 @@ export function formatMemoryForPrompt(profile: string | null | undefined): strin
 ${trimmed}
 
 Use what you know: skip re-asking for information you already have and pick up where you left off. If a detail looks stale or you have reason to doubt it, confirm it rather than assuming.`;
+}
+
+function truncateDetail(detail: string): string {
+  const trimmed = detail.trim();
+  if (trimmed.length <= MAX_DETAIL_CHARS_IN_PROMPT) {
+    return trimmed;
+  }
+  return `${trimmed.slice(0, MAX_DETAIL_CHARS_IN_PROMPT)}…`;
+}
+
+/**
+ * Format the user's active goals and plans for injection into Chad's system
+ * prompt. Unlike memory (a compressed summary), these are the explicit, full
+ * documents the user saved — so Chad references and builds on them directly.
+ * Loaded regardless of the memory toggle. Returns "" when there's nothing.
+ */
+export function formatGoalsForPrompt(
+  goals: Goal[],
+  plans: Plan[]
+): string {
+  const activeGoals = goals
+    .filter((g) => g.status === "active")
+    .slice(0, MAX_GOALS_IN_PROMPT);
+  const activePlans = plans
+    .filter((p) => p.status === "active")
+    .slice(0, MAX_PLANS_IN_PROMPT);
+
+  if (activeGoals.length === 0 && activePlans.length === 0) {
+    return "";
+  }
+
+  const sections: string[] = [];
+
+  if (activeGoals.length > 0) {
+    const lines = activeGoals.map((g) => {
+      const target = g.targetDate ? ` (target: ${g.targetDate})` : "";
+      const detail = g.detail.trim() ? `\n${truncateDetail(g.detail)}` : "";
+      return `- ${g.title}${target}${detail}`;
+    });
+    sections.push(`THIS CLIENT'S GOALS:\n${lines.join("\n")}`);
+  }
+
+  if (activePlans.length > 0) {
+    const lines = activePlans.map((p) => {
+      const detail = p.detail.trim() ? `\n${truncateDetail(p.detail)}` : "";
+      return `- [${p.kind}] ${p.title}${detail}`;
+    });
+    sections.push(`THIS CLIENT'S CURRENT PLANS:\n${lines.join("\n")}`);
+  }
+
+  return `GOALS & PLANS THIS CLIENT HAS SAVED IN THE APP (they set these deliberately — treat them as current and authoritative; reference and build on them, and don't re-ask for what's already here):
+
+${sections.join("\n\n")}`;
 }
 
 /**

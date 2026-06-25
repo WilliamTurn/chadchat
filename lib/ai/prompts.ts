@@ -121,21 +121,26 @@ export const systemPrompt = ({
   requestHints,
   supportsTools,
   memory,
+  goals,
 }: {
   requestHints: RequestHints;
   supportsTools: boolean;
   // Pre-formatted memory block (see lib/ai/memory.ts). Empty/undefined when the
   // user has memory turned off or has no profile yet.
   memory?: string;
+  // Pre-formatted active goals & plans block (see lib/ai/memory.ts
+  // formatGoalsForPrompt). Loaded regardless of the memory toggle.
+  goals?: string;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
   const memoryBlock = memory ? `\n\n${memory}` : "";
+  const goalsBlock = goals ? `\n\n${goals}` : "";
 
   if (!supportsTools) {
-    return `${regularPrompt}${memoryBlock}\n\n${requestPrompt}`;
+    return `${regularPrompt}${memoryBlock}${goalsBlock}\n\n${requestPrompt}`;
   }
 
-  return `${regularPrompt}${memoryBlock}\n\n${requestPrompt}\n\n${artifactsPrompt}`;
+  return `${regularPrompt}${memoryBlock}${goalsBlock}\n\n${requestPrompt}\n\n${artifactsPrompt}`;
 };
 
 export const codePrompt = `

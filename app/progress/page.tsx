@@ -14,11 +14,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import {
+  getActiveGoalsByUserId,
   getBodyMeasurementsByUserId,
   getProgressEntriesByUserId,
   getUserById,
 } from "@/lib/db/queries";
-import type { ProgressEntry } from "@/lib/db/schema";
+import type { Goal, ProgressEntry } from "@/lib/db/schema";
 
 function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
@@ -35,6 +36,22 @@ function convert(weight: number, from: "lb" | "kg", to: "lb" | "kg"): number {
 
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
+}
+
+/** The target weight (in `displayUnit`) from the user's active weight goal, if any. */
+function weightGoalTarget(
+  goals: Goal[],
+  displayUnit: "lb" | "kg"
+): number | null {
+  const wg = goals.find(
+    (g) => g.metric === "weight" && g.targetValue != null
+  );
+  if (!wg || wg.targetValue == null) {
+    return null;
+  }
+  const from: "lb" | "kg" =
+    (wg.unit ?? "").trim().toLowerCase().startsWith("k") ? "kg" : "lb";
+  return round1(convert(wg.targetValue, from, displayUnit));
 }
 
 export default function ProgressPage() {
@@ -111,9 +128,10 @@ function UpgradePrompt() {
 }
 
 async function Dashboard({ userId }: { userId: string }) {
-  const [entries, measurements] = await Promise.all([
+  const [entries, measurements, goals] = await Promise.all([
     getProgressEntriesByUserId(userId),
     getBodyMeasurementsByUserId(userId),
+    getActiveGoalsByUserId(userId),
   ]);
 
   const weighed = entries.filter(
@@ -131,6 +149,7 @@ async function Dashboard({ userId }: { userId: string }) {
   const start = points.at(0)?.weight ?? null;
   const change =
     current != null && start != null ? round1(current - start) : null;
+  const goalWeight = weightGoalTarget(goals, displayUnit);
 
   const photos = entries.filter((e) => e.photoUrl).reverse();
   const recent = [...entries].reverse();
@@ -160,7 +179,11 @@ async function Dashboard({ userId }: { userId: string }) {
       <section className="rounded-2xl border border-border bg-card p-6">
         <h2 className="mb-4 font-medium text-lg">Weight trend</h2>
         {points.length > 0 ? (
-          <WeightChart goalWeight={null} points={points} unit={displayUnit} />
+          <WeightChart
+            goalWeight={goalWeight}
+            points={points}
+            unit={displayUnit}
+          />
         ) : (
           <p className="text-muted-foreground text-sm">
             Log a weight below and your trend shows up here.

@@ -29,6 +29,7 @@ import {
   type DBMessage,
   document,
   emailVerificationToken,
+  type Goal,
   goal,
   type MealAnalysis,
   mealAnalysis,
@@ -36,6 +37,7 @@ import {
   type NutritionTarget,
   nutritionTarget,
   passwordResetToken,
+  type Plan,
   plan,
   type ProgressEntry,
   progressEntry,
@@ -822,6 +824,172 @@ export async function deleteBodyMeasurement({
       "bad_request:database",
       "Failed to delete measurement"
     );
+  }
+}
+
+// --- Goals & Plans (structured, multiple, Chad-aware) ---
+
+export async function createGoal(entry: {
+  userId: string;
+  title: string;
+  detail: string;
+  targetDate: string | null;
+  status: Goal["status"];
+  source: Goal["source"];
+  sourceChatId: string | null;
+  metric: Goal["metric"];
+  startValue: number | null;
+  targetValue: number | null;
+  unit: string | null;
+}): Promise<Goal> {
+  try {
+    const [created] = await db.insert(goal).values(entry).returning();
+    return created;
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to create goal");
+  }
+}
+
+/** A user's goals, newest first. */
+export async function getGoalsByUserId(userId: string): Promise<Goal[]> {
+  try {
+    return await db
+      .select()
+      .from(goal)
+      .where(eq(goal.userId, userId))
+      .orderBy(desc(goal.createdAt));
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get goals");
+  }
+}
+
+/** A user's active goals only — what Chad sees and the dashboard leads with. */
+export async function getActiveGoalsByUserId(userId: string): Promise<Goal[]> {
+  try {
+    return await db
+      .select()
+      .from(goal)
+      .where(and(eq(goal.userId, userId), eq(goal.status, "active")))
+      .orderBy(desc(goal.createdAt));
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get goals");
+  }
+}
+
+/** Edit one goal, scoped to its owner. */
+export async function updateGoal(entry: {
+  id: string;
+  userId: string;
+  title: string;
+  detail: string;
+  targetDate: string | null;
+  status: Goal["status"];
+  metric: Goal["metric"];
+  startValue: number | null;
+  targetValue: number | null;
+  unit: string | null;
+}): Promise<void> {
+  try {
+    const { id, userId, ...fields } = entry;
+    await db
+      .update(goal)
+      .set({ ...fields, updatedAt: new Date() })
+      .where(and(eq(goal.id, id), eq(goal.userId, userId)));
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to update goal");
+  }
+}
+
+/** Delete one goal, scoped to its owner. */
+export async function deleteGoal({
+  id,
+  userId,
+}: {
+  id: string;
+  userId: string;
+}): Promise<void> {
+  try {
+    await db.delete(goal).where(and(eq(goal.id, id), eq(goal.userId, userId)));
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to delete goal");
+  }
+}
+
+export async function createPlan(entry: {
+  userId: string;
+  title: string;
+  detail: string;
+  kind: Plan["kind"];
+  status: Plan["status"];
+  source: Plan["source"];
+  sourceChatId: string | null;
+}): Promise<Plan> {
+  try {
+    const [created] = await db.insert(plan).values(entry).returning();
+    return created;
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to create plan");
+  }
+}
+
+/** A user's plans, newest first. */
+export async function getPlansByUserId(userId: string): Promise<Plan[]> {
+  try {
+    return await db
+      .select()
+      .from(plan)
+      .where(eq(plan.userId, userId))
+      .orderBy(desc(plan.createdAt));
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get plans");
+  }
+}
+
+/** A user's active plans only — what Chad sees and the dashboard leads with. */
+export async function getActivePlansByUserId(userId: string): Promise<Plan[]> {
+  try {
+    return await db
+      .select()
+      .from(plan)
+      .where(and(eq(plan.userId, userId), eq(plan.status, "active")))
+      .orderBy(desc(plan.createdAt));
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get plans");
+  }
+}
+
+/** Edit one plan, scoped to its owner. */
+export async function updatePlan(entry: {
+  id: string;
+  userId: string;
+  title: string;
+  detail: string;
+  kind: Plan["kind"];
+  status: Plan["status"];
+}): Promise<void> {
+  try {
+    const { id, userId, ...fields } = entry;
+    await db
+      .update(plan)
+      .set({ ...fields, updatedAt: new Date() })
+      .where(and(eq(plan.id, id), eq(plan.userId, userId)));
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to update plan");
+  }
+}
+
+/** Delete one plan, scoped to its owner. */
+export async function deletePlan({
+  id,
+  userId,
+}: {
+  id: string;
+  userId: string;
+}): Promise<void> {
+  try {
+    await db.delete(plan).where(and(eq(plan.id, id), eq(plan.userId, userId)));
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to delete plan");
   }
 }
 

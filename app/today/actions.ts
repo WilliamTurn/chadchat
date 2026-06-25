@@ -3,10 +3,46 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/app/(auth)/auth";
 import { canAccessChad } from "@/lib/admin";
-import { getUserById, getUserMemory, upsertUserMemory } from "@/lib/db/queries";
+import {
+  createGoal,
+  createPlan,
+  deleteGoal,
+  deletePlan,
+  getUserById,
+  getUserMemory,
+  updateGoal,
+  updatePlan,
+  upsertUserMemory,
+} from "@/lib/db/queries";
+import type { User } from "@/lib/db/schema";
+import {
+  type CreateGoalInput,
+  createGoalSchema,
+  type CreatePlanInput,
+  createPlanSchema,
+  type UpdateGoalInput,
+  updateGoalSchema,
+  type UpdatePlanInput,
+  updatePlanSchema,
+} from "@/lib/validation/goals";
 import { saveGoalSchema, type SaveGoalInput } from "@/lib/validation/today";
 
 export type TodayActionState = { ok: boolean; error?: string };
+
+/** Shared gate: the signed-in user, only if they can access Chad. */
+async function requireChadUser(): Promise<
+  { user: User } | { error: string }
+> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { error: "Not signed in." };
+  }
+  const user = await getUserById(session.user.id);
+  if (!(user && canAccessChad(user))) {
+    return { error: "Not authorized." };
+  }
+  return { user };
+}
 
 // The fields Chad's memory "## Client file" block tracks, in order. Mirrors the
 // template in lib/ai/memory.ts so a user-set goal lands in the same structure
@@ -79,6 +115,146 @@ export async function saveGoal(
   profile = setClientField(profile, "Week / phase", phase ?? "");
 
   await upsertUserMemory(user.id, profile);
+  revalidatePath("/today");
+  return { ok: true };
+}
+
+// --- Structured goal/plan records (the full documents, not the memory summary) ---
+
+export async function saveGoalRecord(
+  input: CreateGoalInput
+): Promise<TodayActionState> {
+  const gate = await requireChadUser();
+  if ("error" in gate) {
+    return { ok: false, error: gate.error };
+  }
+  const parsed = createGoalSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.errors[0]?.message ?? "Couldn't save that.",
+    };
+  }
+  const d = parsed.data;
+  await createGoal({
+    userId: gate.user.id,
+    title: d.title,
+    detail: d.detail,
+    targetDate: d.targetDate ?? null,
+    status: d.status,
+    source: "user",
+    sourceChatId: null,
+    metric: d.metric ?? null,
+    startValue: d.startValue ?? null,
+    targetValue: d.targetValue ?? null,
+    unit: d.unit ?? null,
+  });
+  revalidatePath("/today");
+  return { ok: true };
+}
+
+export async function updateGoalRecord(
+  input: UpdateGoalInput
+): Promise<TodayActionState> {
+  const gate = await requireChadUser();
+  if ("error" in gate) {
+    return { ok: false, error: gate.error };
+  }
+  const parsed = updateGoalSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.errors[0]?.message ?? "Couldn't save that.",
+    };
+  }
+  const d = parsed.data;
+  await updateGoal({
+    id: d.id,
+    userId: gate.user.id,
+    title: d.title,
+    detail: d.detail,
+    targetDate: d.targetDate ?? null,
+    status: d.status,
+    metric: d.metric ?? null,
+    startValue: d.startValue ?? null,
+    targetValue: d.targetValue ?? null,
+    unit: d.unit ?? null,
+  });
+  revalidatePath("/today");
+  return { ok: true };
+}
+
+export async function removeGoal(id: string): Promise<TodayActionState> {
+  const gate = await requireChadUser();
+  if ("error" in gate) {
+    return { ok: false, error: gate.error };
+  }
+  await deleteGoal({ id, userId: gate.user.id });
+  revalidatePath("/today");
+  return { ok: true };
+}
+
+export async function savePlanRecord(
+  input: CreatePlanInput
+): Promise<TodayActionState> {
+  const gate = await requireChadUser();
+  if ("error" in gate) {
+    return { ok: false, error: gate.error };
+  }
+  const parsed = createPlanSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.errors[0]?.message ?? "Couldn't save that.",
+    };
+  }
+  const d = parsed.data;
+  await createPlan({
+    userId: gate.user.id,
+    title: d.title,
+    detail: d.detail,
+    kind: d.kind,
+    status: d.status,
+    source: "user",
+    sourceChatId: null,
+  });
+  revalidatePath("/today");
+  return { ok: true };
+}
+
+export async function updatePlanRecord(
+  input: UpdatePlanInput
+): Promise<TodayActionState> {
+  const gate = await requireChadUser();
+  if ("error" in gate) {
+    return { ok: false, error: gate.error };
+  }
+  const parsed = updatePlanSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.errors[0]?.message ?? "Couldn't save that.",
+    };
+  }
+  const d = parsed.data;
+  await updatePlan({
+    id: d.id,
+    userId: gate.user.id,
+    title: d.title,
+    detail: d.detail,
+    kind: d.kind,
+    status: d.status,
+  });
+  revalidatePath("/today");
+  return { ok: true };
+}
+
+export async function removePlan(id: string): Promise<TodayActionState> {
+  const gate = await requireChadUser();
+  if ("error" in gate) {
+    return { ok: false, error: gate.error };
+  }
+  await deletePlan({ id, userId: gate.user.id });
   revalidatePath("/today");
   return { ok: true };
 }

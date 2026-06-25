@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { removePlan } from "@/app/today/actions";
+import { removeGoal } from "@/app/today/actions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,23 +16,22 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { downloadPlanPdf } from "@/lib/pdf/goal-pdf";
-import type { EditablePlan } from "./plan-editor";
+import { downloadGoalPdf } from "@/lib/pdf/goal-pdf";
+import type { EditableGoal } from "./goal-editor";
 
-/** Read the full plan, download it as a PDF, discuss it with Chad, or delete it. */
-export function PlanViewer({ plan }: { plan: EditablePlan }) {
+/** Read the full goal, download it as a PDF, discuss it with Chad, or delete it. */
+export function GoalViewer({ goal }: { goal: EditableGoal }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  const kindLabel = plan.kind === "diet" ? "diet" : "training";
-  const discussPrompt = `Let's go over my ${kindLabel} plan: "${plan.title}". Is it still right for me, and how's it going?`;
+  const discussPrompt = `Let's review my goal: "${goal.title}". Where am I at, and what should I be doing right now to hit it?`;
 
   function onDelete() {
     startTransition(async () => {
-      const result = await removePlan(plan.id);
+      const result = await removeGoal(goal.id);
       if (result.ok) {
-        toast.success("Plan deleted.");
+        toast.success("Goal deleted.");
         setOpen(false);
         router.refresh();
       } else {
@@ -45,18 +44,18 @@ export function PlanViewer({ plan }: { plan: EditablePlan }) {
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         <Button className="px-0 text-blood" size="sm" variant="link">
-          View full plan
+          View
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{plan.title}</DialogTitle>
+          <DialogTitle>{goal.title}</DialogTitle>
           <DialogDescription>
-            Your {kindLabel} plan. Ask Chad in chat to change it.
+            {goal.targetDate ? `Target: ${goal.targetDate}` : "Your goal."}
           </DialogDescription>
         </DialogHeader>
         <div className="whitespace-pre-line text-sm leading-relaxed">
-          {plan.detail.trim() || "No details written yet. Hit edit to add them."}
+          {goal.detail.trim() || "No details written yet. Hit edit to add them."}
         </div>
         <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
           <Button
@@ -73,7 +72,7 @@ export function PlanViewer({ plan }: { plan: EditablePlan }) {
             <Button
               className="gap-1.5"
               onClick={() => {
-                downloadPlanPdf(plan).catch(() =>
+                downloadGoalPdf(goal).catch(() =>
                   toast.error("Couldn't generate the PDF.")
                 );
               }}
