@@ -380,3 +380,122 @@ export const waterLog = pgTable("WaterLog", {
 });
 
 export type WaterLog = InferSelectModel<typeof waterLog>;
+
+// --- Workout logging (executed sets/reps/weight, like Hevy/Strong) ---
+// A workout is a dated training session. Its exercises and their sets hang off
+// it (WorkoutExercise → WorkoutSet), so the dashboard can show the full thing,
+// compute PRs / volume, and let Chad reference what was actually trained. Every
+// child row also carries userId so deletes/queries stay cheaply owner-scoped.
+export const workout = pgTable("Workout", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  // Session label, e.g. "Push Day" or "Legs".
+  title: text("title").notNull(),
+  // When the session was trained (user-chosen; defaults to now in the UI).
+  performedAt: timestamp("performedAt").notNull(),
+  // Optional session length in seconds (from the in-app timer or typed in).
+  durationSeconds: integer("durationSeconds"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+export type Workout = InferSelectModel<typeof workout>;
+
+// One exercise performed within a workout. `exerciseName` + `muscleGroup` are
+// stored as a snapshot (not an FK to a library row) so the log is stable even
+// if a custom exercise is later renamed or deleted, and so PRs/trends can group
+// by name across sessions.
+export const workoutExercise = pgTable("WorkoutExercise", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  workoutId: uuid("workoutId")
+    .notNull()
+    .references(() => workout.id),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  exerciseName: text("exerciseName").notNull(),
+  muscleGroup: text("muscleGroup"),
+  // Order within the workout.
+  position: integer("position").notNull().default(0),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type WorkoutExercise = InferSelectModel<typeof workoutExercise>;
+
+// One set of one exercise. Weight is null for bodyweight moves; reps null for
+// timed work. `setType` distinguishes warmups from working sets so they don't
+// pollute PRs. `completed` mirrors the checkbox in the logger.
+export const workoutSet = pgTable("WorkoutSet", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  workoutExerciseId: uuid("workoutExerciseId")
+    .notNull()
+    .references(() => workoutExercise.id),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  position: integer("position").notNull().default(0),
+  weight: doublePrecision("weight"),
+  unit: varchar("unit", { enum: ["lb", "kg"] })
+    .notNull()
+    .default("lb"),
+  reps: integer("reps"),
+  // Rate of perceived exertion (6–10), optional.
+  rpe: doublePrecision("rpe"),
+  setType: varchar("setType", {
+    enum: ["warmup", "working", "dropset", "failure"],
+  })
+    .notNull()
+    .default("working"),
+  completed: boolean("completed").notNull().default(true),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type WorkoutSet = InferSelectModel<typeof workoutSet>;
+
+// A user's own exercises, added when the built-in library (a static catalog in
+// lib/workouts/exercise-library.ts) doesn't have what they want. The picker
+// shows the built-ins plus these.
+export const customExercise = pgTable("CustomExercise", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  name: text("name").notNull(),
+  muscleGroup: varchar("muscleGroup", {
+    enum: [
+      "chest",
+      "back",
+      "legs",
+      "shoulders",
+      "arms",
+      "core",
+      "glutes",
+      "fullBody",
+      "cardio",
+      "other",
+    ],
+  })
+    .notNull()
+    .default("other"),
+  equipment: varchar("equipment", {
+    enum: [
+      "barbell",
+      "dumbbell",
+      "machine",
+      "cable",
+      "bodyweight",
+      "kettlebell",
+      "bands",
+      "other",
+    ],
+  })
+    .notNull()
+    .default("other"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type CustomExercise = InferSelectModel<typeof customExercise>;

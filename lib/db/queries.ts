@@ -26,6 +26,8 @@ import {
   bodyMeasurement,
   type Chat,
   chat,
+  type CustomExercise,
+  customExercise,
   type DBMessage,
   document,
   emailVerificationToken,
@@ -50,6 +52,12 @@ import {
   userMemory,
   vote,
   waterLog,
+  type Workout,
+  workout,
+  type WorkoutExercise,
+  workoutExercise,
+  type WorkoutSet,
+  workoutSet,
 } from "./schema";
 import { generateHashedPassword } from "./utils";
 
@@ -491,6 +499,14 @@ export async function deleteUserByEmail(
       await tx
         .delete(bodyMeasurement)
         .where(eq(bodyMeasurement.userId, userId));
+
+      // Workout logs: sets → exercises → workouts, plus custom exercises.
+      await tx.delete(workoutSet).where(eq(workoutSet.userId, userId));
+      await tx
+        .delete(workoutExercise)
+        .where(eq(workoutExercise.userId, userId));
+      await tx.delete(workout).where(eq(workout.userId, userId));
+      await tx.delete(customExercise).where(eq(customExercise.userId, userId));
 
       // Any outstanding auth-email tokens.
       await tx
@@ -1848,6 +1864,286 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
     throw new ChatbotError(
       "bad_request:database",
       "Failed to get stream ids by chat id"
+    );
+  }
+}
+
+// --- Workout logging -------------------------------------------------------
+
+export type WorkoutWithChildren = Workout & {
+  exercises: (WorkoutExercise & { sets: WorkoutSet[] })[];
+};
+
+type WorkoutWriteInput = {
+  userId: string;
+  title: string;
+  performedAt: Date;
+  durationSeconds: number | null;
+  notes: string | null;
+  exercises: {
+    name: string;
+    muscleGroup: string | null;
+    notes: string | null;
+    sets: {
+      weight: number | null;
+      reps: number | null;
+      unit: WorkoutSet["unit"];
+      rpe: number | null;
+      setType: WorkoutSet["setType"];
+      completed: boolean;
+    }[];
+  }[];
+};
+
+/** Insert the workout's child exercises + sets inside an open transaction. */
+async function insertWorkoutChildren(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  workoutId: string,
+  input: WorkoutWriteInput
+): Promise<void> {
+  for (const [exIndex, ex] of input.exercises.entries()) {
+    const [createdEx] = await tx
+      .insert(workoutExercise)
+      .values({
+        workoutId,
+        userId: input.userId,
+        exerciseName: ex.name,
+        muscleGroup: ex.muscleGroup,
+        position: exIndex,
+        notes: ex.notes,
+      })
+      .returning();
+    if (ex.sets.length > 0) {
+      await tx.insert(workoutSet).values(
+        ex.sets.map((s, setIndex) => ({
+          workoutExerciseId: createdEx.id,
+          userId: input.userId,
+          position: setIndex,
+          weight: s.weight,
+          unit: s.unit,
+          reps: s.reps,
+          rpe: s.rpe,
+          setType: s.setType,
+          completed: s.completed,
+        }))
+      );
+    }
+  }
+}
+
+export async function createWorkout(input: WorkoutWriteInput): Promise<Workout> {
+  try {
+    return await db.transaction(async (tx) => {
+      const [created] = await tx
+        .insert(workout)
+        .values({
+          userId: input.userId,
+          title: input.title,
+          performedAt: input.performedAt,
+          durationSeconds: input.durationSeconds,
+          notes: input.notes,
+        })
+        .returning();
+      await insertWorkoutChildren(tx, created.id, input);
+      return created;
+    });
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to create workout");
+  }
+}
+
+/** All of a user's workouts (newest first) with their exercises + sets nested. */
+export async function getWorkoutsByUserId(
+  userId: string,
+  limit?: number
+): Promise<WorkoutWithChildren[]> {
+  try {
+    const base = db
+      .select()
+      .from(workout)
+      .where(eq(workout.userId, userId))
+      .orderBy(desc(workout.performedAt));
+    const workouts = limit ? await base.limit(limit) : await base;
+    if (workouts.length === 0) {
+      return [];
+    }
+
+    const workoutIds = workouts.map((w) => w.id);
+    const exercises = await db
+      .select()
+      .from(workoutExercise)
+      .where(inArray(workoutExercise.workoutId, workoutIds))
+      .orderBy(asc(workoutExercise.position));
+
+    const exerciseIds = exercises.map((e) => e.id);
+    const sets =
+      exerciseIds.length > 0
+        ? await db
+            .select()
+            .from(workoutSet)
+            .where(inArray(workoutSet.workoutExerciseId, exerciseIds))
+            .orderBy(asc(workoutSet.position))
+        : [];
+
+    const setsByExercise = new Map<string, WorkoutSet[]>();
+    for (const s of sets) {
+      const list = setsByExercise.get(s.workoutExerciseId) ?? [];
+      list.push(s);
+      setsByExercise.set(s.workoutExerciseId, list);
+    }
+    const exercisesByWorkout = new Map<
+      string,
+      (WorkoutExercise & { sets: WorkoutSet[] })[]
+    >();
+    for (const e of exercises) {
+      const list = exercisesByWorkout.get(e.workoutId) ?? [];
+      list.push({ ...e, sets: setsByExercise.get(e.id) ?? [] });
+      exercisesByWorkout.set(e.workoutId, list);
+    }
+
+    return workouts.map((w) => ({
+      ...w,
+      exercises: exercisesByWorkout.get(w.id) ?? [],
+    }));
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get workouts");
+  }
+}
+
+/** Replace a workout's fields + children wholesale, scoped to its owner. */
+export async function updateWorkout(
+  input: WorkoutWriteInput & { id: string }
+): Promise<void> {
+  try {
+    await db.transaction(async (tx) => {
+      const [owned] = await tx
+        .select({ id: workout.id })
+        .from(workout)
+        .where(and(eq(workout.id, input.id), eq(workout.userId, input.userId)));
+      if (!owned) {
+        return;
+      }
+
+      const existing = await tx
+        .select({ id: workoutExercise.id })
+        .from(workoutExercise)
+        .where(eq(workoutExercise.workoutId, input.id));
+      const existingIds = existing.map((e) => e.id);
+      if (existingIds.length > 0) {
+        await tx
+          .delete(workoutSet)
+          .where(inArray(workoutSet.workoutExerciseId, existingIds));
+      }
+      await tx
+        .delete(workoutExercise)
+        .where(eq(workoutExercise.workoutId, input.id));
+
+      await tx
+        .update(workout)
+        .set({
+          title: input.title,
+          performedAt: input.performedAt,
+          durationSeconds: input.durationSeconds,
+          notes: input.notes,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(workout.id, input.id), eq(workout.userId, input.userId)));
+
+      await insertWorkoutChildren(tx, input.id, input);
+    });
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to update workout");
+  }
+}
+
+export async function deleteWorkout({
+  id,
+  userId,
+}: {
+  id: string;
+  userId: string;
+}): Promise<void> {
+  try {
+    await db.transaction(async (tx) => {
+      const [owned] = await tx
+        .select({ id: workout.id })
+        .from(workout)
+        .where(and(eq(workout.id, id), eq(workout.userId, userId)));
+      if (!owned) {
+        return;
+      }
+      const existing = await tx
+        .select({ id: workoutExercise.id })
+        .from(workoutExercise)
+        .where(eq(workoutExercise.workoutId, id));
+      const existingIds = existing.map((e) => e.id);
+      if (existingIds.length > 0) {
+        await tx
+          .delete(workoutSet)
+          .where(inArray(workoutSet.workoutExerciseId, existingIds));
+      }
+      await tx.delete(workoutExercise).where(eq(workoutExercise.workoutId, id));
+      await tx
+        .delete(workout)
+        .where(and(eq(workout.id, id), eq(workout.userId, userId)));
+    });
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to delete workout");
+  }
+}
+
+export async function getCustomExercisesByUserId(
+  userId: string
+): Promise<CustomExercise[]> {
+  try {
+    return await db
+      .select()
+      .from(customExercise)
+      .where(eq(customExercise.userId, userId))
+      .orderBy(asc(customExercise.name));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get custom exercises"
+    );
+  }
+}
+
+export async function createCustomExercise(entry: {
+  userId: string;
+  name: string;
+  muscleGroup: CustomExercise["muscleGroup"];
+  equipment: CustomExercise["equipment"];
+}): Promise<CustomExercise> {
+  try {
+    const [created] = await db
+      .insert(customExercise)
+      .values(entry)
+      .returning();
+    return created;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to create custom exercise"
+    );
+  }
+}
+
+export async function deleteCustomExercise({
+  id,
+  userId,
+}: {
+  id: string;
+  userId: string;
+}): Promise<void> {
+  try {
+    await db
+      .delete(customExercise)
+      .where(and(eq(customExercise.id, id), eq(customExercise.userId, userId)));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to delete custom exercise"
     );
   }
 }

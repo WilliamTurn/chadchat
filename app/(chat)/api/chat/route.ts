@@ -15,6 +15,7 @@ import { getEntitlements, getUsageWarning } from "@/lib/ai/entitlements";
 import {
   formatGoalsForPrompt,
   formatMemoryForPrompt,
+  formatWorkoutsForPrompt,
   maybeUpdateUserMemory,
 } from "@/lib/ai/memory";
 import {
@@ -29,6 +30,7 @@ import { createDocument } from "@/lib/ai/tools/create-document";
 import { editDocument } from "@/lib/ai/tools/edit-document";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
+import { logWorkout } from "@/lib/ai/tools/log-workout";
 import { saveGoal } from "@/lib/ai/tools/save-goal";
 import { savePlan } from "@/lib/ai/tools/save-plan";
 import { updateDocument } from "@/lib/ai/tools/update-document";
@@ -43,6 +45,7 @@ import {
   getMessagesByChatId,
   getUserById,
   getUserMemory,
+  getWorkoutsByUserId,
   saveChat,
   saveMessages,
   updateChatTitleById,
@@ -210,13 +213,16 @@ export async function POST(request: Request) {
       memoryBlock = formatMemoryForPrompt(memoryRecord?.profile);
     }
 
-    // The client's saved goals & plans are explicit records (not memory), so
-    // Chad sees them in every chat regardless of the memory toggle.
-    const [activeGoals, activePlans] = await Promise.all([
+    // The client's saved goals & plans + recently logged workouts are explicit
+    // records (not memory), so Chad sees them in every chat regardless of the
+    // memory toggle.
+    const [activeGoals, activePlans, recentWorkouts] = await Promise.all([
       getActiveGoalsByUserId(session.user.id),
       getActivePlansByUserId(session.user.id),
+      getWorkoutsByUserId(session.user.id, 8),
     ]);
     const goalsBlock = formatGoalsForPrompt(activeGoals, activePlans);
+    const workoutsBlock = formatWorkoutsForPrompt(recentWorkouts);
 
     if (message?.role === "user") {
       await saveMessages({
@@ -251,6 +257,7 @@ export async function POST(request: Request) {
             supportsTools,
             memory: memoryBlock,
             goals: goalsBlock,
+            workouts: workoutsBlock,
           }),
           messages: modelMessages,
           stopWhen: stepCountIs(5),
@@ -265,6 +272,7 @@ export async function POST(request: Request) {
                   "requestSuggestions",
                   "saveGoal",
                   "savePlan",
+                  "logWorkout",
                 ],
           providerOptions: {
             ...(modelConfig?.gatewayOrder && {
@@ -294,6 +302,7 @@ export async function POST(request: Request) {
             }),
             saveGoal: saveGoal({ session, chatId: id }),
             savePlan: savePlan({ session, chatId: id }),
+            logWorkout: logWorkout({ session }),
           },
           experimental_telemetry: {
             isEnabled: isProductionEnvironment,

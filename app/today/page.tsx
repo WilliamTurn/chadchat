@@ -1,6 +1,7 @@
 import {
   Camera,
   CreditCard,
+  Dumbbell,
   Flame,
   LineChart,
   Lock,
@@ -401,8 +402,9 @@ async function TodayContent() {
       </div>
 
       {/* Quick actions */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <QuickAction href="/" icon={<MessageSquare className="size-4" />} label="Talk to Chad" />
+        <QuickAction href="/workouts" icon={<Dumbbell className="size-4" />} label="Workouts" />
         <QuickAction href="/nutrition" icon={<Camera className="size-4" />} label="Nutrition" />
         <QuickAction href="/kitchen" icon={<Refrigerator className="size-4" />} label="Kitchen" />
         <QuickAction href="/progress" icon={<LineChart className="size-4" />} label="Progress" />

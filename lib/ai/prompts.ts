@@ -122,6 +122,7 @@ export const systemPrompt = ({
   supportsTools,
   memory,
   goals,
+  workouts,
 }: {
   requestHints: RequestHints;
   supportsTools: boolean;
@@ -131,16 +132,20 @@ export const systemPrompt = ({
   // Pre-formatted active goals & plans block (see lib/ai/memory.ts
   // formatGoalsForPrompt). Loaded regardless of the memory toggle.
   goals?: string;
+  // Pre-formatted recent-workouts + PRs block (see lib/ai/memory.ts
+  // formatWorkoutsForPrompt). Loaded regardless of the memory toggle.
+  workouts?: string;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
   const memoryBlock = memory ? `\n\n${memory}` : "";
   const goalsBlock = goals ? `\n\n${goals}` : "";
+  const workoutsBlock = workouts ? `\n\n${workouts}` : "";
 
   if (!supportsTools) {
-    return `${regularPrompt}${memoryBlock}${goalsBlock}\n\n${requestPrompt}`;
+    return `${regularPrompt}${memoryBlock}${goalsBlock}${workoutsBlock}\n\n${requestPrompt}`;
   }
 
-  return `${regularPrompt}${memoryBlock}${goalsBlock}\n\n${requestPrompt}\n\n${artifactsPrompt}`;
+  return `${regularPrompt}${memoryBlock}${goalsBlock}${workoutsBlock}\n\n${requestPrompt}\n\n${artifactsPrompt}`;
 };
 
 export const codePrompt = `

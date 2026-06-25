@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 const LINKS: { href: string; label: string; icon: typeof LayoutDashboard }[] = [
   { href: "/today", label: "Dashboard", icon: LayoutDashboard },
   { href: "/", label: "Chat", icon: MessageSquare },
+  { href: "/workouts", label: "Workouts", icon: Dumbbell },
   { href: "/nutrition", label: "Nutrition", icon: Camera },
   { href: "/kitchen", label: "Kitchen", icon: Refrigerator },
   { href: "/progress", label: "Progress", icon: LineChart },

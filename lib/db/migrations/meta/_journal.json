@@ -57,6 +57,13 @@
       "when": 1782345275341,
       "tag": "0007_handy_magdalene",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1782356183984,
+      "tag": "0008_lame_joshua_kane",
+      "breakpoints": true
     }
   ]
 }

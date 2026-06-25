@@ -1,8 +1,15 @@
 import "server-only";
 
 import { generateText } from "ai";
+import type { WorkoutWithChildren } from "@/lib/db/queries";
 import { getUserMemory, upsertUserMemory } from "@/lib/db/queries";
 import type { Goal, Plan } from "@/lib/db/schema";
+import {
+  computePersonalRecords,
+  toLb,
+  type WorkoutData,
+  workoutVolumeLb,
+} from "@/lib/workouts/stats";
 import { memoryModel } from "./models";
 import { getLanguageModel } from "./providers";
 
@@ -11,6 +18,10 @@ import { getLanguageModel } from "./providers";
 const MAX_GOALS_IN_PROMPT = 5;
 const MAX_PLANS_IN_PROMPT = 5;
 const MAX_DETAIL_CHARS_IN_PROMPT = 800;
+// How many recent workouts + PRs to surface to Chad.
+const MAX_WORKOUTS_IN_PROMPT = 5;
+const MAX_PRS_IN_PROMPT = 6;
+const MAX_EXERCISES_PER_WORKOUT_IN_PROMPT = 6;
 
 // Reliable Google Flash model for the background memory update. Memory is a
 // crucial, accuracy-sensitive task — we deliberately do NOT use the cheap title
@@ -165,6 +176,96 @@ export function formatGoalsForPrompt(
   return `GOALS & PLANS THIS CLIENT HAS SAVED IN THE APP (they set these deliberately — treat them as current and authoritative; reference and build on them, and don't re-ask for what's already here):
 
 ${sections.join("\n\n")}`;
+}
+
+function toWorkoutData(w: WorkoutWithChildren): WorkoutData {
+  return {
+    id: w.id,
+    title: w.title,
+    performedAt: w.performedAt.toISOString(),
+    durationSeconds: w.durationSeconds,
+    notes: w.notes,
+    exercises: w.exercises.map((ex) => ({
+      name: ex.exerciseName,
+      muscleGroup: ex.muscleGroup,
+      notes: ex.notes,
+      sets: ex.sets.map((s) => ({
+        weight: s.weight,
+        reps: s.reps,
+        unit: s.unit,
+        rpe: s.rpe,
+        setType: s.setType,
+        completed: s.completed,
+      })),
+    })),
+  };
+}
+
+function shortDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+/**
+ * Summarize the client's recently logged workouts + their lifting PRs for
+ * Chad's prompt, so he can reference real training and hold them accountable.
+ * These are explicit logs (not memory) — loaded regardless of the memory
+ * toggle. Returns "" when nothing's been logged. Kept compact (a handful of
+ * sessions + top PRs) to avoid prompt bloat.
+ */
+export function formatWorkoutsForPrompt(workouts: WorkoutWithChildren[]): string {
+  if (workouts.length === 0) {
+    return "";
+  }
+
+  const data = workouts.map(toWorkoutData);
+  // workouts arrive newest-first from the query.
+  const recent = data.slice(0, MAX_WORKOUTS_IN_PROMPT);
+
+  const workoutLines = recent.map((w) => {
+    const volume = workoutVolumeLb(w);
+    const exParts = w.exercises
+      .slice(0, MAX_EXERCISES_PER_WORKOUT_IN_PROMPT)
+      .map((ex) => {
+        const working = ex.sets.filter(
+          (s) => s.completed && s.setType !== "warmup"
+        );
+        if (working.length === 0) {
+          return ex.name;
+        }
+        const top = working.reduce((a, b) =>
+          toLb(b.weight ?? 0, b.unit) > toLb(a.weight ?? 0, a.unit) ? b : a
+        );
+        const load =
+          top.weight == null ? "BW" : `${top.weight}${top.unit}`;
+        const reps = top.reps == null ? "" : `×${top.reps}`;
+        return `${ex.name} ${working.length} set${working.length === 1 ? "" : "s"} (top ${load}${reps})`;
+      });
+    const volStr = volume > 0 ? `, ${volume.toLocaleString()} lb volume` : "";
+    return `- ${shortDate(w.performedAt)} · ${w.title} (${exParts.length} exercise${exParts.length === 1 ? "" : "s"}${volStr}): ${exParts.join("; ")}`;
+  });
+
+  const prs = computePersonalRecords(data)
+    .filter((p) => p.bestEst1RM != null)
+    .slice(0, MAX_PRS_IN_PROMPT)
+    .map((p) => {
+      const best =
+        p.bestWeight == null
+          ? ""
+          : ` (best set ${p.bestWeight}${p.bestWeightUnit}${p.bestWeightReps == null ? "" : ` × ${p.bestWeightReps}`})`;
+      return `- ${p.exerciseName}: est. 1RM ~${p.bestEst1RM} lb${best}`;
+    });
+
+  const sections = [
+    `RECENT WORKOUTS THIS CLIENT HAS LOGGED (their real training — reference it, hold them to it, and progress it):\n${workoutLines.join("\n")}`,
+  ];
+  if (prs.length > 0) {
+    sections.push(`THEIR LIFTING PRs (estimated 1-rep maxes):\n${prs.join("\n")}`);
+  }
+
+  return sections.join("\n\n");
 }
 
 /**
