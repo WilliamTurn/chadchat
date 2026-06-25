@@ -24,7 +24,11 @@ export async function proxy(request: NextRequest) {
   // Paywall: no anonymous guests. Unauthenticated visitors must sign in /
   // register. Auth pages stay public so people can actually do that, and API
   // routes are left to return their own 401 instead of an HTML redirect.
-  const isAuthPage = pathname === "/login" || pathname === "/register";
+  const isAuthPage =
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password";
   // Public share links must work for logged-out visitors (the page itself only
   // renders chats whose visibility is "public").
   const isPublicShare = pathname.startsWith("/share/");
@@ -49,7 +53,11 @@ export async function proxy(request: NextRequest) {
 
   // After signing in, land members on the dashboard (a populated home screen)
   // rather than a bare chat box — it reads as a real product, not just a chat.
-  if (token && !isGuest && isAuthPage) {
+  if (
+    token &&
+    !isGuest &&
+    (pathname === "/login" || pathname === "/register")
+  ) {
     return NextResponse.redirect(new URL(`${base}/today`, request.url));
   }
 
