@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { removeWorkout } from "@/app/workouts/actions";
 import { Button } from "@/components/ui/button";
+import { formatCalendarDay } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import {
   formatDuration,
@@ -29,7 +30,7 @@ const SET_TAG: Record<string, string> = {
 };
 
 function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
+  return formatCalendarDay(new Date(iso), {
     weekday: "short",
     month: "short",
     day: "numeric",

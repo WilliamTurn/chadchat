@@ -1,6 +1,7 @@
 import "server-only";
 
 import { generateText } from "ai";
+import { formatCalendarDay } from "@/lib/date";
 import type { WorkoutWithChildren } from "@/lib/db/queries";
 import { getUserMemory, upsertUserMemory } from "@/lib/db/queries";
 import type { Goal, Plan } from "@/lib/db/schema";
@@ -202,10 +203,7 @@ function toWorkoutData(w: WorkoutWithChildren): WorkoutData {
 }
 
 function shortDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-  });
+  return formatCalendarDay(new Date(iso));
 }
 
 /**

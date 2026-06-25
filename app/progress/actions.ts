@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/app/(auth)/auth";
 import { canAccessProFeatures } from "@/lib/admin";
+import { parseCalendarDay } from "@/lib/date";
 import {
   createBodyMeasurement,
   createProgressEntry,
@@ -56,8 +57,7 @@ export async function addProgressEntry(
   }
 
   const { recordedAt, weight, unit, note, photoUrl } = parsed.data;
-  const when = recordedAt ? new Date(recordedAt) : new Date();
-  const recorded = Number.isNaN(when.getTime()) ? new Date() : when;
+  const recorded = parseCalendarDay(recordedAt) ?? new Date();
 
   await createProgressEntry({
     userId: user.id,
@@ -89,8 +89,7 @@ export async function editProgressEntry(
   }
 
   const { id, recordedAt, weight, unit, note } = parsed.data;
-  const when = recordedAt ? new Date(recordedAt) : new Date();
-  const recorded = Number.isNaN(when.getTime()) ? new Date() : when;
+  const recorded = parseCalendarDay(recordedAt) ?? new Date();
 
   await updateProgressEntry({
     id,
@@ -135,8 +134,7 @@ export async function addBodyMeasurement(
   }
 
   const { recordedAt, kind, value, unit } = parsed.data;
-  const when = recordedAt ? new Date(recordedAt) : new Date();
-  const recorded = Number.isNaN(when.getTime()) ? new Date() : when;
+  const recorded = parseCalendarDay(recordedAt) ?? new Date();
 
   await createBodyMeasurement({
     userId: user.id,

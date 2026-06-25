@@ -7,6 +7,8 @@
  * exists, a dashed goal line is overlaid with a "X to go" readout.
  */
 
+import { formatCalendarDayMs } from "@/lib/date";
+
 const MA_HALF_WINDOW = 3; // centered window of up to 7 points
 
 /** Centered simple moving average over the weight series. */
@@ -23,10 +25,7 @@ function movingAverage(weights: number[]): number[] {
 }
 
 function fmtDate(t: number): string {
-  return new Date(t).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-  });
+  return formatCalendarDayMs(t);
 }
 
 export function WeightChart({

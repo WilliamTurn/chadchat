@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
+import { parseDateInput } from "@/lib/date";
 import { createWorkout } from "@/lib/db/queries";
 
 type LogWorkoutProps = {
@@ -54,8 +55,7 @@ export const logWorkout = ({ session }: LogWorkoutProps) =>
         .max(50),
     }),
     execute: async ({ title, performedAt, notes, exercises }) => {
-      const when = performedAt ? new Date(performedAt) : new Date();
-      const performed = Number.isNaN(when.getTime()) ? new Date() : when;
+      const performed = parseDateInput(performedAt);
 
       const created = await createWorkout({
         userId: session.user.id,

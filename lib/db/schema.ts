@@ -108,6 +108,11 @@ export const mealAnalysis = pgTable("MealAnalysis", {
   // Which meal of the day this is, for the diary buckets. Null for fridge/pantry
   // shots and for older rows logged before meal categories existed.
   meal: varchar("meal", { enum: ["breakfast", "lunch", "dinner", "snack"] }),
+  // The day this meal is logged *for* (user-chosen; defaults to today). Lets a
+  // user back-date a meal they forgot, and keeps the diary day-buckets honest
+  // regardless of the UTC insert instant. Nullable for rows logged before this
+  // existed — read it as `recordedAt ?? createdAt`.
+  recordedAt: timestamp("recordedAt"),
   // The analyzed photo (Vercel Blob URL). Null for manual entries.
   photoUrl: text("photoUrl"),
   // Short label Chad gives the shot ("Double cheeseburger + fries").

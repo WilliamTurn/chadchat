@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/app/(auth)/auth";
 import { canAccessProFeatures } from "@/lib/admin";
 import { analyzeFoodPhoto } from "@/lib/ai/meal-analysis";
+import { parseCalendarDay } from "@/lib/date";
 import {
   addWaterLog,
   createMealAnalysis,
@@ -62,7 +63,7 @@ export async function analyzeMeal(
     };
   }
 
-  const { photoUrl, mediaType, kind, meal, note } = parsed.data;
+  const { photoUrl, mediaType, kind, meal, recordedAt, note } = parsed.data;
 
   try {
     const result = await analyzeFoodPhoto({ photoUrl, mediaType, kind, note });
@@ -72,6 +73,8 @@ export async function analyzeMeal(
       kind,
       source: "photo",
       meal: kind === "meal" ? (meal ?? null) : null,
+      // Only meals carry a diary date; fridge/pantry shots are point-in-time.
+      recordedAt: kind === "meal" ? parseCalendarDay(recordedAt) : null,
       photoUrl,
       title: result.title,
       calories: result.calories ?? null,
@@ -113,13 +116,14 @@ export async function logMealManually(
     };
   }
 
-  const { title, meal, calories, protein, carbs, fat } = parsed.data;
+  const { title, meal, recordedAt, calories, protein, carbs, fat } = parsed.data;
 
   await createMealAnalysis({
     userId: user.id,
     kind: "meal",
     source: "manual",
     meal: meal ?? null,
+    recordedAt: parseCalendarDay(recordedAt),
     photoUrl: null,
     title,
     calories,
@@ -154,13 +158,15 @@ export async function editMeal(
     };
   }
 
-  const { id, title, meal, calories, protein, carbs, fat } = parsed.data;
+  const { id, title, meal, recordedAt, calories, protein, carbs, fat } =
+    parsed.data;
 
   await updateMealAnalysis({
     id,
     userId: user.id,
     title,
     meal: meal ?? null,
+    recordedAt: parseCalendarDay(recordedAt),
     calories,
     protein,
     carbs,

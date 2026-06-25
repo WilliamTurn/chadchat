@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { todayLocalISO } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import type { SetType, WorkoutData } from "@/lib/workouts/stats";
 import { ExercisePicker, type PickedExercise } from "./exercise-picker";
@@ -60,9 +61,7 @@ function uid(): string {
   return `w${_uid}`;
 }
 
-function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
-}
+const todayISO = todayLocalISO;
 
 function blankSet(prev?: EditorSet): EditorSet {
   return {

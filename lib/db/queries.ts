@@ -14,6 +14,7 @@ import {
   lt,
   or,
   type SQL,
+  sql,
 } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
@@ -1018,6 +1019,7 @@ export async function createMealAnalysis(entry: {
   kind: "meal" | "fridge" | "pantry";
   source?: "photo" | "manual";
   meal?: MealCategoryValue | null;
+  recordedAt?: Date | null;
   photoUrl: string | null;
   title: string;
   calories: number | null;
@@ -1037,6 +1039,7 @@ export async function createMealAnalysis(entry: {
         kind: entry.kind,
         source: entry.source ?? "photo",
         meal: entry.meal ?? null,
+        recordedAt: entry.recordedAt ?? new Date(),
         photoUrl: entry.photoUrl,
         title: entry.title,
         calories: entry.calories,
@@ -1064,6 +1067,7 @@ export async function updateMealAnalysis(entry: {
   userId: string;
   title: string;
   meal: MealCategoryValue | null;
+  recordedAt?: Date | null;
   calories: number | null;
   protein: number | null;
   carbs: number | null;
@@ -1075,6 +1079,7 @@ export async function updateMealAnalysis(entry: {
       .set({
         title: entry.title,
         meal: entry.meal,
+        ...(entry.recordedAt ? { recordedAt: entry.recordedAt } : {}),
         calories: entry.calories,
         protein: entry.protein,
         carbs: entry.carbs,
@@ -1124,7 +1129,7 @@ export async function getMealsSince(
         and(
           eq(mealAnalysis.userId, userId),
           eq(mealAnalysis.kind, "meal"),
-          gte(mealAnalysis.createdAt, since)
+          gte(sql`coalesce(${mealAnalysis.recordedAt}, ${mealAnalysis.createdAt})`, since)
         )
       )
       .orderBy(desc(mealAnalysis.createdAt));
@@ -1145,7 +1150,10 @@ export async function getMealLogByUserId(
       .where(
         and(eq(mealAnalysis.userId, userId), eq(mealAnalysis.kind, "meal"))
       )
-      .orderBy(desc(mealAnalysis.createdAt))
+      .orderBy(
+        desc(sql`coalesce(${mealAnalysis.recordedAt}, ${mealAnalysis.createdAt})`),
+        desc(mealAnalysis.createdAt)
+      )
       .limit(limit);
   } catch (_error) {
     throw new ChatbotError("bad_request:database", "Failed to get meal log");

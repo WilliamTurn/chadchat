@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/app/(auth)/auth";
 import { canAccessProFeatures } from "@/lib/admin";
+import { parseCalendarDay } from "@/lib/date";
 import {
   createCustomExercise,
   createWorkout,
@@ -61,8 +62,7 @@ function toWriteInput(
     }[];
   }[];
 } {
-  const when = data.performedAt ? new Date(data.performedAt) : new Date();
-  const performedAt = Number.isNaN(when.getTime()) ? new Date() : when;
+  const performedAt = parseCalendarDay(data.performedAt) ?? new Date();
   return {
     userId,
     title: data.title,

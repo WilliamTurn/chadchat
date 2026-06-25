@@ -3,6 +3,7 @@ import { DeleteAnalysisButton } from "@/components/nutrition/delete-analysis-but
 import { EditMealButton } from "@/components/nutrition/edit-meal-button";
 import { LogAgainButton } from "@/components/nutrition/log-again-button";
 import { Badge } from "@/components/ui/badge";
+import { formatCalendarDay } from "@/lib/date";
 import type { MealAnalysis } from "@/lib/db/schema";
 
 type Item = { name: string; detail?: string | null };
@@ -99,15 +100,7 @@ export function AnalysisCard({ entry }: { entry: MealAnalysis }) {
                   </Badge>
                 )}
                 <span className="text-muted-foreground text-xs">
-                  {entry.createdAt.toLocaleDateString(undefined, {
-                    month: "short",
-                    day: "numeric",
-                  })}{" "}
-                  ·{" "}
-                  {entry.createdAt.toLocaleTimeString(undefined, {
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })}
+                  {formatCalendarDay(entry.recordedAt ?? entry.createdAt)}
                 </span>
               </div>
             </div>

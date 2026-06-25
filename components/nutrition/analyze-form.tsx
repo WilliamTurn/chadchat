@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { todayLocalISO } from "@/lib/date";
 import type { MealCategory } from "@/lib/validation/nutrition";
 
 type Mode = "photo" | "manual";
@@ -24,6 +25,7 @@ export function AnalyzeForm() {
   const [uploading, setUploading] = useState(false);
   const [mode, setMode] = useState<Mode>("photo");
   const [meal, setMeal] = useState<MealCategory>(defaultMealForNow());
+  const [date, setDate] = useState(todayLocalISO);
   const [note, setNote] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -50,6 +52,7 @@ export function AnalyzeForm() {
   function resetCommon() {
     setNote("");
     setMeal(defaultMealForNow());
+    setDate(todayLocalISO());
   }
 
   async function submitPhoto() {
@@ -91,6 +94,7 @@ export function AnalyzeForm() {
         mediaType: mediaType as "image/jpeg" | "image/png",
         kind: "meal",
         meal,
+        recordedAt: date,
         note: note.trim() || null,
       });
       if (result.ok) {
@@ -129,6 +133,7 @@ export function AnalyzeForm() {
       const result = await logMealManually({
         title: title.trim(),
         meal,
+        recordedAt: date,
         calories: calNum,
         protein: proNum,
         carbs: carbNum,
@@ -198,10 +203,23 @@ export function AnalyzeForm() {
         </button>
       </div>
 
-      {/* Meal category */}
+      {/* Meal category + date (back-date a meal you forgot) */}
       <div className="flex flex-col gap-2">
         <Label className="text-muted-foreground text-xs">Meal</Label>
         <MealCategoryPicker onChange={setMeal} value={meal} />
+      </div>
+      <div className="flex flex-col gap-2">
+        <Label className="text-muted-foreground text-xs" htmlFor="m-date">
+          Date
+        </Label>
+        <Input
+          className="w-44"
+          id="m-date"
+          max={todayLocalISO()}
+          onChange={(e) => setDate(e.target.value)}
+          type="date"
+          value={date}
+        />
       </div>
 
       {mode === "photo" ? (

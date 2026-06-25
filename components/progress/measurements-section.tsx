@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { todayLocalISO } from "@/lib/date";
 import { MEASUREMENT_KINDS } from "@/lib/validation/progress";
 
 type Measurement = {
@@ -31,9 +32,7 @@ const KIND_LABEL: Record<string, string> = {
   neck: "Neck",
 };
 
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
-}
+const todayISO = todayLocalISO;
 
 /** A tiny inline sparkline for one metric's history. */
 function Spark({ values }: { values: number[] }) {

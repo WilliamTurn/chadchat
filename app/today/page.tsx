@@ -214,7 +214,7 @@ async function TodayContent() {
   // Streak from logged actions (progress + meals).
   const streak = computeStreak([
     ...entries.map((e) => e.recordedAt),
-    ...todaysMeals.map((m) => m.createdAt),
+    ...todaysMeals.map((m) => m.recordedAt ?? m.createdAt),
   ]);
 
   // First-run: a brand-new member with no profile and nothing logged yet. We

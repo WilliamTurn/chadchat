@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { toCalendarDayISO, todayLocalISO } from "@/lib/date";
 import type { MealAnalysis } from "@/lib/db/schema";
 import type { MealCategory } from "@/lib/validation/nutrition";
 
@@ -31,6 +32,9 @@ export function EditMealButton({ entry }: { entry: MealAnalysis }) {
   const [title, setTitle] = useState(entry.title);
   const [meal, setMeal] = useState<MealCategory>(
     (entry.meal as MealCategory | null) ?? defaultMealForNow()
+  );
+  const [date, setDate] = useState(
+    toCalendarDayISO(entry.recordedAt ?? entry.createdAt)
   );
   const [cal, setCal] = useState(entry.calories?.toString() ?? "");
   const [pro, setPro] = useState(entry.protein?.toString() ?? "");
@@ -61,6 +65,7 @@ export function EditMealButton({ entry }: { entry: MealAnalysis }) {
         id: entry.id,
         title: title.trim(),
         meal,
+        recordedAt: date,
         calories: calNum,
         protein: proNum,
         carbs: carbNum,
@@ -105,6 +110,17 @@ export function EditMealButton({ entry }: { entry: MealAnalysis }) {
           <div className="flex flex-col gap-2">
             <Label className="text-muted-foreground text-xs">Meal</Label>
             <MealCategoryPicker onChange={setMeal} value={meal} />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="e-date">Date</Label>
+            <Input
+              className="w-44"
+              id="e-date"
+              max={todayLocalISO()}
+              onChange={(e) => setDate(e.target.value)}
+              type="date"
+              value={date}
+            />
           </div>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div className="flex flex-col gap-2">

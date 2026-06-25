@@ -4,11 +4,10 @@
  * recent bar is highlighted with its value labelled.
  */
 
+import { formatCalendarDayMs } from "@/lib/date";
+
 function fmtDate(t: number): string {
-  return new Date(t).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-  });
+  return formatCalendarDayMs(t);
 }
 
 function fmtK(n: number): string {

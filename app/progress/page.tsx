@@ -13,6 +13,7 @@ import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
+import { formatCalendarDay, toCalendarDayISO } from "@/lib/date";
 import {
   getActiveGoalsByUserId,
   getBodyMeasurementsByUserId,
@@ -21,8 +22,15 @@ import {
 } from "@/lib/db/queries";
 import type { Goal, ProgressEntry } from "@/lib/db/schema";
 
-function isoDate(d: Date): string {
-  return d.toISOString().slice(0, 10);
+const isoDate = toCalendarDayISO;
+
+/** Numeric calendar-day display (e.g. "6/25/2026"), tz-stable. */
+function displayDate(d: Date): string {
+  return formatCalendarDay(d, {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  });
 }
 
 const LB_PER_KG = 2.204_62;
@@ -215,7 +223,7 @@ async function Dashboard({ userId }: { userId: string }) {
             .reverse()
             .map((e) => ({
               url: e.photoUrl ?? "",
-              date: e.recordedAt.toLocaleDateString(),
+              date: displayDate(e.recordedAt),
             }))}
         />
       )}
@@ -232,12 +240,12 @@ async function Dashboard({ userId }: { userId: string }) {
               >
                 {/* biome-ignore lint/performance/noImgElement: user-uploaded blob images, sizes vary */}
                 <img
-                  alt={`Progress on ${e.recordedAt.toLocaleDateString()}`}
+                  alt={`Progress on ${displayDate(e.recordedAt)}`}
                   className="aspect-square w-full object-cover"
                   src={e.photoUrl ?? ""}
                 />
                 <figcaption className="px-3 py-2 text-muted-foreground text-xs">
-                  {e.recordedAt.toLocaleDateString()}
+                  {displayDate(e.recordedAt)}
                 </figcaption>
               </figure>
             ))}
@@ -259,7 +267,7 @@ async function Dashboard({ userId }: { userId: string }) {
               >
                 <div className="min-w-0">
                   <div className="font-medium text-sm">
-                    {e.recordedAt.toLocaleDateString()}
+                    {displayDate(e.recordedAt)}
                     {e.weight != null && (
                       <span className="ml-2 text-muted-foreground">
                         {round1(e.weight)} {e.unit}
