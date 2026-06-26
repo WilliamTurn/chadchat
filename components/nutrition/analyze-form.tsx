@@ -1,6 +1,13 @@
 "use client";
 
-import { Camera, History, Loader2, PencilLine, Plus } from "lucide-react";
+import {
+  Camera,
+  History,
+  Loader2,
+  PencilLine,
+  Plus,
+  ScanLine,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -21,7 +28,7 @@ import {
 } from "@/lib/nutrition/recent-foods";
 import type { MealCategory } from "@/lib/validation/nutrition";
 
-type Mode = "photo" | "manual" | "recent";
+type Mode = "photo" | "label" | "manual" | "recent";
 
 export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
   const router = useRouter();
@@ -34,6 +41,8 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
   const [note, setNote] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  // Label mode: how many of the label's servings the user ate.
+  const [servings, setServings] = useState("1");
   // Manual fields
   const [title, setTitle] = useState("");
   const [cal, setCal] = useState("");
@@ -60,10 +69,18 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
     setDate(todayLocalISO());
   }
 
-  async function submitPhoto() {
+  async function submitPhoto(kind: "meal" | "label") {
     if (!file) {
       toast.error("Add a photo first.");
       return;
+    }
+    let servingsNum = 1;
+    if (kind === "label") {
+      servingsNum = Number.parseFloat(servings);
+      if (!(Number.isFinite(servingsNum) && servingsNum > 0)) {
+        toast.error("How many servings did you eat?");
+        return;
+      }
     }
     setUploading(true);
     const fd = new FormData();
@@ -97,15 +114,19 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
       const result = await analyzeMeal({
         photoUrl,
         mediaType: mediaType as "image/jpeg" | "image/png",
-        kind: "meal",
+        kind,
         meal,
         recordedAt: date,
+        servings: servingsNum,
         note: note.trim() || null,
       });
       if (result.ok) {
-        toast.success("Chad's verdict is in.");
+        toast.success(
+          kind === "label" ? "Label logged." : "Chad's verdict is in."
+        );
         resetCommon();
         pick(null);
+        setServings("1");
         if (inputRef.current) {
           inputRef.current.value = "";
         }
@@ -186,10 +207,28 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (mode === "photo") {
-      submitPhoto();
+      submitPhoto("meal");
+    } else if (mode === "label") {
+      submitPhoto("label");
     } else if (mode === "manual") {
       submitManual();
     }
+  }
+
+  function renderSubmitLabel() {
+    if (mode === "photo") {
+      if (uploading) {
+        return "Uploading…";
+      }
+      return pending ? "Chad's analyzing…" : "Analyze with Chad";
+    }
+    if (mode === "label") {
+      if (uploading) {
+        return "Uploading…";
+      }
+      return pending ? "Reading label…" : "Scan label";
+    }
+    return pending ? "Logging…" : "Log meal";
   }
 
   return (
@@ -197,14 +236,15 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
       <div>
         <h2 className="font-medium text-lg">Log a meal</h2>
         <p className="mt-1 text-muted-foreground text-sm">
-          Snap your plate and Chad reads the photo — calories, macros, and a
-          straight verdict on what it's doing to your goal. Or type the numbers
-          yourself, or re-log something you've eaten before in one tap.
+          Snap your plate and Chad reads the photo, or scan a packaged-food
+          label for the exact numbers — calories, macros, and a straight verdict
+          on what it's doing to your goal. Or type the numbers yourself, or
+          re-log something you've eaten before in one tap.
         </p>
       </div>
 
       {/* Mode toggle */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <button
           className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 font-medium text-sm transition-colors ${
             mode === "photo"
@@ -216,6 +256,18 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
         >
           <Camera className="size-4" />
           Photo
+        </button>
+        <button
+          className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 font-medium text-sm transition-colors ${
+            mode === "label"
+              ? "border-blood bg-blood/10"
+              : "border-border bg-background/40 text-muted-foreground hover:bg-accent/50"
+          }`}
+          onClick={() => setMode("label")}
+          type="button"
+        >
+          <ScanLine className="size-4" />
+          Label
         </button>
         <button
           className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 font-medium text-sm transition-colors ${
@@ -262,8 +314,14 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
         />
       </div>
 
-      {mode === "photo" ? (
+      {mode === "photo" || mode === "label" ? (
         <>
+          {mode === "label" && (
+            <p className="rounded-xl border border-border border-dashed bg-background/40 px-3 py-2.5 text-muted-foreground text-xs">
+              Photograph the nutrition facts panel on packaged food. Chad reads
+              the calories and macros straight off the label.
+            </p>
+          )}
           <button
             className="relative flex min-h-44 w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-border border-dashed bg-background/40 px-4 py-6 text-center transition-colors hover:bg-accent/40"
             onClick={() => inputRef.current?.click()}
@@ -278,8 +336,16 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
               />
             ) : (
               <>
-                <Camera className="size-7 text-muted-foreground" />
-                <span className="font-medium text-sm">Tap to add a photo</span>
+                {mode === "label" ? (
+                  <ScanLine className="size-7 text-muted-foreground" />
+                ) : (
+                  <Camera className="size-7 text-muted-foreground" />
+                )}
+                <span className="font-medium text-sm">
+                  {mode === "label"
+                    ? "Tap to add the nutrition label"
+                    : "Tap to add a photo"}
+                </span>
                 <span className="text-muted-foreground text-xs">
                   JPEG or PNG, up to 5MB
                 </span>
@@ -293,6 +359,27 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
             ref={inputRef}
             type="file"
           />
+          {mode === "label" && (
+            <div className="flex flex-col gap-2">
+              <Label className="text-muted-foreground text-xs" htmlFor="m-serv">
+                Servings eaten
+              </Label>
+              <Input
+                className="w-44"
+                id="m-serv"
+                inputMode="decimal"
+                min="0"
+                onChange={(e) => setServings(e.target.value)}
+                placeholder="1"
+                step="0.5"
+                type="number"
+                value={servings}
+              />
+              <p className="text-muted-foreground text-xs">
+                The label lists values per serving — Chad multiplies by this.
+              </p>
+            </div>
+          )}
           <Textarea
             maxLength={500}
             onChange={(e) => setNote(e.target.value)}
@@ -400,20 +487,12 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
       {mode !== "recent" && (
         <Button
           className="gap-2"
-          disabled={busy || (mode === "photo" && !file)}
+          disabled={busy || ((mode === "photo" || mode === "label") && !file)}
           size="lg"
           type="submit"
         >
           {busy && <Loader2 className="size-4 animate-spin" />}
-          {mode === "photo"
-            ? uploading
-              ? "Uploading…"
-              : pending
-                ? "Chad's analyzing…"
-                : "Analyze with Chad"
-            : pending
-              ? "Logging…"
-              : "Log meal"}
+          {renderSubmitLabel()}
         </Button>
       )}
     </form>

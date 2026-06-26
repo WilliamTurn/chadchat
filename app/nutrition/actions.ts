@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/app/(auth)/auth";
 import { canAccessProFeatures } from "@/lib/admin";
-import { analyzeFoodPhoto } from "@/lib/ai/meal-analysis";
+import {
+  analyzeFoodPhoto,
+  analyzeNutritionLabel,
+} from "@/lib/ai/meal-analysis";
 import { parseCalendarDay } from "@/lib/date";
 import {
   addWaterLog,
@@ -63,7 +66,54 @@ export async function analyzeMeal(
     };
   }
 
-  const { photoUrl, mediaType, kind, meal, recordedAt, note } = parsed.data;
+  const { photoUrl, mediaType, kind, meal, recordedAt, servings, note } =
+    parsed.data;
+
+  // A nutrition-label scan is logged as a meal, but the macros are read off the
+  // label per serving and multiplied here — exact arithmetic, not the model's.
+  if (kind === "label") {
+    try {
+      const label = await analyzeNutritionLabel({
+        photoUrl,
+        mediaType,
+        servings,
+        note,
+      });
+      const scale = (v: number | null) =>
+        v === null ? null : Math.round(v * servings);
+      const portion = label.servingSize
+        ? `${servings} × ${label.servingSize}`
+        : `${servings} serving${servings === 1 ? "" : "s"}`;
+
+      await createMealAnalysis({
+        userId: user.id,
+        kind: "meal",
+        source: "photo",
+        meal: meal ?? null,
+        recordedAt: parseCalendarDay(recordedAt),
+        photoUrl,
+        title: label.title,
+        calories: scale(label.calories),
+        protein: scale(label.protein),
+        carbs: scale(label.carbs),
+        fat: scale(label.fat),
+        healthScore: label.healthScore ?? null,
+        verdict: label.verdict,
+        items: [{ name: label.title, detail: portion }],
+        tips: label.tips,
+      });
+    } catch (_error) {
+      return {
+        ok: false,
+        error:
+          "Chad couldn't read that label. Get the nutrition panel in frame, well-lit and in focus.",
+      };
+    }
+
+    revalidatePath("/nutrition");
+    revalidatePath("/today");
+    return { ok: true };
+  }
 
   try {
     const result = await analyzeFoodPhoto({ photoUrl, mediaType, kind, note });

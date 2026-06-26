@@ -19,15 +19,22 @@ const calendarDay = z
 export const analyzeMealSchema = z.object({
   photoUrl: z.string().url(),
   mediaType: z.enum(["image/jpeg", "image/png"]).default("image/jpeg"),
-  kind: z.enum(["meal", "fridge", "pantry"]).default("meal"),
+  // "label" = a packaged-food nutrition label; logged as a meal, but the macros
+  // are read off the label (per serving) rather than estimated from a plate.
+  kind: z.enum(["meal", "fridge", "pantry", "label"]).default("meal"),
   // Which meal of the day a plated meal is. Ignored for fridge/pantry.
   meal: z.enum(MEAL_CATEGORIES).nullable().optional(),
   // The day this meal is logged for. Omit/null = today. Ignored for fridge/pantry.
   recordedAt: calendarDay.nullable().optional(),
+  // How many label servings were eaten (label kind only). The label lists
+  // per-serving macros; we multiply by this to get the totals consumed.
+  servings: z.number().positive().max(50).default(1),
   note: z.string().trim().max(500).nullable().optional(),
 });
 
-export type AnalyzeMealInput = z.infer<typeof analyzeMealSchema>;
+// `z.input` (not `z.infer`) so callers may omit fields that carry a Zod
+// `.default()` — e.g. `servings` (label-only) and `kind`/`mediaType`.
+export type AnalyzeMealInput = z.input<typeof analyzeMealSchema>;
 
 /** Manual meal entry — type the macros yourself, no photo, no grade. */
 export const logMealSchema = z.object({
