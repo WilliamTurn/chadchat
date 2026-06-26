@@ -329,7 +329,7 @@ async function TodayContent() {
         <Card>
           <div className="flex items-center justify-between">
             <CardTitle icon={<Utensils className="size-4 text-blood" />}>
-              Today's fuel
+              Today's meal log
             </CardTitle>
             <TargetEditor
               calories={target?.calories ?? null}
@@ -351,11 +351,14 @@ async function TodayContent() {
             />
           </div>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-muted-foreground text-sm">
+            <Link
+              className="text-muted-foreground text-sm underline-offset-4 transition-colors hover:text-foreground hover:underline"
+              href="/nutrition"
+            >
               {todaysMeals.length > 0
                 ? `${todaysMeals.length} meal${todaysMeals.length === 1 ? "" : "s"} logged today`
                 : "No meals logged yet today."}
-            </p>
+            </Link>
             <div className="flex items-center gap-2">
               <AskChadButton prompt="Look at what I've eaten today and how it stacks up against my calorie and macro targets. Am I on track, and what should I eat for the rest of the day?" />
               <Button asChild className="gap-1.5" size="sm" variant="outline">
@@ -377,7 +380,7 @@ async function TodayContent() {
         <LockedCard
           icon={<Utensils className="size-4" />}
           text="Snap a meal, fridge, or pantry and Chad grades the macros, then tracks your calories and protein against a daily target. Pro only."
-          title="Today's fuel"
+          title="Today's meal log"
         />
       )}
 
