@@ -3,13 +3,12 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
-import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { DeleteEntryButton } from "@/components/progress/delete-entry-button";
 import { EditEntryButton } from "@/components/progress/edit-entry-button";
 import { LogEntryForm } from "@/components/progress/log-entry-form";
 import { MeasurementsSection } from "@/components/progress/measurements-section";
 import { PhotoCompare } from "@/components/progress/photo-compare";
-import { WeightChart } from "@/components/progress/weight-chart";
+import { WeightChartInteractive } from "@/components/progress/weight-chart-interactive";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -154,10 +153,6 @@ async function Dashboard({ userId }: { userId: string }) {
     weight: round1(convert(e.weight, e.unit, displayUnit)),
   }));
 
-  const current = points.at(-1)?.weight ?? null;
-  const start = points.at(0)?.weight ?? null;
-  const change =
-    current != null && start != null ? round1(current - start) : null;
   const goalWeight = weightGoalTarget(goals, displayUnit);
 
   const photos = entries.filter((e) => e.photoUrl).reverse();
@@ -165,45 +160,21 @@ async function Dashboard({ userId }: { userId: string }) {
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Summary */}
-      {points.length > 0 && (
-        <div className="grid grid-cols-3 gap-4">
-          <SummaryCard
-            label="Current"
-            value={current == null ? "—" : `${current} ${displayUnit}`}
-          />
-          <SummaryCard
-            label="Since start"
-            value={
-              change == null
-                ? "—"
-                : `${change > 0 ? "+" : ""}${change} ${displayUnit}`
-            }
-          />
-          <SummaryCard label="Entries" value={String(entries.length)} />
-        </div>
-      )}
-
-      {/* Weight trend */}
-      <section className="rounded-2xl border border-border bg-card p-6">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 className="font-medium text-lg">Weight trend</h2>
-          {points.length > 0 && (
-            <AskChadButton prompt="Review my progress — weight, body measurements, and photos. How am I doing, and what should I adjust?" />
-          )}
-        </div>
-        {points.length > 0 ? (
-          <WeightChart
-            goalWeight={goalWeight}
-            points={points}
-            unit={displayUnit}
-          />
-        ) : (
+      {/* Weight trend — the chart owns its card chrome, KPI strip and toggle. */}
+      {points.length > 0 ? (
+        <WeightChartInteractive
+          goalWeight={goalWeight}
+          points={points}
+          unit={displayUnit}
+        />
+      ) : (
+        <section className="rounded-2xl border border-border bg-card p-6">
+          <h2 className="mb-2 font-medium text-lg">Weight trend</h2>
           <p className="text-muted-foreground text-sm">
             Log a weight below and your trend shows up here.
           </p>
-        )}
-      </section>
+        </section>
+      )}
 
       {/* Log a new entry */}
       <section className="rounded-2xl border border-border bg-card p-6">
@@ -301,15 +272,6 @@ async function Dashboard({ userId }: { userId: string }) {
           </div>
         </section>
       )}
-    </div>
-  );
-}
-
-function SummaryCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-border bg-card p-5">
-      <div className="font-semibold text-xl tracking-tight">{value}</div>
-      <div className="mt-1 text-muted-foreground text-sm">{label}</div>
     </div>
   );
 }
