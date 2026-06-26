@@ -7,6 +7,7 @@ import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { AnalysisCard } from "@/components/nutrition/analysis-card";
 import { AnalyzeForm } from "@/components/nutrition/analyze-form";
+import { MacroTrendChart } from "@/components/nutrition/macro-trend-chart";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
@@ -17,6 +18,7 @@ import {
   getUserById,
 } from "@/lib/db/queries";
 import type { MealAnalysis, NutritionTarget } from "@/lib/db/schema";
+import { dailyMacroTrend } from "@/lib/nutrition/daily-macros";
 import { deriveRecentFoods } from "@/lib/nutrition/recent-foods";
 import { MEAL_CATEGORIES, type MealCategory } from "@/lib/validation/nutrition";
 
@@ -137,6 +139,7 @@ async function Feed({ userId }: { userId: string }) {
   const todays = meals.filter((m) => mealDay(m) >= since);
   const earlier = meals.filter((m) => mealDay(m) < since);
   const recentFoods = deriveRecentFoods(meals);
+  const macroDays = dailyMacroTrend(meals);
 
   return (
     <div className="flex flex-col gap-8">
@@ -145,6 +148,22 @@ async function Feed({ userId }: { userId: string }) {
       </section>
 
       <TodaySection meals={todays} target={target} />
+
+      {macroDays.length >= 2 && (
+        <MacroTrendChart
+          days={macroDays}
+          target={
+            target
+              ? {
+                  calories: target.calories,
+                  protein: target.protein,
+                  carbs: target.carbs,
+                  fat: target.fat,
+                }
+              : null
+          }
+        />
+      )}
 
       {earlier.length > 0 && <HistorySection meals={earlier} />}
 

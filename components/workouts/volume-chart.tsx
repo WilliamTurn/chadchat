@@ -1,111 +1,159 @@
+"use client";
+
 /**
- * Dependency-free volume bar chart. Pure presentational SVG so it renders on
- * the server. Each bar is one day's total volume (lb) over time; the most
- * recent bar is highlighted with its value labelled.
+ * Interactive workout-volume trend. Each bar is one day's total training volume
+ * (lb), oldest → newest. Built on Recharts via the shadcn chart primitive and
+ * the shared dashboard chart system (ChartCard / Kpi / useChartRange) — same
+ * engine and look as the weight tracker — so volume scrubs and reads like every
+ * other dashboard. The most recent day is highlighted; hover/scrub any bar for
+ * its date and volume.
  */
 
-import { formatCalendarDayMs } from "@/lib/date";
+import { useMemo } from "react";
+import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from "recharts";
+import { ChartCard } from "@/components/dashboard/chart-card";
+import { Kpi } from "@/components/dashboard/kpi";
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+} from "@/components/ui/chart";
+import { useChartRange } from "@/hooks/use-chart-range";
+import { formatTick } from "@/lib/chart/format";
 
-function fmtDate(t: number): string {
-  return formatCalendarDayMs(t);
-}
+const ACCENT = "#a4161a"; // brand blood red
 
+const ASK_CHAD_PROMPT =
+  "Look at my training volume trend over time. Am I progressively overloading, stalling, or backing off — and what should I do about it?";
+
+const chartConfig = {
+  volume: { label: "Volume", color: ACCENT },
+} satisfies ChartConfig;
+
+type Point = { t: number; volume: number };
+
+/** Compact axis number, e.g. "12k" / "850". */
 function fmtK(n: number): string {
-  return n >= 1000 ? `${Math.round(n / 100) / 10}k` : String(n);
+  return n >= 1000 ? `${Math.round(n / 100) / 10}k` : String(Math.round(n));
 }
 
-export function VolumeChart({
-  points,
-}: {
-  points: { t: number; volume: number }[];
-}) {
+export function VolumeChart({ points }: { points: Point[] }) {
+  const { rows, control } = useChartRange(points, { minPoints: 6 });
+
+  const stats = useMemo(() => {
+    if (rows.length === 0) {
+      return null;
+    }
+    const latest = rows.at(-1)?.volume ?? 0;
+    const top = Math.max(...rows.map((r) => r.volume));
+    return { latest, top };
+  }, [rows]);
+
+  const yMax = useMemo(() => {
+    if (rows.length === 0) {
+      return 1;
+    }
+    return Math.max(...rows.map((r) => r.volume)) * 1.15;
+  }, [rows]);
+
   if (points.length === 0) {
     return null;
   }
 
-  const W = 600;
-  const H = 200;
-  const pad = { t: 24, r: 12, b: 28, l: 12 };
-  const maxV = Math.max(...points.map((p) => p.volume));
-  const innerW = W - pad.l - pad.r;
-  const innerH = H - pad.t - pad.b;
-  const n = points.length;
-  const slot = innerW / n;
-  const barW = Math.min(slot * 0.6, 36);
-
-  const tickIdx =
-    n === 1
-      ? [0]
-      : [...new Set([0, Math.floor((n - 1) / 2), n - 1])];
+  const lastT = rows.at(-1)?.t;
 
   return (
-    <svg
-      aria-label="Workout volume over time"
-      className="h-auto w-full text-blood"
-      preserveAspectRatio="none"
-      role="img"
-      viewBox={`0 0 ${W} ${H}`}
-    >
-      <title>Workout volume over time</title>
-
-      {/* baseline */}
-      <line
-        className="text-border"
-        stroke="currentColor"
-        strokeWidth="1"
-        x1={pad.l}
-        x2={W - pad.r}
-        y1={H - pad.b}
-        y2={H - pad.b}
-      />
-
-      {points.map((p, i) => {
-        const h = maxV > 0 ? (p.volume / maxV) * innerH : 0;
-        const cx = pad.l + slot * i + slot / 2;
-        const x = cx - barW / 2;
-        const yTop = H - pad.b - h;
-        const isLast = i === n - 1;
-        return (
-          <g key={`bar-${i}`}>
-            <rect
-              fill="currentColor"
-              fillOpacity={isLast ? 0.9 : 0.35}
-              height={Math.max(h, 1)}
-              rx="3"
-              width={barW}
-              x={x}
-              y={yTop}
+    <ChartCard
+      askChadPrompt={ASK_CHAD_PROMPT}
+      kpis={
+        stats && (
+          <>
+            <Kpi
+              label="Latest session"
+              size="lg"
+              value={`${stats.latest.toLocaleString()} lb`}
             />
-            {isLast && (
-              <text
-                className="fill-foreground font-semibold"
-                fontSize="12"
-                textAnchor={cx > W - 50 ? "end" : "middle"}
-                x={Math.min(Math.max(cx, 18), W - 12)}
-                y={yTop - 6}
-              >
-                {fmtK(p.volume)} lb
-              </text>
-            )}
-          </g>
-        );
-      })}
+            <Kpi label="Top day" value={`${stats.top.toLocaleString()} lb`} />
+          </>
+        )
+      }
+      range={control}
+      title="Volume trend"
+    >
+      <ChartContainer className="h-[220px] w-full" config={chartConfig}>
+        <BarChart
+          data={rows}
+          margin={{ top: 8, right: 8, bottom: 0, left: -8 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+          <XAxis
+            axisLine={false}
+            dataKey="t"
+            domain={["dataMin", "dataMax"]}
+            minTickGap={32}
+            scale="time"
+            tickFormatter={formatTick}
+            tickLine={false}
+            tickMargin={8}
+            type="number"
+          />
+          <YAxis
+            axisLine={false}
+            domain={[0, yMax]}
+            tickCount={4}
+            tickFormatter={fmtK}
+            tickLine={false}
+            tickMargin={4}
+            width={40}
+          />
+          <ChartTooltip
+            content={<VolumeTooltip />}
+            cursor={{ fill: "var(--muted-foreground)", fillOpacity: 0.08 }}
+          />
+          <Bar dataKey="volume" maxBarSize={36} radius={[3, 3, 0, 0]}>
+            {rows.map((r) => (
+              <Cell
+                fill={ACCENT}
+                fillOpacity={r.t === lastT ? 0.95 : 0.4}
+                key={r.t}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ChartContainer>
+    </ChartCard>
+  );
+}
 
-      {tickIdx.map((idx) => {
-        const cx = pad.l + slot * idx + slot / 2;
-        return (
-          <text
-            className="fill-muted-foreground"
-            fontSize="11"
-            key={`tick-${idx}`}
-            textAnchor={idx === 0 ? "start" : idx === n - 1 ? "end" : "middle"}
-            x={Math.min(Math.max(cx, pad.l), W - pad.r)}
-            y={H - 9}
-          >
-            {fmtDate(points[idx].t)}
-          </text>
-        );
-      })}
-    </svg>
+function VolumeTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: { payload?: Point }[];
+}) {
+  if (!active || !payload?.length) {
+    return null;
+  }
+  const row = payload[0]?.payload;
+  if (!row) {
+    return null;
+  }
+  return (
+    <div className="min-w-[10rem] rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
+      <div className="mb-1.5 font-medium">{formatTick(row.t)}</div>
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1.5">
+          <span
+            className="size-2 shrink-0 rounded-[2px]"
+            style={{ backgroundColor: ACCENT }}
+          />
+          <span className="text-muted-foreground">Volume</span>
+        </div>
+        <span className="ml-auto font-medium text-foreground tabular-nums">
+          {row.volume.toLocaleString()} lb
+        </span>
+      </div>
+    </div>
   );
 }

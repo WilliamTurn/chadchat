@@ -1,12 +1,11 @@
 "use client";
 
 /**
- * The interactive weight-trend view — the centerpiece of `/progress`. Built on
- * Recharts via the shadcn chart primitive (`components/ui/chart.tsx`) and the
- * shared dashboard chart system (`ChartCard`, `Kpi`, `useChartRange`, the pure
- * `lib/chart` math). What it gives a user in under three seconds: where am I
- * (trend weight), which way and how fast (change + rate), and will I hit my goal
- * (remaining + projected date).
+ * The interactive weight-trend view. Built on Recharts via the shadcn chart
+ * primitive (`components/ui/chart.tsx`) and the shared dashboard chart system
+ * (`ChartCard`, `Kpi`, `useChartRange`, the pure `lib/chart` math). What it
+ * gives a user in under three seconds: where am I (trend weight), which way and
+ * how fast (change + rate), and will I hit my goal (remaining + projected date).
  *
  * Trend is a **gap-aware EMA** (TrendWeight/MacroFactor style) — smooth and
  * trustworthy right at today's edge, the part that matters most — riding over
@@ -14,6 +13,12 @@
  * trend. Honest sparse states: a lone weigh-in shows the number, not a broken
  * one-dot line; rate/projection stay hidden until there's enough data to be
  * truthful.
+ *
+ * Two variants share one chart body:
+ *   - `full` (default) — the `/progress` centerpiece: own card chrome, KPI
+ *     strip, range toggle, projection footer.
+ *   - `compact` — the `/today` mini view: chart only (the page supplies the
+ *     card + headline number), all history, shorter, no toggle/KPIs.
  */
 
 import { useMemo } from "react";
@@ -66,10 +71,12 @@ export function WeightChartInteractive({
   points,
   unit,
   goalWeight = null,
+  variant = "full",
 }: {
   points: { t: number; weight: number }[];
   unit: string;
   goalWeight?: number | null;
+  variant?: "full" | "compact";
 }) {
   // Trend is computed over the FULL history so the smoothing never restarts at a
   // range boundary; the range only narrows what's drawn.
@@ -112,22 +119,27 @@ export function WeightChartInteractive({
     };
   }, [rows, goalWeight, n]);
 
-  // Padded y-domain that always keeps the goal line on screen.
-  const yDomain = useMemo<[number, number]>(() => {
-    const ws = rows.map((r) => r.weight);
-    const vals = goalWeight == null ? ws : [...ws, goalWeight];
-    if (vals.length === 0) {
-      return [0, 1];
-    }
-    const min = Math.min(...vals);
-    const max = Math.max(...vals);
-    const spread = max - min;
-    const pad = spread > 0 ? spread * 0.15 : Math.max(max * 0.02, 1);
-    return [Math.floor(min - pad), Math.ceil(max + pad)];
-  }, [rows, goalWeight]);
-
   if (n === 0) {
     return null; // page renders the empty-state prompt
+  }
+
+  // ---- Compact /today mini view: chart only, all history, no chrome ---------
+  if (variant === "compact") {
+    if (n === 1) {
+      return (
+        <p className="py-6 text-center text-muted-foreground text-sm">
+          Log another weigh-in to see your trend line.
+        </p>
+      );
+    }
+    return (
+      <WeightChartBody
+        compact
+        goalWeight={goalWeight}
+        rows={allRows}
+        unit={unit}
+      />
+    );
   }
 
   const rangeLabel =
@@ -218,9 +230,7 @@ export function WeightChartInteractive({
                 }
                 tone={reached ? "good" : "neutral"}
                 value={
-                  reached
-                    ? "Reached 🎯"
-                    : `${Math.abs(stats.toGo)} ${unit}`
+                  reached ? "Reached 🎯" : `${Math.abs(stats.toGo)} ${unit}`
                 }
               />
             )}
@@ -230,31 +240,75 @@ export function WeightChartInteractive({
       range={control}
       title="Weight trend"
     >
-      <ChartContainer className="h-[260px] w-full" config={chartConfig}>
-        <ComposedChart
-          data={rows}
-          margin={{ top: 8, right: 12, bottom: 0, left: -8 }}
-        >
-          <defs>
-            <linearGradient id="weightTrendFill" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor={ACCENT} stopOpacity={0.18} />
-              <stop offset="95%" stopColor={ACCENT} stopOpacity={0} />
-            </linearGradient>
-          </defs>
+      <WeightChartBody goalWeight={goalWeight} rows={rows} unit={unit} />
+    </ChartCard>
+  );
+}
 
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+/**
+ * The shared Recharts body: faint raw weigh-ins under the headline EMA trend,
+ * a dashed goal line, and a scrub crosshair + tooltip. `compact` drops the
+ * Y-axis and goal label and shrinks the height for the `/today` mini view.
+ */
+function WeightChartBody({
+  rows,
+  unit,
+  goalWeight,
+  compact = false,
+}: {
+  rows: TrendRow[];
+  unit: string;
+  goalWeight: number | null;
+  compact?: boolean;
+}) {
+  // Padded y-domain that always keeps the goal line on screen.
+  const yDomain = useMemo<[number, number]>(() => {
+    const ws = rows.map((r) => r.weight);
+    const vals = goalWeight == null ? ws : [...ws, goalWeight];
+    if (vals.length === 0) {
+      return [0, 1];
+    }
+    const min = Math.min(...vals);
+    const max = Math.max(...vals);
+    const spread = max - min;
+    const pad = spread > 0 ? spread * 0.15 : Math.max(max * 0.02, 1);
+    return [Math.floor(min - pad), Math.ceil(max + pad)];
+  }, [rows, goalWeight]);
 
-          <XAxis
-            axisLine={false}
-            dataKey="t"
-            domain={["dataMin", "dataMax"]}
-            minTickGap={32}
-            scale="time"
-            tickFormatter={formatTick}
-            tickLine={false}
-            tickMargin={8}
-            type="number"
-          />
+  return (
+    <ChartContainer
+      className={compact ? "h-[170px] w-full" : "h-[260px] w-full"}
+      config={chartConfig}
+    >
+      <ComposedChart
+        data={rows}
+        margin={
+          compact
+            ? { top: 8, right: 8, bottom: 0, left: 8 }
+            : { top: 8, right: 12, bottom: 0, left: -8 }
+        }
+      >
+        <defs>
+          <linearGradient id="weightTrendFill" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor={ACCENT} stopOpacity={0.18} />
+            <stop offset="95%" stopColor={ACCENT} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+
+        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+
+        <XAxis
+          axisLine={false}
+          dataKey="t"
+          domain={["dataMin", "dataMax"]}
+          minTickGap={compact ? 48 : 32}
+          scale="time"
+          tickFormatter={formatTick}
+          tickLine={false}
+          tickMargin={8}
+          type="number"
+        />
+        {!compact && (
           <YAxis
             axisLine={false}
             domain={yDomain}
@@ -263,57 +317,62 @@ export function WeightChartInteractive({
             tickMargin={4}
             width={40}
           />
+        )}
+        {compact && <YAxis domain={yDomain} hide />}
 
-          <ChartTooltip
-            content={<WeightTooltip unit={unit} />}
-            cursor={{
-              stroke: "var(--muted-foreground)",
-              strokeDasharray: "4 4",
-              strokeWidth: 1,
-            }}
+        <ChartTooltip
+          content={<WeightTooltip unit={unit} />}
+          cursor={{
+            stroke: "var(--muted-foreground)",
+            strokeDasharray: "4 4",
+            strokeWidth: 1,
+          }}
+        />
+
+        {goalWeight != null && (
+          <ReferenceLine
+            label={
+              compact
+                ? undefined
+                : {
+                    value: `Goal ${goalWeight} ${unit}`,
+                    position: "insideTopRight",
+                    fill: "var(--muted-foreground)",
+                    fontSize: 11,
+                  }
+            }
+            stroke={GOAL_COLOR}
+            strokeDasharray="5 4"
+            strokeWidth={1.5}
+            y={goalWeight}
           />
+        )}
 
-          {goalWeight != null && (
-            <ReferenceLine
-              label={{
-                value: `Goal ${goalWeight} ${unit}`,
-                position: "insideTopRight",
-                fill: "var(--muted-foreground)",
-                fontSize: 11,
-              }}
-              stroke={GOAL_COLOR}
-              strokeDasharray="5 4"
-              strokeWidth={1.5}
-              y={goalWeight}
-            />
-          )}
+        {/* Faint raw daily weigh-ins, underneath the trend. */}
+        <Line
+          activeDot={{ r: 4, fill: "var(--muted-foreground)", strokeWidth: 0 }}
+          dataKey="weight"
+          dot={{ r: 2, fillOpacity: 0.5, strokeWidth: 0 }}
+          isAnimationActive={false}
+          stroke="var(--muted-foreground)"
+          strokeOpacity={0.3}
+          strokeWidth={1}
+          type="monotone"
+        />
 
-          {/* Faint raw daily weigh-ins, underneath the trend. */}
-          <Line
-            activeDot={{ r: 4, fill: "var(--muted-foreground)", strokeWidth: 0 }}
-            dataKey="weight"
-            dot={{ r: 2, fillOpacity: 0.5, strokeWidth: 0 }}
-            isAnimationActive={false}
-            stroke="var(--muted-foreground)"
-            strokeOpacity={0.3}
-            strokeWidth={1}
-            type="monotone"
-          />
-
-          {/* The headline EMA trend, on top. */}
-          <Area
-            activeDot={{ r: 4, fill: ACCENT, strokeWidth: 0 }}
-            dataKey="trend"
-            dot={false}
-            fill="url(#weightTrendFill)"
-            isAnimationActive={false}
-            stroke={ACCENT}
-            strokeWidth={2.5}
-            type="monotone"
-          />
-        </ComposedChart>
-      </ChartContainer>
-    </ChartCard>
+        {/* The headline EMA trend, on top. */}
+        <Area
+          activeDot={{ r: 4, fill: ACCENT, strokeWidth: 0 }}
+          dataKey="trend"
+          dot={false}
+          fill="url(#weightTrendFill)"
+          isAnimationActive={false}
+          stroke={ACCENT}
+          strokeWidth={2.5}
+          type="monotone"
+        />
+      </ComposedChart>
+    </ChartContainer>
   );
 }
 
@@ -346,11 +405,7 @@ function WeightTooltip({
           label="Weighed in"
           value={`${row.weight} ${unit}`}
         />
-        <TooltipRow
-          color={ACCENT}
-          label="Trend"
-          value={`${row.trend} ${unit}`}
-        />
+        <TooltipRow color={ACCENT} label="Trend" value={`${row.trend} ${unit}`} />
       </div>
     </div>
   );

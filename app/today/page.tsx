@@ -18,11 +18,12 @@ import { auth } from "@/app/(auth)/auth";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { MacroRings } from "@/components/nutrition/macro-rings";
-import { WeightChart } from "@/components/progress/weight-chart";
+import { WeightChartInteractive } from "@/components/progress/weight-chart-interactive";
 import { GoalList } from "@/components/today/goal-list";
 import { PlanList } from "@/components/today/plan-list";
 import { TargetEditor } from "@/components/today/target-editor";
 import { WaterTracker } from "@/components/today/water-tracker";
+import { WaterTrendChart } from "@/components/today/water-trend-chart";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
@@ -34,6 +35,7 @@ import {
   getProgressEntriesByUserId,
   getUserById,
   getUserMemory,
+  getWaterDailyTotals,
   getWaterMlSince,
 } from "@/lib/db/queries";
 import type { ProgressEntry } from "@/lib/db/schema";
@@ -132,16 +134,25 @@ async function TodayContent() {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
-  const [memory, entries, todaysMeals, target, waterMl, goals, plans] =
-    await Promise.all([
-      getUserMemory(user.id),
-      isPro ? getProgressEntriesByUserId(user.id) : Promise.resolve([]),
-      isPro ? getMealsSince(user.id, startOfToday) : Promise.resolve([]),
-      isPro ? getNutritionTarget(user.id) : Promise.resolve(undefined),
-      isPro ? getWaterMlSince(user.id, startOfToday) : Promise.resolve(0),
-      getActiveGoalsByUserId(user.id),
-      getActivePlansByUserId(user.id),
-    ]);
+  const [
+    memory,
+    entries,
+    todaysMeals,
+    target,
+    waterMl,
+    waterDaily,
+    goals,
+    plans,
+  ] = await Promise.all([
+    getUserMemory(user.id),
+    isPro ? getProgressEntriesByUserId(user.id) : Promise.resolve([]),
+    isPro ? getMealsSince(user.id, startOfToday) : Promise.resolve([]),
+    isPro ? getNutritionTarget(user.id) : Promise.resolve(undefined),
+    isPro ? getWaterMlSince(user.id, startOfToday) : Promise.resolve(0),
+    isPro ? getWaterDailyTotals(user.id) : Promise.resolve([]),
+    getActiveGoalsByUserId(user.id),
+    getActivePlansByUserId(user.id),
+  ]);
 
   // Strip the DB rows down to the serializable shape the client cards need.
   const goalItems = goals.map((g) => ({
@@ -404,10 +415,11 @@ async function TodayContent() {
             </div>
             <div className="mt-2">
               {points.length > 0 ? (
-                <WeightChart
+                <WeightChartInteractive
                   goalWeight={goalWeight}
                   points={points}
                   unit={displayUnit}
+                  variant="compact"
                 />
               ) : (
                 <EmptyHint
@@ -437,6 +449,11 @@ async function TodayContent() {
           />
         )}
       </div>
+
+      {/* Hydration trend (Pro) — full-width, once there's history to show */}
+      {isPro && waterDaily.length >= 2 && (
+        <WaterTrendChart days={waterDaily} />
+      )}
 
       {/* Quick actions */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">

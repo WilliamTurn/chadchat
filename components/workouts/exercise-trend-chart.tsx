@@ -1,151 +1,176 @@
+"use client";
+
 /**
- * Dependency-free est-1RM trend line for a single exercise. Pure presentational
- * SVG (same approach as WeightChart/VolumeChart) so it scales to its container.
- * Each point is one session's best estimated 1RM (lb), oldest → newest, drawn as
- * a filled-area line with dots and the latest value labelled.
+ * Interactive estimated-1RM trend for a single exercise. Built on Recharts via
+ * the shadcn chart primitive + the shared `lib/chart` formatters — the same
+ * engine as the weight tracker — so strength history scrubs and reads like the
+ * rest of the dashboards. Each point is one session's best estimated 1RM (lb),
+ * oldest → newest; hover/scrub any session for its date and value, with the
+ * latest value labelled on the line.
+ *
+ * Rendered inside the Personal-records drill-down panel, which already owns the
+ * card chrome and title — so this is the chart only, no ChartCard wrapper (no
+ * double chrome). Strength is a step-function of PRs, not a noisy daily signal,
+ * so we plot the raw session values (no EMA smoothing).
  */
 
-import { formatCalendarDayMs } from "@/lib/date";
+import { useMemo } from "react";
+import {
+  Area,
+  CartesianGrid,
+  ComposedChart,
+  ReferenceDot,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+} from "@/components/ui/chart";
+import { formatTick } from "@/lib/chart/format";
 
-function fmtDate(t: number): string {
-  return formatCalendarDayMs(t);
-}
+const ACCENT = "#a4161a"; // brand blood red
+
+const chartConfig = {
+  value: { label: "Est. 1RM", color: ACCENT },
+} satisfies ChartConfig;
+
+type Point = { t: number; value: number };
 
 export function ExerciseTrendChart({
   points,
   unit = "lb",
 }: {
-  points: { t: number; value: number }[];
+  points: Point[];
   unit?: string;
 }) {
+  const yDomain = useMemo<[number, number]>(() => {
+    if (points.length === 0) {
+      return [0, 1];
+    }
+    const vs = points.map((p) => p.value);
+    const min = Math.min(...vs);
+    const max = Math.max(...vs);
+    const spread = max - min;
+    const pad = spread > 0 ? spread * 0.15 : Math.max(max * 0.05, 1);
+    return [Math.floor(min - pad), Math.ceil(max + pad)];
+  }, [points]);
+
   if (points.length === 0) {
     return null;
   }
 
-  const W = 600;
-  const H = 200;
-  const pad = { t: 22, r: 16, b: 28, l: 16 };
-
-  const vs = points.map((p) => p.value);
-  const ts = points.map((p) => p.t);
-  const minV = Math.min(...vs);
-  const maxV = Math.max(...vs);
-  const minT = Math.min(...ts);
-  const maxT = Math.max(...ts);
-
-  const range = maxV - minV;
-  const yPad = range > 0 ? range * 0.15 : Math.max(maxV * 0.05, 1);
-  const yMin = minV - yPad;
-  const yMax = maxV + yPad;
-
-  const x = (t: number) =>
-    maxT === minT
-      ? W / 2
-      : pad.l + ((t - minT) / (maxT - minT)) * (W - pad.l - pad.r);
-  const y = (v: number) =>
-    yMax === yMin
-      ? H / 2
-      : pad.t + ((yMax - v) / (yMax - yMin)) * (H - pad.t - pad.b);
-
-  const coords = points.map((p) => ({ cx: x(p.t), cy: y(p.value) }));
-  const line = coords
-    .map((c, i) => `${i === 0 ? "M" : "L"}${c.cx.toFixed(1)} ${c.cy.toFixed(1)}`)
-    .join(" ");
-  const last = coords.at(-1);
-  const first = coords[0];
-  const area =
-    last && first
-      ? `${line} L${last.cx.toFixed(1)} ${H - pad.b} L${first.cx.toFixed(1)} ${
-          H - pad.b
-        } Z`
-      : "";
-
-  const latest = points.at(-1)?.value ?? 0;
-
-  const tickIdx =
-    points.length === 1
-      ? [0]
-      : [...new Set([0, Math.floor((points.length - 1) / 2), points.length - 1])];
+  const latest = points.at(-1);
 
   return (
-    <svg
-      aria-label="Estimated 1RM over time"
-      className="h-auto w-full text-blood"
-      preserveAspectRatio="none"
-      role="img"
-      viewBox={`0 0 ${W} ${H}`}
-    >
-      <title>Estimated 1RM over time</title>
-      <defs>
-        <linearGradient id="oneRmFill" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="currentColor" stopOpacity="0.18" />
-          <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
-        </linearGradient>
-      </defs>
+    <ChartContainer className="h-[220px] w-full" config={chartConfig}>
+      <ComposedChart
+        data={points}
+        margin={{ top: 16, right: 16, bottom: 0, left: -8 }}
+      >
+        <defs>
+          <linearGradient id="oneRmTrendFill" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor={ACCENT} stopOpacity={0.18} />
+            <stop offset="95%" stopColor={ACCENT} stopOpacity={0} />
+          </linearGradient>
+        </defs>
 
-      {/* baseline */}
-      <line
-        className="text-border"
-        stroke="currentColor"
-        strokeWidth="1"
-        x1={pad.l}
-        x2={W - pad.r}
-        y1={H - pad.b}
-        y2={H - pad.b}
-      />
+        <CartesianGrid strokeDasharray="3 3" vertical={false} />
 
-      {coords.length > 1 && <path d={area} fill="url(#oneRmFill)" />}
-
-      {coords.length > 1 && (
-        <path
-          d={line}
-          fill="none"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2.5"
+        <XAxis
+          axisLine={false}
+          dataKey="t"
+          domain={["dataMin", "dataMax"]}
+          minTickGap={32}
+          scale="time"
+          tickFormatter={formatTick}
+          tickLine={false}
+          tickMargin={8}
+          type="number"
         />
-      )}
-
-      {coords.map((c, i) => (
-        <circle
-          cx={c.cx}
-          cy={c.cy}
-          fill="currentColor"
-          fillOpacity={i === coords.length - 1 ? 1 : 0.55}
-          key={points[i].t}
-          r={i === coords.length - 1 ? 4.5 : 2.5}
+        <YAxis
+          axisLine={false}
+          domain={yDomain}
+          tickCount={5}
+          tickLine={false}
+          tickMargin={4}
+          width={40}
         />
-      ))}
 
-      {/* latest-value label */}
-      {last && (
-        <text
-          className="fill-foreground font-semibold"
-          fontSize="13"
-          textAnchor={last.cx > W - 80 ? "end" : "middle"}
-          x={Math.min(Math.max(last.cx, 24), W - 24)}
-          y={Math.max(last.cy - 10, 12)}
-        >
-          {latest} {unit}
-        </text>
-      )}
+        <ChartTooltip
+          content={<OneRmTooltip unit={unit} />}
+          cursor={{
+            stroke: "var(--muted-foreground)",
+            strokeDasharray: "4 4",
+            strokeWidth: 1,
+          }}
+        />
 
-      {/* x-axis date ticks */}
-      {tickIdx.map((idx) => (
-        <text
-          className="fill-muted-foreground"
-          fontSize="11"
-          key={points[idx].t}
-          textAnchor={
-            idx === 0 ? "start" : idx === points.length - 1 ? "end" : "middle"
-          }
-          x={Math.min(Math.max(coords[idx].cx, pad.l), W - pad.r)}
-          y={H - 9}
-        >
-          {fmtDate(points[idx].t)}
-        </text>
-      ))}
-    </svg>
+        <Area
+          activeDot={{ r: 4.5, fill: ACCENT, strokeWidth: 0 }}
+          dataKey="value"
+          dot={{ r: 2.5, fill: ACCENT, fillOpacity: 0.55, strokeWidth: 0 }}
+          fill="url(#oneRmTrendFill)"
+          isAnimationActive={false}
+          stroke={ACCENT}
+          strokeWidth={2.5}
+          type="monotone"
+        />
+
+        {latest && (
+          <ReferenceDot
+            fill={ACCENT}
+            label={{
+              value: `${latest.value} ${unit}`,
+              position: "top",
+              fill: "var(--foreground)",
+              fontSize: 13,
+              fontWeight: 600,
+            }}
+            r={4.5}
+            stroke="var(--background)"
+            strokeWidth={1.5}
+            x={latest.t}
+            y={latest.value}
+          />
+        )}
+      </ComposedChart>
+    </ChartContainer>
+  );
+}
+
+function OneRmTooltip({
+  active,
+  payload,
+  unit,
+}: {
+  active?: boolean;
+  payload?: { payload?: Point }[];
+  unit: string;
+}) {
+  if (!active || !payload?.length) {
+    return null;
+  }
+  const row = payload[0]?.payload;
+  if (!row) {
+    return null;
+  }
+  return (
+    <div className="min-w-[10rem] rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
+      <div className="mb-1.5 font-medium">{formatTick(row.t)}</div>
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1.5">
+          <span
+            className="size-2 shrink-0 rounded-[2px]"
+            style={{ backgroundColor: ACCENT }}
+          />
+          <span className="text-muted-foreground">Est. 1RM</span>
+        </div>
+        <span className="ml-auto font-medium text-foreground tabular-nums">
+          {row.value} {unit}
+        </span>
+      </div>
+    </div>
   );
 }

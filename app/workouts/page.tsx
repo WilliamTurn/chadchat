@@ -1,4 +1,4 @@
-import { Dumbbell, Plus, Repeat, TrendingUp, Trophy } from "lucide-react";
+import { Dumbbell, Plus, Repeat, Trophy } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -203,15 +203,7 @@ async function Dashboard({ userId }: { userId: string }) {
       ) : (
         <>
           {/* Volume trend */}
-          {trend.length >= 2 && (
-            <section className="rounded-2xl border border-border bg-card p-5">
-              <h2 className="mb-3 flex items-center gap-2 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-                <TrendingUp className="size-4 text-blood" />
-                Volume trend
-              </h2>
-              <VolumeChart points={trend} />
-            </section>
-          )}
+          {trend.length >= 2 && <VolumeChart points={trend} />}
 
           {/* Personal records */}
           {records.length > 0 && (

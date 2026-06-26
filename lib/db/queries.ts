@@ -1495,6 +1495,44 @@ export async function getWaterMlBetween(
   }
 }
 
+/**
+ * Daily water totals over the last `sinceDays` days, oldest first, for the
+ * hydration trend chart. Each row is one UTC calendar day's summed ml (keyed to
+ * that day's midnight-UTC ms) — bucketed in JS the same way `volumeTrend` does,
+ * so ticks/tooltips stay timezone-stable (see `lib/date.ts`).
+ */
+export async function getWaterDailyTotals(
+  userId: string,
+  sinceDays = 90
+): Promise<{ t: number; ml: number }[]> {
+  try {
+    const since = new Date(Date.now() - sinceDays * 24 * 60 * 60 * 1000);
+    const rows = await db
+      .select({
+        recordedAt: waterLog.recordedAt,
+        amountMl: waterLog.amountMl,
+      })
+      .from(waterLog)
+      .where(
+        and(eq(waterLog.userId, userId), gte(waterLog.recordedAt, since))
+      );
+    const byDay = new Map<number, number>();
+    for (const r of rows) {
+      const d = r.recordedAt;
+      const t = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+      byDay.set(t, (byDay.get(t) ?? 0) + (r.amountMl ?? 0));
+    }
+    return [...byDay.entries()]
+      .map(([t, ml]) => ({ t, ml: Math.max(0, ml) }))
+      .sort((a, b) => a.t - b.t);
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get water history"
+    );
+  }
+}
+
 export async function addWaterLog(entry: {
   userId: string;
   amountMl: number;
