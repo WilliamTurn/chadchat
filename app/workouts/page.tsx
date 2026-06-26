@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
+import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -167,6 +168,9 @@ async function Dashboard({ userId }: { userId: string }) {
             />
           </div>
           <div className="flex items-center gap-2">
+            {workouts.length > 0 && (
+              <AskChadButton prompt="Review my recent workouts and training — volume, consistency, and PRs. How am I progressing, and what should I focus on next?" />
+            )}
             {workouts.length > 0 && (
               <WorkoutBuilder
                 customExercises={customExercises}

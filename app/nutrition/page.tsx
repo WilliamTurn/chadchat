@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
+import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { AnalysisCard } from "@/components/nutrition/analysis-card";
 import { AnalyzeForm } from "@/components/nutrition/analyze-form";
@@ -211,11 +212,14 @@ function TodaySection({
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex items-baseline justify-between">
-        <h2 className="font-medium text-lg">Today</h2>
-        <span className="text-muted-foreground text-sm">
-          {meals.length} meal{meals.length === 1 ? "" : "s"}
-        </span>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-baseline gap-3">
+          <h2 className="font-medium text-lg">Today</h2>
+          <span className="text-muted-foreground text-sm">
+            {meals.length} meal{meals.length === 1 ? "" : "s"}
+          </span>
+        </div>
+        <AskChadButton prompt="Review my nutrition over the last few days — calories, protein, and the quality of what I've been eating. What's working and what should I fix?" />
       </div>
 
       {/* Totals + remaining */}

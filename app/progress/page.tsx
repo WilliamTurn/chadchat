@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
+import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { DeleteEntryButton } from "@/components/progress/delete-entry-button";
 import { EditEntryButton } from "@/components/progress/edit-entry-button";
 import { LogEntryForm } from "@/components/progress/log-entry-form";
@@ -185,7 +186,12 @@ async function Dashboard({ userId }: { userId: string }) {
 
       {/* Weight trend */}
       <section className="rounded-2xl border border-border bg-card p-6">
-        <h2 className="mb-4 font-medium text-lg">Weight trend</h2>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="font-medium text-lg">Weight trend</h2>
+          {points.length > 0 && (
+            <AskChadButton prompt="Review my progress — weight, body measurements, and photos. How am I doing, and what should I adjust?" />
+          )}
+        </div>
         {points.length > 0 ? (
           <WeightChart
             goalWeight={goalWeight}

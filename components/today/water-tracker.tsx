@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useId, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { addWater, logWaterAmount, removeWater } from "@/app/nutrition/actions";
+import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -99,11 +100,14 @@ export function WaterTracker({
   return (
     <section className="flex flex-col rounded-2xl border border-border bg-card p-6">
       {/* Header */}
-      <div className="flex items-center gap-2">
-        <Droplets className="size-4 text-sky-400" />
-        <h2 className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
-          Hydration
-        </h2>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Droplets className="size-4 text-sky-400" />
+          <h2 className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
+            Hydration
+          </h2>
+        </div>
+        <AskChadButton prompt="How's my water intake today? Am I drinking enough, and when should I top up?" />
       </div>
 
       {/* Hero vessel + readout */}

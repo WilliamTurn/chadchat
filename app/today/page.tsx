@@ -15,6 +15,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
+import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { MacroRings } from "@/components/nutrition/macro-rings";
 import { WeightChart } from "@/components/progress/weight-chart";
@@ -344,12 +345,15 @@ async function TodayContent() {
                 ? `${todaysMeals.length} meal${todaysMeals.length === 1 ? "" : "s"} logged today`
                 : "No meals logged yet today."}
             </p>
-            <Button asChild className="gap-1.5" size="sm" variant="outline">
-              <Link href="/nutrition">
-                <Camera className="size-4" />
-                Log a meal
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <AskChadButton prompt="Look at what I've eaten today and how it stacks up against my calorie and macro targets. Am I on track, and what should I eat for the rest of the day?" />
+              <Button asChild className="gap-1.5" size="sm" variant="outline">
+                <Link href="/nutrition">
+                  <Camera className="size-4" />
+                  Log a meal
+                </Link>
+              </Button>
+            </div>
           </div>
           {target?.calories == null && (
             <p className="mt-2 text-muted-foreground text-xs">
@@ -414,17 +418,15 @@ async function TodayContent() {
               )}
             </div>
             {points.length > 0 && (
-              <Button
-                asChild
-                className="mt-3 gap-1.5"
-                size="sm"
-                variant="outline"
-              >
-                <Link href="/progress">
-                  <LineChart className="size-3.5" />
-                  Log progress
-                </Link>
-              </Button>
+              <div className="mt-3 flex items-center gap-2">
+                <AskChadButton prompt="Look at my weight trend and how it's tracking against my goal weight. Am I moving in the right direction, and should I change anything?" />
+                <Button asChild className="gap-1.5" size="sm" variant="outline">
+                  <Link href="/progress">
+                    <LineChart className="size-3.5" />
+                    Log progress
+                  </Link>
+                </Button>
+              </div>
             )}
           </Card>
         ) : (
