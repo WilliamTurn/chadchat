@@ -3,9 +3,10 @@
 import { useMemo, useState } from "react";
 import { MS_PER_DAY, spanDays } from "@/lib/chart/trend";
 
-export type RangeKey = "1m" | "3m" | "6m" | "1y" | "all";
+export type RangeKey = "1w" | "1m" | "3m" | "6m" | "1y" | "all";
 
 const RANGE_DAYS: Record<Exclude<RangeKey, "all">, number> = {
+  "1w": 7,
   "1m": 30,
   "3m": 90,
   "6m": 180,
@@ -13,6 +14,7 @@ const RANGE_DAYS: Record<Exclude<RangeKey, "all">, number> = {
 };
 
 const RANGE_LABEL: Record<RangeKey, string> = {
+  "1w": "1W",
   "1m": "1M",
   "3m": "3M",
   "6m": "6M",
@@ -52,7 +54,7 @@ export function useChartRange<T extends { t: number }>(
   const span = spanDays(rows);
 
   const presets = useMemo<RangePreset[]>(() => {
-    const keys = (["1m", "3m", "6m", "1y"] as const).filter(
+    const keys = (["1w", "1m", "3m", "6m", "1y"] as const).filter(
       (r) => span > RANGE_DAYS[r]
     );
     return [...keys, "all" as const].map((key) => ({

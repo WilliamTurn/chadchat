@@ -119,6 +119,24 @@ export function WeightChartInteractive({
     };
   }, [rows, goalWeight, n]);
 
+  // How far along the journey from the very first weigh-in to the goal — the
+  // "you're 60% there" bar pro scale apps lead with. Computed over ALL history
+  // (not the range) so it answers "how close am I overall?".
+  const goalProgress = useMemo(() => {
+    if (goalWeight == null || allRows.length < 2) {
+      return null;
+    }
+    const start = allRows[0].trend;
+    const current = allRows[allRows.length - 1].trend;
+    const total = start - goalWeight; // signed distance to cover
+    if (Math.abs(total) < 0.1) {
+      return null; // started at goal — nothing meaningful to show
+    }
+    const done = start - current; // signed progress made so far
+    const pct = Math.max(0, Math.min(1, done / total));
+    return { pct, reached: pct >= 0.999 };
+  }, [allRows, goalWeight]);
+
   if (n === 0) {
     return null; // page renders the empty-state prompt
   }
@@ -203,11 +221,33 @@ export function WeightChartInteractive({
         stats && (
           <>
             <Kpi
+              help={
+                <>
+                  Your <span className="text-foreground">smoothed</span> weight —
+                  not today's number on the scale. It blends your recent weigh-ins
+                  so a salty meal or a dehydrated morning doesn't fool you. That's
+                  why it's a decimal: e.g. {stats.trendWeight} sits between your
+                  last couple of weigh-ins, weighted toward the most recent one.{" "}
+                  <span className="text-foreground">This is the number to
+                  actually watch.</span>
+                </>
+              }
               label="Trend weight"
               size="lg"
               value={`${stats.trendWeight} ${unit}`}
             />
             <Kpi
+              help={
+                <>
+                  How much your trend weight has moved over the selected time
+                  window.{" "}
+                  <span className="text-emerald-500">Green</span> means it's
+                  heading toward your goal,{" "}
+                  <span className="text-blood">red</span> means away. Use the{" "}
+                  <span className="text-foreground">1W / 1M / All</span> buttons to
+                  change the window.
+                </>
+              }
               label="Change"
               sub={`· ${rangeLabel}`}
               tone={stats.tone}
@@ -215,6 +255,16 @@ export function WeightChartInteractive({
             />
             {showRate && (
               <Kpi
+                help={
+                  <>
+                    Your average pace — how fast the trend is moving per week over
+                    this window. For steady fat loss,{" "}
+                    <span className="text-foreground">
+                      0.5–1% of bodyweight per week
+                    </span>{" "}
+                    is the usual healthy target.
+                  </>
+                }
                 label="Rate"
                 tone={stats.tone}
                 value={formatRate(stats.perWeek, unit)}
@@ -222,6 +272,16 @@ export function WeightChartInteractive({
             )}
             {goalWeight != null && stats.toGo != null && (
               <Kpi
+                help={
+                  <>
+                    How far your trend weight still is from your goal of{" "}
+                    <span className="text-foreground">
+                      {goalWeight} {unit}
+                    </span>
+                    . Once there's enough data, the date below is when you'll reach
+                    it if you hold this pace.
+                  </>
+                }
                 label="To goal"
                 sub={
                   stats.projection
@@ -241,6 +301,24 @@ export function WeightChartInteractive({
       title="Weight trend"
     >
       <WeightChartBody goalWeight={goalWeight} rows={rows} unit={unit} />
+      {goalProgress && (
+        <div className="mt-5">
+          <div className="mb-1.5 flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">Progress to goal</span>
+            <span className="font-medium tabular-nums">
+              {goalProgress.reached
+                ? "Reached 🎯"
+                : `${Math.round(goalProgress.pct * 100)}%`}
+            </span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-emerald-500 transition-all"
+              style={{ width: `${Math.max(2, goalProgress.pct * 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
     </ChartCard>
   );
 }

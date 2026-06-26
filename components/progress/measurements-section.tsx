@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Ruler, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -31,6 +31,14 @@ const KIND_LABEL: Record<string, string> = {
   shoulders: "Shoulders",
   neck: "Neck",
 };
+
+/**
+ * Which direction is "progress" per spot. For most people the waist/hips/neck
+ * shrinking is the win (fat loss the scale hides), while arms/chest/shoulders
+ * growing is the win (muscle). Used to color the change green vs neutral so the
+ * number actually means something instead of always treating "down" as good.
+ */
+const GROW_IS_GOOD = new Set(["arms", "chest", "shoulders"]);
 
 const todayISO = todayLocalISO;
 
@@ -129,10 +137,14 @@ export function MeasurementsSection({
 
   return (
     <section className="rounded-2xl border border-border bg-card p-6">
-      <h2 className="mb-1 font-medium text-lg">Body measurements</h2>
+      <div className="mb-1 flex items-center gap-2">
+        <h2 className="font-medium text-lg">Body measurements</h2>
+        <Ruler aria-hidden="true" className="size-4 text-muted-foreground/60" />
+      </div>
       <p className="mb-4 text-muted-foreground text-sm">
-        The scale lies on a cut or a bulk — the tape doesn't. Track where it
-        actually changes.
+        The scale lies on a cut or a bulk — the tape doesn't. A shrinking waist
+        with a steady scale means you're losing fat and holding muscle. Track the
+        spots that matter and watch them move.
       </p>
 
       <form className="flex flex-wrap items-end gap-3" onSubmit={onSubmit}>
@@ -191,7 +203,7 @@ export function MeasurementsSection({
         </Button>
       </form>
 
-      {byKind.size > 0 && (
+      {byKind.size > 0 ? (
         <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
           {[...byKind.entries()].map(([k, list]) => {
             const latest = list.at(-1);
@@ -200,6 +212,13 @@ export function MeasurementsSection({
               latest && firstVal != null
                 ? Math.round((latest.value - firstVal) * 10) / 10
                 : null;
+            // Is this change in the good direction for this spot?
+            const isProgress =
+              change != null && change !== 0
+                ? GROW_IS_GOOD.has(k)
+                  ? change > 0
+                  : change < 0
+                : false;
             return (
               <div
                 className="flex items-center justify-between gap-3 rounded-xl border border-border bg-background/40 px-4 py-3"
@@ -216,10 +235,16 @@ export function MeasurementsSection({
                     </span>
                     {change != null && change !== 0 && (
                       <span
-                        className={`ml-2 text-xs ${
-                          change < 0 ? "text-emerald-500" : "text-muted-foreground"
+                        className={`ml-2 inline-flex items-center gap-0.5 text-xs ${
+                          isProgress ? "text-emerald-500" : "text-muted-foreground"
                         }`}
+                        title={`${change > 0 ? "+" : ""}${change} ${latest?.unit} since your first reading`}
                       >
+                        {change < 0 ? (
+                          <ArrowDownRight className="size-3" />
+                        ) : (
+                          <ArrowUpRight className="size-3" />
+                        )}
                         {change > 0 ? "+" : ""}
                         {change}
                       </span>
@@ -244,6 +269,13 @@ export function MeasurementsSection({
               </div>
             );
           })}
+        </div>
+      ) : (
+        <div className="mt-6 rounded-xl border border-border border-dashed bg-background/40 px-4 py-5 text-center text-muted-foreground text-sm">
+          No measurements yet. Start with your{" "}
+          <span className="font-medium text-foreground">waist</span> — it's the
+          single best non-scale signal of fat loss. Log it weekly and the trend
+          shows up here.
         </div>
       )}
     </section>

@@ -65,14 +65,9 @@ function weightGoalTarget(
 export default function ProgressPage() {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col px-4 py-12">
-      <Toaster
-        position="top-center"
-        theme="system"
-        toastOptions={{
-          className:
-            "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
-        }}
-      />
+      {/* richColors: success → green, error → red (the "Logged." confirmation
+          reads as a clear success instead of a neutral gray toast). */}
+      <Toaster position="top-center" richColors theme="system" />
 
       <StandaloneHeader active="/progress" />
 
