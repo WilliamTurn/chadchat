@@ -11,10 +11,12 @@ import { checkBotId } from "botid/server";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { auth } from "@/app/(auth)/auth";
-import { getEntitlements, getUsageWarning } from "@/lib/ai/entitlements";
+import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import { formatTodaySnapshot, summarizeWeight } from "@/lib/ai/dashboard";
+import { getEntitlements, getUsageWarning } from "@/lib/ai/entitlements";
 import {
   formatGoalsForPrompt,
+  formatMealPlanForPrompt,
   formatMemoryForPrompt,
   formatWorkoutsForPrompt,
   maybeUpdateUserMemory,
@@ -25,14 +27,19 @@ import {
   DEFAULT_CHAT_MODEL,
   getCapabilities,
 } from "@/lib/ai/models";
-import { isPlaceholderTitle, type RequestHints, systemPrompt } from "@/lib/ai/prompts";
+import {
+  isPlaceholderTitle,
+  type RequestHints,
+  systemPrompt,
+} from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
 import { editDocument } from "@/lib/ai/tools/edit-document";
+import { generateMealPlanTool } from "@/lib/ai/tools/generate-meal-plan";
 import { getDashboard } from "@/lib/ai/tools/get-dashboard";
 import { getWeather } from "@/lib/ai/tools/get-weather";
-import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { logWorkout } from "@/lib/ai/tools/log-workout";
+import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { saveGoal } from "@/lib/ai/tools/save-goal";
 import { savePlan } from "@/lib/ai/tools/save-plan";
 import { updateDocument } from "@/lib/ai/tools/update-document";
@@ -41,6 +48,7 @@ import {
   createStreamId,
   deleteChatById,
   getActiveGoalsByUserId,
+  getActiveMealPlanByUserId,
   getActivePlansByUserId,
   getChatById,
   getMealsSince,
@@ -58,7 +66,6 @@ import {
   updateMessage,
 } from "@/lib/db/queries";
 import type { DBMessage } from "@/lib/db/schema";
-import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import { ChatbotError } from "@/lib/errors";
 import { checkIpRateLimit } from "@/lib/ratelimit";
 import type { ChatMessage } from "@/lib/types";
@@ -66,7 +73,10 @@ import { convertToUIMessages, generateUUID } from "@/lib/utils";
 import { generateTitleFromUserMessage } from "../../actions";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
 
-export const maxDuration = 60;
+// Raised from 60s: the generateMealPlan tool runs one Opus design pass plus a
+// batch of food-database lookups, which can take a couple of minutes for a full
+// 7-day plan. A higher ceiling is harmless to normal (fast) chat turns.
+export const maxDuration = 300;
 
 function getStreamContext() {
   try {
@@ -236,17 +246,24 @@ export async function POST(request: Request) {
     // for any other day Chad calls the getDashboard tool. Best-effort — a query
     // hiccup here must never block the chat.
     let dashboardBlock = "";
+    let mealPlanBlock = "";
     if (canAccessProFeatures(dbUser)) {
       try {
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
-        const [todaysMeals, nutritionTarget, waterMl, progressEntries] =
-          await Promise.all([
-            getMealsSince(session.user.id, startOfToday),
-            getNutritionTarget(session.user.id),
-            getWaterMlSince(session.user.id, startOfToday),
-            getProgressEntriesByUserId(session.user.id),
-          ]);
+        const [
+          todaysMeals,
+          nutritionTarget,
+          waterMl,
+          progressEntries,
+          activeMealPlan,
+        ] = await Promise.all([
+          getMealsSince(session.user.id, startOfToday),
+          getNutritionTarget(session.user.id),
+          getWaterMlSince(session.user.id, startOfToday),
+          getProgressEntriesByUserId(session.user.id),
+          getActiveMealPlanByUserId(session.user.id),
+        ]);
         dashboardBlock = formatTodaySnapshot({
           date: startOfToday,
           meals: todaysMeals,
@@ -254,6 +271,7 @@ export async function POST(request: Request) {
           waterMl,
           weight: summarizeWeight(progressEntries),
         });
+        mealPlanBlock = formatMealPlanForPrompt(activeMealPlan);
       } catch (error) {
         console.error("Dashboard snapshot failed:", error);
       }
@@ -294,6 +312,7 @@ export async function POST(request: Request) {
             goals: goalsBlock,
             workouts: workoutsBlock,
             dashboard: dashboardBlock,
+            mealPlan: mealPlanBlock,
           }),
           messages: modelMessages,
           stopWhen: stepCountIs(5),
@@ -308,6 +327,7 @@ export async function POST(request: Request) {
                   "requestSuggestions",
                   "saveGoal",
                   "savePlan",
+                  "generateMealPlan",
                   "logWorkout",
                   "getDashboard",
                 ],
@@ -339,6 +359,7 @@ export async function POST(request: Request) {
             }),
             saveGoal: saveGoal({ session, chatId: id }),
             savePlan: savePlan({ session, chatId: id }),
+            generateMealPlan: generateMealPlanTool({ session, chatId: id }),
             logWorkout: logWorkout({ session }),
             getDashboard: getDashboard({ session }),
           },

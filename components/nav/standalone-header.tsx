@@ -10,6 +10,7 @@ import {
   MenuIcon,
   MessageSquare,
   Refrigerator,
+  UtensilsCrossed,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -40,6 +41,7 @@ const LINKS: { href: string; label: string; icon: typeof LayoutDashboard }[] = [
   { href: "/", label: "Chat", icon: MessageSquare },
   { href: "/workouts", label: "Workouts", icon: Dumbbell },
   { href: "/nutrition", label: "Nutrition", icon: Camera },
+  { href: "/meal-plan", label: "Meal Plan", icon: UtensilsCrossed },
   { href: "/kitchen", label: "Kitchen", icon: Refrigerator },
   { href: "/progress", label: "Progress", icon: LineChart },
   { href: "/account", label: "Account", icon: CreditCard },

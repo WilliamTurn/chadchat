@@ -504,3 +504,42 @@ export const customExercise = pgTable("CustomExercise", {
 });
 
 export type CustomExercise = InferSelectModel<typeof customExercise>;
+
+// --- Structured meal plans (Pro) ---
+// A multi-day meal plan Chad (or the user) generates. Unlike the markdown `plan`
+// table (which holds free-text training/diet plans), a meal plan is fully
+// STRUCTURED: days → meals → foods, with macros that come from the USDA food
+// database (computed in code), never AI-estimated. The shape of `days` and
+// `preferences` is defined + validated in lib/validation/meal-plan.ts.
+export const mealPlan = pgTable("MealPlan", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  // "2,200 kcal cut — 4 meals/day".
+  title: text("title").notNull(),
+  status: varchar("status", { enum: ["active", "archived"] })
+    .notNull()
+    .default("active"),
+  source: varchar("source", { enum: ["user", "chad"] })
+    .notNull()
+    .default("chad"),
+  sourceChatId: uuid("sourceChatId"),
+  // The macro target this plan was built to hit (snapshot at generation time).
+  targetCalories: integer("targetCalories"),
+  targetProtein: integer("targetProtein"),
+  targetCarbs: integer("targetCarbs"),
+  targetFat: integer("targetFat"),
+  // Generation inputs (diet style, allergies, dislikes, meals/day, budget,
+  // cook-time, notes) so the plan can be regenerated with the same constraints.
+  preferences: json("preferences").notNull(),
+  // Chad's blunt voice intro / strategy explainer for this plan.
+  coachIntro: text("coachIntro").notNull().default(""),
+  // The structured plan: days[] → meals[] → foods[], with DB-verified macros
+  // and per-meal/per-day totals baked in. See lib/validation/meal-plan.ts.
+  days: json("days").notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+export type MealPlan = InferSelectModel<typeof mealPlan>;

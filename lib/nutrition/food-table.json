@@ -1,0 +1,3042 @@
+{
+  "2% milk": {
+    "name": "2% milk",
+    "fdcId": 2705386,
+    "desc": "Milk, reduced fat (2%)",
+    "per100g": {
+      "calories": 50,
+      "protein": 3.4,
+      "carbs": 4.9,
+      "fat": 1.9
+    },
+    "aliases": []
+  },
+  "all purpose flour": {
+    "name": "all purpose flour",
+    "fdcId": 169761,
+    "desc": "Wheat flour, white, all-purpose, unenriched",
+    "per100g": {
+      "calories": 364,
+      "protein": 10.3,
+      "carbs": 76.3,
+      "fat": 1
+    },
+    "aliases": []
+  },
+  "almond butter": {
+    "name": "almond butter",
+    "fdcId": 2707533,
+    "desc": "Almond butter",
+    "per100g": {
+      "calories": 641,
+      "protein": 20.7,
+      "carbs": 21.1,
+      "fat": 52.7
+    },
+    "aliases": []
+  },
+  "almond milk": {
+    "name": "almond milk",
+    "fdcId": 2479376,
+    "desc": "UNSWEETENED ALMOND MILK, UNSWEETENED",
+    "per100g": {
+      "calories": 12,
+      "protein": 0.4,
+      "carbs": 0.4,
+      "fat": 1
+    },
+    "aliases": []
+  },
+  "almonds": {
+    "name": "almonds",
+    "fdcId": null,
+    "desc": "Nuts, almonds, raw",
+    "per100g": {
+      "calories": 579,
+      "protein": 21.2,
+      "carbs": 21.6,
+      "fat": 49.9
+    },
+    "aliases": []
+  },
+  "apple": {
+    "name": "apple",
+    "fdcId": 171689,
+    "desc": "Apples, raw, without skin",
+    "per100g": {
+      "calories": 48,
+      "protein": 0.3,
+      "carbs": 12.8,
+      "fat": 0.1
+    },
+    "aliases": [
+      "apples"
+    ]
+  },
+  "apricot": {
+    "name": "apricot",
+    "fdcId": 171697,
+    "desc": "Apricots, raw",
+    "per100g": {
+      "calories": 48,
+      "protein": 1.4,
+      "carbs": 11.1,
+      "fat": 0.4
+    },
+    "aliases": []
+  },
+  "artichoke": {
+    "name": "artichoke",
+    "fdcId": 2709766,
+    "desc": "Artichoke",
+    "per100g": {
+      "calories": 53,
+      "protein": 2.9,
+      "carbs": 12,
+      "fat": 0.3
+    },
+    "aliases": []
+  },
+  "arugula": {
+    "name": "arugula",
+    "fdcId": 169387,
+    "desc": "Arugula, raw",
+    "per100g": {
+      "calories": 25,
+      "protein": 2.6,
+      "carbs": 3.7,
+      "fat": 0.7
+    },
+    "aliases": []
+  },
+  "asparagus": {
+    "name": "asparagus",
+    "fdcId": 168390,
+    "desc": "Asparagus, cooked, boiled, drained",
+    "per100g": {
+      "calories": 22,
+      "protein": 2.4,
+      "carbs": 4.1,
+      "fat": 0.2
+    },
+    "aliases": []
+  },
+  "avocado": {
+    "name": "avocado",
+    "fdcId": 171706,
+    "desc": "Avocados, raw, California",
+    "per100g": {
+      "calories": 167,
+      "protein": 2,
+      "carbs": 8.6,
+      "fat": 15.4
+    },
+    "aliases": []
+  },
+  "avocado oil": {
+    "name": "avocado oil",
+    "fdcId": 173573,
+    "desc": "Oil, avocado",
+    "per100g": {
+      "calories": 884,
+      "protein": 0,
+      "carbs": 0,
+      "fat": 100
+    },
+    "aliases": []
+  },
+  "bacon": {
+    "name": "bacon",
+    "fdcId": null,
+    "desc": "Pork bacon, cooked",
+    "per100g": {
+      "calories": 541,
+      "protein": 37,
+      "carbs": 1.4,
+      "fat": 41.8
+    },
+    "aliases": []
+  },
+  "bagel": {
+    "name": "bagel",
+    "fdcId": 2707684,
+    "desc": "Bagel",
+    "per100g": {
+      "calories": 264,
+      "protein": 10.6,
+      "carbs": 52.4,
+      "fat": 1.3
+    },
+    "aliases": []
+  },
+  "balsamic vinegar": {
+    "name": "balsamic vinegar",
+    "fdcId": 172241,
+    "desc": "Vinegar, balsamic",
+    "per100g": {
+      "calories": 88,
+      "protein": 0.5,
+      "carbs": 17,
+      "fat": 0
+    },
+    "aliases": []
+  },
+  "banana": {
+    "name": "banana",
+    "fdcId": 1105073,
+    "desc": "Bananas, overripe, raw",
+    "per100g": {
+      "calories": 85,
+      "protein": 0.7,
+      "carbs": 20.1,
+      "fat": 0.2
+    },
+    "aliases": [
+      "bananas"
+    ]
+  },
+  "barley": {
+    "name": "barley",
+    "fdcId": 170285,
+    "desc": "Barley, pearled, cooked",
+    "per100g": {
+      "calories": 123,
+      "protein": 2.3,
+      "carbs": 28.2,
+      "fat": 0.4
+    },
+    "aliases": []
+  },
+  "basmati rice": {
+    "name": "basmati rice",
+    "fdcId": 169708,
+    "desc": "Rice, white, long-grain, parboiled, enriched, cooked",
+    "per100g": {
+      "calories": 123,
+      "protein": 2.9,
+      "carbs": 26,
+      "fat": 0.4
+    },
+    "aliases": []
+  },
+  "bbq sauce": {
+    "name": "bbq sauce",
+    "fdcId": 2709750,
+    "desc": "Barbecue sauce",
+    "per100g": {
+      "calories": 172,
+      "protein": 0.8,
+      "carbs": 40.8,
+      "fat": 0.6
+    },
+    "aliases": []
+  },
+  "beef chuck": {
+    "name": "beef chuck",
+    "fdcId": 2705825,
+    "desc": "Beef, steak, chuck",
+    "per100g": {
+      "calories": 225,
+      "protein": 26,
+      "carbs": 0.2,
+      "fat": 13.4
+    },
+    "aliases": []
+  },
+  "beef jerky": {
+    "name": "beef jerky",
+    "fdcId": 2705860,
+    "desc": "Beef jerky",
+    "per100g": {
+      "calories": 410,
+      "protein": 33.2,
+      "carbs": 11,
+      "fat": 25.6
+    },
+    "aliases": []
+  },
+  "beef stew meat": {
+    "name": "beef stew meat",
+    "fdcId": 2705849,
+    "desc": "Beef, stew meat",
+    "per100g": {
+      "calories": 251,
+      "protein": 28.4,
+      "carbs": 0,
+      "fat": 15.4
+    },
+    "aliases": []
+  },
+  "beef tenderloin": {
+    "name": "beef tenderloin",
+    "fdcId": 2705841,
+    "desc": "Beef, steak, tenderloin",
+    "per100g": {
+      "calories": 196,
+      "protein": 30.5,
+      "carbs": 0,
+      "fat": 8.3
+    },
+    "aliases": [
+      "filet mignon"
+    ]
+  },
+  "beets": {
+    "name": "beets",
+    "fdcId": 169146,
+    "desc": "Beets, cooked, boiled, drained",
+    "per100g": {
+      "calories": 44,
+      "protein": 1.7,
+      "carbs": 10,
+      "fat": 0.2
+    },
+    "aliases": []
+  },
+  "bell pepper": {
+    "name": "bell pepper",
+    "fdcId": 170108,
+    "desc": "Peppers, sweet, red, raw",
+    "per100g": {
+      "calories": 26,
+      "protein": 1,
+      "carbs": 6,
+      "fat": 0.3
+    },
+    "aliases": [
+      "red pepper",
+      "bell peppers"
+    ]
+  },
+  "black beans": {
+    "name": "black beans",
+    "fdcId": 2707359,
+    "desc": "Black beans, NFS",
+    "per100g": {
+      "calories": 181,
+      "protein": 8.2,
+      "carbs": 22,
+      "fat": 7
+    },
+    "aliases": []
+  },
+  "blackberries": {
+    "name": "blackberries",
+    "fdcId": 173946,
+    "desc": "Blackberries, raw",
+    "per100g": {
+      "calories": 43,
+      "protein": 1.4,
+      "carbs": 9.6,
+      "fat": 0.5
+    },
+    "aliases": []
+  },
+  "blueberries": {
+    "name": "blueberries",
+    "fdcId": 171711,
+    "desc": "Blueberries, raw",
+    "per100g": {
+      "calories": 57,
+      "protein": 0.7,
+      "carbs": 14.5,
+      "fat": 0.3
+    },
+    "aliases": []
+  },
+  "bok choy": {
+    "name": "bok choy",
+    "fdcId": 2178962,
+    "desc": "BABY BOK CHOY",
+    "per100g": {
+      "calories": 13,
+      "protein": 1.8,
+      "carbs": 1.8,
+      "fat": 0
+    },
+    "aliases": []
+  },
+  "brazil nuts": {
+    "name": "brazil nuts",
+    "fdcId": 2707492,
+    "desc": "Brazil nuts",
+    "per100g": {
+      "calories": 659,
+      "protein": 14.3,
+      "carbs": 11.7,
+      "fat": 67.1
+    },
+    "aliases": []
+  },
+  "broccoli": {
+    "name": "broccoli",
+    "fdcId": 747447,
+    "desc": "Broccoli, raw",
+    "per100g": {
+      "calories": 31,
+      "protein": 2.6,
+      "carbs": 6.3,
+      "fat": 0.3
+    },
+    "aliases": []
+  },
+  "brown rice": {
+    "name": "brown rice",
+    "fdcId": 2710789,
+    "desc": "Rice, brown, cooked, as ingredient",
+    "per100g": {
+      "calories": 124,
+      "protein": 2.5,
+      "carbs": 25.9,
+      "fat": 1.1
+    },
+    "aliases": []
+  },
+  "brown sugar": {
+    "name": "brown sugar",
+    "fdcId": 168833,
+    "desc": "Sugars, brown",
+    "per100g": {
+      "calories": 380,
+      "protein": 0.1,
+      "carbs": 98.1,
+      "fat": 0
+    },
+    "aliases": []
+  },
+  "brussels sprouts": {
+    "name": "brussels sprouts",
+    "fdcId": 170383,
+    "desc": "Brussels sprouts, raw",
+    "per100g": {
+      "calories": 43,
+      "protein": 3.4,
+      "carbs": 9,
+      "fat": 0.3
+    },
+    "aliases": []
+  },
+  "bulgur": {
+    "name": "bulgur",
+    "fdcId": 170287,
+    "desc": "Bulgur, cooked",
+    "per100g": {
+      "calories": 83,
+      "protein": 3.1,
+      "carbs": 18.6,
+      "fat": 0.2
+    },
+    "aliases": []
+  },
+  "butter": {
+    "name": "butter",
+    "fdcId": 173410,
+    "desc": "Butter, salted",
+    "per100g": {
+      "calories": 717,
+      "protein": 0.9,
+      "carbs": 0.1,
+      "fat": 81.1
+    },
+    "aliases": []
+  },
+  "butternut squash": {
+    "name": "butternut squash",
+    "fdcId": 169295,
+    "desc": "Squash, winter, butternut, raw",
+    "per100g": {
+      "calories": 45,
+      "protein": 1,
+      "carbs": 11.7,
+      "fat": 0.1
+    },
+    "aliases": []
+  },
+  "cabbage": {
+    "name": "cabbage",
+    "fdcId": 169975,
+    "desc": "Cabbage, raw",
+    "per100g": {
+      "calories": 25,
+      "protein": 1.3,
+      "carbs": 5.8,
+      "fat": 0.1
+    },
+    "aliases": []
+  },
+  "canned salmon": {
+    "name": "canned salmon",
+    "fdcId": 175174,
+    "desc": "Salmon, sockeye, canned, total can contents",
+    "per100g": {
+      "calories": 153,
+      "protein": 20.6,
+      "carbs": 0,
+      "fat": 7.2
+    },
+    "aliases": []
+  },
+  "canned tuna": {
+    "name": "canned tuna",
+    "fdcId": 334194,
+    "desc": "Fish, tuna, light, canned in water, drained solids",
+    "per100g": {
+      "calories": 90,
+      "protein": 19,
+      "carbs": 0.1,
+      "fat": 0.9
+    },
+    "aliases": [
+      "tuna in water"
+    ]
+  },
+  "cannellini beans": {
+    "name": "cannellini beans",
+    "fdcId": 2707353,
+    "desc": "White beans, NFS",
+    "per100g": {
+      "calories": 188,
+      "protein": 9,
+      "carbs": 23.3,
+      "fat": 6.8
+    },
+    "aliases": []
+  },
+  "canola oil": {
+    "name": "canola oil",
+    "fdcId": 2710188,
+    "desc": "Canola oil",
+    "per100g": {
+      "calories": 900,
+      "protein": 0,
+      "carbs": 0,
+      "fat": 100
+    },
+    "aliases": []
+  },
+  "cantaloupe": {
+    "name": "cantaloupe",
+    "fdcId": 2709226,
+    "desc": "Cantaloupe, raw",
+    "per100g": {
+      "calories": 38,
+      "protein": 0.8,
+      "carbs": 8.2,
+      "fat": 0.2
+    },
+    "aliases": []
+  },
+  "carrots": {
+    "name": "carrots",
+    "fdcId": 170393,
+    "desc": "Carrots, raw",
+    "per100g": {
+      "calories": 41,
+      "protein": 0.9,
+      "carbs": 9.6,
+      "fat": 0.2
+    },
+    "aliases": [
+      "carrot"
+    ]
+  },
+  "casein protein": {
+    "name": "casein protein",
+    "fdcId": 173459,
+    "desc": "Protein supplement, milk based, Muscle Milk, powder",
+    "per100g": {
+      "calories": 411,
+      "protein": 45.7,
+      "carbs": 18.5,
+      "fat": 17.1
+    },
+    "aliases": []
+  },
+  "cashew butter": {
+    "name": "cashew butter",
+    "fdcId": 2707536,
+    "desc": "Cashew butter",
+    "per100g": {
+      "calories": 609,
+      "protein": 12.1,
+      "carbs": 30.3,
+      "fat": 53
+    },
+    "aliases": []
+  },
+  "cashews": {
+    "name": "cashews",
+    "fdcId": 2707494,
+    "desc": "Cashews, unroasted",
+    "per100g": {
+      "calories": 574,
+      "protein": 15.3,
+      "carbs": 32.7,
+      "fat": 46.4
+    },
+    "aliases": []
+  },
+  "catfish": {
+    "name": "catfish",
+    "fdcId": 175166,
+    "desc": "Fish, catfish, channel, farmed, cooked, dry heat",
+    "per100g": {
+      "calories": 144,
+      "protein": 18.4,
+      "carbs": 0,
+      "fat": 7.2
+    },
+    "aliases": []
+  },
+  "cauliflower": {
+    "name": "cauliflower",
+    "fdcId": 169986,
+    "desc": "Cauliflower, raw",
+    "per100g": {
+      "calories": 25,
+      "protein": 1.9,
+      "carbs": 5,
+      "fat": 0.3
+    },
+    "aliases": []
+  },
+  "celery": {
+    "name": "celery",
+    "fdcId": 169988,
+    "desc": "Celery, raw",
+    "per100g": {
+      "calories": 14,
+      "protein": 0.7,
+      "carbs": 3,
+      "fat": 0.2
+    },
+    "aliases": []
+  },
+  "cereal": {
+    "name": "cereal",
+    "fdcId": 1944652,
+    "desc": "CORN FLAKES CEREAL",
+    "per100g": {
+      "calories": 381,
+      "protein": 4.8,
+      "carbs": 85.7,
+      "fat": 0
+    },
+    "aliases": []
+  },
+  "cheddar cheese": {
+    "name": "cheddar cheese",
+    "fdcId": 328637,
+    "desc": "Cheese, cheddar",
+    "per100g": {
+      "calories": 408,
+      "protein": 23.3,
+      "carbs": 2.4,
+      "fat": 34
+    },
+    "aliases": [
+      "cheddar"
+    ]
+  },
+  "cherries": {
+    "name": "cherries",
+    "fdcId": 171719,
+    "desc": "Cherries, sweet, raw",
+    "per100g": {
+      "calories": 63,
+      "protein": 1.1,
+      "carbs": 16,
+      "fat": 0.2
+    },
+    "aliases": []
+  },
+  "cherry tomatoes": {
+    "name": "cherry tomatoes",
+    "fdcId": 321360,
+    "desc": "Tomatoes, grape, raw",
+    "per100g": {
+      "calories": 27,
+      "protein": 0.8,
+      "carbs": 5.5,
+      "fat": 0.6
+    },
+    "aliases": []
+  },
+  "chia seeds": {
+    "name": "chia seeds",
+    "fdcId": 2707590,
+    "desc": "Chia seeds",
+    "per100g": {
+      "calories": 486,
+      "protein": 16.5,
+      "carbs": 42.1,
+      "fat": 30.7
+    },
+    "aliases": []
+  },
+  "chicken breast": {
+    "name": "chicken breast",
+    "fdcId": null,
+    "desc": "Chicken, breast, meat only, cooked, roasted",
+    "per100g": {
+      "calories": 165,
+      "protein": 31,
+      "carbs": 0,
+      "fat": 3.6
+    },
+    "aliases": [
+      "grilled chicken breast",
+      "chicken breasts"
+    ]
+  },
+  "chicken broth": {
+    "name": "chicken broth",
+    "fdcId": 1909393,
+    "desc": "CHICKEN BROTH",
+    "per100g": {
+      "calories": 6,
+      "protein": 0.4,
+      "carbs": 0.8,
+      "fat": 0.2
+    },
+    "aliases": []
+  },
+  "chicken drumstick": {
+    "name": "chicken drumstick",
+    "fdcId": 2706000,
+    "desc": "Chicken drumstick, NS as to cooking method, skin eaten",
+    "per100g": {
+      "calories": 206,
+      "protein": 25.7,
+      "carbs": 0.1,
+      "fat": 11.5
+    },
+    "aliases": [
+      "chicken leg"
+    ]
+  },
+  "chicken wing": {
+    "name": "chicken wing",
+    "fdcId": 2706064,
+    "desc": "Chicken wing, sauteed",
+    "per100g": {
+      "calories": 265,
+      "protein": 23.1,
+      "carbs": 0,
+      "fat": 18.4
+    },
+    "aliases": []
+  },
+  "chickpeas": {
+    "name": "chickpeas",
+    "fdcId": 2707414,
+    "desc": "Chickpeas, NFS",
+    "per100g": {
+      "calories": 211,
+      "protein": 8.2,
+      "carbs": 25.5,
+      "fat": 8.9
+    },
+    "aliases": [
+      "garbanzo beans"
+    ]
+  },
+  "clams": {
+    "name": "clams",
+    "fdcId": 2706339,
+    "desc": "Clams, NFS",
+    "per100g": {
+      "calories": 143,
+      "protein": 16.1,
+      "carbs": 6.7,
+      "fat": 5.2
+    },
+    "aliases": []
+  },
+  "coconut": {
+    "name": "coconut",
+    "fdcId": 170169,
+    "desc": "Nuts, coconut meat, raw",
+    "per100g": {
+      "calories": 354,
+      "protein": 3.3,
+      "carbs": 15.2,
+      "fat": 33.5
+    },
+    "aliases": []
+  },
+  "coconut milk": {
+    "name": "coconut milk",
+    "fdcId": 2705413,
+    "desc": "Coconut milk",
+    "per100g": {
+      "calories": 31,
+      "protein": 0.2,
+      "carbs": 2.9,
+      "fat": 2.1
+    },
+    "aliases": []
+  },
+  "coconut oil": {
+    "name": "coconut oil",
+    "fdcId": 2710182,
+    "desc": "Coconut oil",
+    "per100g": {
+      "calories": 895,
+      "protein": 0,
+      "carbs": 0.8,
+      "fat": 99.1
+    },
+    "aliases": []
+  },
+  "cod": {
+    "name": "cod",
+    "fdcId": null,
+    "desc": "Fish, cod, cooked, dry heat",
+    "per100g": {
+      "calories": 105,
+      "protein": 22.8,
+      "carbs": 0,
+      "fat": 0.9
+    },
+    "aliases": []
+  },
+  "collard greens": {
+    "name": "collard greens",
+    "fdcId": 170406,
+    "desc": "Collards, raw",
+    "per100g": {
+      "calories": 32,
+      "protein": 3,
+      "carbs": 5.4,
+      "fat": 0.6
+    },
+    "aliases": []
+  },
+  "corn": {
+    "name": "corn",
+    "fdcId": 169998,
+    "desc": "Corn, sweet, yellow, raw",
+    "per100g": {
+      "calories": 86,
+      "protein": 3.3,
+      "carbs": 18.7,
+      "fat": 1.4
+    },
+    "aliases": [
+      "sweet corn"
+    ]
+  },
+  "corn tortilla": {
+    "name": "corn tortilla",
+    "fdcId": 2707823,
+    "desc": "Tortilla, corn",
+    "per100g": {
+      "calories": 218,
+      "protein": 5.7,
+      "carbs": 44.6,
+      "fat": 2.9
+    },
+    "aliases": []
+  },
+  "cornmeal": {
+    "name": "cornmeal",
+    "fdcId": 167628,
+    "desc": "Cornmeal, blue (Navajo)",
+    "per100g": {
+      "calories": 398,
+      "protein": 10.4,
+      "carbs": 76.9,
+      "fat": 5.4
+    },
+    "aliases": []
+  },
+  "cottage cheese": {
+    "name": "cottage cheese",
+    "fdcId": 2535346,
+    "desc": "2% LOWFAT COTTAGE CHEESE",
+    "per100g": {
+      "calories": 79,
+      "protein": 10.5,
+      "carbs": 4.4,
+      "fat": 2.2
+    },
+    "aliases": [
+      "low fat cottage cheese"
+    ]
+  },
+  "couscous": {
+    "name": "couscous",
+    "fdcId": 169700,
+    "desc": "Couscous, cooked",
+    "per100g": {
+      "calories": 112,
+      "protein": 3.8,
+      "carbs": 23.2,
+      "fat": 0.2
+    },
+    "aliases": []
+  },
+  "crab": {
+    "name": "crab",
+    "fdcId": 2706344,
+    "desc": "Crab",
+    "per100g": {
+      "calories": 83,
+      "protein": 17.9,
+      "carbs": 0,
+      "fat": 0.7
+    },
+    "aliases": [
+      "crab meat"
+    ]
+  },
+  "crackers": {
+    "name": "crackers",
+    "fdcId": 2055557,
+    "desc": "CRACKERS",
+    "per100g": {
+      "calories": 468,
+      "protein": 7.2,
+      "carbs": 57.6,
+      "fat": 21.6
+    },
+    "aliases": []
+  },
+  "cream cheese": {
+    "name": "cream cheese",
+    "fdcId": 2433848,
+    "desc": "CREAM CHEESE",
+    "per100g": {
+      "calories": 321,
+      "protein": 7.1,
+      "carbs": 7.1,
+      "fat": 32.1
+    },
+    "aliases": []
+  },
+  "cucumber": {
+    "name": "cucumber",
+    "fdcId": 169225,
+    "desc": "Cucumber, peeled, raw",
+    "per100g": {
+      "calories": 10,
+      "protein": 0.6,
+      "carbs": 2.2,
+      "fat": 0.2
+    },
+    "aliases": []
+  },
+  "dates": {
+    "name": "dates",
+    "fdcId": 168191,
+    "desc": "Dates, medjool",
+    "per100g": {
+      "calories": 277,
+      "protein": 1.8,
+      "carbs": 75,
+      "fat": 0.2
+    },
+    "aliases": []
+  },
+  "dried cranberries": {
+    "name": "dried cranberries",
+    "fdcId": 2709202,
+    "desc": "Cranberries, dried",
+    "per100g": {
+      "calories": 308,
+      "protein": 0.2,
+      "carbs": 82.8,
+      "fat": 1.1
+    },
+    "aliases": []
+  },
+  "duck breast": {
+    "name": "duck breast",
+    "fdcId": 174469,
+    "desc": "Duck, wild, breast, meat only, raw",
+    "per100g": {
+      "calories": 123,
+      "protein": 19.8,
+      "carbs": 0,
+      "fat": 4.3
+    },
+    "aliases": []
+  },
+  "edamame": {
+    "name": "edamame",
+    "fdcId": 168411,
+    "desc": "Edamame, frozen, prepared",
+    "per100g": {
+      "calories": 121,
+      "protein": 11.9,
+      "carbs": 8.9,
+      "fat": 5.2
+    },
+    "aliases": []
+  },
+  "egg white": {
+    "name": "egg white",
+    "fdcId": 323697,
+    "desc": "Egg, white, raw, frozen, pasteurized",
+    "per100g": {
+      "calories": 48,
+      "protein": 10.1,
+      "carbs": 0.7,
+      "fat": 0.2
+    },
+    "aliases": [
+      "egg whites",
+      "liquid egg whites"
+    ]
+  },
+  "egg yolk": {
+    "name": "egg yolk",
+    "fdcId": 329596,
+    "desc": "Egg, yolk, raw, frozen, pasteurized",
+    "per100g": {
+      "calories": 296,
+      "protein": 15.6,
+      "carbs": 0.6,
+      "fat": 25.1
+    },
+    "aliases": []
+  },
+  "eggplant": {
+    "name": "eggplant",
+    "fdcId": null,
+    "desc": "Eggplant, cooked, boiled",
+    "per100g": {
+      "calories": 35,
+      "protein": 0.8,
+      "carbs": 8.7,
+      "fat": 0.2
+    },
+    "aliases": []
+  },
+  "english muffin": {
+    "name": "english muffin",
+    "fdcId": 174093,
+    "desc": "English muffins, whole grain white",
+    "per100g": {
+      "calories": 245,
+      "protein": 7,
+      "carbs": 50.2,
+      "fat": 1.8
+    },
+    "aliases": []
+  },
+  "farro": {
+    "name": "farro",
+    "fdcId": null,
+    "desc": "Farro, cooked",
+    "per100g": {
+      "calories": 130,
+      "protein": 5,
+      "carbs": 26,
+      "fat": 1
+    },
+    "aliases": []
+  },
+  "feta cheese": {
+    "name": "feta cheese",
+    "fdcId": 2465427,
+    "desc": "FETA CHEESE, FETA",
+    "per100g": {
+      "calories": 333,
+      "protein": 20,
+      "carbs": 3.3,
+      "fat": 26.7
+    },
+    "aliases": [
+      "feta"
+    ]
+  },
+  "flank steak": {
+    "name": "flank steak",
+    "fdcId": 2705827,
+    "desc": "Beef, steak, flank",
+    "per100g": {
+      "calories": 243,
+      "protein": 29.1,
+      "carbs": 0,
+      "fat": 14.1
+    },
+    "aliases": []
+  },
+  "flax seeds": {
+    "name": "flax seeds",
+    "fdcId": 2632589,
+    "desc": "FLAXSEED",
+    "per100g": {
+      "calories": 548,
+      "protein": 19.4,
+      "carbs": 32.3,
+      "fat": 35.5
+    },
+    "aliases": [
+      "flaxseed"
+    ]
+  },
+  "flour tortilla": {
+    "name": "flour tortilla",
+    "fdcId": 2707824,
+    "desc": "Tortilla, flour",
+    "per100g": {
+      "calories": 306,
+      "protein": 8.2,
+      "carbs": 49.4,
+      "fat": 8
+    },
+    "aliases": [
+      "tortilla"
+    ]
+  },
+  "garlic": {
+    "name": "garlic",
+    "fdcId": 1104647,
+    "desc": "Garlic, raw",
+    "per100g": {
+      "calories": 143,
+      "protein": 6.6,
+      "carbs": 28.2,
+      "fat": 0.4
+    },
+    "aliases": []
+  },
+  "goat cheese": {
+    "name": "goat cheese",
+    "fdcId": 2297514,
+    "desc": "GOAT CHEESE, GOAT",
+    "per100g": {
+      "calories": 321,
+      "protein": 25,
+      "carbs": 3.6,
+      "fat": 35.7
+    },
+    "aliases": []
+  },
+  "granola": {
+    "name": "granola",
+    "fdcId": 2707933,
+    "desc": "Cookie, granola",
+    "per100g": {
+      "calories": 464,
+      "protein": 9.8,
+      "carbs": 66.7,
+      "fat": 17.6
+    },
+    "aliases": []
+  },
+  "grapefruit": {
+    "name": "grapefruit",
+    "fdcId": 174677,
+    "desc": "Grapefruit, raw, white, California",
+    "per100g": {
+      "calories": 37,
+      "protein": 0.9,
+      "carbs": 9.1,
+      "fat": 0.1
+    },
+    "aliases": []
+  },
+  "grapes": {
+    "name": "grapes",
+    "fdcId": 173040,
+    "desc": "Grapes, muscadine, raw",
+    "per100g": {
+      "calories": 57,
+      "protein": 0.8,
+      "carbs": 13.9,
+      "fat": 0.5
+    },
+    "aliases": []
+  },
+  "greek yogurt": {
+    "name": "greek yogurt",
+    "fdcId": 2431245,
+    "desc": "PLAIN GREEK NONFAT YOGURT, PLAIN",
+    "per100g": {
+      "calories": 59,
+      "protein": 10,
+      "carbs": 4.1,
+      "fat": 0
+    },
+    "aliases": [
+      "nonfat greek yogurt"
+    ]
+  },
+  "green beans": {
+    "name": "green beans",
+    "fdcId": 2710803,
+    "desc": "Green beans, cooked, as ingredient",
+    "per100g": {
+      "calories": 42,
+      "protein": 2.1,
+      "carbs": 7.7,
+      "fat": 0.3
+    },
+    "aliases": [
+      "string beans"
+    ]
+  },
+  "green onion": {
+    "name": "green onion",
+    "fdcId": 170005,
+    "desc": "Onions, spring or scallions (includes tops and bulb), raw",
+    "per100g": {
+      "calories": 32,
+      "protein": 1.8,
+      "carbs": 7.3,
+      "fat": 0.2
+    },
+    "aliases": [
+      "scallions"
+    ]
+  },
+  "green peas": {
+    "name": "green peas",
+    "fdcId": null,
+    "desc": "Peas, green, cooked, boiled",
+    "per100g": {
+      "calories": 84,
+      "protein": 5.4,
+      "carbs": 15.6,
+      "fat": 0.2
+    },
+    "aliases": [
+      "peas"
+    ]
+  },
+  "grits": {
+    "name": "grits",
+    "fdcId": 2708363,
+    "desc": "Grits, NFS",
+    "per100g": {
+      "calories": 71,
+      "protein": 1.2,
+      "carbs": 12.2,
+      "fat": 1.8
+    },
+    "aliases": []
+  },
+  "ground beef": {
+    "name": "ground beef",
+    "fdcId": null,
+    "desc": "Beef, ground, 90% lean, cooked, pan-browned",
+    "per100g": {
+      "calories": 217,
+      "protein": 26.1,
+      "carbs": 0,
+      "fat": 11.6
+    },
+    "aliases": [
+      "lean ground beef",
+      "hamburger"
+    ]
+  },
+  "ground beef 80/20": {
+    "name": "ground beef 80/20",
+    "fdcId": 2507121,
+    "desc": "80% LEAN 20% FAT GROUND BEEF",
+    "per100g": {
+      "calories": 257,
+      "protein": 16.8,
+      "carbs": 0,
+      "fat": 20.4
+    },
+    "aliases": []
+  },
+  "ground beef 93/7": {
+    "name": "ground beef 93/7",
+    "fdcId": 173110,
+    "desc": "Beef, ground, 93% lean meat / 7% fat, raw",
+    "per100g": {
+      "calories": 152,
+      "protein": 20.8,
+      "carbs": 0,
+      "fat": 7
+    },
+    "aliases": []
+  },
+  "ground chicken": {
+    "name": "ground chicken",
+    "fdcId": null,
+    "desc": "Chicken, ground, cooked",
+    "per100g": {
+      "calories": 189,
+      "protein": 23.5,
+      "carbs": 0,
+      "fat": 10.9
+    },
+    "aliases": []
+  },
+  "ground pork": {
+    "name": "ground pork",
+    "fdcId": 167903,
+    "desc": "Pork, fresh, ground, cooked",
+    "per100g": {
+      "calories": 297,
+      "protein": 25.7,
+      "carbs": 0,
+      "fat": 20.8
+    },
+    "aliases": []
+  },
+  "ground turkey": {
+    "name": "ground turkey",
+    "fdcId": 171506,
+    "desc": "Turkey, Ground, cooked",
+    "per100g": {
+      "calories": 203,
+      "protein": 27.4,
+      "carbs": 0,
+      "fat": 10.4
+    },
+    "aliases": []
+  },
+  "half and half": {
+    "name": "half and half",
+    "fdcId": 171255,
+    "desc": "Cream, fluid, half and half",
+    "per100g": {
+      "calories": 131,
+      "protein": 3.1,
+      "carbs": 4.3,
+      "fat": 11.5
+    },
+    "aliases": []
+  },
+  "halibut": {
+    "name": "halibut",
+    "fdcId": null,
+    "desc": "Fish, halibut, cooked, dry heat",
+    "per100g": {
+      "calories": 111,
+      "protein": 22.5,
+      "carbs": 0,
+      "fat": 2.3
+    },
+    "aliases": []
+  },
+  "ham": {
+    "name": "ham",
+    "fdcId": 746952,
+    "desc": "Ham, sliced, restaurant",
+    "per100g": {
+      "calories": 121,
+      "protein": 19.6,
+      "carbs": 2.4,
+      "fat": 3.7
+    },
+    "aliases": [
+      "deli ham"
+    ]
+  },
+  "hazelnuts": {
+    "name": "hazelnuts",
+    "fdcId": 2707502,
+    "desc": "Hazelnuts",
+    "per100g": {
+      "calories": 628,
+      "protein": 15,
+      "carbs": 16.7,
+      "fat": 60.8
+    },
+    "aliases": []
+  },
+  "herring": {
+    "name": "herring",
+    "fdcId": 175117,
+    "desc": "Fish, herring, Atlantic, cooked, dry heat",
+    "per100g": {
+      "calories": 203,
+      "protein": 23,
+      "carbs": 0,
+      "fat": 11.6
+    },
+    "aliases": []
+  },
+  "hot sauce": {
+    "name": "hot sauce",
+    "fdcId": 171186,
+    "desc": "Sauce, hot chile, sriracha",
+    "per100g": {
+      "calories": 93,
+      "protein": 1.9,
+      "carbs": 19.2,
+      "fat": 0.9
+    },
+    "aliases": []
+  },
+  "hummus": {
+    "name": "hummus",
+    "fdcId": 321358,
+    "desc": "Hummus, commercial",
+    "per100g": {
+      "calories": 229,
+      "protein": 7.4,
+      "carbs": 14.9,
+      "fat": 17.1
+    },
+    "aliases": []
+  },
+  "italian sausage": {
+    "name": "italian sausage",
+    "fdcId": 2706189,
+    "desc": "Italian sausage",
+    "per100g": {
+      "calories": 317,
+      "protein": 18.2,
+      "carbs": 2.2,
+      "fat": 26.2
+    },
+    "aliases": []
+  },
+  "jalapeno": {
+    "name": "jalapeno",
+    "fdcId": 168576,
+    "desc": "Peppers, jalapeno, raw",
+    "per100g": {
+      "calories": 29,
+      "protein": 0.9,
+      "carbs": 6.5,
+      "fat": 0.4
+    },
+    "aliases": []
+  },
+  "jam": {
+    "name": "jam",
+    "fdcId": 169641,
+    "desc": "Jams and preserves",
+    "per100g": {
+      "calories": 278,
+      "protein": 0.4,
+      "carbs": 68.9,
+      "fat": 0.1
+    },
+    "aliases": []
+  },
+  "kale": {
+    "name": "kale",
+    "fdcId": 323505,
+    "desc": "Kale, raw",
+    "per100g": {
+      "calories": 35,
+      "protein": 2.9,
+      "carbs": 4.4,
+      "fat": 1.5
+    },
+    "aliases": []
+  },
+  "ketchup": {
+    "name": "ketchup",
+    "fdcId": 747693,
+    "desc": "Ketchup, restaurant",
+    "per100g": {
+      "calories": 117,
+      "protein": 1.1,
+      "carbs": 26.8,
+      "fat": 0.6
+    },
+    "aliases": []
+  },
+  "kidney beans": {
+    "name": "kidney beans",
+    "fdcId": 2707379,
+    "desc": "Kidney beans, NFS",
+    "per100g": {
+      "calories": 177,
+      "protein": 8.1,
+      "carbs": 21.2,
+      "fat": 7
+    },
+    "aliases": []
+  },
+  "kiwi": {
+    "name": "kiwi",
+    "fdcId": 327046,
+    "desc": "Kiwifruit, green, raw",
+    "per100g": {
+      "calories": 58,
+      "protein": 1.1,
+      "carbs": 14,
+      "fat": 0.4
+    },
+    "aliases": []
+  },
+  "leek": {
+    "name": "leek",
+    "fdcId": null,
+    "desc": "Leeks, raw",
+    "per100g": {
+      "calories": 61,
+      "protein": 1.5,
+      "carbs": 14.2,
+      "fat": 0.3
+    },
+    "aliases": []
+  },
+  "lemon": {
+    "name": "lemon",
+    "fdcId": 167746,
+    "desc": "Lemons, raw, without peel",
+    "per100g": {
+      "calories": 29,
+      "protein": 1.1,
+      "carbs": 9.3,
+      "fat": 0.3
+    },
+    "aliases": []
+  },
+  "lentils": {
+    "name": "lentils",
+    "fdcId": null,
+    "desc": "Lentils, cooked, boiled",
+    "per100g": {
+      "calories": 116,
+      "protein": 9,
+      "carbs": 20.1,
+      "fat": 0.4
+    },
+    "aliases": []
+  },
+  "lime": {
+    "name": "lime",
+    "fdcId": 168155,
+    "desc": "Limes, raw",
+    "per100g": {
+      "calories": 30,
+      "protein": 0.7,
+      "carbs": 10.5,
+      "fat": 0.2
+    },
+    "aliases": []
+  },
+  "lobster": {
+    "name": "lobster",
+    "fdcId": 2706349,
+    "desc": "Lobster",
+    "per100g": {
+      "calories": 97,
+      "protein": 20.9,
+      "carbs": 0,
+      "fat": 1
+    },
+    "aliases": []
+  },
+  "macadamia nuts": {
+    "name": "macadamia nuts",
+    "fdcId": 2707503,
+    "desc": "Macadamia nuts",
+    "per100g": {
+      "calories": 716,
+      "protein": 7.8,
+      "carbs": 12.8,
+      "fat": 76.1
+    },
+    "aliases": []
+  },
+  "mackerel": {
+    "name": "mackerel",
+    "fdcId": 174236,
+    "desc": "Fish, mackerel, king, cooked, dry heat",
+    "per100g": {
+      "calories": 134,
+      "protein": 26,
+      "carbs": 0,
+      "fat": 2.6
+    },
+    "aliases": []
+  },
+  "mahi mahi": {
+    "name": "mahi mahi",
+    "fdcId": null,
+    "desc": "Fish, mahi mahi (dolphinfish), cooked",
+    "per100g": {
+      "calories": 109,
+      "protein": 23.7,
+      "carbs": 0,
+      "fat": 0.9
+    },
+    "aliases": []
+  },
+  "mango": {
+    "name": "mango",
+    "fdcId": 169910,
+    "desc": "Mangos, raw",
+    "per100g": {
+      "calories": 60,
+      "protein": 0.8,
+      "carbs": 15,
+      "fat": 0.4
+    },
+    "aliases": []
+  },
+  "maple syrup": {
+    "name": "maple syrup",
+    "fdcId": 169661,
+    "desc": "Syrups, maple",
+    "per100g": {
+      "calories": 260,
+      "protein": 0,
+      "carbs": 67,
+      "fat": 0.1
+    },
+    "aliases": []
+  },
+  "marinara sauce": {
+    "name": "marinara sauce",
+    "fdcId": 332282,
+    "desc": "Sauce, pasta, spaghetti/marinara, ready-to-serve",
+    "per100g": {
+      "calories": 45,
+      "protein": 1.4,
+      "carbs": 8.1,
+      "fat": 1.5
+    },
+    "aliases": []
+  },
+  "mayonnaise": {
+    "name": "mayonnaise",
+    "fdcId": null,
+    "desc": "Mayonnaise, regular",
+    "per100g": {
+      "calories": 680,
+      "protein": 1,
+      "carbs": 0.6,
+      "fat": 75
+    },
+    "aliases": [
+      "mayo"
+    ]
+  },
+  "mozzarella cheese": {
+    "name": "mozzarella cheese",
+    "fdcId": null,
+    "desc": "Cheese, mozzarella, whole milk",
+    "per100g": {
+      "calories": 300,
+      "protein": 22.2,
+      "carbs": 2.2,
+      "fat": 22.4
+    },
+    "aliases": [
+      "mozzarella"
+    ]
+  },
+  "mushrooms": {
+    "name": "mushrooms",
+    "fdcId": 169251,
+    "desc": "Mushrooms, white, raw",
+    "per100g": {
+      "calories": 22,
+      "protein": 3.1,
+      "carbs": 3.3,
+      "fat": 0.3
+    },
+    "aliases": [
+      "mushroom"
+    ]
+  },
+  "mussels": {
+    "name": "mussels",
+    "fdcId": 2706350,
+    "desc": "Mussels",
+    "per100g": {
+      "calories": 109,
+      "protein": 15.1,
+      "carbs": 4.7,
+      "fat": 2.8
+    },
+    "aliases": []
+  },
+  "naan": {
+    "name": "naan",
+    "fdcId": 2094900,
+    "desc": "PLAIN BREAD (NAAN)",
+    "per100g": {
+      "calories": 254,
+      "protein": 7,
+      "carbs": 49.3,
+      "fat": 2.1
+    },
+    "aliases": []
+  },
+  "navy beans": {
+    "name": "navy beans",
+    "fdcId": null,
+    "desc": "Beans, navy, cooked, boiled",
+    "per100g": {
+      "calories": 140,
+      "protein": 8.2,
+      "carbs": 26.1,
+      "fat": 0.6
+    },
+    "aliases": []
+  },
+  "new york strip": {
+    "name": "new york strip",
+    "fdcId": 169541,
+    "desc": "Beef, short loin, top loin, separable lean and fat, trimmed to 1/8\" fat, prime, cooked, broiled",
+    "per100g": {
+      "calories": 310,
+      "protein": 25.9,
+      "carbs": 0,
+      "fat": 22.1
+    },
+    "aliases": []
+  },
+  "oat milk": {
+    "name": "oat milk",
+    "fdcId": 2705412,
+    "desc": "Oat milk",
+    "per100g": {
+      "calories": 45,
+      "protein": 0.7,
+      "carbs": 5.4,
+      "fat": 2.3
+    },
+    "aliases": []
+  },
+  "okra": {
+    "name": "okra",
+    "fdcId": 169260,
+    "desc": "Okra, raw",
+    "per100g": {
+      "calories": 33,
+      "protein": 1.9,
+      "carbs": 7.5,
+      "fat": 0.2
+    },
+    "aliases": []
+  },
+  "olive oil": {
+    "name": "olive oil",
+    "fdcId": 2710186,
+    "desc": "Olive oil",
+    "per100g": {
+      "calories": 900,
+      "protein": 0,
+      "carbs": 0,
+      "fat": 100
+    },
+    "aliases": []
+  },
+  "olives": {
+    "name": "olives",
+    "fdcId": 169095,
+    "desc": "Olives, ripe, canned (jumbo-super colossal)",
+    "per100g": {
+      "calories": 81,
+      "protein": 1,
+      "carbs": 5.6,
+      "fat": 6.9
+    },
+    "aliases": []
+  },
+  "onion": {
+    "name": "onion",
+    "fdcId": 790577,
+    "desc": "Onions, red, raw",
+    "per100g": {
+      "calories": 44,
+      "protein": 0.9,
+      "carbs": 9.9,
+      "fat": 0.1
+    },
+    "aliases": [
+      "onions"
+    ]
+  },
+  "orange": {
+    "name": "orange",
+    "fdcId": 746771,
+    "desc": "Oranges, raw, navels",
+    "per100g": {
+      "calories": 47,
+      "protein": 0.9,
+      "carbs": 11.8,
+      "fat": 0.2
+    },
+    "aliases": [
+      "oranges"
+    ]
+  },
+  "oysters": {
+    "name": "oysters",
+    "fdcId": 2706351,
+    "desc": "Oysters, raw",
+    "per100g": {
+      "calories": 51,
+      "protein": 5.7,
+      "carbs": 2.7,
+      "fat": 1.7
+    },
+    "aliases": []
+  },
+  "pancake": {
+    "name": "pancake",
+    "fdcId": 2708306,
+    "desc": "Pancakes, fruit",
+    "per100g": {
+      "calories": 232,
+      "protein": 5.9,
+      "carbs": 30.6,
+      "fat": 9.5
+    },
+    "aliases": []
+  },
+  "parmesan cheese": {
+    "name": "parmesan cheese",
+    "fdcId": 325036,
+    "desc": "Cheese, parmesan, grated",
+    "per100g": {
+      "calories": 421,
+      "protein": 29.6,
+      "carbs": 12.4,
+      "fat": 28
+    },
+    "aliases": [
+      "parmesan"
+    ]
+  },
+  "pasta": {
+    "name": "pasta",
+    "fdcId": 2708357,
+    "desc": "Pasta, cooked",
+    "per100g": {
+      "calories": 157,
+      "protein": 5.8,
+      "carbs": 30.7,
+      "fat": 0.9
+    },
+    "aliases": [
+      "spaghetti",
+      "white pasta"
+    ]
+  },
+  "peanut butter": {
+    "name": "peanut butter",
+    "fdcId": 2370100,
+    "desc": "SMOOTH PEANUT BUTTER, SMOOTH",
+    "per100g": {
+      "calories": 562,
+      "protein": 21.9,
+      "carbs": 25,
+      "fat": 46.9
+    },
+    "aliases": []
+  },
+  "peanuts": {
+    "name": "peanuts",
+    "fdcId": 174263,
+    "desc": "Peanuts, spanish, raw",
+    "per100g": {
+      "calories": 570,
+      "protein": 26.2,
+      "carbs": 15.8,
+      "fat": 49.6
+    },
+    "aliases": []
+  },
+  "pear": {
+    "name": "pear",
+    "fdcId": 746773,
+    "desc": "Pears, raw, bartlett",
+    "per100g": {
+      "calories": 57,
+      "protein": 0.4,
+      "carbs": 15.1,
+      "fat": 0.2
+    },
+    "aliases": []
+  },
+  "pecans": {
+    "name": "pecans",
+    "fdcId": 2707521,
+    "desc": "Pecans, NFS",
+    "per100g": {
+      "calories": 750,
+      "protein": 10,
+      "carbs": 12.7,
+      "fat": 73.3
+    },
+    "aliases": []
+  },
+  "pesto": {
+    "name": "pesto",
+    "fdcId": 2710175,
+    "desc": "Pesto sauce",
+    "per100g": {
+      "calories": 580,
+      "protein": 8.6,
+      "carbs": 5.7,
+      "fat": 59.2
+    },
+    "aliases": []
+  },
+  "pickles": {
+    "name": "pickles",
+    "fdcId": 324653,
+    "desc": "Pickles, cucumber, dill or kosher dill",
+    "per100g": {
+      "calories": 12,
+      "protein": 0.5,
+      "carbs": 2,
+      "fat": 0.4
+    },
+    "aliases": []
+  },
+  "pine nuts": {
+    "name": "pine nuts",
+    "fdcId": 2707526,
+    "desc": "Pine nuts",
+    "per100g": {
+      "calories": 673,
+      "protein": 13.7,
+      "carbs": 13.1,
+      "fat": 68.4
+    },
+    "aliases": []
+  },
+  "pinto beans": {
+    "name": "pinto beans",
+    "fdcId": 2707371,
+    "desc": "Pinto beans, NFS",
+    "per100g": {
+      "calories": 191,
+      "protein": 8.4,
+      "carbs": 24.4,
+      "fat": 7.1
+    },
+    "aliases": []
+  },
+  "pistachios": {
+    "name": "pistachios",
+    "fdcId": 2608588,
+    "desc": "RAW PISTACHIOS",
+    "per100g": {
+      "calories": 567,
+      "protein": 20,
+      "carbs": 26.7,
+      "fat": 46.7
+    },
+    "aliases": []
+  },
+  "pita bread": {
+    "name": "pita bread",
+    "fdcId": 2271892,
+    "desc": "PITA BREAD",
+    "per100g": {
+      "calories": 231,
+      "protein": 10.3,
+      "carbs": 43.6,
+      "fat": 2.6
+    },
+    "aliases": []
+  },
+  "plain yogurt": {
+    "name": "plain yogurt",
+    "fdcId": 171284,
+    "desc": "Yogurt, plain, whole milk",
+    "per100g": {
+      "calories": 61,
+      "protein": 3.5,
+      "carbs": 4.7,
+      "fat": 3.3
+    },
+    "aliases": []
+  },
+  "plant protein powder": {
+    "name": "plant protein powder",
+    "fdcId": 2608970,
+    "desc": "PEA PROTEIN POWDER, PEA",
+    "per100g": {
+      "calories": 455,
+      "protein": 86.4,
+      "carbs": 4.6,
+      "fat": 9.1
+    },
+    "aliases": []
+  },
+  "plum": {
+    "name": "plum",
+    "fdcId": 169949,
+    "desc": "Plums, raw",
+    "per100g": {
+      "calories": 46,
+      "protein": 0.7,
+      "carbs": 11.4,
+      "fat": 0.3
+    },
+    "aliases": []
+  },
+  "pomegranate": {
+    "name": "pomegranate",
+    "fdcId": 169134,
+    "desc": "Pomegranates, raw",
+    "per100g": {
+      "calories": 83,
+      "protein": 1.7,
+      "carbs": 18.7,
+      "fat": 1.2
+    },
+    "aliases": []
+  },
+  "pork chop": {
+    "name": "pork chop",
+    "fdcId": null,
+    "desc": "Pork, loin chop, cooked, broiled",
+    "per100g": {
+      "calories": 210,
+      "protein": 29.9,
+      "carbs": 0,
+      "fat": 9
+    },
+    "aliases": [
+      "pork chops"
+    ]
+  },
+  "pork loin": {
+    "name": "pork loin",
+    "fdcId": 168377,
+    "desc": "Pork loin, fresh, backribs, bone-in, cooked-roasted, lean only",
+    "per100g": {
+      "calories": 255,
+      "protein": 24.2,
+      "carbs": 0,
+      "fat": 17.6
+    },
+    "aliases": []
+  },
+  "pork ribs": {
+    "name": "pork ribs",
+    "fdcId": null,
+    "desc": "Pork, ribs, cooked",
+    "per100g": {
+      "calories": 277,
+      "protein": 20.4,
+      "carbs": 0,
+      "fat": 21.4
+    },
+    "aliases": []
+  },
+  "pork sausage": {
+    "name": "pork sausage",
+    "fdcId": 173882,
+    "desc": "Pork sausage, reduced sodium, cooked",
+    "per100g": {
+      "calories": 271,
+      "protein": 9.4,
+      "carbs": 8.1,
+      "fat": 22.4
+    },
+    "aliases": [
+      "sausage"
+    ]
+  },
+  "pork tenderloin": {
+    "name": "pork tenderloin",
+    "fdcId": 2705877,
+    "desc": "Pork, tenderloin",
+    "per100g": {
+      "calories": 134,
+      "protein": 24.7,
+      "carbs": 0.1,
+      "fat": 3.4
+    },
+    "aliases": []
+  },
+  "potato": {
+    "name": "potato",
+    "fdcId": 2709383,
+    "desc": "Potato, baked, NFS",
+    "per100g": {
+      "calories": 93,
+      "protein": 2,
+      "carbs": 21.5,
+      "fat": 0.1
+    },
+    "aliases": [
+      "potatoes",
+      "russet potato",
+      "white potato"
+    ]
+  },
+  "prosciutto": {
+    "name": "prosciutto",
+    "fdcId": 2495531,
+    "desc": "PROSCIUTTO",
+    "per100g": {
+      "calories": 286,
+      "protein": 25,
+      "carbs": 0,
+      "fat": 21.4
+    },
+    "aliases": []
+  },
+  "provolone cheese": {
+    "name": "provolone cheese",
+    "fdcId": 2654012,
+    "desc": "PROVOLONE CHEESE, PROVOLONE",
+    "per100g": {
+      "calories": 348,
+      "protein": 26.1,
+      "carbs": 0,
+      "fat": 26.1
+    },
+    "aliases": []
+  },
+  "pumpkin": {
+    "name": "pumpkin",
+    "fdcId": null,
+    "desc": "Pumpkin, cooked, boiled",
+    "per100g": {
+      "calories": 20,
+      "protein": 0.7,
+      "carbs": 4.9,
+      "fat": 0.1
+    },
+    "aliases": []
+  },
+  "pumpkin seeds": {
+    "name": "pumpkin seeds",
+    "fdcId": 2707580,
+    "desc": "Pumpkin seeds, salted",
+    "per100g": {
+      "calories": 567,
+      "protein": 29.5,
+      "carbs": 14.5,
+      "fat": 48.5
+    },
+    "aliases": [
+      "pepitas"
+    ]
+  },
+  "quinoa": {
+    "name": "quinoa",
+    "fdcId": 168917,
+    "desc": "Quinoa, cooked",
+    "per100g": {
+      "calories": 120,
+      "protein": 4.4,
+      "carbs": 21.3,
+      "fat": 1.9
+    },
+    "aliases": []
+  },
+  "radish": {
+    "name": "radish",
+    "fdcId": 169276,
+    "desc": "Radishes, raw",
+    "per100g": {
+      "calories": 16,
+      "protein": 0.7,
+      "carbs": 3.4,
+      "fat": 0.1
+    },
+    "aliases": []
+  },
+  "raisins": {
+    "name": "raisins",
+    "fdcId": 168166,
+    "desc": "Raisins, seeded",
+    "per100g": {
+      "calories": 296,
+      "protein": 2.5,
+      "carbs": 78.5,
+      "fat": 0.5
+    },
+    "aliases": []
+  },
+  "ranch dressing": {
+    "name": "ranch dressing",
+    "fdcId": 2710212,
+    "desc": "Ranch dressing",
+    "per100g": {
+      "calories": 430,
+      "protein": 1.3,
+      "carbs": 5.9,
+      "fat": 44.5
+    },
+    "aliases": []
+  },
+  "raspberries": {
+    "name": "raspberries",
+    "fdcId": 167755,
+    "desc": "Raspberries, raw",
+    "per100g": {
+      "calories": 52,
+      "protein": 1.2,
+      "carbs": 11.9,
+      "fat": 0.7
+    },
+    "aliases": []
+  },
+  "red potato": {
+    "name": "red potato",
+    "fdcId": 170435,
+    "desc": "Potatoes, red, flesh and skin, baked",
+    "per100g": {
+      "calories": 87,
+      "protein": 2.3,
+      "carbs": 19.6,
+      "fat": 0.2
+    },
+    "aliases": []
+  },
+  "refried beans": {
+    "name": "refried beans",
+    "fdcId": 2707396,
+    "desc": "Refried beans",
+    "per100g": {
+      "calories": 90,
+      "protein": 5,
+      "carbs": 13.6,
+      "fat": 2
+    },
+    "aliases": []
+  },
+  "ribeye steak": {
+    "name": "ribeye steak",
+    "fdcId": 2705829,
+    "desc": "Beef, steak, ribeye, lean and fat eaten",
+    "per100g": {
+      "calories": 289,
+      "protein": 23.5,
+      "carbs": 0,
+      "fat": 21.6
+    },
+    "aliases": [
+      "ribeye"
+    ]
+  },
+  "rice cakes": {
+    "name": "rice cakes",
+    "fdcId": 2708162,
+    "desc": "Rice cake",
+    "per100g": {
+      "calories": 392,
+      "protein": 7.1,
+      "carbs": 81.1,
+      "fat": 4.3
+    },
+    "aliases": []
+  },
+  "ricotta cheese": {
+    "name": "ricotta cheese",
+    "fdcId": 1920703,
+    "desc": "PART SKIM RICOTTA CHEESE, RICOTTA",
+    "per100g": {
+      "calories": 161,
+      "protein": 8.1,
+      "carbs": 8.1,
+      "fat": 9.7
+    },
+    "aliases": [
+      "ricotta"
+    ]
+  },
+  "roast beef": {
+    "name": "roast beef",
+    "fdcId": 2018288,
+    "desc": "DELI ROAST BEEF",
+    "per100g": {
+      "calories": 107,
+      "protein": 19.6,
+      "carbs": 0,
+      "fat": 3.6
+    },
+    "aliases": []
+  },
+  "rolled oats": {
+    "name": "rolled oats",
+    "fdcId": 2708489,
+    "desc": "Oats, raw",
+    "per100g": {
+      "calories": 379,
+      "protein": 13.2,
+      "carbs": 67.7,
+      "fat": 6.5
+    },
+    "aliases": [
+      "oatmeal",
+      "oats",
+      "dry oats"
+    ]
+  },
+  "romaine lettuce": {
+    "name": "romaine lettuce",
+    "fdcId": 2709590,
+    "desc": "Romaine lettuce, raw",
+    "per100g": {
+      "calories": 21,
+      "protein": 1,
+      "carbs": 4.1,
+      "fat": 0.1
+    },
+    "aliases": [
+      "lettuce"
+    ]
+  },
+  "rotisserie chicken": {
+    "name": "rotisserie chicken",
+    "fdcId": null,
+    "desc": "Chicken, roasted, meat and skin",
+    "per100g": {
+      "calories": 197,
+      "protein": 28,
+      "carbs": 0,
+      "fat": 9
+    },
+    "aliases": []
+  },
+  "rye bread": {
+    "name": "rye bread",
+    "fdcId": 2622829,
+    "desc": "RYE BREAD, RYE",
+    "per100g": {
+      "calories": 244,
+      "protein": 12.2,
+      "carbs": 51.2,
+      "fat": 0
+    },
+    "aliases": []
+  },
+  "salmon": {
+    "name": "salmon",
+    "fdcId": null,
+    "desc": "Fish, salmon, Atlantic, farmed, cooked",
+    "per100g": {
+      "calories": 206,
+      "protein": 22.1,
+      "carbs": 0,
+      "fat": 12.4
+    },
+    "aliases": [
+      "grilled salmon",
+      "atlantic salmon"
+    ]
+  },
+  "salsa": {
+    "name": "salsa",
+    "fdcId": 2709736,
+    "desc": "Salsa, NFS",
+    "per100g": {
+      "calories": 34,
+      "protein": 1.4,
+      "carbs": 6.7,
+      "fat": 0.2
+    },
+    "aliases": []
+  },
+  "sardines": {
+    "name": "sardines",
+    "fdcId": 2706293,
+    "desc": "Fish, sardines, canned",
+    "per100g": {
+      "calories": 208,
+      "protein": 24.6,
+      "carbs": 0,
+      "fat": 11.5
+    },
+    "aliases": []
+  },
+  "sauerkraut": {
+    "name": "sauerkraut",
+    "fdcId": 169279,
+    "desc": "Sauerkraut, canned, solids and liquids",
+    "per100g": {
+      "calories": 19,
+      "protein": 0.9,
+      "carbs": 4.3,
+      "fat": 0.1
+    },
+    "aliases": []
+  },
+  "scallops": {
+    "name": "scallops",
+    "fdcId": 2706357,
+    "desc": "Scallops, grilled",
+    "per100g": {
+      "calories": 108,
+      "protein": 15.3,
+      "carbs": 4,
+      "fat": 2.9
+    },
+    "aliases": []
+  },
+  "sea bass": {
+    "name": "sea bass",
+    "fdcId": 175142,
+    "desc": "Fish, sea bass, mixed species, raw",
+    "per100g": {
+      "calories": 97,
+      "protein": 18.4,
+      "carbs": 0,
+      "fat": 2
+    },
+    "aliases": []
+  },
+  "sesame oil": {
+    "name": "sesame oil",
+    "fdcId": 2710190,
+    "desc": "Sesame oil",
+    "per100g": {
+      "calories": 884,
+      "protein": 0,
+      "carbs": 0,
+      "fat": 100
+    },
+    "aliases": []
+  },
+  "sesame seeds": {
+    "name": "sesame seeds",
+    "fdcId": 2707586,
+    "desc": "Sesame seeds",
+    "per100g": {
+      "calories": 631,
+      "protein": 20.5,
+      "carbs": 11.7,
+      "fat": 61.2
+    },
+    "aliases": []
+  },
+  "shrimp": {
+    "name": "shrimp",
+    "fdcId": null,
+    "desc": "Crustaceans, shrimp, cooked",
+    "per100g": {
+      "calories": 99,
+      "protein": 24,
+      "carbs": 0.2,
+      "fat": 0.3
+    },
+    "aliases": [
+      "prawns"
+    ]
+  },
+  "sirloin steak": {
+    "name": "sirloin steak",
+    "fdcId": 2705833,
+    "desc": "Beef, steak, sirloin, lean and fat eaten",
+    "per100g": {
+      "calories": 262,
+      "protein": 26.2,
+      "carbs": 0,
+      "fat": 16.7
+    },
+    "aliases": [
+      "sirloin"
+    ]
+  },
+  "skim milk": {
+    "name": "skim milk",
+    "fdcId": 746776,
+    "desc": "Milk, nonfat, fluid, with added vitamin A and vitamin D (fat free or skim)",
+    "per100g": {
+      "calories": 34,
+      "protein": 3.4,
+      "carbs": 4.9,
+      "fat": 0.1
+    },
+    "aliases": [
+      "nonfat milk"
+    ]
+  },
+  "snap peas": {
+    "name": "snap peas",
+    "fdcId": 170010,
+    "desc": "Peas, edible-podded, raw",
+    "per100g": {
+      "calories": 42,
+      "protein": 2.8,
+      "carbs": 7.6,
+      "fat": 0.2
+    },
+    "aliases": []
+  },
+  "snapper": {
+    "name": "snapper",
+    "fdcId": 173698,
+    "desc": "Fish, snapper, mixed species, raw",
+    "per100g": {
+      "calories": 100,
+      "protein": 20.5,
+      "carbs": 0,
+      "fat": 1.3
+    },
+    "aliases": []
+  },
+  "sour cream": {
+    "name": "sour cream",
+    "fdcId": 173443,
+    "desc": "Sour cream, light",
+    "per100g": {
+      "calories": 136,
+      "protein": 3.5,
+      "carbs": 7.1,
+      "fat": 10.6
+    },
+    "aliases": []
+  },
+  "sourdough bread": {
+    "name": "sourdough bread",
+    "fdcId": 172675,
+    "desc": "Bread, french or vienna (includes sourdough)",
+    "per100g": {
+      "calories": 272,
+      "protein": 10.8,
+      "carbs": 51.9,
+      "fat": 2.4
+    },
+    "aliases": []
+  },
+  "soy milk": {
+    "name": "soy milk",
+    "fdcId": 2705405,
+    "desc": "Soy milk, unsweetened",
+    "per100g": {
+      "calories": 38,
+      "protein": 3.6,
+      "carbs": 1.3,
+      "fat": 2.1
+    },
+    "aliases": []
+  },
+  "soy sauce": {
+    "name": "soy sauce",
+    "fdcId": 2707442,
+    "desc": "Soy sauce",
+    "per100g": {
+      "calories": 53,
+      "protein": 8.1,
+      "carbs": 4.9,
+      "fat": 0.6
+    },
+    "aliases": []
+  },
+  "soy sauce low sodium": {
+    "name": "soy sauce low sodium",
+    "fdcId": 2707443,
+    "desc": "Soy sauce, reduced sodium",
+    "per100g": {
+      "calories": 57,
+      "protein": 9.1,
+      "carbs": 5.6,
+      "fat": 0.3
+    },
+    "aliases": []
+  },
+  "spinach": {
+    "name": "spinach",
+    "fdcId": 168462,
+    "desc": "Spinach, raw",
+    "per100g": {
+      "calories": 23,
+      "protein": 2.9,
+      "carbs": 3.6,
+      "fat": 0.4
+    },
+    "aliases": []
+  },
+  "split peas": {
+    "name": "split peas",
+    "fdcId": null,
+    "desc": "Peas, split, cooked, boiled",
+    "per100g": {
+      "calories": 118,
+      "protein": 8.3,
+      "carbs": 21.1,
+      "fat": 0.4
+    },
+    "aliases": []
+  },
+  "squid": {
+    "name": "squid",
+    "fdcId": null,
+    "desc": "Mollusks, squid, raw",
+    "per100g": {
+      "calories": 92,
+      "protein": 15.6,
+      "carbs": 3.1,
+      "fat": 1.4
+    },
+    "aliases": [
+      "calamari"
+    ]
+  },
+  "sriracha": {
+    "name": "sriracha",
+    "fdcId": 171186,
+    "desc": "Sauce, hot chile, sriracha",
+    "per100g": {
+      "calories": 93,
+      "protein": 1.9,
+      "carbs": 19.2,
+      "fat": 0.9
+    },
+    "aliases": []
+  },
+  "steel cut oats": {
+    "name": "steel cut oats",
+    "fdcId": 2708489,
+    "desc": "Oats, raw",
+    "per100g": {
+      "calories": 379,
+      "protein": 13.2,
+      "carbs": 67.7,
+      "fat": 6.5
+    },
+    "aliases": []
+  },
+  "strawberries": {
+    "name": "strawberries",
+    "fdcId": 167762,
+    "desc": "Strawberries, raw",
+    "per100g": {
+      "calories": 32,
+      "protein": 0.7,
+      "carbs": 7.7,
+      "fat": 0.3
+    },
+    "aliases": []
+  },
+  "string cheese": {
+    "name": "string cheese",
+    "fdcId": 2057284,
+    "desc": "LOW-MOISTURE PART-SKIM MOZZARELLA CHEESE",
+    "per100g": {
+      "calories": 286,
+      "protein": 25,
+      "carbs": 3.6,
+      "fat": 21.4
+    },
+    "aliases": []
+  },
+  "sugar": {
+    "name": "sugar",
+    "fdcId": 746784,
+    "desc": "Sugars, granulated",
+    "per100g": {
+      "calories": 385,
+      "protein": 0,
+      "carbs": 99.6,
+      "fat": 0.3
+    },
+    "aliases": []
+  },
+  "sunflower seeds": {
+    "name": "sunflower seeds",
+    "fdcId": 325524,
+    "desc": "Seeds, sunflower seed kernels, dry roasted, with salt added",
+    "per100g": {
+      "calories": 612,
+      "protein": 21,
+      "carbs": 17.1,
+      "fat": 56.1
+    },
+    "aliases": []
+  },
+  "sweet pepper": {
+    "name": "sweet pepper",
+    "fdcId": 170427,
+    "desc": "Peppers, sweet, green, raw",
+    "per100g": {
+      "calories": 20,
+      "protein": 0.9,
+      "carbs": 4.6,
+      "fat": 0.2
+    },
+    "aliases": []
+  },
+  "sweet potato": {
+    "name": "sweet potato",
+    "fdcId": 170542,
+    "desc": "Sweet potato, frozen, cooked, baked, with salt",
+    "per100g": {
+      "calories": 100,
+      "protein": 1.7,
+      "carbs": 23.4,
+      "fat": 0.1
+    },
+    "aliases": [
+      "sweet potatoes",
+      "yam"
+    ]
+  },
+  "swiss chard": {
+    "name": "swiss chard",
+    "fdcId": 169991,
+    "desc": "Chard, swiss, raw",
+    "per100g": {
+      "calories": 19,
+      "protein": 1.8,
+      "carbs": 3.7,
+      "fat": 0.2
+    },
+    "aliases": []
+  },
+  "swiss cheese": {
+    "name": "swiss cheese",
+    "fdcId": 746767,
+    "desc": "Cheese, swiss",
+    "per100g": {
+      "calories": 393,
+      "protein": 27,
+      "carbs": 1.4,
+      "fat": 31
+    },
+    "aliases": []
+  },
+  "tahini": {
+    "name": "tahini",
+    "fdcId": 2375296,
+    "desc": "ORGANIC TAHINI SESAME BUTTER, SESAME BUTTER",
+    "per100g": {
+      "calories": 714,
+      "protein": 25,
+      "carbs": 10.7,
+      "fat": 64.3
+    },
+    "aliases": []
+  },
+  "tempeh": {
+    "name": "tempeh",
+    "fdcId": 174272,
+    "desc": "Tempeh",
+    "per100g": {
+      "calories": 192,
+      "protein": 20.3,
+      "carbs": 7.6,
+      "fat": 10.8
+    },
+    "aliases": []
+  },
+  "tilapia": {
+    "name": "tilapia",
+    "fdcId": 175177,
+    "desc": "Fish, tilapia, cooked, dry heat",
+    "per100g": {
+      "calories": 128,
+      "protein": 26.2,
+      "carbs": 0,
+      "fat": 2.7
+    },
+    "aliases": []
+  },
+  "tofu": {
+    "name": "tofu",
+    "fdcId": 174290,
+    "desc": "Tofu, extra firm, prepared with nigari",
+    "per100g": {
+      "calories": 83,
+      "protein": 10,
+      "carbs": 1.2,
+      "fat": 5.3
+    },
+    "aliases": [
+      "firm tofu"
+    ]
+  },
+  "tomato": {
+    "name": "tomato",
+    "fdcId": 170457,
+    "desc": "Tomatoes, red, ripe, raw, year round average",
+    "per100g": {
+      "calories": 18,
+      "protein": 0.9,
+      "carbs": 3.9,
+      "fat": 0.2
+    },
+    "aliases": [
+      "tomatoes"
+    ]
+  },
+  "tomato paste": {
+    "name": "tomato paste",
+    "fdcId": 360299,
+    "desc": "TOMATO PASTE",
+    "per100g": {
+      "calories": 91,
+      "protein": 3,
+      "carbs": 21.2,
+      "fat": 0
+    },
+    "aliases": []
+  },
+  "tomato sauce": {
+    "name": "tomato sauce",
+    "fdcId": 169074,
+    "desc": "Tomato sauce, canned, no salt added",
+    "per100g": {
+      "calories": 24,
+      "protein": 1.2,
+      "carbs": 5.3,
+      "fat": 0.3
+    },
+    "aliases": []
+  },
+  "trout": {
+    "name": "trout",
+    "fdcId": 172004,
+    "desc": "Fish, trout, mixed species, cooked, dry heat",
+    "per100g": {
+      "calories": 190,
+      "protein": 26.6,
+      "carbs": 0,
+      "fat": 8.5
+    },
+    "aliases": []
+  },
+  "tuna steak": {
+    "name": "tuna steak",
+    "fdcId": null,
+    "desc": "Fish, tuna, yellowfin, cooked",
+    "per100g": {
+      "calories": 130,
+      "protein": 28.2,
+      "carbs": 0,
+      "fat": 1.3
+    },
+    "aliases": [
+      "ahi tuna"
+    ]
+  },
+  "turkey bacon": {
+    "name": "turkey bacon",
+    "fdcId": 2706135,
+    "desc": "Turkey bacon, cooked",
+    "per100g": {
+      "calories": 368,
+      "protein": 29.5,
+      "carbs": 4.2,
+      "fat": 25.9
+    },
+    "aliases": []
+  },
+  "turkey breast": {
+    "name": "turkey breast",
+    "fdcId": 171501,
+    "desc": "Turkey breast, pre-basted, meat and skin, cooked, roasted",
+    "per100g": {
+      "calories": 126,
+      "protein": 22.2,
+      "carbs": 0,
+      "fat": 3.5
+    },
+    "aliases": [
+      "sliced turkey"
+    ]
+  },
+  "turkey thigh": {
+    "name": "turkey thigh",
+    "fdcId": 171502,
+    "desc": "Turkey thigh, pre-basted, meat and skin, cooked, roasted",
+    "per100g": {
+      "calories": 157,
+      "protein": 18.8,
+      "carbs": 0,
+      "fat": 8.5
+    },
+    "aliases": []
+  },
+  "turnip": {
+    "name": "turnip",
+    "fdcId": null,
+    "desc": "Turnips, cooked, boiled",
+    "per100g": {
+      "calories": 22,
+      "protein": 0.7,
+      "carbs": 5.1,
+      "fat": 0.1
+    },
+    "aliases": []
+  },
+  "vegetable oil": {
+    "name": "vegetable oil",
+    "fdcId": null,
+    "desc": "Oil, vegetable (soybean)",
+    "per100g": {
+      "calories": 884,
+      "protein": 0,
+      "carbs": 0,
+      "fat": 100
+    },
+    "aliases": []
+  },
+  "walnuts": {
+    "name": "walnuts",
+    "fdcId": null,
+    "desc": "Nuts, walnuts, english",
+    "per100g": {
+      "calories": 654,
+      "protein": 15.2,
+      "carbs": 13.7,
+      "fat": 65.2
+    },
+    "aliases": []
+  },
+  "watermelon": {
+    "name": "watermelon",
+    "fdcId": 167765,
+    "desc": "Watermelon, raw",
+    "per100g": {
+      "calories": 30,
+      "protein": 0.6,
+      "carbs": 7.6,
+      "fat": 0.2
+    },
+    "aliases": []
+  },
+  "whey protein": {
+    "name": "whey protein",
+    "fdcId": 2710731,
+    "desc": "Nutritional powder mix (EAS Whey Protein Powder)",
+    "per100g": {
+      "calories": 385,
+      "protein": 66.7,
+      "carbs": 18,
+      "fat": 5.1
+    },
+    "aliases": [
+      "protein powder",
+      "whey"
+    ]
+  },
+  "white bread": {
+    "name": "white bread",
+    "fdcId": 167532,
+    "desc": "Bread, white wheat",
+    "per100g": {
+      "calories": 238,
+      "protein": 10.7,
+      "carbs": 43.9,
+      "fat": 2.2
+    },
+    "aliases": [
+      "bread"
+    ]
+  },
+  "white rice": {
+    "name": "white rice",
+    "fdcId": 2710788,
+    "desc": "Rice, white, cooked, as ingredient",
+    "per100g": {
+      "calories": 130,
+      "protein": 2.5,
+      "carbs": 29,
+      "fat": 0.4
+    },
+    "aliases": [
+      "jasmine rice",
+      "cooked white rice"
+    ]
+  },
+  "whole egg": {
+    "name": "whole egg",
+    "fdcId": 748967,
+    "desc": "Eggs, Grade A, Large, egg whole",
+    "per100g": {
+      "calories": 148,
+      "protein": 12.4,
+      "carbs": 1,
+      "fat": 10
+    },
+    "aliases": [
+      "eggs",
+      "egg"
+    ]
+  },
+  "whole milk": {
+    "name": "whole milk",
+    "fdcId": 2705385,
+    "desc": "Milk, whole",
+    "per100g": {
+      "calories": 61,
+      "protein": 3.3,
+      "carbs": 4.6,
+      "fat": 3.2
+    },
+    "aliases": [
+      "milk"
+    ]
+  },
+  "whole milk greek yogurt": {
+    "name": "whole milk greek yogurt",
+    "fdcId": 171304,
+    "desc": "Yogurt, Greek, plain, whole milk",
+    "per100g": {
+      "calories": 97,
+      "protein": 9,
+      "carbs": 4,
+      "fat": 5
+    },
+    "aliases": []
+  },
+  "whole wheat bread": {
+    "name": "whole wheat bread",
+    "fdcId": 174916,
+    "desc": "Bread, pita, whole-wheat",
+    "per100g": {
+      "calories": 262,
+      "protein": 9.8,
+      "carbs": 55.9,
+      "fat": 1.7
+    },
+    "aliases": [
+      "wheat bread"
+    ]
+  },
+  "whole wheat flour": {
+    "name": "whole wheat flour",
+    "fdcId": 168944,
+    "desc": "Wheat flour, whole-grain, soft wheat",
+    "per100g": {
+      "calories": 332,
+      "protein": 9.6,
+      "carbs": 74.5,
+      "fat": 2
+    },
+    "aliases": []
+  },
+  "whole wheat pasta": {
+    "name": "whole wheat pasta",
+    "fdcId": 168916,
+    "desc": "Pasta, whole grain, 51% whole wheat, remaining unenriched semolina, cooked",
+    "per100g": {
+      "calories": 159,
+      "protein": 5.8,
+      "carbs": 31.5,
+      "fat": 1.5
+    },
+    "aliases": []
+  },
+  "yellow squash": {
+    "name": "yellow squash",
+    "fdcId": 2709807,
+    "desc": "Summer squash, yellow, raw",
+    "per100g": {
+      "calories": 19,
+      "protein": 1,
+      "carbs": 3.9,
+      "fat": 0.3
+    },
+    "aliases": []
+  },
+  "zucchini": {
+    "name": "zucchini",
+    "fdcId": null,
+    "desc": "Squash, zucchini, raw",
+    "per100g": {
+      "calories": 17,
+      "protein": 1.2,
+      "carbs": 3.1,
+      "fat": 0.3
+    },
+    "aliases": [
+      "courgette"
+    ]
+  }
+}

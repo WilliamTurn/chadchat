@@ -4,7 +4,8 @@ import { generateText } from "ai";
 import { formatCalendarDay } from "@/lib/date";
 import type { WorkoutWithChildren } from "@/lib/db/queries";
 import { getUserMemory, upsertUserMemory } from "@/lib/db/queries";
-import type { Goal, Plan } from "@/lib/db/schema";
+import type { Goal, MealPlan, Plan } from "@/lib/db/schema";
+import { planDaysSchema } from "@/lib/validation/meal-plan";
 import {
   computePersonalRecords,
   toLb,
@@ -114,7 +115,9 @@ export function messagesToText(messages: TextualMessage[]): string {
 }
 
 /** Format the stored profile for injection into Chad's system prompt. */
-export function formatMemoryForPrompt(profile: string | null | undefined): string {
+export function formatMemoryForPrompt(
+  profile: string | null | undefined
+): string {
   const trimmed = profile?.trim();
   if (!trimmed) {
     return "";
@@ -140,10 +143,7 @@ function truncateDetail(detail: string): string {
  * documents the user saved — so Chad references and builds on them directly.
  * Loaded regardless of the memory toggle. Returns "" when there's nothing.
  */
-export function formatGoalsForPrompt(
-  goals: Goal[],
-  plans: Plan[]
-): string {
+export function formatGoalsForPrompt(goals: Goal[], plans: Plan[]): string {
   const activeGoals = goals
     .filter((g) => g.status === "active")
     .slice(0, MAX_GOALS_IN_PROMPT);
@@ -177,6 +177,51 @@ export function formatGoalsForPrompt(
   return `GOALS & PLANS THIS CLIENT HAS SAVED IN THE APP (they set these deliberately — treat them as current and authoritative; reference and build on them, and don't re-ask for what's already here):
 
 ${sections.join("\n\n")}`;
+}
+
+/**
+ * Summarize the client's active structured meal plan for Chad's prompt so he
+ * knows what he's already got them eating and can coach against it (without
+ * re-asking or contradicting his own plan). Kept compact: title, daily target,
+ * and a one-line-per-meal breakdown of the first day as a representative day —
+ * the full multi-day plan lives on the /meal-plan page they can open. Returns ""
+ * when there's no active plan. Macros come straight from the stored, DB-verified
+ * totals — never re-estimated.
+ */
+export function formatMealPlanForPrompt(
+  plan: MealPlan | null | undefined
+): string {
+  if (!plan) {
+    return "";
+  }
+  const parsed = planDaysSchema.safeParse(plan.days);
+  if (!parsed.success || parsed.data.length === 0) {
+    return "";
+  }
+
+  const targetLine =
+    plan.targetCalories != null
+      ? `Daily target: ${plan.targetCalories.toLocaleString()} kcal — ${plan.targetProtein ?? 0}P / ${plan.targetCarbs ?? 0}C / ${plan.targetFat ?? 0}F.`
+      : "";
+
+  const sample = parsed.data[0];
+  const mealLines = sample.meals.map(
+    (m) =>
+      `  - ${m.title} (${Math.round(m.totals.calories).toLocaleString()} kcal, ${Math.round(m.totals.protein)}P)`
+  );
+
+  const dayCount = parsed.data.length;
+  const scope =
+    dayCount > 1
+      ? `It's a ${dayCount}-day plan; here is "${sample.label}" as a sample day:`
+      : "The plan:";
+
+  return `THIS CLIENT'S ACTIVE MEAL PLAN (Chad built this structured plan with real foods + DB-verified macros — it lives on their Meal Plan page where they can view, edit portions, log meals as eaten, or regenerate it; reference it and hold them to it, don't re-invent it):
+
+"${plan.title}"
+${targetLine}
+${scope}
+${mealLines.join("\n")}`;
 }
 
 function toWorkoutData(w: WorkoutWithChildren): WorkoutData {
@@ -213,7 +258,9 @@ function shortDate(iso: string): string {
  * toggle. Returns "" when nothing's been logged. Kept compact (a handful of
  * sessions + top PRs) to avoid prompt bloat.
  */
-export function formatWorkoutsForPrompt(workouts: WorkoutWithChildren[]): string {
+export function formatWorkoutsForPrompt(
+  workouts: WorkoutWithChildren[]
+): string {
   if (workouts.length === 0) {
     return "";
   }
@@ -236,8 +283,7 @@ export function formatWorkoutsForPrompt(workouts: WorkoutWithChildren[]): string
         const top = working.reduce((a, b) =>
           toLb(b.weight ?? 0, b.unit) > toLb(a.weight ?? 0, a.unit) ? b : a
         );
-        const load =
-          top.weight == null ? "BW" : `${top.weight}${top.unit}`;
+        const load = top.weight == null ? "BW" : `${top.weight}${top.unit}`;
         const reps = top.reps == null ? "" : `×${top.reps}`;
         return `${ex.name} ${working.length} set${working.length === 1 ? "" : "s"} (top ${load}${reps})`;
       });
@@ -260,7 +306,9 @@ export function formatWorkoutsForPrompt(workouts: WorkoutWithChildren[]): string
     `RECENT WORKOUTS THIS CLIENT HAS LOGGED (their real training — reference it, hold them to it, and progress it):\n${workoutLines.join("\n")}`,
   ];
   if (prs.length > 0) {
-    sections.push(`THEIR LIFTING PRs (estimated 1-rep maxes):\n${prs.join("\n")}`);
+    sections.push(
+      `THEIR LIFTING PRs (estimated 1-rep maxes):\n${prs.join("\n")}`
+    );
   }
 
   return sections.join("\n\n");

@@ -38,6 +38,8 @@ import {
   goal,
   type MealAnalysis,
   mealAnalysis,
+  type MealPlan,
+  mealPlan,
   message,
   type NutritionTarget,
   nutritionTarget,
@@ -1100,6 +1102,115 @@ export async function deletePlan({
     await db.delete(plan).where(and(eq(plan.id, id), eq(plan.userId, userId)));
   } catch (_error) {
     throw new ChatbotError("bad_request:database", "Failed to delete plan");
+  }
+}
+
+// --- Structured meal plans (Pro) ---
+
+export async function createMealPlan(entry: {
+  userId: string;
+  title: string;
+  source: MealPlan["source"];
+  sourceChatId: string | null;
+  targetCalories: number | null;
+  targetProtein: number | null;
+  targetCarbs: number | null;
+  targetFat: number | null;
+  preferences: unknown;
+  coachIntro: string;
+  days: unknown;
+}): Promise<MealPlan> {
+  try {
+    const [created] = await db.insert(mealPlan).values(entry).returning();
+    return created;
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to create meal plan");
+  }
+}
+
+/** A user's meal plans, newest first. */
+export async function getMealPlansByUserId(
+  userId: string
+): Promise<MealPlan[]> {
+  try {
+    return await db
+      .select()
+      .from(mealPlan)
+      .where(eq(mealPlan.userId, userId))
+      .orderBy(desc(mealPlan.createdAt));
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get meal plans");
+  }
+}
+
+/** The user's latest active meal plan — what the dashboard and Chad lead with. */
+export async function getActiveMealPlanByUserId(
+  userId: string
+): Promise<MealPlan | undefined> {
+  try {
+    const [latest] = await db
+      .select()
+      .from(mealPlan)
+      .where(and(eq(mealPlan.userId, userId), eq(mealPlan.status, "active")))
+      .orderBy(desc(mealPlan.createdAt))
+      .limit(1);
+    return latest;
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get meal plan");
+  }
+}
+
+/** One meal plan, scoped to its owner. */
+export async function getMealPlanById(entry: {
+  id: string;
+  userId: string;
+}): Promise<MealPlan | undefined> {
+  try {
+    const [found] = await db
+      .select()
+      .from(mealPlan)
+      .where(and(eq(mealPlan.id, entry.id), eq(mealPlan.userId, entry.userId)))
+      .limit(1);
+    return found;
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get meal plan");
+  }
+}
+
+/** Edit a meal plan (its title, intro, or the structured days), owner-scoped. */
+export async function updateMealPlan(entry: {
+  id: string;
+  userId: string;
+  title?: string;
+  coachIntro?: string;
+  days?: unknown;
+  status?: MealPlan["status"];
+}): Promise<void> {
+  try {
+    const { id, userId, ...fields } = entry;
+    await db
+      .update(mealPlan)
+      .set({ ...fields, updatedAt: new Date() })
+      .where(and(eq(mealPlan.id, id), eq(mealPlan.userId, userId)));
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to update meal plan");
+  }
+}
+
+/** Delete one meal plan, scoped to its owner. */
+export async function deleteMealPlan({
+  id,
+  userId,
+}: {
+  id: string;
+  userId: string;
+}): Promise<void> {
+  try {
+    await db
+      .delete(mealPlan)
+      .where(and(eq(mealPlan.id, id), eq(mealPlan.userId, userId)));
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to delete meal plan");
   }
 }
 

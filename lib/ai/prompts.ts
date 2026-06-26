@@ -129,6 +129,7 @@ export const systemPrompt = ({
   goals,
   workouts,
   dashboard,
+  mealPlan,
 }: {
   requestHints: RequestHints;
   supportsTools: boolean;
@@ -144,13 +145,17 @@ export const systemPrompt = ({
   // Pre-formatted "today's dashboard" snapshot (see lib/ai/dashboard.ts
   // formatTodaySnapshot): today's macros vs target, latest weigh-in, water.
   dashboard?: string;
+  // Pre-formatted active meal-plan summary (see lib/ai/memory.ts
+  // formatMealPlanForPrompt). Empty when the client has no active plan.
+  mealPlan?: string;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
   const memoryBlock = memory ? `\n\n${memory}` : "";
   const goalsBlock = goals ? `\n\n${goals}` : "";
   const workoutsBlock = workouts ? `\n\n${workouts}` : "";
   const dashboardBlock = dashboard ? `\n\n${dashboard}` : "";
-  const dataBlocks = `${memoryBlock}${goalsBlock}${workoutsBlock}${dashboardBlock}`;
+  const mealPlanBlock = mealPlan ? `\n\n${mealPlan}` : "";
+  const dataBlocks = `${memoryBlock}${goalsBlock}${workoutsBlock}${dashboardBlock}${mealPlanBlock}`;
 
   if (!supportsTools) {
     return `${regularPrompt}${dataBlocks}\n\n${requestPrompt}`;

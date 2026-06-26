@@ -71,6 +71,13 @@
       "when": 1782373104608,
       "tag": "0009_broad_spot",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1782457339784,
+      "tag": "0010_goofy_archangel",
+      "breakpoints": true
     }
   ]
 }
