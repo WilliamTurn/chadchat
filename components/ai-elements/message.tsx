@@ -377,6 +377,11 @@ function remarkChadRed() {
 export const MessageResponse = memo(
   ({ className, remarkPlugins, ...props }: MessageResponseProps) => (
     <Streamdown
+      // remarkChadRed emits <span class="chad-red">; without this, Streamdown's
+      // rehype-sanitize strips the className (and the span itself), so the red
+      // never renders. allowedTags merges {span:["className"]} into the sanitize
+      // schema so the class survives. (memory: chad-red-emphasis-broken)
+      allowedTags={{ span: ["className"] }}
       className={cn(
         "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
         className

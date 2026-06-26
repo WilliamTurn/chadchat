@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { Streamdown } from "streamdown";
 import { removePlan } from "@/app/today/actions";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,6 +20,47 @@ import {
 } from "@/components/ui/dialog";
 import { downloadPlanPdf } from "@/lib/pdf/goal-pdf";
 import type { EditablePlan } from "./plan-editor";
+
+// biome-ignore lint/suspicious/noExplicitAny: minimal mdast node shapes
+type MdNode = { type: string; value?: string; children?: any[] };
+
+/**
+ * Honor the author's line breaks: turn single-newline soft breaks into hard
+ * <br>. Plans are pasted/generated documents where every line matters, but
+ * Markdown collapses single newlines into spaces — without this, consecutive
+ * lines like "Day 3 …\nDay 4 …" run together. Markdown (lists, headings, bold)
+ * still renders normally; this only affects loose lines inside a paragraph.
+ */
+function remarkHardBreaks() {
+  const walk = (node: MdNode) => {
+    if (!node || !Array.isArray(node.children)) {
+      return;
+    }
+    const next: MdNode[] = [];
+    for (const child of node.children as MdNode[]) {
+      if (
+        child.type === "text" &&
+        typeof child.value === "string" &&
+        child.value.includes("\n")
+      ) {
+        const parts = child.value.split("\n");
+        parts.forEach((part, i) => {
+          if (part) {
+            next.push({ type: "text", value: part });
+          }
+          if (i < parts.length - 1) {
+            next.push({ type: "break" });
+          }
+        });
+      } else {
+        walk(child);
+        next.push(child);
+      }
+    }
+    node.children = next;
+  };
+  return (tree: MdNode) => walk(tree);
+}
 
 /** Read the full plan, download it as a PDF, discuss it with Chad, or delete it. */
 export function PlanViewer({ plan }: { plan: EditablePlan }) {
@@ -48,16 +91,28 @@ export function PlanViewer({ plan }: { plan: EditablePlan }) {
           View full plan
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{plan.title}</DialogTitle>
-          <DialogDescription>
-            Your {kindLabel} plan. Ask Chad in chat to change it.
+          <DialogTitle className="text-xl">{plan.title}</DialogTitle>
+          <DialogDescription className="flex items-center gap-2">
+            <Badge variant="secondary">
+              {plan.kind === "diet" ? "Diet" : "Training"}
+            </Badge>
+            <span>Ask Chad in chat to change it.</span>
           </DialogDescription>
         </DialogHeader>
-        <div className="whitespace-pre-line text-sm leading-relaxed">
-          {plan.detail.trim() || "No details written yet. Hit edit to add them."}
-        </div>
+        {plan.detail.trim() ? (
+          <Streamdown
+            className="text-sm leading-relaxed [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+            remarkPlugins={[remarkHardBreaks]}
+          >
+            {plan.detail.trim()}
+          </Streamdown>
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            No details written yet. Hit edit to add them.
+          </p>
+        )}
         <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
           <Button
             className="gap-1.5 text-muted-foreground"
