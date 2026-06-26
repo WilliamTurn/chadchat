@@ -12,6 +12,7 @@ import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { auth } from "@/app/(auth)/auth";
 import { getEntitlements, getUsageWarning } from "@/lib/ai/entitlements";
+import { formatTodaySnapshot, summarizeWeight } from "@/lib/ai/dashboard";
 import {
   formatGoalsForPrompt,
   formatMemoryForPrompt,
@@ -28,6 +29,7 @@ import { isPlaceholderTitle, type RequestHints, systemPrompt } from "@/lib/ai/pr
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
 import { editDocument } from "@/lib/ai/tools/edit-document";
+import { getDashboard } from "@/lib/ai/tools/get-dashboard";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { logWorkout } from "@/lib/ai/tools/log-workout";
@@ -41,10 +43,14 @@ import {
   getActiveGoalsByUserId,
   getActivePlansByUserId,
   getChatById,
+  getMealsSince,
   getMessageCountByUserId,
   getMessagesByChatId,
+  getNutritionTarget,
+  getProgressEntriesByUserId,
   getUserById,
   getUserMemory,
+  getWaterMlSince,
   getWorkoutsByUserId,
   saveChat,
   saveMessages,
@@ -52,7 +58,7 @@ import {
   updateMessage,
 } from "@/lib/db/queries";
 import type { DBMessage } from "@/lib/db/schema";
-import { canAccessChad } from "@/lib/admin";
+import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import { ChatbotError } from "@/lib/errors";
 import { checkIpRateLimit } from "@/lib/ratelimit";
 import type { ChatMessage } from "@/lib/types";
@@ -224,6 +230,35 @@ export async function POST(request: Request) {
     const goalsBlock = formatGoalsForPrompt(activeGoals, activePlans);
     const workoutsBlock = formatWorkoutsForPrompt(recentWorkouts);
 
+    // Always-on "today's dashboard" snapshot so Chad has live, ambient
+    // awareness of where the client stands (nutrition vs target, latest
+    // weigh-in, water) without being asked. Pro-only data, mirroring /today;
+    // for any other day Chad calls the getDashboard tool. Best-effort — a query
+    // hiccup here must never block the chat.
+    let dashboardBlock = "";
+    if (canAccessProFeatures(dbUser)) {
+      try {
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        const [todaysMeals, nutritionTarget, waterMl, progressEntries] =
+          await Promise.all([
+            getMealsSince(session.user.id, startOfToday),
+            getNutritionTarget(session.user.id),
+            getWaterMlSince(session.user.id, startOfToday),
+            getProgressEntriesByUserId(session.user.id),
+          ]);
+        dashboardBlock = formatTodaySnapshot({
+          date: startOfToday,
+          meals: todaysMeals,
+          target: nutritionTarget,
+          waterMl,
+          weight: summarizeWeight(progressEntries),
+        });
+      } catch (error) {
+        console.error("Dashboard snapshot failed:", error);
+      }
+    }
+
     if (message?.role === "user") {
       await saveMessages({
         messages: [
@@ -258,6 +293,7 @@ export async function POST(request: Request) {
             memory: memoryBlock,
             goals: goalsBlock,
             workouts: workoutsBlock,
+            dashboard: dashboardBlock,
           }),
           messages: modelMessages,
           stopWhen: stepCountIs(5),
@@ -273,6 +309,7 @@ export async function POST(request: Request) {
                   "saveGoal",
                   "savePlan",
                   "logWorkout",
+                  "getDashboard",
                 ],
           providerOptions: {
             ...(modelConfig?.gatewayOrder && {
@@ -303,6 +340,7 @@ export async function POST(request: Request) {
             saveGoal: saveGoal({ session, chatId: id }),
             savePlan: savePlan({ session, chatId: id }),
             logWorkout: logWorkout({ session }),
+            getDashboard: getDashboard({ session }),
           },
           experimental_telemetry: {
             isEnabled: isProductionEnvironment,

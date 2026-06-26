@@ -96,3 +96,40 @@ export function formatCalendarDayMs(
 ): string {
   return formatCalendarDay(new Date(t), opts);
 }
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+/** The UTC calendar day a stored Date falls on, anchored at 00:00 UTC. */
+function utcDayStart(date: Date): Date {
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+  );
+}
+
+/**
+ * Resolve a calendar-day range into a half-open [start, end) window of UTC
+ * instants, suitable for `recordedAt >= start AND recordedAt < end` queries.
+ *
+ * - `start` / `end` are bare "YYYY-MM-DD" calendar days (the convention used
+ *   everywhere a user picks a day — see `parseCalendarDay`).
+ * - `start` omitted/unparseable → today's UTC day.
+ * - `end` omitted → a single day (the `start` day).
+ * - `end` before `start` → collapses to the single `start` day.
+ *
+ * The returned `end` is exclusive (start of the day *after* the last day in the
+ * range), so callers use `< end` and never double-count the boundary instant.
+ */
+export function calendarRangeWindowUTC(
+  start?: string | null,
+  end?: string | null
+): { start: Date; end: Date } {
+  const startDay = utcDayStart(parseCalendarDay(start) ?? new Date());
+  const endDayInclusive = utcDayStart(parseCalendarDay(end) ?? startDay);
+  const lastDay =
+    endDayInclusive.getTime() < startDay.getTime() ? startDay : endDayInclusive;
+  return {
+    start: startDay,
+    // Exclusive upper bound: midnight UTC at the start of the next day.
+    end: new Date(lastDay.getTime() + MS_PER_DAY),
+  };
+}

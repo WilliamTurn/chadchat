@@ -1251,6 +1251,48 @@ export async function getMealsSince(
   }
 }
 
+/**
+ * Meals (only) logged for a day/range — the half-open [start, end) window of
+ * effective days. Same `recordedAt ?? createdAt` convention as `getMealsSince`
+ * (expressed via typed columns so postgres-js maps the Date params), just with
+ * an upper bound too. Backs Chad's dashboard lookups for a specific past date.
+ */
+export async function getMealsBetween(
+  userId: string,
+  start: Date,
+  end: Date
+): Promise<MealAnalysis[]> {
+  try {
+    return await db
+      .select()
+      .from(mealAnalysis)
+      .where(
+        and(
+          eq(mealAnalysis.userId, userId),
+          eq(mealAnalysis.kind, "meal"),
+          or(
+            and(
+              isNotNull(mealAnalysis.recordedAt),
+              gte(mealAnalysis.recordedAt, start),
+              lt(mealAnalysis.recordedAt, end)
+            ),
+            and(
+              isNull(mealAnalysis.recordedAt),
+              gte(mealAnalysis.createdAt, start),
+              lt(mealAnalysis.createdAt, end)
+            )
+          )
+        )
+      )
+      .orderBy(desc(mealAnalysis.createdAt));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get meals for range"
+    );
+  }
+}
+
 /** A user's logged MEALS only (no fridge/pantry), newest first — backs the diary. */
 export async function getMealLogByUserId(
   userId: string,
@@ -1292,6 +1334,37 @@ export async function getKitchenAnalysesByUserId(
       )
       .orderBy(desc(mealAnalysis.createdAt))
       .limit(limit);
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get kitchen analyses"
+    );
+  }
+}
+
+/**
+ * Fridge/pantry analyses within a half-open [start, end) window. Kitchen shots
+ * aren't back-dated (recordedAt is null for them), so the day is `createdAt`.
+ * Backs Chad's dashboard lookups so he can see what was in the kitchen on a day.
+ */
+export async function getKitchenAnalysesBetween(
+  userId: string,
+  start: Date,
+  end: Date
+): Promise<MealAnalysis[]> {
+  try {
+    return await db
+      .select()
+      .from(mealAnalysis)
+      .where(
+        and(
+          eq(mealAnalysis.userId, userId),
+          inArray(mealAnalysis.kind, ["fridge", "pantry"]),
+          gte(mealAnalysis.createdAt, start),
+          lt(mealAnalysis.createdAt, end)
+        )
+      )
+      .orderBy(desc(mealAnalysis.createdAt));
   } catch (_error) {
     throw new ChatbotError(
       "bad_request:database",
@@ -1387,6 +1460,32 @@ export async function getWaterMlSince(
       .select({ amountMl: waterLog.amountMl })
       .from(waterLog)
       .where(and(eq(waterLog.userId, userId), gte(waterLog.recordedAt, since)));
+    return Math.max(
+      0,
+      rows.reduce((sum, r) => sum + (r.amountMl ?? 0), 0)
+    );
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get water total");
+  }
+}
+
+/** Total ml logged within a half-open [start, end) window (clamped at 0). */
+export async function getWaterMlBetween(
+  userId: string,
+  start: Date,
+  end: Date
+): Promise<number> {
+  try {
+    const rows = await db
+      .select({ amountMl: waterLog.amountMl })
+      .from(waterLog)
+      .where(
+        and(
+          eq(waterLog.userId, userId),
+          gte(waterLog.recordedAt, start),
+          lt(waterLog.recordedAt, end)
+        )
+      );
     return Math.max(
       0,
       rows.reduce((sum, r) => sum + (r.amountMl ?? 0), 0)
@@ -2077,6 +2176,57 @@ export async function createWorkout(
   }
 }
 
+/**
+ * Attach each workout's exercises + sets (ordered by position) to the given
+ * workout rows. Shared by every getter that returns hydrated workouts so the
+ * two-extra-query join lives in exactly one place.
+ */
+async function hydrateWorkouts(
+  workouts: Workout[]
+): Promise<WorkoutWithChildren[]> {
+  if (workouts.length === 0) {
+    return [];
+  }
+
+  const workoutIds = workouts.map((w) => w.id);
+  const exercises = await db
+    .select()
+    .from(workoutExercise)
+    .where(inArray(workoutExercise.workoutId, workoutIds))
+    .orderBy(asc(workoutExercise.position));
+
+  const exerciseIds = exercises.map((e) => e.id);
+  const sets =
+    exerciseIds.length > 0
+      ? await db
+          .select()
+          .from(workoutSet)
+          .where(inArray(workoutSet.workoutExerciseId, exerciseIds))
+          .orderBy(asc(workoutSet.position))
+      : [];
+
+  const setsByExercise = new Map<string, WorkoutSet[]>();
+  for (const s of sets) {
+    const list = setsByExercise.get(s.workoutExerciseId) ?? [];
+    list.push(s);
+    setsByExercise.set(s.workoutExerciseId, list);
+  }
+  const exercisesByWorkout = new Map<
+    string,
+    (WorkoutExercise & { sets: WorkoutSet[] })[]
+  >();
+  for (const e of exercises) {
+    const list = exercisesByWorkout.get(e.workoutId) ?? [];
+    list.push({ ...e, sets: setsByExercise.get(e.id) ?? [] });
+    exercisesByWorkout.set(e.workoutId, list);
+  }
+
+  return workouts.map((w) => ({
+    ...w,
+    exercises: exercisesByWorkout.get(w.id) ?? [],
+  }));
+}
+
 /** All of a user's workouts (newest first) with their exercises + sets nested. */
 export async function getWorkoutsByUserId(
   userId: string,
@@ -2089,47 +2239,35 @@ export async function getWorkoutsByUserId(
       .where(eq(workout.userId, userId))
       .orderBy(desc(workout.performedAt));
     const workouts = limit ? await base.limit(limit) : await base;
-    if (workouts.length === 0) {
-      return [];
-    }
+    return await hydrateWorkouts(workouts);
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get workouts");
+  }
+}
 
-    const workoutIds = workouts.map((w) => w.id);
-    const exercises = await db
+/**
+ * A user's workouts trained within a half-open [start, end) window (newest
+ * first), hydrated with exercises + sets. Backs Chad's day/range dashboard
+ * lookups so he can see what was actually trained on a given date.
+ */
+export async function getWorkoutsBetween(
+  userId: string,
+  start: Date,
+  end: Date
+): Promise<WorkoutWithChildren[]> {
+  try {
+    const workouts = await db
       .select()
-      .from(workoutExercise)
-      .where(inArray(workoutExercise.workoutId, workoutIds))
-      .orderBy(asc(workoutExercise.position));
-
-    const exerciseIds = exercises.map((e) => e.id);
-    const sets =
-      exerciseIds.length > 0
-        ? await db
-            .select()
-            .from(workoutSet)
-            .where(inArray(workoutSet.workoutExerciseId, exerciseIds))
-            .orderBy(asc(workoutSet.position))
-        : [];
-
-    const setsByExercise = new Map<string, WorkoutSet[]>();
-    for (const s of sets) {
-      const list = setsByExercise.get(s.workoutExerciseId) ?? [];
-      list.push(s);
-      setsByExercise.set(s.workoutExerciseId, list);
-    }
-    const exercisesByWorkout = new Map<
-      string,
-      (WorkoutExercise & { sets: WorkoutSet[] })[]
-    >();
-    for (const e of exercises) {
-      const list = exercisesByWorkout.get(e.workoutId) ?? [];
-      list.push({ ...e, sets: setsByExercise.get(e.id) ?? [] });
-      exercisesByWorkout.set(e.workoutId, list);
-    }
-
-    return workouts.map((w) => ({
-      ...w,
-      exercises: exercisesByWorkout.get(w.id) ?? [],
-    }));
+      .from(workout)
+      .where(
+        and(
+          eq(workout.userId, userId),
+          gte(workout.performedAt, start),
+          lt(workout.performedAt, end)
+        )
+      )
+      .orderBy(desc(workout.performedAt));
+    return await hydrateWorkouts(workouts);
   } catch (_error) {
     throw new ChatbotError("bad_request:database", "Failed to get workouts");
   }

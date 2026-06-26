@@ -117,12 +117,18 @@ About the origin of user's request:
 - country: ${requestHints.country}
 `;
 
+// Tells Chad he can read the client's dashboard for any past day on demand.
+// Only added when the model supports tools (the getDashboard tool exists).
+const dashboardToolPrompt = `DASHBOARD ACCESS:
+You have live read access to this client's app dashboard. The "TODAY'S DASHBOARD" block above (when present) is their current day, refreshed every message. To see ANY other day — or to compare a span of days — call the getDashboard tool with a date (and optional endDate) in YYYY-MM-DD. Use it before giving advice that depends on what they actually did: "what did I eat Tuesday?", reviewing last week's training, checking if they're hitting protein, spotting a stall in their weight. Pull the real numbers instead of guessing or asking them to repeat what's already logged.`;
+
 export const systemPrompt = ({
   requestHints,
   supportsTools,
   memory,
   goals,
   workouts,
+  dashboard,
 }: {
   requestHints: RequestHints;
   supportsTools: boolean;
@@ -135,17 +141,22 @@ export const systemPrompt = ({
   // Pre-formatted recent-workouts + PRs block (see lib/ai/memory.ts
   // formatWorkoutsForPrompt). Loaded regardless of the memory toggle.
   workouts?: string;
+  // Pre-formatted "today's dashboard" snapshot (see lib/ai/dashboard.ts
+  // formatTodaySnapshot): today's macros vs target, latest weigh-in, water.
+  dashboard?: string;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
   const memoryBlock = memory ? `\n\n${memory}` : "";
   const goalsBlock = goals ? `\n\n${goals}` : "";
   const workoutsBlock = workouts ? `\n\n${workouts}` : "";
+  const dashboardBlock = dashboard ? `\n\n${dashboard}` : "";
+  const dataBlocks = `${memoryBlock}${goalsBlock}${workoutsBlock}${dashboardBlock}`;
 
   if (!supportsTools) {
-    return `${regularPrompt}${memoryBlock}${goalsBlock}${workoutsBlock}\n\n${requestPrompt}`;
+    return `${regularPrompt}${dataBlocks}\n\n${requestPrompt}`;
   }
 
-  return `${regularPrompt}${memoryBlock}${goalsBlock}${workoutsBlock}\n\n${requestPrompt}\n\n${artifactsPrompt}`;
+  return `${regularPrompt}${dataBlocks}\n\n${dashboardToolPrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}`;
 };
 
 export const codePrompt = `
