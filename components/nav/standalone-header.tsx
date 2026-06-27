@@ -7,6 +7,7 @@ import {
   HelpCircle,
   LayoutDashboard,
   LineChart,
+  LogOut,
   MenuIcon,
   MessageSquare,
   Refrigerator,
@@ -14,8 +15,17 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Sheet,
   SheetClose,
@@ -47,6 +57,72 @@ const LINKS: { href: string; label: string; icon: typeof LayoutDashboard }[] = [
   { href: "/account", label: "Account", icon: CreditCard },
   { href: "/help", label: "Help", icon: HelpCircle },
 ];
+
+function emailToHue(email: string): number {
+  let hash = 0;
+  for (const char of email) {
+    hash = char.charCodeAt(0) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash) % 360;
+}
+
+/**
+ * Account avatar + dropdown for the standalone pages. The chat view has the
+ * sidebar user menu for this; the dashboard pages had no sign-out anywhere, so
+ * a logged-in member who landed here (e.g. via the landing "Log in" link, which
+ * bounces authenticated users to /today) was stranded with no way out.
+ */
+function AccountMenu() {
+  const { data } = useSession();
+  const email = data?.user?.email ?? "";
+  const hue = emailToHue(email);
+  const avatar = (
+    <span
+      className="size-6 shrink-0 rounded-full ring-1 ring-border/50"
+      style={{
+        background: `linear-gradient(135deg, oklch(0.35 0.08 ${hue}), oklch(0.25 0.05 ${hue + 40}))`,
+      }}
+    />
+  );
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          aria-label="Account menu"
+          className="size-9 shrink-0 rounded-full p-0"
+          size="icon"
+          variant="ghost"
+        >
+          {avatar}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        {email ? (
+          <>
+            <DropdownMenuLabel className="truncate font-normal text-muted-foreground text-xs">
+              {email}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+          </>
+        ) : null}
+        <DropdownMenuItem asChild>
+          <Link className="cursor-pointer" href="/account">
+            <CreditCard className="size-4" />
+            Membership &amp; billing
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="cursor-pointer"
+          onSelect={() => signOut({ redirectTo: "/" })}
+        >
+          <LogOut className="size-4" />
+          Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 function Wordmark() {
   return (
@@ -96,6 +172,9 @@ export function StandaloneHeader({ active }: { active?: string }) {
             </Link>
           );
         })}
+        <div className="ml-1 self-center">
+          <AccountMenu />
+        </div>
       </div>
 
       {/* Mobile: hamburger → full-height sheet with the same links, stacked. */}
@@ -139,6 +218,18 @@ export function StandaloneHeader({ active }: { active?: string }) {
                 </SheetClose>
               );
             })}
+            <div className="my-1 border-border border-t" />
+            <button
+              className="flex items-center gap-3 rounded-lg px-3 py-3 text-left font-medium text-base text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+              onClick={() => {
+                setOpen(false);
+                signOut({ redirectTo: "/" });
+              }}
+              type="button"
+            >
+              <LogOut className="size-5" />
+              <span>Sign out</span>
+            </button>
           </div>
         </SheetContent>
       </Sheet>
