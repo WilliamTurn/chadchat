@@ -1,7 +1,6 @@
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon, Dumbbell } from "lucide-react";
 import Link from "next/link";
 import { Toaster } from "sonner";
-import { SparklesIcon, VercelIcon } from "@/components/chat/icons";
 import { Preview } from "@/components/chat/preview";
 
 export default function AuthLayout({
@@ -21,7 +20,13 @@ export default function AuthLayout({
             "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
         }}
       />
-      <div className="flex w-full flex-col bg-background p-8 xl:w-[600px] xl:shrink-0 xl:rounded-r-2xl xl:border-r xl:border-border/40 md:p-16">
+      <div className="relative flex w-full flex-col overflow-hidden bg-background p-8 xl:w-[600px] xl:shrink-0 xl:rounded-r-2xl xl:border-r xl:border-border/40 md:p-16">
+        {/* Brand warmth on the screens too narrow for the showcase panel (below
+            xl): a faint blood glow so the form doesn't sit on a flat slab. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-24 -right-16 size-72 rounded-full bg-blood/[0.06] blur-3xl xl:hidden"
+        />
         <Link
           className="flex w-fit items-center gap-1.5 text-[13px] text-muted-foreground transition-colors hover:text-foreground"
           href="/"
@@ -31,8 +36,15 @@ export default function AuthLayout({
         </Link>
         <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-10">
           <div className="flex flex-col gap-2">
-            <div className="mb-2 flex size-9 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground ring-1 ring-border/50">
-              <SparklesIcon size={14} />
+            {/* ACC-3: the real CHAD mark (dumbbell + wordmark), matching the
+                in-app header, instead of a generic sparkles icon. */}
+            <div className="mb-2 flex items-center gap-2">
+              <span className="flex size-9 items-center justify-center rounded-lg bg-muted/60 ring-1 ring-border/50">
+                <Dumbbell className="text-blood" size={16} strokeWidth={2.5} />
+              </span>
+              <span className="font-display font-bold text-[15px] tracking-[0.14em]">
+                CHAD
+              </span>
             </div>
             {children}
           </div>
@@ -40,10 +52,9 @@ export default function AuthLayout({
       </div>
 
       <div className="hidden flex-1 flex-col overflow-hidden pl-12 xl:flex">
-        <div className="flex items-center gap-1.5 pt-8 text-[13px] text-muted-foreground/50">
-          Powered by
-          <VercelIcon size={14} />
-          <span className="font-medium text-muted-foreground">AI Gateway</span>
+        <div className="flex items-center gap-2 pt-8 text-[13px] text-muted-foreground">
+          <Dumbbell className="text-blood" size={14} strokeWidth={2.5} />
+          <span className="font-medium">The coach that won't let you quit.</span>
         </div>
         <div className="flex-1 pt-4">
           <Preview />

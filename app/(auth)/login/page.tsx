@@ -8,10 +8,9 @@ import { useActionState, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { AuthForm } from "@/components/chat/auth-form";
+import { AuthSubmitButton } from "@/components/chat/auth-submit-button";
 import { GoogleSignIn } from "@/components/chat/google-sign-in";
-import { LoaderIcon } from "@/components/chat/icons";
 import { toast } from "@/components/chat/toast";
-import { Button } from "@/components/ui/button";
 import { type LoginFormValues, loginFormSchema } from "@/lib/validation/auth";
 import { type LoginActionState, login } from "../actions";
 
@@ -58,18 +57,9 @@ export default function Page() {
       </p>
       <GoogleSignIn />
       <AuthForm form={form} onSubmit={onSubmit}>
-        <Button
-          className="relative"
-          disabled={isPending || isSuccessful}
-          type="submit"
-        >
+        <AuthSubmitButton isPending={isPending} isSuccessful={isSuccessful}>
           Sign in
-          {(isPending || isSuccessful) && (
-            <span className="absolute right-4 animate-spin">
-              <LoaderIcon />
-            </span>
-          )}
-        </Button>
+        </AuthSubmitButton>
         <p className="text-center text-[13px] text-muted-foreground">
           <Link
             className="text-foreground underline-offset-4 hover:underline"

@@ -5,9 +5,8 @@ import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
-import { LoaderIcon } from "@/components/chat/icons";
+import { AuthSubmitButton } from "@/components/chat/auth-submit-button";
 import { toast } from "@/components/chat/toast";
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -108,14 +107,9 @@ export default function Page() {
               </FormItem>
             )}
           />
-          <Button className="relative" disabled={isPending} type="submit">
+          <AuthSubmitButton isPending={isPending}>
             Send reset link
-            {isPending && (
-              <span className="absolute right-4 animate-spin">
-                <LoaderIcon />
-              </span>
-            )}
-          </Button>
+          </AuthSubmitButton>
           <p className="text-center text-[13px] text-muted-foreground">
             {"Remembered it? "}
             <Link

@@ -6,10 +6,9 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useActionState, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
-import { LoaderIcon } from "@/components/chat/icons";
+import { AuthSubmitButton } from "@/components/chat/auth-submit-button";
 import { PasswordStrength } from "@/components/chat/password-strength";
 import { toast } from "@/components/chat/toast";
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -150,18 +149,9 @@ function ResetPasswordForm() {
               </FormItem>
             )}
           />
-          <Button
-            className="relative"
-            disabled={isPending || isDone}
-            type="submit"
-          >
+          <AuthSubmitButton isPending={isPending} isSuccessful={isDone}>
             Update password
-            {isPending && (
-              <span className="absolute right-4 animate-spin">
-                <LoaderIcon />
-              </span>
-            )}
-          </Button>
+          </AuthSubmitButton>
         </form>
       </Form>
     </>
