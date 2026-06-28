@@ -1698,9 +1698,14 @@ export async function getActivityDaysSince(
           )
         ),
     ]);
+    // The meal query's `t` comes from a raw `sql<Date>` coalesce, which Drizzle
+    // does NOT run through the column's Date codec — the driver hands it back as
+    // a string. The other three select typed columns and are real Dates. Coerce
+    // everything to a Date so downstream `dayKey`/streak math never sees a string
+    // (which would throw `getFullYear is not a function` and 500 /today).
     return [...meals, ...workouts, ...waters, ...progress]
-      .map((r) => r.t)
-      .filter((t): t is Date => t != null);
+      .map((r) => (r.t instanceof Date ? r.t : new Date(r.t as unknown as string)))
+      .filter((t): t is Date => t != null && !Number.isNaN(t.getTime()));
   } catch (_error) {
     throw new ChatbotError(
       "bad_request:database",
