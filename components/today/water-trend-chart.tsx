@@ -52,7 +52,7 @@ function formatMl(ml: number): string {
   return `${Math.round(ml)} ml`;
 }
 
-/** Compact axis number in litres, e.g. "1.5L". */
+/** Compact axis number in liters, e.g. "1.5L". */
 function fmtAxis(ml: number): string {
   return `${Math.round(ml / 100) / 10}L`;
 }

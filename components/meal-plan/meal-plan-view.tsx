@@ -83,9 +83,9 @@ function dayMacros(day: PlanDay): Macros {
   return sumMacros(day.meals.map(mealMacros));
 }
 
-/** Compact "504 kcal · 33P 35C 26F" macro line. */
+/** Compact "504 cal · 33P 35C 26F" macro line. */
 function macroLine(m: Macros): string {
-  return `${m.calories.toLocaleString()} kcal · ${m.protein}P ${m.carbs}C ${m.fat}F`;
+  return `${m.calories.toLocaleString()} cal · ${m.protein}P ${m.carbs}C ${m.fat}F`;
 }
 
 // Shared P/C/F accent colors — kept in sync with `MacroRings` (protein = sky,
@@ -295,7 +295,7 @@ export function MealPlanView({ plan }: { plan: MealPlanViewData }) {
           )}
           {plan.target && !editing && (
             <p className="mt-1 text-muted-foreground text-sm">
-              Target {plan.target.calories.toLocaleString()} kcal ·{" "}
+              Target {plan.target.calories.toLocaleString()} cal ·{" "}
               {plan.target.protein}P / {plan.target.carbs}C / {plan.target.fat}F
               per day
             </p>
@@ -440,7 +440,7 @@ export function MealPlanView({ plan }: { plan: MealPlanViewData }) {
               consumedLabel="Planned"
               fatConsumed={dayTotals.fat}
               fatTarget={plan.target?.fat ?? null}
-              noTargetSub="kcal / day"
+              noTargetSub="cal / day"
               proteinConsumed={dayTotals.protein}
               proteinTarget={plan.target?.protein ?? null}
             />
@@ -505,7 +505,7 @@ function DaySwitchCard({
       <span className="font-semibold text-sm tabular-nums">
         {cals.toLocaleString()}
         <span className="ml-0.5 font-normal text-[10px] text-muted-foreground">
-          kcal
+          cal
         </span>
       </span>
       <div className="h-1 w-full overflow-hidden rounded-full bg-muted">

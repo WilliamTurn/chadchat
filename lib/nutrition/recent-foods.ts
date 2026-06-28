@@ -58,11 +58,11 @@ export function deriveRecentFoods(
   return out;
 }
 
-/** "520 kcal · 40g P · 55g C · 18g F" — omits any macro that wasn't logged. */
+/** "520 cal · 40g P · 55g C · 18g F" — omits any macro that wasn't logged. */
 export function formatMacroSummary(food: RecentFood): string {
   const parts: string[] = [];
   if (food.calories != null) {
-    parts.push(`${food.calories} kcal`);
+    parts.push(`${food.calories} cal`);
   }
   if (food.protein != null) {
     parts.push(`${food.protein}g P`);

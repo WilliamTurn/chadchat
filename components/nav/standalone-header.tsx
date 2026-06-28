@@ -155,18 +155,22 @@ export function StandaloneHeader({ active }: { active?: string }) {
     : { hidden: { opacity: 0, x: 12 }, show: { opacity: 1, x: 0 } };
 
   return (
-    <nav className="mb-8 flex items-center justify-between gap-4 border-border border-b pb-3 sm:items-start">
+    <nav className="mb-8 flex items-center justify-between gap-4 border-border border-b pb-3">
       <Wordmark />
 
-      {/* Desktop / tablet: every link in a wrapping row — no scrollbar ever.
-          The active highlight is a single shared-layout pill that slides between
-          sections as you navigate (ACC-11). */}
-      <div className="hidden flex-1 flex-wrap items-center justify-end gap-x-0.5 gap-y-1 sm:flex">
+      {/* Desktop / tablet: a single, non-wrapping icon bar. Inactive sections are
+          icon-only (with a native tooltip + aria-label); the active section
+          expands to icon + label inside the shared-layout pill that slides
+          between sections (ACC-11). Icon-forward keeps every section on one line
+          at the page's narrow max-width instead of wrapping into a ragged second
+          row. */}
+      <div className="hidden flex-1 items-center justify-end gap-0.5 sm:flex">
         {headerLinks.map((link) => {
           const Icon = link.icon;
           const activeLink = isActive(link.href);
           return (
             <Link
+              aria-label={link.label}
               className={cn(
                 "relative flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium text-sm transition-colors",
                 activeLink
@@ -175,6 +179,7 @@ export function StandaloneHeader({ active }: { active?: string }) {
               )}
               href={link.href}
               key={link.href}
+              title={link.label}
             >
               {activeLink && (
                 <motion.span
@@ -194,7 +199,9 @@ export function StandaloneHeader({ active }: { active?: string }) {
                   activeLink && "text-blood"
                 )}
               />
-              <span className="relative z-10">{link.label}</span>
+              {activeLink && (
+                <span className="relative z-10">{link.label}</span>
+              )}
             </Link>
           );
         })}

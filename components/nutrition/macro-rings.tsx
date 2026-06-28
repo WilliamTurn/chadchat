@@ -38,7 +38,7 @@ type RingProps = {
   /**
    * Optional call-to-action shown below the dial when no calorie target is set
    * (e.g. a "Set your targets" button). With no target the ring is rendered as
-   * a deliberate dashed ghost rather than a full grey ring that reads as broken.
+   * a deliberate dashed ghost rather than a full gray ring that reads as broken.
    */
   emptyCta?: React.ReactNode;
 };
@@ -93,9 +93,9 @@ function CalorieDial({
 
   const ariaLabel = hasTarget
     ? over
-      ? `Calories: ${round(consumed)} of ${round(target as number)} kcal, ${round(consumed - (target as number))} over target. Tap for details.`
-      : `Calories: ${round(consumed)} of ${round(target as number)} kcal, ${round(remaining)} remaining. Tap for details.`
-    : `Calories: ${round(consumed)} kcal logged today. Tap for details.`;
+      ? `Calories: ${round(consumed)} of ${round(target as number)} cal, ${round(consumed - (target as number))} over target. Tap for details.`
+      : `Calories: ${round(consumed)} of ${round(target as number)} cal, ${round(remaining)} remaining. Tap for details.`
+    : `Calories: ${round(consumed)} cal logged today. Tap for details.`;
 
   // Center copy.
   let big: string;
@@ -106,7 +106,7 @@ function CalorieDial({
     sub = consumed > 0 ? noTargetSub : "no target yet";
   } else if (over) {
     big = round(consumed - (target as number)).toLocaleString();
-    sub = "kcal over";
+    sub = "cal over";
     bigClass = "fill-blood";
   } else {
     big = round(remaining).toLocaleString();
@@ -391,7 +391,7 @@ export function MacroRings({
   fatConsumed,
   fatTarget,
   consumedLabel = "Eaten",
-  noTargetSub = "kcal today",
+  noTargetSub = "cal today",
   emptyCta,
 }: RingProps) {
   const reduced = useReducedMotion() ?? false;

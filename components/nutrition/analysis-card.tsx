@@ -121,7 +121,7 @@ export function AnalysisCard({ entry }: { entry: MealAnalysis }) {
 
           {hasMacros && (
             <div className="grid grid-cols-4 gap-2">
-              <Macro label="kcal" unit="" value={entry.calories} />
+              <Macro label="cal" unit="" value={entry.calories} />
               <Macro label="protein" unit="g" value={entry.protein} />
               <Macro label="carbs" unit="g" value={entry.carbs} />
               <Macro label="fat" unit="g" value={entry.fat} />

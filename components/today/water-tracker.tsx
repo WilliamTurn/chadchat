@@ -25,7 +25,7 @@ import {
 const GLASS_ML = 250;
 const MAX_CUSTOM_ML = 2000;
 
-/** Pretty-print a millilitre amount as "1.25 L" / "750 ml". */
+/** Pretty-print a milliliter amount as "1.25 L" / "750 ml". */
 function formatMl(ml: number): string {
   if (ml >= 1000) {
     const liters = ml / 1000;
@@ -275,7 +275,7 @@ export function WaterTracker({
       {/* Quick-add controls */}
       <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3">
         <Button
-          aria-label="Add a glass, 250 millilitres"
+          aria-label="Add a glass, 250 milliliters"
           className="h-11 flex-col gap-0.5"
           disabled={pending}
           onClick={() => run(addWater)}
@@ -289,7 +289,7 @@ export function WaterTracker({
         </Button>
 
         <Button
-          aria-label="Add a bottle, 500 millilitres"
+          aria-label="Add a bottle, 500 milliliters"
           className="h-11 flex-col gap-0.5"
           disabled={pending}
           onClick={() => run(() => logWaterAmount(500))}
@@ -322,7 +322,7 @@ export function WaterTracker({
               <div className="flex flex-col gap-1.5">
                 <span className="font-medium text-sm">Add water</span>
                 <span className="text-muted-foreground text-xs">
-                  Enter an amount in millilitres (max {MAX_CUSTOM_ML} ml).
+                  Enter an amount in milliliters (max {MAX_CUSTOM_ML} ml).
                 </span>
               </div>
               <div className="flex gap-2">
@@ -340,7 +340,7 @@ export function WaterTracker({
               </div>
               <div className="flex gap-2">
                 <Input
-                  aria-label="Custom water amount in millilitres"
+                  aria-label="Custom water amount in milliliters"
                   autoFocus
                   className="h-10"
                   inputMode="numeric"

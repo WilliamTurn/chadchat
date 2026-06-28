@@ -121,7 +121,7 @@ export function TargetEditor({
         <form className="flex flex-col gap-4" onSubmit={onSubmit}>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="t-cal">Calories (kcal)</Label>
+              <Label htmlFor="t-cal">Calories</Label>
               <Input
                 id="t-cal"
                 inputMode="numeric"

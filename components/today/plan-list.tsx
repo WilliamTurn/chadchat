@@ -167,7 +167,7 @@ export function PlanList({
             className="whitespace-nowrap text-muted-foreground text-xs underline-offset-4 transition-colors hover:text-foreground hover:underline"
             href="/workouts"
           >
-            All workouts →
+            View all →
           </Link>
           {plans.length > 0 && <PlanEditor variant="add" />}
         </div>

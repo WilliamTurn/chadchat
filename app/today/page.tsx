@@ -200,7 +200,7 @@ async function TodayContent() {
         dayCount: Array.isArray(mealPlan.days) ? mealPlan.days.length : 0,
         targetLine:
           mealPlan.targetCalories != null
-            ? `${mealPlan.targetCalories.toLocaleString()} kcal · ${mealPlan.targetProtein ?? 0}P / ${mealPlan.targetCarbs ?? 0}C / ${mealPlan.targetFat ?? 0}F`
+            ? `${mealPlan.targetCalories.toLocaleString()} cal · ${mealPlan.targetProtein ?? 0}P / ${mealPlan.targetCarbs ?? 0}C / ${mealPlan.targetFat ?? 0}F`
             : null,
       }
     : null;
@@ -392,7 +392,7 @@ async function TodayContent() {
             <Button asChild className="gap-1.5" size="sm" variant="outline">
               <Link href="/workouts">
                 <Dumbbell className="size-3.5" />
-                All workouts
+                View all
               </Link>
             </Button>
           </div>
@@ -574,7 +574,7 @@ async function TodayContent() {
                 <Button asChild className="gap-1.5" size="sm" variant="outline">
                   <Link href="/progress">
                     <LineChart className="size-3.5" />
-                    Log progress
+                    Log weight
                   </Link>
                 </Button>
               </div>

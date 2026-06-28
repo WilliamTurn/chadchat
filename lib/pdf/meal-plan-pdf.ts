@@ -33,7 +33,7 @@ function foodMacros(food: PlanFood): Macros {
 }
 
 function macroSummary(m: Macros): string {
-  return `${m.calories.toLocaleString()} kcal  ${m.protein}P / ${m.carbs}C / ${m.fat}F`;
+  return `${m.calories.toLocaleString()} cal  ${m.protein}P / ${m.carbs}C / ${m.fat}F`;
 }
 
 function formatDate(d: Date): string {
@@ -99,7 +99,7 @@ export async function downloadMealPlanPdf(plan: {
   if (plan.target?.calories != null) {
     const t = plan.target;
     doc.text(
-      `Daily target: ${t.calories?.toLocaleString()} kcal  ${t.protein ?? 0}P / ${t.carbs ?? 0}C / ${t.fat ?? 0}F`,
+      `Daily target: ${t.calories?.toLocaleString()} cal  ${t.protein ?? 0}P / ${t.carbs ?? 0}C / ${t.fat ?? 0}F`,
       MARGIN,
       y
     );

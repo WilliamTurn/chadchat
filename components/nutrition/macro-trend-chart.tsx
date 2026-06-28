@@ -43,7 +43,7 @@ const METRICS: Record<
   MetricKey,
   { label: string; short: string; unit: string; color: string }
 > = {
-  calories: { label: "Calories", short: "Cal", unit: "kcal", color: "#a4161a" },
+  calories: { label: "Calories", short: "Cal", unit: "cal", color: "#a4161a" },
   protein: { label: "Protein", short: "Protein", unit: "g", color: "#38bdf8" },
   carbs: { label: "Carbs", short: "Carbs", unit: "g", color: "#fbbf24" },
   fat: { label: "Fat", short: "Fat", unit: "g", color: "#a78bfa" },

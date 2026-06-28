@@ -129,7 +129,7 @@ export function EditMealButton({ entry }: { entry: MealAnalysis }) {
                 id="e-cal"
                 inputMode="numeric"
                 onChange={(e) => setCal(e.target.value)}
-                placeholder="kcal"
+                placeholder="cal"
                 value={cal}
               />
             </div>

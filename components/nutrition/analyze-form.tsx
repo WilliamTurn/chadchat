@@ -407,7 +407,7 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
                 id="m-cal"
                 inputMode="numeric"
                 onChange={(e) => setCal(e.target.value)}
-                placeholder="kcal"
+                placeholder="cal"
                 value={cal}
               />
             </div>

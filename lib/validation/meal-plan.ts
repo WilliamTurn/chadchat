@@ -132,7 +132,7 @@ export const mealPlanDesignSchema = z.object({
     .min(1)
     .max(120)
     .describe(
-      "A short plan title that states the calorie target + meals/day, e.g. '2,200 kcal cut — 4 meals/day'."
+      "A short plan title that states the calorie target + meals/day, e.g. '2,200 cal cut — 4 meals/day'."
     ),
   coachIntro: z
     .string()
