@@ -1,18 +1,6 @@
 "use client";
 
-import {
-  Camera,
-  CreditCard,
-  Dumbbell,
-  HelpCircle,
-  LayoutDashboard,
-  LineChart,
-  LogOut,
-  MenuIcon,
-  MessageSquare,
-  Refrigerator,
-  UtensilsCrossed,
-} from "lucide-react";
+import { CreditCard, Dumbbell, LogOut, MenuIcon, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
@@ -33,6 +21,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { headerLinks } from "@/lib/nav-links";
 import { cn } from "@/lib/utils";
 
 /**
@@ -42,21 +31,13 @@ import { cn } from "@/lib/utils";
  * can only leave by bouncing through the chat. The bar gives every standalone
  * page the same wordmark + cross-nav, with the current section highlighted.
  *
+ * The link set comes from the shared `headerLinks` list (`lib/nav-links.ts`) so
+ * it stays in lockstep with the chat sidebar (NAV-3).
+ *
  * Desktop renders every item in a wrapping row (never a horizontal scrollbar,
  * regardless of how narrow the host page's max-width is). Mobile collapses the
  * links into a hamburger sheet so they're never pushed off-screen.
  */
-const LINKS: { href: string; label: string; icon: typeof LayoutDashboard }[] = [
-  { href: "/today", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/", label: "Chat", icon: MessageSquare },
-  { href: "/workouts", label: "Workouts", icon: Dumbbell },
-  { href: "/nutrition", label: "Nutrition", icon: Camera },
-  { href: "/meal-plan", label: "Meal Plan", icon: UtensilsCrossed },
-  { href: "/kitchen", label: "Kitchen", icon: Refrigerator },
-  { href: "/progress", label: "Progress", icon: LineChart },
-  { href: "/account", label: "Account", icon: CreditCard },
-  { href: "/help", label: "Help", icon: HelpCircle },
-];
 
 function emailToHue(email: string): number {
   let hash = 0;
@@ -107,11 +88,18 @@ function AccountMenu() {
           </>
         ) : null}
         <DropdownMenuItem asChild>
+          <Link className="cursor-pointer" href="/pricing">
+            <Sparkles className="size-4" />
+            Plans &amp; pricing
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
           <Link className="cursor-pointer" href="/account">
             <CreditCard className="size-4" />
             Membership &amp; billing
           </Link>
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem
           className="cursor-pointer"
           onSelect={() => signOut({ redirectTo: "/" })}
@@ -154,7 +142,7 @@ export function StandaloneHeader({ active }: { active?: string }) {
 
       {/* Desktop / tablet: every link in a wrapping row — no scrollbar ever. */}
       <div className="hidden flex-1 flex-wrap items-center justify-end gap-x-0.5 gap-y-1 sm:flex">
-        {LINKS.map((link) => {
+        {headerLinks.map((link) => {
           const Icon = link.icon;
           return (
             <Link
@@ -199,7 +187,7 @@ export function StandaloneHeader({ active }: { active?: string }) {
             </SheetTitle>
           </div>
           <div className="flex flex-col gap-1 p-3">
-            {LINKS.map((link) => {
+            {headerLinks.map((link) => {
               const Icon = link.icon;
               return (
                 <SheetClose asChild key={link.href}>
@@ -218,6 +206,20 @@ export function StandaloneHeader({ active }: { active?: string }) {
                 </SheetClose>
               );
             })}
+            <SheetClose asChild>
+              <Link
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-3 font-medium text-base transition-colors",
+                  isActive("/pricing")
+                    ? "bg-accent text-foreground"
+                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                )}
+                href="/pricing"
+              >
+                <Sparkles className="size-5" />
+                <span>Plans &amp; pricing</span>
+              </Link>
+            </SheetClose>
             <div className="my-1 border-border border-t" />
             <button
               className="flex items-center gap-3 rounded-lg px-3 py-3 text-left font-medium text-base text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"

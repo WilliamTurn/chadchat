@@ -1,20 +1,15 @@
 "use client";
 
 import {
-  Camera,
   Dumbbell,
-  HelpCircle,
-  LayoutDashboard,
-  LineChart,
   PanelLeftIcon,
   PenSquareIcon,
-  Refrigerator,
   TrashIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { User } from "next-auth";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
@@ -38,6 +33,8 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { sidebarLinks } from "@/lib/nav-links";
+import type { PlanStatusSummary } from "@/lib/subscription";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,7 +46,6 @@ import {
   AlertDialogTitle,
 } from "../ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import type { PlanStatusSummary } from "@/lib/subscription";
 
 export function AppSidebar({
   user,
@@ -84,40 +80,40 @@ export function AppSidebar({
           <SidebarMenu>
             <SidebarMenuItem className="flex flex-row items-center justify-between">
               <div className="flex items-center gap-2">
-              <div className="group/logo relative flex items-center justify-center">
-                <SidebarMenuButton
-                  asChild
-                  className="size-8 !px-0 items-center justify-center group-data-[collapsible=icon]:group-hover/logo:opacity-0"
-                  tooltip="Chad"
+                <div className="group/logo relative flex items-center justify-center">
+                  <SidebarMenuButton
+                    asChild
+                    className="size-8 !px-0 items-center justify-center group-data-[collapsible=icon]:group-hover/logo:opacity-0"
+                    tooltip="Chad"
+                  >
+                    <Link href="/" onClick={() => setOpenMobile(false)}>
+                      <Dumbbell
+                        className="size-4 text-blood"
+                        strokeWidth={2.5}
+                      />
+                    </Link>
+                  </SidebarMenuButton>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton
+                        className="pointer-events-none absolute inset-0 size-8 opacity-0 group-data-[collapsible=icon]:pointer-events-auto group-data-[collapsible=icon]:group-hover/logo:opacity-100"
+                        onClick={() => toggleSidebar()}
+                      >
+                        <PanelLeftIcon className="size-4" />
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    <TooltipContent className="hidden md:block" side="right">
+                      Open sidebar
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <Link
+                  className="font-display font-bold text-[15px] text-sidebar-foreground tracking-[0.14em] group-data-[collapsible=icon]:hidden"
+                  href="/"
+                  onClick={() => setOpenMobile(false)}
                 >
-                  <Link href="/" onClick={() => setOpenMobile(false)}>
-                    <Dumbbell
-                      className="size-4 text-blood"
-                      strokeWidth={2.5}
-                    />
-                  </Link>
-                </SidebarMenuButton>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <SidebarMenuButton
-                      className="pointer-events-none absolute inset-0 size-8 opacity-0 group-data-[collapsible=icon]:pointer-events-auto group-data-[collapsible=icon]:group-hover/logo:opacity-100"
-                      onClick={() => toggleSidebar()}
-                    >
-                      <PanelLeftIcon className="size-4" />
-                    </SidebarMenuButton>
-                  </TooltipTrigger>
-                  <TooltipContent className="hidden md:block" side="right">
-                    Open sidebar
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <Link
-                className="font-display font-bold text-[15px] text-sidebar-foreground tracking-[0.14em] group-data-[collapsible=icon]:hidden"
-                href="/"
-                onClick={() => setOpenMobile(false)}
-              >
-                CHAD
-              </Link>
+                  CHAD
+                </Link>
               </div>
               <div className="group-data-[collapsible=icon]:hidden">
                 <SidebarTrigger className="text-sidebar-foreground/60 transition-colors duration-150 hover:text-sidebar-foreground" />
@@ -129,91 +125,48 @@ export function AppSidebar({
           <SidebarGroup className="pt-1">
             <SidebarGroupContent>
               <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    className="h-8 rounded-lg text-[13px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                    tooltip="Dashboard"
-                  >
-                    <Link href="/today" onClick={() => setOpenMobile(false)}>
-                      <LayoutDashboard className="size-4" />
-                      <span className="font-medium">Dashboard</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    className="h-8 rounded-lg border border-sidebar-border text-[13px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                    onClick={() => {
-                      setOpenMobile(false);
-                      router.push("/");
-                    }}
-                    tooltip="New Chat"
-                  >
-                    <PenSquareIcon className="size-4" />
-                    <span className="font-medium">New chat</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    className="h-8 rounded-lg text-[13px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                    tooltip="Workouts"
-                  >
-                    <Link href="/workouts" onClick={() => setOpenMobile(false)}>
-                      <Dumbbell className="size-4" />
-                      <span className="font-medium">Workouts</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    className="h-8 rounded-lg text-[13px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                    tooltip="Nutrition"
-                  >
-                    <Link href="/nutrition" onClick={() => setOpenMobile(false)}>
-                      <Camera className="size-4" />
-                      <span className="font-medium">Nutrition</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    className="h-8 rounded-lg text-[13px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                    tooltip="Kitchen"
-                  >
-                    <Link href="/kitchen" onClick={() => setOpenMobile(false)}>
-                      <Refrigerator className="size-4" />
-                      <span className="font-medium">Kitchen</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    className="h-8 rounded-lg text-[13px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                    tooltip="Progress"
-                  >
-                    <Link href="/progress" onClick={() => setOpenMobile(false)}>
-                      <LineChart className="size-4" />
-                      <span className="font-medium">Progress</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    className="h-8 rounded-lg text-[13px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                    tooltip="Help"
-                  >
-                    <Link href="/help" onClick={() => setOpenMobile(false)}>
-                      <HelpCircle className="size-4" />
-                      <span className="font-medium">Help</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                {/* Section links come from the shared nav list (NAV-3) so the
+                    sidebar and the StandaloneHeader can't drift apart. The
+                    "New chat" action is sidebar-only, so it's rendered inline
+                    right after Dashboard (the first link) rather than living in
+                    the shared list. */}
+                {sidebarLinks.map((link, index) => {
+                  const Icon = link.icon;
+                  return (
+                    <Fragment key={link.href}>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton
+                          asChild
+                          className="h-8 rounded-lg text-[13px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                          tooltip={link.label}
+                        >
+                          <Link
+                            href={link.href}
+                            onClick={() => setOpenMobile(false)}
+                          >
+                            <Icon className="size-4" />
+                            <span className="font-medium">{link.label}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      {index === 0 && (
+                        <SidebarMenuItem>
+                          <SidebarMenuButton
+                            className="h-8 rounded-lg border border-sidebar-border text-[13px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                            onClick={() => {
+                              setOpenMobile(false);
+                              router.push("/");
+                            }}
+                            tooltip="New Chat"
+                          >
+                            <PenSquareIcon className="size-4" />
+                            <span className="font-medium">New chat</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )}
+                    </Fragment>
+                  );
+                })}
                 {user && (
                   <SidebarMenuItem>
                     <SidebarMenuButton

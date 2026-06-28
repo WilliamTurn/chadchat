@@ -97,6 +97,11 @@ export function SidebarUserNav({ user }: { user: User }) {
             >
               Settings
             </DropdownMenuItem>
+            <DropdownMenuItem asChild data-testid="user-nav-item-plans">
+              <Link className="cursor-pointer text-[13px]" href="/pricing">
+                Plans & pricing
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem asChild data-testid="user-nav-item-billing">
               <Link className="cursor-pointer text-[13px]" href="/account">
                 Membership & billing
