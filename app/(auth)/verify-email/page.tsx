@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { Suspense } from "react";
 
-import { buttonVariants } from "@/components/ui/button";
+import { AuthStatus } from "@/components/chat/auth-status";
 import { hashToken } from "@/lib/auth/tokens";
 import {
   consumeEmailVerificationToken,
@@ -16,14 +15,11 @@ export default function Page({
   return (
     <Suspense
       fallback={
-        <>
-          <h1 className="font-semibold text-2xl tracking-tight">
-            Verifying…
-          </h1>
-          <p className="text-muted-foreground text-sm">
-            Confirming your email address.
-          </p>
-        </>
+        <AuthStatus
+          description="Confirming your email address."
+          title="Verifying…"
+          variant="pending"
+        />
       }
     >
       <VerifyResult searchParams={searchParams} />
@@ -47,19 +43,19 @@ async function VerifyResult({
     }
   }
 
-  return (
-    <>
-      <h1 className="font-semibold text-2xl tracking-tight">
-        {verified ? "Email verified" : "Link expired"}
-      </h1>
-      <p className="text-muted-foreground text-sm">
-        {verified
-          ? "Thanks — your email address is confirmed. You're all set."
-          : "This verification link is invalid or has expired. Sign in and resend a new one from the banner at the top of the app."}
-      </p>
-      <Link className={buttonVariants({ className: "mt-2" })} href="/today">
-        {verified ? "Continue to Chad" : "Go to Chad"}
-      </Link>
-    </>
+  return verified ? (
+    <AuthStatus
+      action={{ href: "/today", label: "Continue to Chad" }}
+      description="Thanks — your email address is confirmed. You're all set."
+      title="Email verified"
+      variant="success"
+    />
+  ) : (
+    <AuthStatus
+      action={{ href: "/today", label: "Go to Chad" }}
+      description="This verification link is invalid or has expired. Sign in and resend a new one from the banner at the top of the app."
+      title="Link expired"
+      variant="expired"
+    />
   );
 }

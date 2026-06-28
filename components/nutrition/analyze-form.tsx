@@ -18,6 +18,7 @@ import {
   parseMacro,
 } from "@/components/nutrition/meal-shared";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -304,12 +305,11 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
         <Label className="text-muted-foreground text-xs" htmlFor="m-date">
           Date
         </Label>
-        <Input
+        <DatePicker
           className="w-44"
           id="m-date"
           max={todayLocalISO()}
-          onChange={(e) => setDate(e.target.value)}
-          type="date"
+          onChange={setDate}
           value={date}
         />
       </div>

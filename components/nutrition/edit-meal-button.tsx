@@ -11,6 +11,7 @@ import {
   parseMacro,
 } from "@/components/nutrition/meal-shared";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -113,12 +114,11 @@ export function EditMealButton({ entry }: { entry: MealAnalysis }) {
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="e-date">Date</Label>
-            <Input
+            <DatePicker
               className="w-44"
               id="e-date"
               max={todayLocalISO()}
-              onChange={(e) => setDate(e.target.value)}
-              type="date"
+              onChange={setDate}
               value={date}
             />
           </div>

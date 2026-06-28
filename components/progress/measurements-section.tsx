@@ -9,8 +9,16 @@ import {
   removeBodyMeasurement,
 } from "@/app/progress/actions";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { todayLocalISO } from "@/lib/date";
 import { MEASUREMENT_KINDS } from "@/lib/validation/progress";
 
@@ -150,20 +158,23 @@ export function MeasurementsSection({
       <form className="flex flex-wrap items-end gap-3" onSubmit={onSubmit}>
         <div className="flex flex-col gap-2">
           <Label htmlFor="m-kind">Spot</Label>
-          <select
-            className="h-9 rounded-md border border-input bg-transparent px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            id="m-kind"
-            onChange={(e) =>
-              setKind(e.target.value as (typeof MEASUREMENT_KINDS)[number])
+          <Select
+            onValueChange={(v) =>
+              setKind(v as (typeof MEASUREMENT_KINDS)[number])
             }
             value={kind}
           >
-            {MEASUREMENT_KINDS.map((k) => (
-              <option key={k} value={k}>
-                {KIND_LABEL[k]}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="h-9 w-fit rounded-lg" id="m-kind">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {MEASUREMENT_KINDS.map((k) => (
+                <SelectItem key={k} value={k}>
+                  {KIND_LABEL[k]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="m-value">Measurement</Label>
@@ -176,25 +187,30 @@ export function MeasurementsSection({
               placeholder="e.g. 34"
               value={value}
             />
-            <select
-              aria-label="Unit"
-              className="h-9 rounded-md border border-input bg-transparent px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              onChange={(e) => setUnit(e.target.value as "in" | "cm")}
+            <Select
+              onValueChange={(v) => setUnit(v as "in" | "cm")}
               value={unit}
             >
-              <option value="in">in</option>
-              <option value="cm">cm</option>
-            </select>
+              <SelectTrigger
+                aria-label="Unit"
+                className="h-9 shrink-0 rounded-lg"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="in">in</SelectItem>
+                <SelectItem value="cm">cm</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="m-date">Date</Label>
-          <Input
+          <DatePicker
             className="w-40"
             id="m-date"
             max={todayISO()}
-            onChange={(e) => setDate(e.target.value)}
-            type="date"
+            onChange={setDate}
             value={date}
           />
         </div>

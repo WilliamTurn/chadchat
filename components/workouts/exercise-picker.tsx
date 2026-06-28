@@ -15,6 +15,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   BUILT_IN_EXERCISES,
   EQUIPMENT,
   EQUIPMENT_LABELS,
@@ -32,9 +39,6 @@ type CustomExerciseRow = {
   muscleGroup: string;
   equipment: string;
 };
-
-const selectClass =
-  "h-9 rounded-md border border-input bg-transparent px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
 
 export function ExercisePicker({
   open,
@@ -190,35 +194,41 @@ export function ExercisePicker({
                   <Label className="text-xs" htmlFor="new-ex-muscle">
                     Muscle
                   </Label>
-                  <select
-                    className={selectClass}
-                    id="new-ex-muscle"
-                    onChange={(e) => setNewMuscle(e.target.value as MuscleGroup)}
+                  <Select
+                    onValueChange={(v) => setNewMuscle(v as MuscleGroup)}
                     value={newMuscle}
                   >
-                    {MUSCLE_GROUPS.map((m) => (
-                      <option key={m} value={m}>
-                        {MUSCLE_GROUP_LABELS[m]}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="h-9 w-full rounded-md" id="new-ex-muscle">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MUSCLE_GROUPS.map((m) => (
+                        <SelectItem key={m} value={m}>
+                          {MUSCLE_GROUP_LABELS[m]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="flex flex-col gap-1">
                   <Label className="text-xs" htmlFor="new-ex-equip">
                     Equipment
                   </Label>
-                  <select
-                    className={selectClass}
-                    id="new-ex-equip"
-                    onChange={(e) => setNewEquipment(e.target.value as Equipment)}
+                  <Select
+                    onValueChange={(v) => setNewEquipment(v as Equipment)}
                     value={newEquipment}
                   >
-                    {EQUIPMENT.map((eq) => (
-                      <option key={eq} value={eq}>
-                        {EQUIPMENT_LABELS[eq]}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="h-9 w-full rounded-md" id="new-ex-equip">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EQUIPMENT.map((eq) => (
+                        <SelectItem key={eq} value={eq}>
+                          {EQUIPMENT_LABELS[eq]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <Button

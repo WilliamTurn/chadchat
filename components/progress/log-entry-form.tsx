@@ -1,12 +1,21 @@
 "use client";
 
+import { Camera } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useState, useTransition } from "react";
+import { type FormEvent, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { addProgressEntry } from "@/app/progress/actions";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { todayLocalISO } from "@/lib/date";
 
@@ -20,10 +29,21 @@ export function LogEntryForm({ defaultUnit }: { defaultUnit: "lb" | "kg" }) {
   const [weight, setWeight] = useState("");
   const [unit, setUnit] = useState<"lb" | "kg">(defaultUnit);
   const [note, setNote] = useState("");
-  const [fileKey, setFileKey] = useState(0);
   const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const busy = pending || uploading;
+
+  function pick(f: File | null) {
+    setFile(f);
+    setPreview((prev) => {
+      if (prev) {
+        URL.revokeObjectURL(prev);
+      }
+      return f ? URL.createObjectURL(f) : null;
+    });
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -78,8 +98,10 @@ export function LogEntryForm({ defaultUnit }: { defaultUnit: "lb" | "kg" }) {
         toast.success("Logged.");
         setWeight("");
         setNote("");
-        setFile(null);
-        setFileKey((k) => k + 1);
+        pick(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
         router.refresh();
       } else {
         toast.error(result.error ?? "Couldn't save that entry.");
@@ -92,11 +114,10 @@ export function LogEntryForm({ defaultUnit }: { defaultUnit: "lb" | "kg" }) {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <Label htmlFor="p-date">Date</Label>
-          <Input
+          <DatePicker
             id="p-date"
             max={todayISO()}
-            onChange={(e) => setDate(e.target.value)}
-            type="date"
+            onChange={setDate}
             value={date}
           />
         </div>
@@ -110,15 +131,21 @@ export function LogEntryForm({ defaultUnit }: { defaultUnit: "lb" | "kg" }) {
               placeholder="e.g. 184.5"
               value={weight}
             />
-            <select
-              aria-label="Weight unit"
-              className="h-9 rounded-md border border-input bg-transparent px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              onChange={(e) => setUnit(e.target.value as "lb" | "kg")}
+            <Select
+              onValueChange={(v) => setUnit(v as "lb" | "kg")}
               value={unit}
             >
-              <option value="lb">lb</option>
-              <option value="kg">kg</option>
-            </select>
+              <SelectTrigger
+                aria-label="Weight unit"
+                className="h-9 shrink-0 rounded-lg"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="lb">lb</SelectItem>
+                <SelectItem value="kg">kg</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
@@ -137,11 +164,34 @@ export function LogEntryForm({ defaultUnit }: { defaultUnit: "lb" | "kg" }) {
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="p-photo">Progress photo (optional)</Label>
-        <Input
+        <button
+          className="relative flex min-h-32 w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-border border-dashed bg-background/40 px-4 py-6 text-center transition-colors hover:bg-accent/40"
+          onClick={() => fileInputRef.current?.click()}
+          type="button"
+        >
+          {preview ? (
+            // biome-ignore lint/performance/noImgElement: local object-URL preview
+            <img
+              alt="Selected progress photo"
+              className="max-h-56 w-auto rounded-lg object-contain"
+              src={preview}
+            />
+          ) : (
+            <>
+              <Camera className="size-6 text-muted-foreground" />
+              <span className="font-medium text-sm">Tap to add a photo</span>
+              <span className="text-muted-foreground text-xs">
+                JPEG or PNG
+              </span>
+            </>
+          )}
+        </button>
+        <input
           accept="image/png,image/jpeg"
+          className="hidden"
           id="p-photo"
-          key={fileKey}
-          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          onChange={(e) => pick(e.target.files?.[0] ?? null)}
+          ref={fileInputRef}
           type="file"
         />
       </div>

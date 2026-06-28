@@ -1,11 +1,11 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useActionState, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
+import { AuthStatus } from "@/components/chat/auth-status";
 import { AuthSubmitButton } from "@/components/chat/auth-submit-button";
 import { PasswordStrength } from "@/components/chat/password-strength";
 import { toast } from "@/components/chat/toast";
@@ -67,39 +67,23 @@ function ResetPasswordForm() {
 
   if (isDone) {
     return (
-      <>
-        <h1 className="font-semibold text-2xl tracking-tight">
-          Password updated
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          Your password has been changed. You can now sign in with it.
-        </p>
-        <Link
-          className="text-[13px] text-foreground underline-offset-4 hover:underline"
-          href="/login"
-        >
-          Go to sign in
-        </Link>
-      </>
+      <AuthStatus
+        action={{ href: "/login", label: "Go to sign in" }}
+        description="Your password has been changed. You can now sign in with it."
+        title="Password updated"
+        variant="success"
+      />
     );
   }
 
   if (!token) {
     return (
-      <>
-        <h1 className="font-semibold text-2xl tracking-tight">
-          Invalid reset link
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          This link is missing its reset token. Request a new one.
-        </p>
-        <Link
-          className="text-[13px] text-foreground underline-offset-4 hover:underline"
-          href="/forgot-password"
-        >
-          Request a new link
-        </Link>
-      </>
+      <AuthStatus
+        action={{ href: "/forgot-password", label: "Request a new link" }}
+        description="This link is missing its reset token. Request a new one."
+        title="Invalid reset link"
+        variant="expired"
+      />
     );
   }
 

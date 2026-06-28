@@ -6,6 +6,7 @@ import { type FormEvent, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { editProgressEntry } from "@/app/progress/actions";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -16,6 +17,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
 export function EditEntryButton({
@@ -84,10 +92,9 @@ export function EditEntryButton({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor="e-date">Date</Label>
-              <Input
+              <DatePicker
                 id="e-date"
-                onChange={(ev) => setDate(ev.target.value)}
-                type="date"
+                onChange={setDate}
                 value={date}
               />
             </div>
@@ -101,15 +108,21 @@ export function EditEntryButton({
                   placeholder="e.g. 184.5"
                   value={w}
                 />
-                <select
-                  aria-label="Weight unit"
-                  className="h-9 rounded-md border border-input bg-transparent px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  onChange={(ev) => setU(ev.target.value as "lb" | "kg")}
+                <Select
+                  onValueChange={(v) => setU(v as "lb" | "kg")}
                   value={u}
                 >
-                  <option value="lb">lb</option>
-                  <option value="kg">kg</option>
-                </select>
+                  <SelectTrigger
+                    aria-label="Weight unit"
+                    className="h-9 shrink-0 rounded-lg"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lb">lb</SelectItem>
+                    <SelectItem value="kg">kg</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>

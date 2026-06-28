@@ -13,8 +13,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { todayLocalISO } from "@/lib/date";
 import { cn } from "@/lib/utils";
@@ -330,11 +338,10 @@ export function WorkoutBuilder({
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="wk-date">Date</Label>
-                <Input
+                <DatePicker
                   id="wk-date"
                   max={todayISO()}
-                  onChange={(e) => setDate(e.target.value)}
-                  type="date"
+                  onChange={setDate}
                   value={date}
                 />
               </div>
@@ -558,17 +565,23 @@ function ExerciseBlock({
                   placeholder="–"
                   value={s.weight}
                 />
-                <select
-                  aria-label="Unit"
-                  className="h-9 shrink-0 rounded-md border border-input bg-transparent px-1 text-muted-foreground text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  onChange={(e) =>
-                    onUpdateSet(s.uid, { unit: e.target.value as "lb" | "kg" })
+                <Select
+                  onValueChange={(v) =>
+                    onUpdateSet(s.uid, { unit: v as "lb" | "kg" })
                   }
                   value={s.unit}
                 >
-                  <option value="lb">lb</option>
-                  <option value="kg">kg</option>
-                </select>
+                  <SelectTrigger
+                    aria-label="Unit"
+                    className="h-9 shrink-0 gap-1 rounded-md px-2 text-muted-foreground text-xs"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lb">lb</SelectItem>
+                    <SelectItem value="kg">kg</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <Input

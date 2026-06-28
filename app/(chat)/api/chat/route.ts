@@ -37,7 +37,6 @@ import { createDocument } from "@/lib/ai/tools/create-document";
 import { editDocument } from "@/lib/ai/tools/edit-document";
 import { generateMealPlanTool } from "@/lib/ai/tools/generate-meal-plan";
 import { getDashboard } from "@/lib/ai/tools/get-dashboard";
-import { getWeather } from "@/lib/ai/tools/get-weather";
 import { logWorkout } from "@/lib/ai/tools/log-workout";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { saveGoal } from "@/lib/ai/tools/save-goal";
@@ -320,7 +319,6 @@ export async function POST(request: Request) {
             isReasoningModel && !supportsTools
               ? []
               : [
-                  "getWeather",
                   "createDocument",
                   "editDocument",
                   "updateDocument",
@@ -340,7 +338,6 @@ export async function POST(request: Request) {
             }),
           },
           tools: {
-            getWeather,
             createDocument: createDocument({
               session,
               dataStream,

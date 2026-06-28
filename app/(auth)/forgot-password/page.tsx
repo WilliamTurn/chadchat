@@ -1,10 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { MailCheck } from "lucide-react";
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
+import { AuthStatus } from "@/components/chat/auth-status";
 import { AuthSubmitButton } from "@/components/chat/auth-submit-button";
 import { toast } from "@/components/chat/toast";
 import {
@@ -49,20 +51,13 @@ export default function Page() {
 
   if (submittedEmail) {
     return (
-      <>
-        <h1 className="font-semibold text-2xl tracking-tight">
-          Check your email
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          {`If an account exists for ${submittedEmail}, we've sent a link to reset your password. The link expires in 1 hour.`}
-        </p>
-        <Link
-          className="text-[13px] text-foreground underline-offset-4 hover:underline"
-          href="/login"
-        >
-          Back to sign in
-        </Link>
-      </>
+      <AuthStatus
+        action={{ href: "/login", label: "Back to sign in" }}
+        description={`If an account exists for ${submittedEmail}, we've sent a link to reset your password. The link expires in 1 hour.`}
+        icon={MailCheck}
+        title="Check your email"
+        variant="success"
+      />
     );
   }
 
