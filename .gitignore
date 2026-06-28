@@ -25,3 +25,7 @@ yarn-error.log*
 /playwright/*
 next-env.d.ts
 tsconfig.tsbuildinfo
+
+# DSH-16 image pipeline: keep chroma-green source + preview composites local-only
+public/today/raw/
+public/today/*_on_*.jpg
