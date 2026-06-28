@@ -167,7 +167,7 @@ async function Dashboard({ userId }: { userId: string }) {
               }
             />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             {workouts.length > 0 && (
               <AskChadButton prompt="Review my recent workouts and training — volume, consistency, and PRs. How am I progressing, and what should I focus on next?" />
             )}

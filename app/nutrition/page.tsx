@@ -200,14 +200,14 @@ function TodaySection({
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <div className="flex items-baseline gap-3">
           <h2 className="font-medium text-lg">Today</h2>
-          <span className="text-muted-foreground text-sm">
+          <span className="whitespace-nowrap text-muted-foreground text-sm">
             {meals.length} meal{meals.length === 1 ? "" : "s"}
           </span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="ml-auto flex shrink-0 items-center gap-1">
           <TargetEditor
             calories={target?.calories ?? null}
             carbs={target?.carbs ?? null}
