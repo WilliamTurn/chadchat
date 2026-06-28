@@ -1,10 +1,10 @@
 "use client";
 
-import { RotateCcw, Target } from "lucide-react";
+import { RotateCcw, Target, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { updateGoalRecord } from "@/app/today/actions";
+import { removeGoal, updateGoalRecord } from "@/app/today/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { type EditableGoal, GoalEditor } from "./goal-editor";
@@ -81,7 +81,67 @@ function GoalItem({
       <div className="mt-1 flex items-center gap-1">
         <GoalViewer goal={goal} />
         <GoalEditor goal={goal} variant="icon" />
+        <RowDeleteGoal id={goal.id} />
       </div>
+    </div>
+  );
+}
+
+/**
+ * A direct row delete for a goal: a trash icon that flips to an inline
+ * Delete/Cancel confirm (matching the workouts list), so deleting doesn't
+ * require opening the View dialog (NAV-25).
+ */
+function RowDeleteGoal({ id }: { id: string }) {
+  const router = useRouter();
+  const [confirming, setConfirming] = useState(false);
+  const [pending, startTransition] = useTransition();
+
+  if (!confirming) {
+    return (
+      <Button
+        aria-label="Delete goal"
+        className="size-7 text-muted-foreground"
+        onClick={() => setConfirming(true)}
+        size="icon"
+        variant="ghost"
+      >
+        <Trash2 className="size-3.5" />
+      </Button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1">
+      <Button
+        className="h-7 px-2 text-xs"
+        disabled={pending}
+        onClick={() =>
+          startTransition(async () => {
+            const result = await removeGoal(id);
+            if (result.ok) {
+              toast.success("Goal deleted.");
+              router.refresh();
+            } else {
+              toast.error(result.error ?? "Couldn't delete that goal.");
+              setConfirming(false);
+            }
+          })
+        }
+        size="sm"
+        variant="destructive"
+      >
+        {pending ? "Deleting…" : "Delete"}
+      </Button>
+      <Button
+        className="h-7 px-2 text-xs"
+        disabled={pending}
+        onClick={() => setConfirming(false)}
+        size="sm"
+        variant="ghost"
+      >
+        Cancel
+      </Button>
     </div>
   );
 }

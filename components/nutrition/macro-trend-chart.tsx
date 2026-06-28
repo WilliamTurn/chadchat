@@ -11,6 +11,7 @@
  * KPI over the selected window.
  */
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   Bar,
@@ -123,7 +124,16 @@ export function MacroTrendChart({
             · bars are each day, line is your trend
           </span>
         ) : (
-          <span>Set a daily target on /today to see it on the chart.</span>
+          <span>
+            Set a daily target on{" "}
+            <Link
+              className="font-medium text-foreground underline-offset-4 hover:underline"
+              href="/today"
+            >
+              /today
+            </Link>{" "}
+            to see it on the chart.
+          </span>
         )
       }
       kpis={

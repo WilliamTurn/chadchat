@@ -20,15 +20,15 @@ function PureChatHeader({
   hasMessages: boolean;
 }) {
   const { state, toggleSidebar, isMobile } = useSidebar();
-
-  if (state === "collapsed" && !isMobile) {
-    return null;
-  }
+  const collapsed = state === "collapsed" && !isMobile;
 
   return (
     <header className="sticky top-0 flex h-14 items-center gap-2 border-b border-blood/15 bg-sidebar px-3">
+      {/* Sidebar toggle: always on mobile; on desktop only when the sidebar is
+          collapsed, so the header stays usable (and Share stays reachable)
+          instead of disappearing entirely (NAV-24). */}
       <Button
-        className="md:hidden"
+        className={collapsed ? undefined : "md:hidden"}
         onClick={toggleSidebar}
         size="icon-sm"
         variant="ghost"
