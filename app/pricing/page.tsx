@@ -107,7 +107,7 @@ async function PricingContent() {
       {hasAccess && (
         <div className="mb-8 flex items-center gap-3">
           <Button asChild>
-            <Link href="/">Open Chad</Link>
+            <Link href="/today">Open Chad</Link>
           </Button>
           <Button asChild variant="outline">
             <Link href="/account">Manage billing</Link>

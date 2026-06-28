@@ -120,7 +120,7 @@ async function MembershipCard() {
 
           {hasAccess ? (
             <Button asChild variant="outline">
-              <Link href="/">Open Chad</Link>
+              <Link href="/today">Open Chad</Link>
             </Button>
           ) : (
             <Button asChild variant="outline">

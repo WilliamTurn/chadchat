@@ -14,6 +14,7 @@ import {
   isNotNull,
   isNull,
   lt,
+  ne,
   or,
   type SQL,
   sql,
@@ -982,6 +983,24 @@ export async function getActiveGoalsByUserId(userId: string): Promise<Goal[]> {
       .select()
       .from(goal)
       .where(and(eq(goal.userId, userId), eq(goal.status, "active")))
+      .orderBy(desc(goal.createdAt));
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get goals");
+  }
+}
+
+/**
+ * A user's non-active goals (achieved + archived), newest first — the recovery
+ * surface for goals a status change otherwise soft-deletes from the dashboard.
+ */
+export async function getInactiveGoalsByUserId(
+  userId: string
+): Promise<Goal[]> {
+  try {
+    return await db
+      .select()
+      .from(goal)
+      .where(and(eq(goal.userId, userId), ne(goal.status, "active")))
       .orderBy(desc(goal.createdAt));
   } catch (_error) {
     throw new ChatbotError("bad_request:database", "Failed to get goals");

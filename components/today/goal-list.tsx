@@ -1,7 +1,12 @@
 "use client";
 
-import { Target } from "lucide-react";
+import { RotateCcw, Target } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
+import { toast } from "sonner";
+import { updateGoalRecord } from "@/app/today/actions";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { type EditableGoal, GoalEditor } from "./goal-editor";
 import { GoalViewer } from "./goal-viewer";
 
@@ -81,19 +86,63 @@ function GoalItem({
   );
 }
 
+/** One achieved/archived goal: status badge, View, and a one-click Reopen. */
+function PastGoalItem({ goal }: { goal: EditableGoal }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+
+  function onReopen() {
+    startTransition(async () => {
+      const result = await updateGoalRecord({ ...goal, status: "active" });
+      if (result.ok) {
+        toast.success("Goal reopened.");
+        router.refresh();
+      } else {
+        toast.error(result.error ?? "Couldn't reopen that.");
+      }
+    });
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-background/40 px-3 py-2">
+      <div className="flex min-w-0 items-center gap-2">
+        <p className="truncate text-sm">{goal.title}</p>
+        <Badge variant="secondary">{goal.status}</Badge>
+      </div>
+      <div className="flex shrink-0 items-center gap-1">
+        <GoalViewer goal={goal} />
+        <Button
+          aria-label="Reopen goal"
+          className="size-7 text-muted-foreground"
+          disabled={pending}
+          onClick={onReopen}
+          size="icon"
+          variant="ghost"
+        >
+          <RotateCcw className="size-3.5" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 /**
  * The /today "Your goals" card body: lists active goals with live progress, an
  * Add control, and a graceful empty state (falling back to the one-line goal
- * Chad has in memory, if any, until the user saves a real one).
+ * Chad has in memory, if any, until the user saves a real one). Achieved and
+ * archived goals collapse into a "Past goals" disclosure so a status change
+ * stays recoverable instead of reading as a silent delete.
  */
 export function GoalList({
   goals,
   currentWeight,
   memoryGoalHint,
+  pastGoals = [],
 }: {
   goals: EditableGoal[];
   currentWeight: number | null;
   memoryGoalHint: string | null;
+  pastGoals?: EditableGoal[];
 }) {
   return (
     <>
@@ -129,6 +178,20 @@ export function GoalList({
           )}
           <GoalEditor variant="cta" />
         </div>
+      )}
+
+      {pastGoals.length > 0 && (
+        <details className="group mt-4 border-border border-t pt-3">
+          <summary className="flex cursor-pointer list-none items-center gap-1.5 text-muted-foreground text-sm hover:text-foreground">
+            <span className="transition-transform group-open:rotate-90">›</span>
+            Past goals ({pastGoals.length})
+          </summary>
+          <div className="mt-2 flex flex-col gap-2">
+            {pastGoals.map((g) => (
+              <PastGoalItem goal={g} key={g.id} />
+            ))}
+          </div>
+        </details>
       )}
     </>
   );

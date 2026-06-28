@@ -30,6 +30,7 @@ import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import {
   getActiveGoalsByUserId,
   getActivePlansByUserId,
+  getInactiveGoalsByUserId,
   getMealsSince,
   getNutritionTarget,
   getProgressEntriesByUserId,
@@ -142,6 +143,7 @@ async function TodayContent() {
     waterMl,
     waterDaily,
     goals,
+    pastGoals,
     plans,
   ] = await Promise.all([
     getUserMemory(user.id),
@@ -151,11 +153,12 @@ async function TodayContent() {
     isPro ? getWaterMlSince(user.id, startOfToday) : Promise.resolve(0),
     isPro ? getWaterDailyTotals(user.id) : Promise.resolve([]),
     getActiveGoalsByUserId(user.id),
+    getInactiveGoalsByUserId(user.id),
     getActivePlansByUserId(user.id),
   ]);
 
   // Strip the DB rows down to the serializable shape the client cards need.
-  const goalItems = goals.map((g) => ({
+  const toGoalItem = (g: (typeof goals)[number]) => ({
     id: g.id,
     title: g.title,
     detail: g.detail,
@@ -165,7 +168,9 @@ async function TodayContent() {
     startValue: g.startValue,
     targetValue: g.targetValue,
     unit: g.unit,
-  }));
+  });
+  const goalItems = goals.map(toGoalItem);
+  const pastGoalItems = pastGoals.map(toGoalItem);
   const planItems = plans.map((p) => ({
     id: p.id,
     title: p.title,
@@ -316,6 +321,7 @@ async function TodayContent() {
             currentWeight={currentWeight}
             goals={goalItems}
             memoryGoalHint={goal}
+            pastGoals={pastGoalItems}
           />
         </Card>
 

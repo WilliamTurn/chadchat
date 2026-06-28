@@ -57,7 +57,7 @@ async function VerifyResult({
           ? "Thanks — your email address is confirmed. You're all set."
           : "This verification link is invalid or has expired. Sign in and resend a new one from the banner at the top of the app."}
       </p>
-      <Link className={buttonVariants({ className: "mt-2" })} href="/">
+      <Link className={buttonVariants({ className: "mt-2" })} href="/today">
         {verified ? "Continue to Chad" : "Go to Chad"}
       </Link>
     </>
