@@ -1645,6 +1645,70 @@ export async function getWaterDailyTotals(
   }
 }
 
+/**
+ * Distinct days (returned as the raw logged timestamps) on which the user took
+ * any tracked action since `since` — a logged meal, a workout, a water entry, or
+ * a progress/weigh-in. Backs the /today streak strip + 7-day week dots so the
+ * streak reflects *all* engagement, not just one surface. Cheap: each select
+ * pulls a single timestamp column over a short window; the caller buckets into
+ * days. Meals use their effective day (`recordedAt ?? createdAt`).
+ */
+export async function getActivityDaysSince(
+  userId: string,
+  since: Date
+): Promise<Date[]> {
+  try {
+    const [meals, workouts, waters, progress] = await Promise.all([
+      db
+        .select({ t: sql<Date>`coalesce(${mealAnalysis.recordedAt}, ${mealAnalysis.createdAt})` })
+        .from(mealAnalysis)
+        .where(
+          and(
+            eq(mealAnalysis.userId, userId),
+            eq(mealAnalysis.kind, "meal"),
+            or(
+              and(
+                isNotNull(mealAnalysis.recordedAt),
+                gte(mealAnalysis.recordedAt, since)
+              ),
+              and(
+                isNull(mealAnalysis.recordedAt),
+                gte(mealAnalysis.createdAt, since)
+              )
+            )
+          )
+        ),
+      db
+        .select({ t: workout.performedAt })
+        .from(workout)
+        .where(and(eq(workout.userId, userId), gte(workout.performedAt, since))),
+      db
+        .select({ t: waterLog.recordedAt })
+        .from(waterLog)
+        .where(
+          and(eq(waterLog.userId, userId), gte(waterLog.recordedAt, since))
+        ),
+      db
+        .select({ t: progressEntry.recordedAt })
+        .from(progressEntry)
+        .where(
+          and(
+            eq(progressEntry.userId, userId),
+            gte(progressEntry.recordedAt, since)
+          )
+        ),
+    ]);
+    return [...meals, ...workouts, ...waters, ...progress]
+      .map((r) => r.t)
+      .filter((t): t is Date => t != null);
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get activity days"
+    );
+  }
+}
+
 export async function addWaterLog(entry: {
   userId: string;
   amountMl: number;

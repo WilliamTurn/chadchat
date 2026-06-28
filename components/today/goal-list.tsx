@@ -1,6 +1,7 @@
 "use client";
 
 import { RotateCcw, Target, Trash2 } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -10,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { type EditableGoal, GoalEditor } from "./goal-editor";
 import { GoalViewer } from "./goal-viewer";
 
+const EASE = [0.22, 1, 0.36, 1] as const;
+
 /** Live progress for a measurable goal, given a current value. */
 function GoalProgress({
   goal,
@@ -18,6 +21,8 @@ function GoalProgress({
   goal: EditableGoal;
   current: number | null;
 }) {
+  const reduced = useReducedMotion() ?? false;
+
   if (goal.targetValue == null || current == null) {
     return null;
   }
@@ -31,23 +36,26 @@ function GoalProgress({
       : Math.max(0, Math.min(100, Math.round((done / span) * 100)));
   const toGo = Math.round(Math.abs(goal.targetValue - current) * 10) / 10;
   const unit = goal.unit ? ` ${goal.unit}` : "";
+  const reached = pct >= 100;
 
   return (
     <div className="mt-2">
-      <div className="mb-1 flex items-center justify-between text-xs">
+      <div className="mb-1.5 flex items-center justify-between text-xs">
         <span className="text-muted-foreground">
           {current}
           {unit} → {goal.targetValue}
           {unit}
         </span>
-        <span className="font-medium">
-          {pct >= 100 ? "Goal reached 🎯" : `${toGo}${unit} to go`}
+        <span className="font-medium tabular-nums">
+          {reached ? "Goal reached 🎯" : `${pct}% · ${toGo}${unit} to go`}
         </span>
       </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-        <div
-          className="h-full rounded-full bg-blood transition-all"
-          style={{ width: `${pct}%` }}
+      <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-muted">
+        <motion.div
+          animate={{ width: `${pct}%` }}
+          className="h-full rounded-full bg-gradient-to-r from-blood/70 to-blood shadow-[0_0_10px_var(--color-blood)]"
+          initial={{ width: reduced ? `${pct}%` : 0 }}
+          transition={{ duration: reduced ? 0 : 0.9, ease: EASE }}
         />
       </div>
     </div>

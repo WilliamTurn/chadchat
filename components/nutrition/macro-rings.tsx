@@ -35,6 +35,12 @@ type RingProps = {
    */
   consumedLabel?: string;
   noTargetSub?: string;
+  /**
+   * Optional call-to-action shown below the dial when no calorie target is set
+   * (e.g. a "Set your targets" button). With no target the ring is rendered as
+   * a deliberate dashed ghost rather than a full grey ring that reads as broken.
+   */
+  emptyCta?: React.ReactNode;
 };
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -96,8 +102,8 @@ function CalorieDial({
   let sub: string;
   let bigClass = "fill-foreground";
   if (!hasTarget) {
-    big = round(consumed).toLocaleString();
-    sub = noTargetSub;
+    big = consumed > 0 ? round(consumed).toLocaleString() : "—";
+    sub = consumed > 0 ? noTargetSub : "no target yet";
   } else if (over) {
     big = round(consumed - (target as number)).toLocaleString();
     sub = "kcal over";
@@ -124,39 +130,33 @@ function CalorieDial({
           width={SIZE}
         >
           <title id={titleId}>{ariaLabel}</title>
-          {/* Track */}
+          {/* Track — a dashed ghost ring when there's no target, so the empty
+              state reads as "set a goal" rather than a broken full ring. */}
           <circle
-            className="text-border/60"
+            className={hasTarget ? "text-border/60" : "text-border"}
             cx={CENTER}
             cy={CENTER}
             fill="none"
             r={RADIUS}
             stroke="currentColor"
-            strokeWidth={STROKE}
+            strokeDasharray={hasTarget ? undefined : "2 8"}
+            strokeLinecap={hasTarget ? undefined : "round"}
+            strokeWidth={hasTarget ? STROKE : STROKE - 6}
           />
-          {/* Fill */}
-          {(hasTarget || consumed > 0) && (
+          {/* Fill — only when a target exists; overage is signaled by color. */}
+          {hasTarget && (
             <motion.circle
-              animate={{
-                strokeDashoffset: hasTarget ? dashOffset : CIRC * 0.12,
-              }}
+              animate={{ strokeDashoffset: dashOffset }}
               className="text-blood"
               cx={CENTER}
               cy={CENTER}
               fill="none"
-              initial={{
-                strokeDashoffset: reduced
-                  ? hasTarget
-                    ? dashOffset
-                    : CIRC * 0.12
-                  : CIRC,
-              }}
+              initial={{ strokeDashoffset: reduced ? dashOffset : CIRC }}
               r={RADIUS}
               stroke="currentColor"
               strokeDasharray={CIRC}
               strokeLinecap="round"
               strokeWidth={STROKE}
-              style={{ opacity: hasTarget ? 1 : 0.45 }}
               transform={`rotate(-90 ${CENTER} ${CENTER})`}
               transition={{ duration: reduced ? 0 : 1, ease: EASE }}
             />
@@ -280,11 +280,9 @@ function MacroBar({
   const over = hasTarget && consumed > (target as number);
   const remaining = hasTarget ? (target as number) - consumed : 0;
   const percent = pct(consumed, target);
-  const width = hasTarget
-    ? Math.max(0, Math.min(1, fraction)) * 100
-    : consumed > 0
-      ? 100
-      : 0;
+  // With no target there's nothing to fill toward, so the bar stays a ghost
+  // track (a full bar would falsely read as "100% / maxed out").
+  const width = hasTarget ? Math.max(0, Math.min(1, fraction)) * 100 : 0;
 
   const hint = hasTarget
     ? over
@@ -318,7 +316,11 @@ function MacroBar({
       </div>
 
       {/* Track + fill */}
-      <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-border/60">
+      <div
+        className={`mt-2 h-2.5 w-full overflow-hidden rounded-full ${
+          hasTarget ? "bg-border/60" : "bg-border/40"
+        }`}
+      >
         <motion.div
           animate={{ width: `${width}%` }}
           className={`h-full rounded-full ${over ? "bg-blood" : barColor}`}
@@ -390,50 +392,64 @@ export function MacroRings({
   fatTarget,
   consumedLabel = "Eaten",
   noTargetSub = "kcal today",
+  emptyCta,
 }: RingProps) {
   const reduced = useReducedMotion() ?? false;
+  const noTarget = caloriesTarget == null || caloriesTarget <= 0;
 
   return (
-    <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-8">
-      <div className="flex shrink-0 justify-center sm:justify-start">
-        <CalorieDial
-          consumed={caloriesConsumed}
-          consumedLabel={consumedLabel}
-          noTargetSub={noTargetSub}
-          reduced={reduced}
-          target={caloriesTarget}
-        />
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-8">
+        <div className="flex shrink-0 justify-center sm:justify-start">
+          <CalorieDial
+            consumed={caloriesConsumed}
+            consumedLabel={consumedLabel}
+            noTargetSub={noTargetSub}
+            reduced={reduced}
+            target={caloriesTarget}
+          />
+        </div>
+
+        <div className="flex w-full flex-col gap-1">
+          <MacroBar
+            barColor="bg-sky-400"
+            consumed={proteinConsumed}
+            consumedLabel={consumedLabel}
+            label="Protein"
+            reduced={reduced}
+            target={proteinTarget}
+            textColor="text-sky-400"
+          />
+          <MacroBar
+            barColor="bg-amber-400"
+            consumed={carbsConsumed}
+            consumedLabel={consumedLabel}
+            label="Carbs"
+            reduced={reduced}
+            target={carbsTarget}
+            textColor="text-amber-400"
+          />
+          <MacroBar
+            barColor="bg-violet-400"
+            consumed={fatConsumed}
+            consumedLabel={consumedLabel}
+            label="Fat"
+            reduced={reduced}
+            target={fatTarget}
+            textColor="text-violet-400"
+          />
+        </div>
       </div>
 
-      <div className="flex w-full flex-col gap-1">
-        <MacroBar
-          barColor="bg-sky-400"
-          consumed={proteinConsumed}
-          consumedLabel={consumedLabel}
-          label="Protein"
-          reduced={reduced}
-          target={proteinTarget}
-          textColor="text-sky-400"
-        />
-        <MacroBar
-          barColor="bg-amber-400"
-          consumed={carbsConsumed}
-          consumedLabel={consumedLabel}
-          label="Carbs"
-          reduced={reduced}
-          target={carbsTarget}
-          textColor="text-amber-400"
-        />
-        <MacroBar
-          barColor="bg-violet-400"
-          consumed={fatConsumed}
-          consumedLabel={consumedLabel}
-          label="Fat"
-          reduced={reduced}
-          target={fatTarget}
-          textColor="text-violet-400"
-        />
-      </div>
+      {noTarget && emptyCta && (
+        <div className="flex flex-col items-start gap-2 rounded-xl border border-border border-dashed bg-background/40 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-muted-foreground text-sm">
+            No daily target set. Add one so your calorie ring and macro bars fill
+            toward a goal.
+          </p>
+          <div className="shrink-0">{emptyCta}</div>
+        </div>
+      )}
     </div>
   );
 }

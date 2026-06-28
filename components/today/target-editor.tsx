@@ -24,11 +24,15 @@ export function TargetEditor({
   protein,
   carbs,
   fat,
+  prominent = false,
 }: {
   calories: number | null;
   protein: number | null;
   carbs: number | null;
   fat: number | null;
+  /** Render a solid primary button (for the empty-state CTA) vs the default
+   *  ghost text button used in card headers. */
+  prominent?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -87,10 +91,17 @@ export function TargetEditor({
   return (
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
-        <Button className="gap-1.5 text-xs" size="sm" variant="ghost">
-          <Settings2 className="size-3.5" />
-          {hasAny ? "Edit targets" : "Set targets"}
-        </Button>
+        {prominent ? (
+          <Button className="gap-1.5" size="sm">
+            <Settings2 className="size-3.5" />
+            {hasAny ? "Edit targets" : "Set your targets"}
+          </Button>
+        ) : (
+          <Button className="gap-1.5 text-xs" size="sm" variant="ghost">
+            <Settings2 className="size-3.5" />
+            {hasAny ? "Edit targets" : "Set targets"}
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

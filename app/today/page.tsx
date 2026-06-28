@@ -3,7 +3,6 @@ import {
   CreditCard,
   Droplet,
   Dumbbell,
-  Flame,
   LineChart,
   Lock,
   MessageSquare,
@@ -16,12 +15,12 @@ import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
-import { CountUp } from "@/components/dashboard/count-up";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { MacroRings } from "@/components/nutrition/macro-rings";
 import { WeightChartInteractive } from "@/components/progress/weight-chart-interactive";
 import { GoalList } from "@/components/today/goal-list";
 import { PlanList } from "@/components/today/plan-list";
+import { StreakStrip } from "@/components/today/streak-strip";
 import { TargetEditor } from "@/components/today/target-editor";
 import { WaterTracker } from "@/components/today/water-tracker";
 import { WaterTrendChart } from "@/components/today/water-trend-chart";
@@ -31,6 +30,7 @@ import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import {
   getActiveGoalsByUserId,
   getActivePlansByUserId,
+  getActivityDaysSince,
   getInactiveGoalsByUserId,
   getMealsSince,
   getNutritionTarget,
@@ -156,6 +156,11 @@ async function TodayContent() {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
+  // Window for the streak / week strip — long enough that a real streak isn't
+  // capped, cheap because each select pulls a single timestamp column.
+  const activitySince = new Date(startOfToday);
+  activitySince.setDate(activitySince.getDate() - 120);
+
   const [
     memory,
     entries,
@@ -167,6 +172,7 @@ async function TodayContent() {
     pastGoals,
     plans,
     recentWorkouts,
+    activityDays,
   ] = await Promise.all([
     getUserMemory(user.id),
     isPro ? getProgressEntriesByUserId(user.id) : Promise.resolve([]),
@@ -180,6 +186,9 @@ async function TodayContent() {
     canAccessProFeatures(user)
       ? getWorkoutsByUserId(user.id, 1)
       : Promise.resolve([]),
+    isPro
+      ? getActivityDaysSince(user.id, activitySince)
+      : Promise.resolve<Date[]>([]),
   ]);
 
   // Most-recent logged workout, summarized for the /today card.
@@ -276,11 +285,20 @@ async function TodayContent() {
   const carbsToday = todaysMeals.reduce((sum, m) => sum + (m.carbs ?? 0), 0);
   const fatToday = todaysMeals.reduce((sum, m) => sum + (m.fat ?? 0), 0);
 
-  // Streak from logged actions (progress + meals).
-  const streak = computeStreak([
-    ...entries.map((e) => e.recordedAt),
-    ...todaysMeals.map((m) => m.recordedAt ?? m.createdAt),
-  ]);
+  // Streak + 7-day week strip from every tracked action (meals, workouts,
+  // water, weigh-ins), so engagement on any surface keeps the streak alive.
+  const streak = computeStreak(activityDays);
+  const activeDayKeys = new Set(activityDays.map(dayKey));
+  const WEEKDAY_INITIALS = ["S", "M", "T", "W", "T", "F", "S"];
+  const week = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(startOfToday);
+    d.setDate(d.getDate() - (6 - i));
+    return {
+      label: WEEKDAY_INITIALS[d.getDay()],
+      active: activeDayKeys.has(dayKey(d)),
+      isToday: i === 6,
+    };
+  });
 
   // First-run: a brand-new member with no profile and nothing logged yet. We
   // show a "welcome / get started" header instead of "Welcome back" (which is
@@ -332,24 +350,7 @@ async function TodayContent() {
         </div>
 
         {/* Streak strip */}
-        <div className="relative mt-6 flex items-center gap-3 rounded-xl border border-border bg-background/40 px-4 py-3">
-          <Flame
-            className={
-              streak > 0 ? "size-7 text-blood" : "size-7 text-muted-foreground"
-            }
-            strokeWidth={2.5}
-          />
-          <div>
-            <div className="font-display font-bold text-2xl leading-none">
-              <CountUp value={`${streak} day${streak === 1 ? "" : "s"}`} />
-            </div>
-            <div className="mt-1 text-muted-foreground text-sm">
-              {streak > 0
-                ? "Current streak — keep showing up."
-                : "No streak yet. Log something today to start one."}
-            </div>
-          </div>
-        </div>
+        <StreakStrip streak={streak} week={week} />
       </header>
 
       {/* Goal + Training */}
@@ -425,6 +426,15 @@ async function TodayContent() {
               caloriesTarget={target?.calories ?? null}
               carbsConsumed={carbsToday}
               carbsTarget={target?.carbs ?? null}
+              emptyCta={
+                <TargetEditor
+                  calories={target?.calories ?? null}
+                  carbs={target?.carbs ?? null}
+                  fat={target?.fat ?? null}
+                  prominent
+                  protein={target?.protein ?? null}
+                />
+              }
               fatConsumed={fatToday}
               fatTarget={target?.fat ?? null}
               proteinConsumed={proteinToday}
@@ -450,12 +460,6 @@ async function TodayContent() {
               </Button>
             </div>
           </div>
-          {target?.calories == null && (
-            <p className="mt-2 text-muted-foreground text-xs">
-              Tip: set a daily calorie & macro target (top-right) so your rings
-              fill toward a goal.
-            </p>
-          )}
         </Card>
       ) : (
         <LockedCard

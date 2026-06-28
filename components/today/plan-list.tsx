@@ -11,6 +11,55 @@ import { Button } from "@/components/ui/button";
 import { type EditablePlan, PlanEditor } from "./plan-editor";
 import { PlanViewer } from "./plan-viewer";
 
+/**
+ * Pull the day structure out of a free-text training plan: lines like
+ * "Day 1 — Upper", "Day 2: Lower", "**Day 3 - Push**". Returns the per-day
+ * labels (the label may be "" when the line is just "Day N"). Best-effort and
+ * purely additive — an unparseable plan simply shows no split summary.
+ */
+function parsePlanDays(detail: string): string[] {
+  const labels: string[] = [];
+  for (const raw of detail.split(/\r?\n/)) {
+    const line = raw.replace(/[*_#>`]/g, "").trim();
+    const match = line.match(/^day\s*\d+\b\s*[—:\-–.)]*\s*(.*)$/i);
+    if (match) {
+      labels.push(match[1].trim());
+    }
+  }
+  return labels;
+}
+
+/** A compact "4-day split · Upper / Lower / …" strip for a training plan. */
+function SplitSummary({ detail }: { detail: string }) {
+  const days = parsePlanDays(detail);
+  if (days.length < 2) {
+    return null;
+  }
+  const named = days.filter(Boolean).slice(0, 4);
+  const moreNamed = days.filter(Boolean).length > named.length;
+
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+      <span className="flex items-center gap-1">
+        {days.slice(0, 7).map((_, i) => (
+          // Fixed positional dots; index is a stable key here.
+          // biome-ignore lint/suspicious/noArrayIndexKey: positional day dots
+          <span className="size-1.5 rounded-full bg-blood/70" key={i} />
+        ))}
+      </span>
+      <span className="font-medium text-muted-foreground">
+        {days.length}-day split
+      </span>
+      {named.length > 0 && (
+        <span className="min-w-0 truncate text-muted-foreground">
+          · {named.join(" / ")}
+          {moreNamed ? " …" : ""}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function PlanItem({ plan }: { plan: EditablePlan }) {
   return (
     <div className="rounded-xl border border-border bg-background/40 p-3">
@@ -25,6 +74,7 @@ function PlanItem({ plan }: { plan: EditablePlan }) {
           <Badge variant="secondary">{plan.status}</Badge>
         )}
       </div>
+      {plan.kind === "training" && <SplitSummary detail={plan.detail} />}
       <div className="mt-1 flex items-center gap-1">
         <PlanViewer plan={plan} />
         <PlanEditor plan={plan} variant="icon" />
