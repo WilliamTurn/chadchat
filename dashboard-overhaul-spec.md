@@ -95,8 +95,16 @@ it arranges the *final* card set in one pass.
   like the reference, instead of a long ragged vertical stack. Lock per-row heights.
 - **Visual polish:** broaden per-domain `--chart-1..5` accents (underused today); icon
   chips in colored rounded squares; brand hero figure in the header; **goal body diagram**
-  in GoalList (Phase 2 asset, picked by goal type); **food-photo thumbnail** on the
-  meal-plan card; day-pills on the training card.
+  in GoalList (Phase 2 asset via `lib/today/goal-diagram.ts`, picked by goal type);
+  **food-photo thumbnail** on the meal-plan card; day-pills on the training card.
+- **⚠ Asset serving gotcha (found in P2):** `proxy.ts` paywalls *every* non-auth path,
+  so `public/today/*.png` only loads for an authenticated request. On `/today` (always
+  logged-in) a **plain `<img>` or CSS `background-image` serves fine (200)** — the
+  browser sends the session cookie. But **`next/image` optimization 307s**: the
+  optimizer's upstream fetch of the local source is unauthenticated (this is pre-existing
+  — even `public/preview.png` fails via `/_next/image`). So in P4 render these with a
+  plain `<img>` / CSS background (or `next/image` `unoptimized`), **or** allowlist a brand
+  path in `proxy.ts` (decorative art has no auth sensitivity) if you want optimization.
 - Keep surfaces dark/restrained — color is an *accent* (brand: blood `#a4161a` on ink).
 - Honest empty states preserved (no invented metrics).
 
