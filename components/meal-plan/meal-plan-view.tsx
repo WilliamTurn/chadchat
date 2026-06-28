@@ -88,6 +88,57 @@ function macroLine(m: Macros): string {
   return `${m.calories.toLocaleString()} kcal · ${m.protein}P ${m.carbs}C ${m.fat}F`;
 }
 
+// Shared P/C/F accent colors — kept in sync with `MacroRings` (protein = sky,
+// carbs = amber, fat = violet) so a food row reads the same as the day's dial.
+const MACRO_TONE = {
+  protein: "bg-sky-400",
+  carbs: "bg-amber-400",
+  fat: "bg-violet-400",
+} as const;
+
+type MacroKey = keyof typeof MACRO_TONE;
+
+/** Calories contributed by each macro (4/4/9), used to size the micro-bar. */
+function macroCalSplit(m: Macros): {
+  protein: number;
+  carbs: number;
+  fat: number;
+  total: number;
+} {
+  const protein = Math.max(0, m.protein) * 4;
+  const carbs = Math.max(0, m.carbs) * 4;
+  const fat = Math.max(0, m.fat) * 9;
+  return { protein, carbs, fat, total: protein + carbs + fat };
+}
+
+/** Which macro drives most of a food's calories — colors its category dot. */
+function dominantMacro(m: Macros): MacroKey {
+  const { protein, carbs, fat } = macroCalSplit(m);
+  if (fat >= protein && fat >= carbs) {
+    return "fat";
+  }
+  return protein >= carbs ? "protein" : "carbs";
+}
+
+/** A thin 3-segment P/C/F bar showing what's driving a food's calories. */
+function MacroMicroBar({ m }: { m: Macros }) {
+  const { protein, carbs, fat, total } = macroCalSplit(m);
+  if (total <= 0) {
+    return null;
+  }
+  const seg = (cal: number) => `${(cal / total) * 100}%`;
+  return (
+    <div
+      className="mt-1.5 flex h-1 w-full max-w-[180px] overflow-hidden rounded-full bg-muted"
+      title={`Protein ${m.protein}g · Carbs ${m.carbs}g · Fat ${m.fat}g`}
+    >
+      <span className="h-full bg-sky-400" style={{ width: seg(protein) }} />
+      <span className="h-full bg-amber-400" style={{ width: seg(carbs) }} />
+      <span className="h-full bg-violet-400" style={{ width: seg(fat) }} />
+    </div>
+  );
+}
+
 /**
  * The interactive meal-plan viewer. Renders Chad's intro + a week-at-a-glance
  * day switcher + the selected day's meals, and flips into an inline editor for
@@ -358,7 +409,7 @@ export function MealPlanView({ plan }: { plan: MealPlanViewData }) {
 
       {/* Week-at-a-glance day switcher */}
       {days.length > 1 && (
-        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+        <div className="-mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1">
           {days.map((d, i) => (
             <DaySwitchCard
               active={i === dayIdx}
@@ -442,7 +493,7 @@ function DaySwitchCard({
   return (
     <button
       className={cn(
-        "flex w-28 shrink-0 flex-col gap-1.5 rounded-xl border p-3 text-left transition-colors",
+        "flex w-28 shrink-0 snap-start flex-col gap-1.5 rounded-xl border p-3 text-left transition-colors",
         active
           ? "border-blood/60 bg-card ring-1 ring-blood/30"
           : "border-border bg-card/60 hover:bg-card"
@@ -483,6 +534,7 @@ function MealCard({
 }) {
   const router = useRouter();
   const [logging, startLog] = useTransition();
+  const [logged, setLogged] = useState(false);
   const totals = mealMacros(meal);
 
   function onLog() {
@@ -496,8 +548,12 @@ function MealCard({
         fat: totals.fat,
       });
       if (res.ok) {
+        // Optimistic confirmation: morph the button + ring the card briefly so
+        // logging feels acknowledged on the spot, not just via the toast.
+        setLogged(true);
         toast.success(`Logged "${meal.title}" to today's diary.`);
         router.refresh();
+        setTimeout(() => setLogged(false), 2500);
       } else {
         toast.error(res.error ?? "Couldn't log that meal.");
       }
@@ -505,7 +561,12 @@ function MealCard({
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-5">
+    <div
+      className={cn(
+        "rounded-2xl border bg-card p-5 transition-shadow hover:shadow-[var(--shadow-float)]",
+        logged ? "border-emerald-500/40 ring-1 ring-emerald-500/30" : "border-border"
+      )}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <Badge className="mb-2" variant="secondary">
@@ -537,6 +598,15 @@ function MealCard({
               className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0"
               key={`${food.name}-${foodIdx}`}
             >
+              {!editing && (
+                <span
+                  aria-hidden
+                  className={cn(
+                    "size-2 shrink-0 rounded-full",
+                    noMatch ? "bg-muted-foreground/30" : MACRO_TONE[dominantMacro(m)]
+                  )}
+                />
+              )}
               {editing ? (
                 <div className="flex items-center gap-1">
                   <Input
@@ -592,6 +662,7 @@ function MealCard({
                     USDA: {food.fdcDescription}
                   </p>
                 )}
+                {!(editing || noMatch) && <MacroMicroBar m={m} />}
               </div>
 
               <span className="shrink-0 text-right text-muted-foreground text-xs tabular-nums">
@@ -618,18 +689,23 @@ function MealCard({
       {!editing && (
         <div className="mt-4 flex justify-end">
           <Button
-            className="gap-1.5 text-muted-foreground"
-            disabled={logging}
+            className={cn(
+              "gap-1.5",
+              logged ? "text-emerald-500" : "text-muted-foreground"
+            )}
+            disabled={logging || logged}
             onClick={onLog}
             size="sm"
             variant="ghost"
           >
             {logging ? (
               <Loader2 className="size-3.5 animate-spin" />
+            ) : logged ? (
+              <Check className="size-3.5" />
             ) : (
               <Utensils className="size-3.5" />
             )}
-            Log as eaten
+            {logged ? "Logged" : "Log as eaten"}
           </Button>
         </div>
       )}
