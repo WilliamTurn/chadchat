@@ -66,7 +66,12 @@ export default function Page() {
       <h1 className="text-2xl font-semibold tracking-tight">Create account</h1>
       <p className="text-sm text-muted-foreground">Get started for free</p>
       <GoogleSignIn />
-      <AuthForm form={form} onSubmit={onSubmit} showPasswordRequirement>
+      <AuthForm
+        form={form}
+        onSubmit={onSubmit}
+        showPasswordRequirement
+        showPasswordStrength
+      >
         <Button
           className="relative"
           disabled={isPending || isSuccessful}

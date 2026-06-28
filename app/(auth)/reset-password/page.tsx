@@ -7,6 +7,7 @@ import { Suspense, useActionState, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { LoaderIcon } from "@/components/chat/icons";
+import { PasswordStrength } from "@/components/chat/password-strength";
 import { toast } from "@/components/chat/toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,9 +26,6 @@ import {
   resetPasswordSchema,
 } from "@/lib/validation/auth";
 import { type ResetPasswordActionState, resetPassword } from "../actions";
-
-const inputClassName =
-  "h-10 rounded-lg border-border/50 bg-muted/50 text-sm transition-colors focus:border-foreground/20 focus:bg-muted";
 
 export default function Page() {
   return (
@@ -139,12 +137,12 @@ function ResetPasswordForm() {
                   <Input
                     autoComplete="new-password"
                     autoFocus
-                    className={inputClassName}
                     placeholder="••••••••"
                     type="password"
                     {...field}
                   />
                 </FormControl>
+                <PasswordStrength password={field.value} />
                 {!fieldState.error && (
                   <FormDescription>{PASSWORD_REQUIREMENT}</FormDescription>
                 )}

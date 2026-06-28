@@ -22,11 +22,14 @@ import {
  * - `header`  → the StandaloneHeader bar on /today, /nutrition, /progress, …
  * - `sidebar` → the chat sidebar.
  *
- * The sidebar is deliberately kept lean — Chat, Meal Plan and Account are
- * header-only (they're reachable from the chat view itself and the account
- * menu), so adding a new feature link here won't bloat the sidebar unless it's
- * explicitly tagged `sidebar`. Order matters: both navs render the list in
- * order (left-to-right in the header, top-to-bottom in the sidebar).
+ * The sidebar is deliberately kept lean (FEAT-1): only Dashboard and Help are
+ * tagged `sidebar`. Chat, Workouts, Nutrition, Meal Plan, Kitchen, Progress and
+ * Account are all header-only — the chat sidebar is for chat (New chat / history
+ * / Delete all), and feature discovery happens through the StandaloneHeader and
+ * dashboard quick-actions, not by cramming every section into the sidebar.
+ * Adding a new feature link here won't bloat the sidebar unless it's explicitly
+ * tagged `sidebar`. Order matters: both navs render the list in order
+ * (left-to-right in the header, top-to-bottom in the sidebar).
  */
 export type NavSurface = "header" | "sidebar";
 
@@ -49,13 +52,13 @@ export const NAV_LINKS: NavLink[] = [
     href: "/workouts",
     label: "Workouts",
     icon: Dumbbell,
-    surfaces: ["header", "sidebar"],
+    surfaces: ["header"],
   },
   {
     href: "/nutrition",
     label: "Nutrition",
     icon: Camera,
-    surfaces: ["header", "sidebar"],
+    surfaces: ["header"],
   },
   {
     href: "/meal-plan",
@@ -67,13 +70,13 @@ export const NAV_LINKS: NavLink[] = [
     href: "/kitchen",
     label: "Kitchen",
     icon: Refrigerator,
-    surfaces: ["header", "sidebar"],
+    surfaces: ["header"],
   },
   {
     href: "/progress",
     label: "Progress",
     icon: LineChart,
-    surfaces: ["header", "sidebar"],
+    surfaces: ["header"],
   },
   {
     href: "/account",

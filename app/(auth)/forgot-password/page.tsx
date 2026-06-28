@@ -23,9 +23,6 @@ import {
 } from "@/lib/validation/auth";
 import { type RequestResetActionState, requestPasswordReset } from "../actions";
 
-const inputClassName =
-  "h-10 rounded-lg border-border/50 bg-muted/50 text-sm transition-colors focus:border-foreground/20 focus:bg-muted";
-
 export default function Page() {
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
 
@@ -102,7 +99,6 @@ export default function Page() {
                   <Input
                     autoComplete="email"
                     autoFocus
-                    className={inputClassName}
                     placeholder="you@someo.ne"
                     type="email"
                     {...field}
