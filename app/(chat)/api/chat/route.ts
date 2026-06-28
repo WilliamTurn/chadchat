@@ -43,6 +43,7 @@ import { saveGoal } from "@/lib/ai/tools/save-goal";
 import { savePlan } from "@/lib/ai/tools/save-plan";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { isProductionEnvironment } from "@/lib/constants";
+import { startOfTodayUTC } from "@/lib/date";
 import {
   createStreamId,
   deleteChatById,
@@ -248,8 +249,8 @@ export async function POST(request: Request) {
     let mealPlanBlock = "";
     if (canAccessProFeatures(dbUser)) {
       try {
-        const startOfToday = new Date();
-        startOfToday.setHours(0, 0, 0, 0);
+        // 00:00 UTC, matching the noon-UTC calendar-day convention (lib/date.ts).
+        const startOfToday = startOfTodayUTC();
         const [
           todaysMeals,
           nutritionTarget,

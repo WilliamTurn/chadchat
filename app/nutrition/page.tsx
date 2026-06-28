@@ -13,7 +13,11 @@ import { TargetEditor } from "@/components/today/target-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
-import { formatCalendarDay, toCalendarDayISO } from "@/lib/date";
+import {
+  formatCalendarDay,
+  startOfTodayUTC,
+  toCalendarDayISO,
+} from "@/lib/date";
 import {
   getMealLogByUserId,
   getNutritionTarget,
@@ -119,11 +123,9 @@ function UpgradePrompt() {
   );
 }
 
-function startOfToday(): Date {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
+// Lower bound for "today's ..." queries — 00:00 UTC, matching the noon-UTC
+// calendar-day convention (see lib/date.ts). Not server-local midnight.
+const startOfToday = startOfTodayUTC;
 
 /** The day a meal is logged for — its user-picked date, or its insert time for
  * rows logged before back-dating existed. */

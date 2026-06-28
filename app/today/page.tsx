@@ -43,10 +43,17 @@ import {
   getWaterMlSince,
   getWorkoutsByUserId,
 } from "@/lib/db/queries";
+import {
+  formatCalendarDay,
+  startOfDayUTC,
+  startOfTodayUTC,
+  toCalendarDayISO,
+} from "@/lib/date";
 import type { ProgressEntry } from "@/lib/db/schema";
 import { toPlanStatusSummary } from "@/lib/subscription";
 
 const LB_PER_KG = 2.204_62;
+const DAY_MS = 86_400_000;
 
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
@@ -70,17 +77,11 @@ function clientField(
   return value;
 }
 
-function dayKey(d: Date): string {
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-}
-
 /** "Today" / "Yesterday" / "N days ago" / a short date, for the last-workout card. */
 function relativeDay(d: Date): string {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const that = new Date(d);
-  that.setHours(0, 0, 0, 0);
-  const diffDays = Math.round((today.getTime() - that.getTime()) / 86_400_000);
+  const today = startOfTodayUTC();
+  const that = startOfDayUTC(d);
+  const diffDays = Math.round((today.getTime() - that.getTime()) / DAY_MS);
   if (diffDays <= 0) {
     return "Today";
   }
@@ -90,7 +91,7 @@ function relativeDay(d: Date): string {
   if (diffDays < 7) {
     return `${diffDays} days ago`;
   }
-  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return formatCalendarDay(d, { month: "short", day: "numeric" });
 }
 
 /** Consecutive days (ending today or yesterday) with at least one logged action. */
@@ -98,19 +99,18 @@ function computeStreak(dates: Date[]): number {
   if (dates.length === 0) {
     return 0;
   }
-  const days = new Set(dates.map(dayKey));
-  const cursor = new Date();
-  cursor.setHours(0, 0, 0, 0);
-  if (!days.has(dayKey(cursor))) {
-    cursor.setDate(cursor.getDate() - 1);
-    if (!days.has(dayKey(cursor))) {
+  const days = new Set(dates.map(toCalendarDayISO));
+  let cursor = startOfTodayUTC();
+  if (!days.has(toCalendarDayISO(cursor))) {
+    cursor = new Date(cursor.getTime() - DAY_MS);
+    if (!days.has(toCalendarDayISO(cursor))) {
       return 0;
     }
   }
   let streak = 0;
-  while (days.has(dayKey(cursor))) {
+  while (days.has(toCalendarDayISO(cursor))) {
     streak++;
-    cursor.setDate(cursor.getDate() - 1);
+    cursor = new Date(cursor.getTime() - DAY_MS);
   }
   return streak;
 }
@@ -155,13 +155,11 @@ async function TodayContent() {
   const isPro = canAccessProFeatures(user);
   const plan = toPlanStatusSummary(user);
 
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
+  const startOfToday = startOfTodayUTC();
 
   // Window for the streak / week strip — long enough that a real streak isn't
   // capped, cheap because each select pulls a single timestamp column.
-  const activitySince = new Date(startOfToday);
-  activitySince.setDate(activitySince.getDate() - 120);
+  const activitySince = new Date(startOfToday.getTime() - 120 * DAY_MS);
 
   const [
     memory,
@@ -304,14 +302,13 @@ async function TodayContent() {
   // Streak + 7-day week strip from every tracked action (meals, workouts,
   // water, weigh-ins), so engagement on any surface keeps the streak alive.
   const streak = computeStreak(activityDays);
-  const activeDayKeys = new Set(activityDays.map(dayKey));
+  const activeDayKeys = new Set(activityDays.map(toCalendarDayISO));
   const WEEKDAY_INITIALS = ["S", "M", "T", "W", "T", "F", "S"];
   const week = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(startOfToday);
-    d.setDate(d.getDate() - (6 - i));
+    const d = new Date(startOfToday.getTime() - (6 - i) * DAY_MS);
     return {
-      label: WEEKDAY_INITIALS[d.getDay()],
-      active: activeDayKeys.has(dayKey(d)),
+      label: WEEKDAY_INITIALS[d.getUTCDay()],
+      active: activeDayKeys.has(toCalendarDayISO(d)),
       isToday: i === 6,
     };
   });

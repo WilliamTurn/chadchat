@@ -7,7 +7,7 @@ import {
   analyzeFoodPhoto,
   analyzeNutritionLabel,
 } from "@/lib/ai/meal-analysis";
-import { parseCalendarDay } from "@/lib/date";
+import { parseCalendarDay, startOfTodayUTC } from "@/lib/date";
 import {
   addWaterLog,
   createMealAnalysis,
@@ -244,11 +244,9 @@ export async function removeMealAnalysis(
   return { ok: true };
 }
 
-function startOfToday(): Date {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
+// Lower bound for "today's ..." queries — 00:00 UTC, matching the noon-UTC
+// calendar-day convention (see lib/date.ts). Not server-local midnight.
+const startOfToday = startOfTodayUTC;
 
 /** Add one glass (250 ml) to today's water count. */
 export async function addWater(): Promise<NutritionActionState> {

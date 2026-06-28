@@ -99,11 +99,27 @@ export function formatCalendarDayMs(
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-/** The UTC calendar day a stored Date falls on, anchored at 00:00 UTC. */
-function utcDayStart(date: Date): Date {
+/**
+ * The UTC calendar day a stored Date falls on, anchored at 00:00 UTC. The
+ * lower bound for "that day" comparisons; pairs with the noon-UTC calendar-day
+ * convention so a stored day never slips across the boundary.
+ */
+export function startOfDayUTC(date: Date): Date {
   return new Date(
     Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
   );
+}
+
+/**
+ * Start of "today" as a 00:00 UTC instant. The correct lower bound for
+ * "today's ..." queries (meals, water) and for streak/week-strip day math: it
+ * lines up with the noon-UTC calendar-day convention, so back-dated rows fall
+ * in the right day regardless of the server's local timezone. Use this instead
+ * of `new Date(); setHours(0, 0, 0, 0)`, which is the *server-local* day —
+ * UTC on Vercel today, but silently wrong in any other runtime.
+ */
+export function startOfTodayUTC(): Date {
+  return startOfDayUTC(new Date());
 }
 
 /**
@@ -123,8 +139,8 @@ export function calendarRangeWindowUTC(
   start?: string | null,
   end?: string | null
 ): { start: Date; end: Date } {
-  const startDay = utcDayStart(parseCalendarDay(start) ?? new Date());
-  const endDayInclusive = utcDayStart(parseCalendarDay(end) ?? startDay);
+  const startDay = startOfDayUTC(parseCalendarDay(start) ?? new Date());
+  const endDayInclusive = startOfDayUTC(parseCalendarDay(end) ?? startDay);
   const lastDay =
     endDayInclusive.getTime() < startDay.getTime() ? startDay : endDayInclusive;
   return {
