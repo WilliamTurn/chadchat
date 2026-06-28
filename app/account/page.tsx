@@ -1,4 +1,4 @@
-import { Camera, Check, Sparkles, TriangleAlert, Zap } from "lucide-react";
+import { Sparkles, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -7,10 +7,53 @@ import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getUserById } from "@/lib/db/queries";
+import { PRO_PERKS } from "@/lib/plans";
 import { PLANS } from "@/lib/stripe";
-import { hasActiveAccess } from "@/lib/subscription";
+import { hasActiveAccess, type PlanTier } from "@/lib/subscription";
 import { cn } from "@/lib/utils";
 import { openBillingPortal, upgradeToPro } from "./actions";
+
+/** The top-accent color for the membership card, by status/tier (ACC-7). */
+function accentForCard({
+  isPastDue,
+  tier,
+}: {
+  isPastDue: boolean;
+  tier: PlanTier | null;
+}): string {
+  if (isPastDue) {
+    return "bg-destructive";
+  }
+  if (tier === "pro") {
+    return "bg-blood";
+  }
+  if (tier === "basic") {
+    return "bg-muted-foreground/30";
+  }
+  return "bg-border";
+}
+
+/**
+ * Loading placeholder that mirrors the real membership card's shape — accent
+ * strip, plan-name + badge row, status line, and action buttons — instead of a
+ * bare grey rectangle, so the page doesn't visibly reflow when data lands.
+ */
+function MembershipCardSkeleton() {
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-float)]">
+      <div className="absolute inset-x-0 top-0 h-1 bg-border" />
+      <div className="mb-3 flex items-center gap-3">
+        <div className="h-6 w-32 animate-pulse rounded-md bg-muted" />
+        <div className="h-5 w-16 animate-pulse rounded-full bg-muted" />
+      </div>
+      <div className="h-4 w-64 max-w-full animate-pulse rounded bg-muted" />
+      <div className="mt-6 flex gap-3">
+        <div className="h-9 w-32 animate-pulse rounded-lg bg-muted" />
+        <div className="h-9 w-28 animate-pulse rounded-lg bg-muted" />
+      </div>
+    </div>
+  );
+}
 
 function formatDate(date: Date | null): string {
   if (!date) {
@@ -34,11 +77,7 @@ export default function AccountPage() {
         </h1>
       </div>
 
-      <Suspense
-        fallback={
-          <div className="h-40 animate-pulse rounded-2xl border border-border bg-card" />
-        }
-      >
+      <Suspense fallback={<MembershipCardSkeleton />}>
         <MembershipCard />
       </Suspense>
 
@@ -76,6 +115,10 @@ async function MembershipCard() {
   // badge) and the primary action becomes a red "fix it now" button.
   const isPastDue = status === "past_due";
 
+  // Tier-colored top accent so the membership card reads its status at a glance:
+  // Pro = brand blood-red, Basic = a calm neutral, past-due = destructive.
+  const accentClass = accentForCard({ isPastDue, tier });
+
   // Friendly, retention-minded status line. We always surface the actual price
   // so a renewal never reads as a surprise charge.
   let statusLine: string;
@@ -96,12 +139,14 @@ async function MembershipCard() {
     <div className="flex flex-col gap-5">
       <div
         className={cn(
-          "rounded-2xl border p-6",
+          "relative overflow-hidden rounded-2xl border p-6 shadow-[var(--shadow-float)]",
           isPastDue
             ? "border-destructive/50 bg-destructive/[0.06] ring-1 ring-destructive/20"
             : "border-border bg-card"
         )}
       >
+        <div className={cn("absolute inset-x-0 top-0 h-1", accentClass)} />
+
         <div className="mb-3 flex flex-wrap items-center gap-3">
           <span className="font-medium text-lg">{planName}</span>
           {hasAccess && status === "trialing" && (
@@ -168,12 +213,6 @@ async function MembershipCard() {
  * hosted plan-change flow (real proration, no duplicate subscription).
  */
 function UpgradeToProCard({ price }: { price: string }) {
-  const proPerks = [
-    { icon: Camera, text: "Progress photo analysis — Chad reviews your form" },
-    { icon: Sparkles, text: "Custom workout & nutrition plans built for you" },
-    { icon: Zap, text: "Highest-priority access to Chad" },
-  ];
-
   return (
     <div className="relative overflow-hidden rounded-2xl border border-blood/40 bg-card p-6 ring-1 ring-blood/20">
       <div
@@ -193,10 +232,17 @@ function UpgradeToProCard({ price }: { price: string }) {
         </p>
 
         <ul className="mt-4 flex flex-col gap-2.5">
-          {proPerks.map((perk) => (
-            <li className="flex items-start gap-2.5 text-sm" key={perk.text}>
-              <Check className="mt-0.5 size-4 shrink-0 text-blood" />
-              <span>{perk.text}</span>
+          {PRO_PERKS.map(({ icon: Icon, label, soon }) => (
+            <li className="flex items-start gap-2.5 text-sm" key={label}>
+              <Icon className="mt-0.5 size-4 shrink-0 text-blood" />
+              <span>
+                {label}
+                {soon && (
+                  <span className="ml-1.5 text-muted-foreground text-xs">
+                    (coming soon)
+                  </span>
+                )}
+              </span>
             </li>
           ))}
         </ul>

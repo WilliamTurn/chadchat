@@ -1,52 +1,14 @@
 "use client";
 
-import { CheckIcon } from "lucide-react";
+import { CheckIcon, Star } from "lucide-react";
 import { useState, useTransition } from "react";
 import { createCheckoutSession } from "@/app/pricing/actions";
 import { toast } from "@/components/chat/toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { MARKETING_PLANS } from "@/lib/plans";
 import type { PlanTier } from "@/lib/subscription";
-
-type Feature = { label: string; soon?: boolean };
-
-type Plan = {
-  tier: PlanTier;
-  name: string;
-  price: string;
-  tagline: string;
-  features: Feature[];
-  highlighted?: boolean;
-};
-
-const PLANS: Plan[] = [
-  {
-    tier: "basic",
-    name: "Chad Basic",
-    price: "$29",
-    tagline: "Your always-on coach.",
-    features: [
-      { label: "Chat with Chad anytime, day or night" },
-      { label: "Personalized workout & nutrition guidance" },
-      { label: "Form tips, motivation & real accountability" },
-      { label: "Your full coaching history, always saved" },
-    ],
-  },
-  {
-    tier: "pro",
-    name: "Chad Pro",
-    price: "$39",
-    tagline: "The complete Chad experience.",
-    highlighted: true,
-    features: [
-      { label: "Everything in Basic" },
-      { label: "Progress photo analysis — Chad reviews your form" },
-      { label: "Custom workout & nutrition plans built for you", soon: true },
-      { label: "Highest-priority access to Chad" },
-    ],
-  },
-];
+import { cn } from "@/lib/utils";
 
 export function PricingPlans({
   currentTier,
@@ -77,7 +39,7 @@ export function PricingPlans({
 
   return (
     <div className="grid w-full max-w-3xl gap-5 sm:grid-cols-2">
-      {PLANS.map((plan) => {
+      {MARKETING_PLANS.map((plan) => {
         const isCurrent = currentTier === plan.tier;
         const isLoading = isPending && loadingTier === plan.tier;
 
@@ -103,58 +65,94 @@ export function PricingPlans({
         return (
           <div
             className={cn(
-              "relative flex flex-col rounded-2xl border bg-card p-6 shadow-sm",
+              "relative flex flex-col overflow-hidden rounded-2xl border bg-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-[var(--shadow-float)]",
               plan.highlighted
-                ? "border-primary/60 ring-1 ring-primary/30"
+                ? "border-blood/60 ring-1 ring-blood/30"
                 : "border-border"
             )}
             key={plan.tier}
           >
+            {/* Soft brand glow behind the recommended plan, clipped by the
+                card's overflow-hidden so it reads as an inner aura. */}
             {plan.highlighted && (
-              <Badge className="absolute -top-2.5 left-6">Most popular</Badge>
+              <div
+                aria-hidden
+                className="-right-12 -top-12 pointer-events-none absolute size-40 rounded-full bg-blood/15 blur-3xl"
+              />
             )}
 
-            <div className="mb-1 font-semibold text-lg">{plan.name}</div>
-            <p className="mb-4 text-muted-foreground text-sm">{plan.tagline}</p>
+            {plan.highlighted && (
+              <Badge className="absolute top-0 right-6 rounded-t-none border-transparent bg-blood text-white">
+                Most popular
+              </Badge>
+            )}
 
-            <div className="mb-5 flex items-baseline gap-1">
-              <span className="font-semibold text-3xl tracking-tight">
-                {plan.price}
-              </span>
-              <span className="text-muted-foreground text-sm">/month</span>
-            </div>
-
-            <ul className="mb-6 flex flex-col gap-3 text-sm">
-              {plan.features.map((feature) => (
-                <li className="flex items-start gap-2.5" key={feature.label}>
-                  <CheckIcon className="mt-0.5 size-4 shrink-0 text-primary" />
-                  <span>
-                    {feature.label}
-                    {feature.soon && (
-                      <span className="ml-1.5 text-muted-foreground text-xs">
-                        (coming soon)
-                      </span>
-                    )}
-                  </span>
-                </li>
-              ))}
-            </ul>
-
-            <Button
-              className="mt-auto w-full"
-              disabled={isPending || isCurrent}
-              onClick={() => startCheckout(plan.tier)}
-              size="lg"
-              variant={plan.highlighted ? "default" : "outline"}
-            >
-              {cta}
-            </Button>
-
-            {!isCurrent && (
-              <p className="mt-3 text-center text-muted-foreground text-xs">
-                {terms}
+            <div className="relative flex flex-1 flex-col">
+              <div className="mb-1 font-semibold text-lg">{plan.name}</div>
+              <p className="mb-4 text-muted-foreground text-sm">
+                {plan.tagline}
               </p>
-            )}
+
+              <div className="mb-3 flex items-baseline gap-1">
+                <span className="font-semibold text-3xl tracking-tight">
+                  {plan.price}
+                </span>
+                <span className="text-muted-foreground text-sm">/month</span>
+              </div>
+
+              {/* Anchoring social proof on the recommended plan — ad-safe label,
+                  no fabricated counts (matches the page TrustStrip wording). */}
+              {plan.highlighted && (
+                <div className="mb-5 flex items-center gap-1.5 text-muted-foreground text-xs">
+                  <span className="flex items-center gap-0.5 text-amber-500">
+                    {[0, 1, 2, 3, 4].map((i) => (
+                      <Star className="size-3 fill-current" key={i} />
+                    ))}
+                  </span>
+                  Loved by lifters
+                </div>
+              )}
+
+              <ul className="mb-6 flex flex-col gap-3 text-sm">
+                {plan.features.map((feature) => (
+                  <li className="flex items-start gap-2.5" key={feature.label}>
+                    <CheckIcon
+                      className={cn(
+                        "mt-0.5 size-4 shrink-0",
+                        plan.highlighted ? "text-blood" : "text-primary"
+                      )}
+                    />
+                    <span>
+                      {feature.label}
+                      {feature.soon && (
+                        <span className="ml-1.5 text-muted-foreground text-xs">
+                          (coming soon)
+                        </span>
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              <Button
+                className={cn(
+                  "mt-auto w-full",
+                  plan.highlighted && "bg-blood text-white hover:bg-blood/90"
+                )}
+                disabled={isPending || isCurrent}
+                onClick={() => startCheckout(plan.tier)}
+                size="lg"
+                variant={plan.highlighted ? "default" : "outline"}
+              >
+                {cta}
+              </Button>
+
+              {!isCurrent && (
+                <p className="mt-3 text-center text-muted-foreground text-xs">
+                  {terms}
+                </p>
+              )}
+            </div>
           </div>
         );
       })}
