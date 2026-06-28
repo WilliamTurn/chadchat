@@ -27,6 +27,13 @@ type RingProps = {
   carbsTarget: number | null;
   fatConsumed: number;
   fatTarget: number | null;
+  /**
+   * Copy overrides for non-diary contexts. The defaults read for "today's
+   * diary" (what you've eaten); a meal plan, for example, passes "Planned" /
+   * "kcal / day" so the same dial reads correctly against a planned day.
+   */
+  consumedLabel?: string;
+  noTargetSub?: string;
 };
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -55,10 +62,14 @@ function CalorieDial({
   consumed,
   target,
   reduced,
+  consumedLabel,
+  noTargetSub,
 }: {
   consumed: number;
   target: number | null;
   reduced: boolean;
+  consumedLabel: string;
+  noTargetSub: string;
 }) {
   const [open, setOpen] = useState(false);
   const titleId = useId();
@@ -85,7 +96,7 @@ function CalorieDial({
   let bigClass = "fill-foreground";
   if (!hasTarget) {
     big = round(consumed).toLocaleString();
-    sub = "kcal today";
+    sub = noTargetSub;
   } else if (over) {
     big = round(consumed - (target as number)).toLocaleString();
     sub = "kcal over";
@@ -186,7 +197,10 @@ function CalorieDial({
         transition={{ duration: reduced ? 0 : 0.28, ease: EASE }}
       >
         <div className="mt-3 flex items-center gap-4 rounded-xl border border-border bg-background/60 px-4 py-2.5 text-sm">
-          <Detail label="Eaten" value={`${round(consumed).toLocaleString()}`} />
+          <Detail
+            label={consumedLabel}
+            value={`${round(consumed).toLocaleString()}`}
+          />
           {hasTarget && (
             <>
               <Divider />
@@ -248,6 +262,7 @@ function MacroBar({
   textColor,
   barColor,
   reduced,
+  consumedLabel,
 }: {
   label: string;
   consumed: number;
@@ -255,6 +270,7 @@ function MacroBar({
   textColor: string;
   barColor: string;
   reduced: boolean;
+  consumedLabel: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -339,7 +355,7 @@ function MacroBar({
         transition={{ duration: reduced ? 0 : 0.28, ease: EASE }}
       >
         <div className="mt-2 flex items-center gap-4 rounded-lg border border-border bg-background/60 px-3 py-2 text-sm">
-          <Detail label="Eaten" value={`${round(consumed)}g`} />
+          <Detail label={consumedLabel} value={`${round(consumed)}g`} />
           {hasTarget && (
             <>
               <Divider />
@@ -371,6 +387,8 @@ export function MacroRings({
   carbsTarget,
   fatConsumed,
   fatTarget,
+  consumedLabel = "Eaten",
+  noTargetSub = "kcal today",
 }: RingProps) {
   const reduced = useReducedMotion() ?? false;
 
@@ -379,6 +397,8 @@ export function MacroRings({
       <div className="flex shrink-0 justify-center sm:justify-start">
         <CalorieDial
           consumed={caloriesConsumed}
+          consumedLabel={consumedLabel}
+          noTargetSub={noTargetSub}
           reduced={reduced}
           target={caloriesTarget}
         />
@@ -388,6 +408,7 @@ export function MacroRings({
         <MacroBar
           barColor="bg-sky-400"
           consumed={proteinConsumed}
+          consumedLabel={consumedLabel}
           label="Protein"
           reduced={reduced}
           target={proteinTarget}
@@ -396,6 +417,7 @@ export function MacroRings({
         <MacroBar
           barColor="bg-amber-400"
           consumed={carbsConsumed}
+          consumedLabel={consumedLabel}
           label="Carbs"
           reduced={reduced}
           target={carbsTarget}
@@ -404,6 +426,7 @@ export function MacroRings({
         <MacroBar
           barColor="bg-violet-400"
           consumed={fatConsumed}
+          consumedLabel={consumedLabel}
           label="Fat"
           reduced={reduced}
           target={fatTarget}

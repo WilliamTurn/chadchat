@@ -38,7 +38,7 @@ import { downloadMealPlanPdf } from "@/lib/pdf/meal-plan-pdf";
 import { cn } from "@/lib/utils";
 import type { PlanDay, PlanFood, PlanMeal } from "@/lib/validation/meal-plan";
 import type { MealCategory } from "@/lib/validation/nutrition";
-import { MacroBars, type MacroValues } from "./macro-bars";
+import { MacroRings } from "@/components/nutrition/macro-rings";
 
 const SLOT_LABEL: Record<MealCategory, string> = {
   breakfast: "Breakfast",
@@ -52,7 +52,7 @@ export type MealPlanViewData = {
   title: string;
   status: "active" | "archived";
   coachIntro: string;
-  target: MacroValues | null;
+  target: Macros | null;
   days: PlanDay[];
 };
 
@@ -107,6 +107,7 @@ export function MealPlanView({ plan }: { plan: MealPlanViewData }) {
   const [busy, startBusy] = useTransition();
 
   const day = days[dayIdx] ?? days[0];
+  const dayTotals = day ? dayMacros(day) : null;
 
   // --- Edit helpers (all immutable) ---
 
@@ -371,7 +372,7 @@ export function MealPlanView({ plan }: { plan: MealPlanViewData }) {
       )}
 
       {/* Selected day */}
-      {day && (
+      {day && dayTotals && (
         <div className="flex flex-col gap-5">
           <div className="rounded-2xl border border-border bg-card p-5">
             <div className="mb-4 flex items-center justify-between gap-2">
@@ -380,7 +381,18 @@ export function MealPlanView({ plan }: { plan: MealPlanViewData }) {
                 {day.meals.length} meal{day.meals.length === 1 ? "" : "s"}
               </span>
             </div>
-            <MacroBars actual={dayMacros(day)} target={plan.target} />
+            <MacroRings
+              caloriesConsumed={dayTotals.calories}
+              caloriesTarget={plan.target?.calories ?? null}
+              carbsConsumed={dayTotals.carbs}
+              carbsTarget={plan.target?.carbs ?? null}
+              consumedLabel="Planned"
+              fatConsumed={dayTotals.fat}
+              fatTarget={plan.target?.fat ?? null}
+              noTargetSub="kcal / day"
+              proteinConsumed={dayTotals.protein}
+              proteinTarget={plan.target?.protein ?? null}
+            />
           </div>
 
           {day.meals.map((meal, mealIdx) => (
@@ -409,7 +421,7 @@ function DaySwitchCard({
   onSelect,
 }: {
   day: PlanDay;
-  target: MacroValues | null;
+  target: Macros | null;
   active: boolean;
   onSelect: () => void;
 }) {

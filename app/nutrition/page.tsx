@@ -9,6 +9,7 @@ import { AnalysisCard } from "@/components/nutrition/analysis-card";
 import { AnalyzeForm } from "@/components/nutrition/analyze-form";
 import { MacroRings } from "@/components/nutrition/macro-rings";
 import { MacroTrendChart } from "@/components/nutrition/macro-trend-chart";
+import { TargetEditor } from "@/components/today/target-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
@@ -206,7 +207,15 @@ function TodaySection({
             {meals.length} meal{meals.length === 1 ? "" : "s"}
           </span>
         </div>
-        <AskChadButton prompt="Review my nutrition over the last few days — calories, protein, and the quality of what I've been eating. What's working and what should I fix?" />
+        <div className="flex items-center gap-1">
+          <TargetEditor
+            calories={target?.calories ?? null}
+            carbs={target?.carbs ?? null}
+            fat={target?.fat ?? null}
+            protein={target?.protein ?? null}
+          />
+          <AskChadButton prompt="Review my nutrition over the last few days — calories, protein, and the quality of what I've been eating. What's working and what should I fix?" />
+        </div>
       </div>
 
       {/* Totals + remaining — hero calorie dial + macro bars */}

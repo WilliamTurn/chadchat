@@ -5,7 +5,6 @@ import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { GenerateForm } from "@/components/meal-plan/generate-form";
-import type { MacroValues } from "@/components/meal-plan/macro-bars";
 import {
   MealPlanView,
   type MealPlanViewData,
@@ -15,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import { getActiveMealPlanByUserId, getUserById } from "@/lib/db/queries";
+import type { Macros } from "@/lib/nutrition/macros";
 import { planDaysSchema } from "@/lib/validation/meal-plan";
 
 // A 7-day plan is one Opus design pass + ~40 USDA lookups, which can exceed the
@@ -124,7 +124,7 @@ async function PlanArea({ userId }: { userId: string }) {
     );
   }
 
-  const target: MacroValues | null =
+  const target: Macros | null =
     plan.targetCalories != null
       ? {
           calories: plan.targetCalories,
