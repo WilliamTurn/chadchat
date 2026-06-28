@@ -27,6 +27,7 @@ import {
   ChartTooltip,
 } from "@/components/ui/chart";
 import { useChartRange } from "@/hooks/use-chart-range";
+import { useMountReveal } from "@/hooks/use-mount-reveal";
 import { formatTick } from "@/lib/chart/format";
 
 const SKY = "#0ea5e9";
@@ -64,6 +65,7 @@ export function WaterTrendChart({
   goalMl?: number;
 }) {
   const safeGoal = goalMl > 0 ? goalMl : 2000;
+  const reveal = useMountReveal();
   const { rows, control } = useChartRange(days, { minPoints: 7 });
 
   const stats = useMemo(() => {
@@ -149,7 +151,14 @@ export function WaterTrendChart({
             strokeWidth={1.5}
             y={safeGoal}
           />
-          <Bar dataKey="ml" maxBarSize={34} radius={[3, 3, 0, 0]}>
+          <Bar
+            animationDuration={750}
+            animationEasing="ease-out"
+            dataKey="ml"
+            isAnimationActive={reveal}
+            maxBarSize={34}
+            radius={[3, 3, 0, 0]}
+          >
             {rows.map((r) => (
               <Cell
                 fill={SKY}

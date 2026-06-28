@@ -28,6 +28,7 @@ import {
   ChartContainer,
   ChartTooltip,
 } from "@/components/ui/chart";
+import { useMountReveal } from "@/hooks/use-mount-reveal";
 import { formatTick } from "@/lib/chart/format";
 
 const ACCENT = "#a4161a"; // brand blood red
@@ -45,6 +46,7 @@ export function ExerciseTrendChart({
   points: Point[];
   unit?: string;
 }) {
+  const reveal = useMountReveal();
   const yDomain = useMemo<[number, number]>(() => {
     if (points.length === 0) {
       return [0, 1];
@@ -109,10 +111,12 @@ export function ExerciseTrendChart({
 
         <Area
           activeDot={{ r: 4.5, fill: ACCENT, strokeWidth: 0 }}
+          animationDuration={750}
+          animationEasing="ease-out"
           dataKey="value"
           dot={{ r: 2.5, fill: ACCENT, fillOpacity: 0.55, strokeWidth: 0 }}
           fill="url(#oneRmTrendFill)"
-          isAnimationActive={false}
+          isAnimationActive={reveal}
           stroke={ACCENT}
           strokeWidth={2.5}
           type="monotone"

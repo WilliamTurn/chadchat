@@ -39,6 +39,7 @@ import {
   ChartTooltip,
 } from "@/components/ui/chart";
 import { useChartRange } from "@/hooks/use-chart-range";
+import { useMountReveal } from "@/hooks/use-mount-reveal";
 import {
   formatRate,
   formatShortDate,
@@ -339,6 +340,9 @@ function WeightChartBody({
   goalWeight: number | null;
   compact?: boolean;
 }) {
+  // One-time draw-in on mount; scrub + range changes stay instant.
+  const reveal = useMountReveal();
+
   // Padded y-domain that always keeps the goal line on screen.
   const yDomain = useMemo<[number, number]>(() => {
     const ws = rows.map((r) => r.weight);
@@ -429,9 +433,11 @@ function WeightChartBody({
         {/* Faint raw daily weigh-ins, underneath the trend. */}
         <Line
           activeDot={{ r: 4, fill: "var(--muted-foreground)", strokeWidth: 0 }}
+          animationDuration={750}
+          animationEasing="ease-out"
           dataKey="weight"
           dot={{ r: 2, fillOpacity: 0.5, strokeWidth: 0 }}
-          isAnimationActive={false}
+          isAnimationActive={reveal}
           stroke="var(--muted-foreground)"
           strokeOpacity={0.3}
           strokeWidth={1}
@@ -441,10 +447,12 @@ function WeightChartBody({
         {/* The headline EMA trend, on top. */}
         <Area
           activeDot={{ r: 4, fill: ACCENT, strokeWidth: 0 }}
+          animationDuration={750}
+          animationEasing="ease-out"
           dataKey="trend"
           dot={false}
           fill="url(#weightTrendFill)"
-          isAnimationActive={false}
+          isAnimationActive={reveal}
           stroke={ACCENT}
           strokeWidth={2.5}
           type="monotone"

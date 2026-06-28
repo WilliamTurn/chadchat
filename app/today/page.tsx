@@ -16,6 +16,7 @@ import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
+import { CountUp } from "@/components/dashboard/count-up";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { MacroRings } from "@/components/nutrition/macro-rings";
 import { WeightChartInteractive } from "@/components/progress/weight-chart-interactive";
@@ -340,7 +341,7 @@ async function TodayContent() {
           />
           <div>
             <div className="font-display font-bold text-2xl leading-none">
-              {streak} day{streak === 1 ? "" : "s"}
+              <CountUp value={`${streak} day${streak === 1 ? "" : "s"}`} />
             </div>
             <div className="mt-1 text-muted-foreground text-sm">
               {streak > 0

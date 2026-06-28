@@ -19,6 +19,7 @@ import {
   ChartTooltip,
 } from "@/components/ui/chart";
 import { useChartRange } from "@/hooks/use-chart-range";
+import { useMountReveal } from "@/hooks/use-mount-reveal";
 import { formatTick } from "@/lib/chart/format";
 
 const ACCENT = "#a4161a"; // brand blood red
@@ -38,6 +39,7 @@ function fmtK(n: number): string {
 }
 
 export function VolumeChart({ points }: { points: Point[] }) {
+  const reveal = useMountReveal();
   const { rows, control } = useChartRange(points, { minPoints: 6 });
 
   const stats = useMemo(() => {
@@ -110,7 +112,14 @@ export function VolumeChart({ points }: { points: Point[] }) {
             content={<VolumeTooltip />}
             cursor={{ fill: "var(--muted-foreground)", fillOpacity: 0.08 }}
           />
-          <Bar dataKey="volume" maxBarSize={36} radius={[3, 3, 0, 0]}>
+          <Bar
+            animationDuration={750}
+            animationEasing="ease-out"
+            dataKey="volume"
+            isAnimationActive={reveal}
+            maxBarSize={36}
+            radius={[3, 3, 0, 0]}
+          >
             {rows.map((r) => (
               <Cell
                 fill={ACCENT}

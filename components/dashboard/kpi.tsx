@@ -2,6 +2,7 @@
 
 import { HelpCircle } from "lucide-react";
 import type { ReactNode } from "react";
+import { CountUp } from "@/components/dashboard/count-up";
 import {
   Popover,
   PopoverContent,
@@ -44,7 +45,7 @@ export function Kpi({
           tone === "bad" && "text-blood"
         )}
       >
-        {value}
+        <CountUp value={value} />
       </div>
       <div className="mt-0.5 flex items-center gap-1 text-muted-foreground text-xs">
         <span>

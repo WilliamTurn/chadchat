@@ -30,6 +30,7 @@ import {
   ChartTooltip,
 } from "@/components/ui/chart";
 import { useChartRange } from "@/hooks/use-chart-range";
+import { useMountReveal } from "@/hooks/use-mount-reveal";
 import { formatTick } from "@/lib/chart/format";
 import { ema } from "@/lib/chart/trend";
 import type { DailyMacros } from "@/lib/nutrition/daily-macros";
@@ -71,6 +72,7 @@ export function MacroTrendChart({
   target: MacroTarget | null;
 }) {
   const [metric, setMetric] = useState<MetricKey>("calories");
+  const reveal = useMountReveal();
   const { rows, control } = useChartRange(days, { minPoints: 5 });
 
   const meta = METRICS[metric];
@@ -201,7 +203,14 @@ export function MacroTrendChart({
             />
           )}
 
-          <Bar dataKey={metric} maxBarSize={34} radius={[3, 3, 0, 0]}>
+          <Bar
+            animationDuration={750}
+            animationEasing="ease-out"
+            dataKey={metric}
+            isAnimationActive={reveal}
+            maxBarSize={34}
+            radius={[3, 3, 0, 0]}
+          >
             {data.map((r) => (
               <Cell
                 fill={meta.color}
@@ -211,9 +220,11 @@ export function MacroTrendChart({
             ))}
           </Bar>
           <Line
+            animationDuration={750}
+            animationEasing="ease-out"
             dataKey="trend"
             dot={false}
-            isAnimationActive={false}
+            isAnimationActive={reveal}
             stroke={meta.color}
             strokeWidth={2.5}
             type="monotone"

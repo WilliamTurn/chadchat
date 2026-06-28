@@ -17,6 +17,7 @@
 
 import { motion, useReducedMotion } from "motion/react";
 import { useId, useState } from "react";
+import { CountUp } from "@/components/dashboard/count-up";
 
 type RingProps = {
   caloriesConsumed: number;
@@ -169,7 +170,7 @@ function CalorieDial({
             x={CENTER}
             y={CENTER - 8}
           >
-            {big}
+            <CountUp value={big} />
           </text>
           <text
             className="fill-muted-foreground"
