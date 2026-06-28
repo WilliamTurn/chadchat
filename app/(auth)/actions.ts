@@ -56,7 +56,13 @@ export const signInWithGoogle = async (): Promise<void> => {
 };
 
 export type LoginActionState = {
-  status: "idle" | "in_progress" | "success" | "failed" | "invalid_data";
+  status:
+    | "idle"
+    | "in_progress"
+    | "success"
+    | "failed"
+    | "invalid_data"
+    | "google_only";
 };
 
 export const login = async (
@@ -68,6 +74,13 @@ export const login = async (
       email: formData.get("email"),
       password: formData.get("password"),
     });
+
+    // A Google-created account has no password row, so a password attempt can
+    // never succeed — tell them to use Google rather than a vague "invalid".
+    const [existing] = await getUser(validatedData.email);
+    if (existing && !existing.password) {
+      return { status: "google_only" };
+    }
 
     await signIn("credentials", {
       email: validatedData.email,

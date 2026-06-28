@@ -551,7 +551,12 @@ function MealCard({
         // Optimistic confirmation: morph the button + ring the card briefly so
         // logging feels acknowledged on the spot, not just via the toast.
         setLogged(true);
-        toast.success(`Logged "${meal.title}" to today's diary.`);
+        toast.success(`Logged "${meal.title}" to today's diary.`, {
+          action: {
+            label: "View diary",
+            onClick: () => router.push("/nutrition"),
+          },
+        });
         router.refresh();
         setTimeout(() => setLogged(false), 2500);
       } else {

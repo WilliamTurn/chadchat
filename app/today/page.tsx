@@ -1,5 +1,6 @@
 import {
   Camera,
+  ChefHat,
   CreditCard,
   Droplet,
   Dumbbell,
@@ -29,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import {
   getActiveGoalsByUserId,
+  getActiveMealPlanByUserId,
   getActivePlansByUserId,
   getActivityDaysSince,
   getInactiveGoalsByUserId,
@@ -173,6 +175,7 @@ async function TodayContent() {
     plans,
     recentWorkouts,
     activityDays,
+    mealPlan,
   ] = await Promise.all([
     getUserMemory(user.id),
     isPro ? getProgressEntriesByUserId(user.id) : Promise.resolve([]),
@@ -189,7 +192,20 @@ async function TodayContent() {
     isPro
       ? getActivityDaysSince(user.id, activitySince)
       : Promise.resolve<Date[]>([]),
+    isPro ? getActiveMealPlanByUserId(user.id) : Promise.resolve(null),
   ]);
+
+  // Active meal plan summary for the /today card.
+  const mealPlanSummary = mealPlan
+    ? {
+        title: mealPlan.title,
+        dayCount: Array.isArray(mealPlan.days) ? mealPlan.days.length : 0,
+        targetLine:
+          mealPlan.targetCalories != null
+            ? `${mealPlan.targetCalories.toLocaleString()} kcal · ${mealPlan.targetProtein ?? 0}P / ${mealPlan.targetCarbs ?? 0}C / ${mealPlan.targetFat ?? 0}F`
+            : null,
+      }
+    : null;
 
   // Most-recent logged workout, summarized for the /today card.
   const lastWorkout = recentWorkouts[0]
@@ -469,6 +485,44 @@ async function TodayContent() {
         />
       )}
 
+      {/* Active meal plan (Pro) */}
+      {isPro && (
+        <Card>
+          <div className="flex items-center justify-between">
+            <CardTitle icon={<ChefHat className="size-4 text-blood" />}>
+              Meal plan
+            </CardTitle>
+            {mealPlanSummary && (
+              <Button asChild className="gap-1.5" size="sm" variant="outline">
+                <Link href="/meal-plan">
+                  <ChefHat className="size-3.5" />
+                  View plan
+                </Link>
+              </Button>
+            )}
+          </div>
+          {mealPlanSummary ? (
+            <div>
+              <div className="font-display font-semibold text-lg leading-tight">
+                {mealPlanSummary.title}
+              </div>
+              <div className="mt-0.5 text-muted-foreground text-sm">
+                {mealPlanSummary.dayCount}-day plan
+                {mealPlanSummary.targetLine
+                  ? ` · ${mealPlanSummary.targetLine}`
+                  : ""}
+              </div>
+            </div>
+          ) : (
+            <EmptyHint
+              cta="Build a meal plan"
+              href="/meal-plan"
+              text="No meal plan yet. Have Chad build a structured plan around your macro target — real foods, exact portions."
+            />
+          )}
+        </Card>
+      )}
+
       {/* Hydration + Weight (Pro) */}
       <div className="grid gap-6 md:grid-cols-2">
         {isPro ? (
@@ -544,7 +598,7 @@ async function TodayContent() {
       )}
 
       {/* Quick actions */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
         <QuickAction
           href="/"
           icon={<MessageSquare className="size-4" />}
@@ -559,6 +613,11 @@ async function TodayContent() {
           href="/nutrition"
           icon={<Camera className="size-4" />}
           label="Nutrition"
+        />
+        <QuickAction
+          href="/meal-plan"
+          icon={<ChefHat className="size-4" />}
+          label="Meal plan"
         />
         <QuickAction
           href="/kitchen"

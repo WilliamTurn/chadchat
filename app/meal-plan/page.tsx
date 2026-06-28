@@ -43,6 +43,21 @@ export default function MealPlanPage() {
         <p className="mt-1 text-muted-foreground text-sm">
           Chad builds you a structured plan around your macro target — real
           foods, exact portions, accurate numbers from the USDA food database.
+          Logging what you actually ate?{" "}
+          <Link
+            className="text-foreground underline underline-offset-4"
+            href="/nutrition"
+          >
+            Nutrition diary
+          </Link>{" "}
+          ·{" "}
+          <Link
+            className="text-foreground underline underline-offset-4"
+            href="/kitchen"
+          >
+            Rate My Kitchen
+          </Link>
+          .
         </p>
       </div>
 

@@ -40,6 +40,13 @@ export default function KitchenPage() {
             href="/nutrition"
           >
             Nutrition diary
+          </Link>{" "}
+          ·{" "}
+          <Link
+            className="text-foreground underline underline-offset-4"
+            href="/meal-plan"
+          >
+            Meal plan
           </Link>
           .
         </p>

@@ -54,7 +54,14 @@ export default function NutritionPage() {
         </div>
         <p className="mt-1 text-muted-foreground text-sm">
           Log every meal — by photo or by hand. Chad grades it and keeps your
-          day's totals honest. Rating your fridge or pantry?{" "}
+          day's totals honest. Want a plan to follow?{" "}
+          <Link
+            className="text-foreground underline underline-offset-4"
+            href="/meal-plan"
+          >
+            Meal plan
+          </Link>{" "}
+          · Rating your fridge or pantry?{" "}
           <Link
             className="text-foreground underline underline-offset-4"
             href="/kitchen"

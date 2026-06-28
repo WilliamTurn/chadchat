@@ -8,6 +8,9 @@ export const authConfig = {
   pages: {
     signIn: `${base}/login`,
     newUser: `${base}/today`,
+    // Surface OAuth/sign-in failures on the login page (it reads `?error=` and
+    // toasts a friendly message) instead of the default bare /api/auth/error.
+    error: `${base}/login`,
   },
   providers: [],
   callbacks: {},

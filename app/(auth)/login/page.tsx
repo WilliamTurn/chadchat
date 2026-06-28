@@ -2,9 +2,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useActionState, useEffect, useState } from "react";
+import { Suspense, useActionState, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { AuthForm } from "@/components/chat/auth-form";
@@ -14,8 +14,29 @@ import { toast } from "@/components/chat/toast";
 import { type LoginFormValues, loginFormSchema } from "@/lib/validation/auth";
 import { type LoginActionState, login } from "../actions";
 
+/** Friendly copy for the `?error=` code Auth.js appends after a failed OAuth flow. */
+function oauthErrorMessage(code: string): string {
+  switch (code) {
+    case "OAuthAccountNotLinked":
+      return "That email is already registered with a password. Sign in with your email and password below.";
+    case "AccessDenied":
+      return "Google sign-in was cancelled or denied. Please try again.";
+    default:
+      return "Couldn't sign in with Google. Please try again.";
+  }
+}
+
 export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isSuccessful, setIsSuccessful] = useState(false);
 
   const form = useForm<LoginFormValues>({
@@ -33,7 +54,13 @@ export default function Page() {
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: router/updateSession are stable refs
   useEffect(() => {
-    if (state.status === "failed" || state.status === "invalid_data") {
+    if (state.status === "google_only") {
+      toast({
+        type: "error",
+        description:
+          'This account uses Google sign-in. Use "Continue with Google" above.',
+      });
+    } else if (state.status === "failed" || state.status === "invalid_data") {
       toast({ type: "error", description: "Invalid email or password." });
     } else if (state.status === "success") {
       setIsSuccessful(true);
@@ -41,6 +68,14 @@ export default function Page() {
       router.refresh();
     }
   }, [state.status]);
+
+  // Surface a failed OAuth round-trip (Auth.js redirects here with `?error=`).
+  useEffect(() => {
+    const error = searchParams.get("error");
+    if (error) {
+      toast({ type: "error", description: oauthErrorMessage(error) });
+    }
+  }, [searchParams]);
 
   const onSubmit = (values: LoginFormValues) => {
     const formData = new FormData();
