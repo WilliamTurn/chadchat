@@ -29,6 +29,11 @@ import {
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
+// Cap the history we hydrate per page load. Generous (years of training at a
+// session a day) but bounds an otherwise unbounded query + payload as a user's
+// log grows. PRs and the volume trend are computed from this window.
+const MAX_WORKOUTS = 200;
+
 function toWorkoutData(w: WorkoutWithChildren): WorkoutData {
   return {
     id: w.id,
@@ -126,7 +131,7 @@ function UpgradePrompt() {
 
 async function Dashboard({ userId }: { userId: string }) {
   const [rawWorkouts, customExercisesRaw] = await Promise.all([
-    getWorkoutsByUserId(userId),
+    getWorkoutsByUserId(userId, MAX_WORKOUTS),
     getCustomExercisesByUserId(userId),
   ]);
 

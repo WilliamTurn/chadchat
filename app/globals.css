@@ -401,9 +401,11 @@ textarea:focus-visible {
   animation: glow-pulse 2s ease-in-out infinite;
 }
 
-/* Chad's sparing blood-red emphasis (from [[ ]] in his replies). */
+/* Chad's sparing blood-red emphasis (from [[ ]] in his replies). Always bold —
+   red is his loudest signal, so it carries weight even without **stars**. */
 .chad-red {
   color: #a4161a;
+  font-weight: 700;
 }
 
 /* Industrial texture on the user's message bubble — a faint brushed-metal

@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, GripVertical, Plus, Trash2, X } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Plus, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ import { todayLocalISO } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import type { SetType, WorkoutData } from "@/lib/workouts/stats";
 import { ExercisePicker, type PickedExercise } from "./exercise-picker";
+import { PlateCalculator } from "./plate-calculator";
 import { RestTimer } from "./rest-timer";
 
 type CustomExerciseRow = {
@@ -164,6 +165,21 @@ export function WorkoutBuilder({
 
   function removeExercise(exUid: string) {
     setExercises((prev) => prev.filter((ex) => ex.uid !== exUid));
+  }
+
+  // Reorder an exercise up (-1) or down (+1). Order is meaningful — it's the
+  // sequence the lifts were performed in — so this lets you fix a mis-add.
+  function moveExercise(exUid: string, dir: -1 | 1) {
+    setExercises((prev) => {
+      const i = prev.findIndex((ex) => ex.uid === exUid);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= prev.length) {
+        return prev;
+      }
+      const next = [...prev];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
   }
 
   function addSet(exUid: string) {
@@ -335,6 +351,7 @@ export function WorkoutBuilder({
             </div>
 
             <RestTimer />
+            <PlateCalculator />
 
             {/* Exercises */}
             {exercises.length === 0 ? (
@@ -344,11 +361,15 @@ export function WorkoutBuilder({
                 </p>
               </div>
             ) : (
-              exercises.map((ex) => (
+              exercises.map((ex, i) => (
                 <ExerciseBlock
+                  canMoveDown={i < exercises.length - 1}
+                  canMoveUp={i > 0}
                   exercise={ex}
                   key={ex.uid}
                   onAddSet={() => addSet(ex.uid)}
+                  onMoveDown={() => moveExercise(ex.uid, 1)}
+                  onMoveUp={() => moveExercise(ex.uid, -1)}
                   onRemove={() => removeExercise(ex.uid)}
                   onRemoveSet={(setUid) => removeSet(ex.uid, setUid)}
                   onUpdate={(patch) => updateExercise(ex.uid, patch)}
@@ -413,14 +434,22 @@ export function WorkoutBuilder({
 
 function ExerciseBlock({
   exercise,
+  canMoveUp,
+  canMoveDown,
   onUpdate,
+  onMoveUp,
+  onMoveDown,
   onRemove,
   onAddSet,
   onUpdateSet,
   onRemoveSet,
 }: {
   exercise: EditorExercise;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
   onUpdate: (patch: Partial<EditorExercise>) => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
   onRemove: () => void;
   onAddSet: () => void;
   onUpdateSet: (setUid: string, patch: Partial<EditorSet>) => void;
@@ -432,20 +461,41 @@ function ExerciseBlock({
   return (
     <div className="rounded-xl border border-border bg-background/40 p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5">
-          <GripVertical className="size-4 shrink-0 text-muted-foreground" />
-          <span className="font-medium text-sm">{exercise.name}</span>
+        <span className="font-medium text-sm">{exercise.name}</span>
+        <div className="flex items-center gap-0.5">
+          <Button
+            aria-label="Move exercise up"
+            className="size-7 text-muted-foreground"
+            disabled={!canMoveUp}
+            onClick={onMoveUp}
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
+            <ChevronUp className="size-4" />
+          </Button>
+          <Button
+            aria-label="Move exercise down"
+            className="size-7 text-muted-foreground"
+            disabled={!canMoveDown}
+            onClick={onMoveDown}
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
+            <ChevronDown className="size-4" />
+          </Button>
+          <Button
+            aria-label="Remove exercise"
+            className="size-7 text-muted-foreground"
+            onClick={onRemove}
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
+            <Trash2 className="size-3.5" />
+          </Button>
         </div>
-        <Button
-          aria-label="Remove exercise"
-          className="size-7 text-muted-foreground"
-          onClick={onRemove}
-          size="icon"
-          type="button"
-          variant="ghost"
-        >
-          <Trash2 className="size-3.5" />
-        </Button>
       </div>
 
       {/* Column headers */}

@@ -38,6 +38,7 @@ import {
   getUserMemory,
   getWaterDailyTotals,
   getWaterMlSince,
+  getWorkoutsByUserId,
 } from "@/lib/db/queries";
 import type { ProgressEntry } from "@/lib/db/schema";
 import { toPlanStatusSummary } from "@/lib/subscription";
@@ -68,6 +69,25 @@ function clientField(
 
 function dayKey(d: Date): string {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+/** "Today" / "Yesterday" / "N days ago" / a short date, for the last-workout card. */
+function relativeDay(d: Date): string {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const that = new Date(d);
+  that.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((today.getTime() - that.getTime()) / 86_400_000);
+  if (diffDays <= 0) {
+    return "Today";
+  }
+  if (diffDays === 1) {
+    return "Yesterday";
+  }
+  if (diffDays < 7) {
+    return `${diffDays} days ago`;
+  }
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
 /** Consecutive days (ending today or yesterday) with at least one logged action. */
@@ -145,6 +165,7 @@ async function TodayContent() {
     goals,
     pastGoals,
     plans,
+    recentWorkouts,
   ] = await Promise.all([
     getUserMemory(user.id),
     isPro ? getProgressEntriesByUserId(user.id) : Promise.resolve([]),
@@ -155,7 +176,23 @@ async function TodayContent() {
     getActiveGoalsByUserId(user.id),
     getInactiveGoalsByUserId(user.id),
     getActivePlansByUserId(user.id),
+    canAccessProFeatures(user)
+      ? getWorkoutsByUserId(user.id, 1)
+      : Promise.resolve([]),
   ]);
+
+  // Most-recent logged workout, summarized for the /today card.
+  const lastWorkout = recentWorkouts[0]
+    ? {
+        title: recentWorkouts[0].title,
+        performedAt: recentWorkouts[0].performedAt,
+        exerciseCount: recentWorkouts[0].exercises.length,
+        setCount: recentWorkouts[0].exercises.reduce(
+          (sum, ex) => sum + ex.sets.length,
+          0
+        ),
+      }
+    : null;
 
   // Strip the DB rows down to the serializable shape the client cards need.
   const toGoalItem = (g: (typeof goals)[number]) => ({
@@ -329,6 +366,43 @@ async function TodayContent() {
           <PlanList memoryPlanHint={workoutPlan} plans={planItems} />
         </Card>
       </div>
+
+      {/* Last workout (Pro) */}
+      {isPro && (
+        <Card>
+          <div className="flex items-center justify-between">
+            <CardTitle icon={<Dumbbell className="size-4 text-blood" />}>
+              Last workout
+            </CardTitle>
+            <Button asChild className="gap-1.5" size="sm" variant="outline">
+              <Link href="/workouts">
+                <Dumbbell className="size-3.5" />
+                All workouts
+              </Link>
+            </Button>
+          </div>
+          {lastWorkout ? (
+            <div>
+              <div className="font-display font-semibold text-lg leading-tight">
+                {lastWorkout.title}
+              </div>
+              <div className="mt-0.5 text-muted-foreground text-sm">
+                {relativeDay(lastWorkout.performedAt)} ·{" "}
+                {lastWorkout.exerciseCount} exercise
+                {lastWorkout.exerciseCount === 1 ? "" : "s"} ·{" "}
+                {lastWorkout.setCount} set
+                {lastWorkout.setCount === 1 ? "" : "s"}
+              </div>
+            </div>
+          ) : (
+            <EmptyHint
+              cta="Log a workout"
+              href="/workouts"
+              text="No workouts logged yet. Log your first session and Chad starts tracking your PRs and volume."
+            />
+          )}
+        </Card>
+      )}
 
       {/* Today's fuel (Pro) — the daily centerpiece, full width */}
       {isPro ? (
