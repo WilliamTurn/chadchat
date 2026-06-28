@@ -51,6 +51,7 @@ import {
   getActiveMealPlanByUserId,
   getActivePlansByUserId,
   getChatById,
+  getLatestSleepEntry,
   getMealsSince,
   getMessageCountByUserId,
   getMessagesByChatId,
@@ -257,12 +258,14 @@ export async function POST(request: Request) {
           waterMl,
           progressEntries,
           activeMealPlan,
+          lastSleep,
         ] = await Promise.all([
           getMealsSince(session.user.id, startOfToday),
           getNutritionTarget(session.user.id),
           getWaterMlSince(session.user.id, startOfToday),
           getProgressEntriesByUserId(session.user.id),
           getActiveMealPlanByUserId(session.user.id),
+          getLatestSleepEntry(session.user.id),
         ]);
         dashboardBlock = formatTodaySnapshot({
           date: startOfToday,
@@ -270,6 +273,7 @@ export async function POST(request: Request) {
           target: nutritionTarget,
           waterMl,
           weight: summarizeWeight(progressEntries),
+          lastSleep,
         });
         mealPlanBlock = formatMealPlanForPrompt(activeMealPlan);
       } catch (error) {

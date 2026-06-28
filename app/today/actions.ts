@@ -2,10 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@/app/(auth)/auth";
-import { canAccessChad } from "@/lib/admin";
+import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
+import { parseCalendarDay } from "@/lib/date";
 import {
   createGoal,
   createPlan,
+  createSleepEntry,
   deleteGoal,
   deletePlan,
   getUserById,
@@ -15,6 +17,7 @@ import {
   upsertUserMemory,
 } from "@/lib/db/queries";
 import type { User } from "@/lib/db/schema";
+import { type SleepEntryInput, sleepEntrySchema } from "@/lib/validation/sleep";
 import {
   type CreateGoalInput,
   createGoalSchema,
@@ -255,6 +258,41 @@ export async function removePlan(id: string): Promise<TodayActionState> {
     return { ok: false, error: gate.error };
   }
   await deletePlan({ id, userId: gate.user.id });
+  revalidatePath("/today");
+  return { ok: true };
+}
+
+// --- Sleep & recovery (Pro) ---
+
+/** Log (or overwrite) a night's sleep for the Sleep & Recovery card. */
+export async function logSleep(
+  input: SleepEntryInput
+): Promise<TodayActionState> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { ok: false, error: "Not signed in." };
+  }
+  const user = await getUserById(session.user.id);
+  if (!(user && canAccessProFeatures(user))) {
+    return { ok: false, error: "Sleep tracking is a Chad Pro feature." };
+  }
+
+  const parsed = sleepEntrySchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.errors[0]?.message ?? "Couldn't log that.",
+    };
+  }
+
+  const { recordedAt, minutes, quality } = parsed.data;
+  await createSleepEntry({
+    userId: user.id,
+    recordedAt: parseCalendarDay(recordedAt) ?? new Date(),
+    minutes,
+    quality: quality ?? null,
+  });
+
   revalidatePath("/today");
   return { ok: true };
 }

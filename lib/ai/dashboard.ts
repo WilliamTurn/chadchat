@@ -17,6 +17,7 @@ const MAX_MEASUREMENTS_IN_LOG = 20;
 const MAX_KITCHEN_IN_LOG = 20;
 
 const LB_PER_KG = 2.204_62;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 function round(n: number): number {
   return Math.round(n);
@@ -129,6 +130,7 @@ export function formatTodaySnapshot({
   waterMl,
   weight,
   goalWeight,
+  lastSleep,
 }: {
   date: Date;
   meals: MealAnalysis[];
@@ -136,6 +138,7 @@ export function formatTodaySnapshot({
   waterMl: number;
   weight: WeightSummary | null;
   goalWeight?: { value: number; unit: string } | null;
+  lastSleep?: { minutes: number; quality: number | null; recordedAt: Date } | null;
 }): string {
   const lines: string[] = [];
 
@@ -165,6 +168,22 @@ export function formatTodaySnapshot({
 
   if (waterMl > 0) {
     lines.push(`- Water today: ${round(waterMl).toLocaleString()} ml.`);
+  }
+
+  // Sleep is logged per night; only surface it if it's recent (within ~2 days)
+  // so the always-on snapshot stays "today", not stale.
+  if (
+    lastSleep &&
+    lastSleep.recordedAt.getTime() >= date.getTime() - 2 * MS_PER_DAY
+  ) {
+    const h = Math.floor(lastSleep.minutes / 60);
+    const m = lastSleep.minutes % 60;
+    const dur = m === 0 ? `${h}h` : `${h}h ${m}m`;
+    const quality =
+      lastSleep.quality == null ? "" : `, quality ${lastSleep.quality}/5`;
+    lines.push(
+      `- Last night's sleep: ${dur}${quality} (${formatCalendarDay(lastSleep.recordedAt)}).`
+    );
   }
 
   if (lines.length === 0) {

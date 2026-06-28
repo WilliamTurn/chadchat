@@ -7,6 +7,7 @@ import {
   LineChart,
   Lock,
   MessageSquare,
+  Moon,
   Refrigerator,
   Utensils,
 } from "lucide-react";
@@ -21,6 +22,12 @@ import { MacroRings } from "@/components/nutrition/macro-rings";
 import { WeightChartInteractive } from "@/components/progress/weight-chart-interactive";
 import { GoalList } from "@/components/today/goal-list";
 import { PlanList } from "@/components/today/plan-list";
+import {
+  type LastNight,
+  type SleepNight,
+  SleepTracker,
+} from "@/components/today/sleep-tracker";
+import { SleepTrendChart } from "@/components/today/sleep-trend-chart";
 import { StreakStrip } from "@/components/today/streak-strip";
 import { TargetEditor } from "@/components/today/target-editor";
 import { WaterTracker } from "@/components/today/water-tracker";
@@ -35,8 +42,10 @@ import {
   getActivityDaysSince,
   getInactiveGoalsByUserId,
   getMealsSince,
+  getLatestSleepEntry,
   getNutritionTarget,
   getProgressEntriesByUserId,
+  getSleepDailyTotals,
   getUserById,
   getUserMemory,
   getWaterDailyTotals,
@@ -174,6 +183,8 @@ async function TodayContent() {
     recentWorkouts,
     activityDays,
     mealPlan,
+    latestSleep,
+    sleepDaily,
   ] = await Promise.all([
     getUserMemory(user.id),
     isPro ? getProgressEntriesByUserId(user.id) : Promise.resolve([]),
@@ -191,6 +202,8 @@ async function TodayContent() {
       ? getActivityDaysSince(user.id, activitySince)
       : Promise.resolve<Date[]>([]),
     isPro ? getActiveMealPlanByUserId(user.id) : Promise.resolve(null),
+    isPro ? getLatestSleepEntry(user.id) : Promise.resolve(null),
+    isPro ? getSleepDailyTotals(user.id) : Promise.resolve([]),
   ]);
 
   // Active meal plan summary for the /today card.
@@ -309,6 +322,30 @@ async function TodayContent() {
     return {
       label: WEEKDAY_INITIALS[d.getUTCDay()],
       active: activeDayKeys.has(toCalendarDayISO(d)),
+      isToday: i === 6,
+    };
+  });
+
+  // Sleep & recovery (Pro): last night's entry + a 7-night week strip. The
+  // daily totals are keyed to midnight-UTC ms, which equals each week day's
+  // startOfDayUTC time, so the lookup lines up across timezones (see lib/date.ts).
+  const sleepByDay = new Map(sleepDaily.map((s) => [s.t, s] as const));
+  const lastNight: LastNight = latestSleep
+    ? {
+        minutes: latestSleep.minutes,
+        quality: latestSleep.quality,
+        whenLabel: relativeDay(latestSleep.recordedAt),
+      }
+    : null;
+  const sleepWeek: SleepNight[] = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(startOfToday.getTime() - (6 - i) * DAY_MS);
+    const entry = sleepByDay.get(d.getTime());
+    return {
+      t: d.getTime(),
+      label: WEEKDAY_INITIALS[d.getUTCDay()],
+      minutes: entry?.minutes ?? 0,
+      quality: entry?.quality ?? null,
+      logged: entry != null,
       isToday: i === 6,
     };
   });
@@ -589,9 +626,25 @@ async function TodayContent() {
         )}
       </div>
 
+      {/* Sleep & recovery (Pro) */}
+      {isPro ? (
+        <SleepTracker last={lastNight} week={sleepWeek} />
+      ) : (
+        <LockedCard
+          icon={<Moon className="size-4" />}
+          text="Log how you sleep each night and Chad factors recovery into your training. Pro only."
+          title="Sleep & recovery"
+        />
+      )}
+
       {/* Hydration trend (Pro) — full-width, once there's history to show */}
       {isPro && waterDaily.length >= 2 && (
         <WaterTrendChart days={waterDaily} />
+      )}
+
+      {/* Sleep trend (Pro) — full-width, once there's history to show */}
+      {isPro && sleepDaily.length >= 2 && (
+        <SleepTrendChart days={sleepDaily} />
       )}
 
       {/* Quick actions */}

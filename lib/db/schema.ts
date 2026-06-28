@@ -386,6 +386,28 @@ export const waterLog = pgTable("WaterLog", {
 
 export type WaterLog = InferSelectModel<typeof waterLog>;
 
+// --- Sleep log (a recovery staple, like Whoop/Oura/Apple Health) ---
+// One row per night. Unlike water (many increments summed per day), sleep is a
+// single value per night — `createSleepEntry` replaces any existing row for the
+// same calendar day so re-logging a night overwrites it rather than stacking.
+// `recordedAt` is the night anchored at noon UTC (the `lib/date.ts` convention);
+// `minutes` is total time asleep; `quality` is an optional 1–5 self-rating.
+export const sleepEntry = pgTable("SleepEntry", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  // The night this entry is for (user-chosen; defaults to today in the UI).
+  recordedAt: timestamp("recordedAt").notNull(),
+  // Total minutes asleep (stored in minutes so 7h30m is exact, not a 7.5 float).
+  minutes: integer("minutes").notNull(),
+  // Optional self-rated sleep quality, 1 (poor) … 5 (great).
+  quality: integer("quality"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type SleepEntry = InferSelectModel<typeof sleepEntry>;
+
 // --- Workout logging (executed sets/reps/weight, like Hevy/Strong) ---
 // A workout is a dated training session. Its exercises and their sets hang off
 // it (WorkoutExercise → WorkoutSet), so the dashboard can show the full thing,

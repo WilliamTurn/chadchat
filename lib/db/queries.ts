@@ -23,6 +23,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import type { ArtifactKind } from "@/components/chat/artifact";
 import type { VisibilityType } from "@/components/chat/visibility-selector";
+import { startOfDayUTC } from "../date";
 import { ChatbotError } from "../errors";
 import {
   type BodyMeasurement,
@@ -48,6 +49,8 @@ import {
   passwordResetToken,
   plan,
   progressEntry,
+  type SleepEntry,
+  sleepEntry,
   type Suggestion,
   stream,
   suggestion,
@@ -569,6 +572,9 @@ export async function deleteUserByEmail(
         .delete(nutritionTarget)
         .where(eq(nutritionTarget.userId, userId));
       await tx.delete(waterLog).where(eq(waterLog.userId, userId));
+
+      // Nightly sleep log.
+      await tx.delete(sleepEntry).where(eq(sleepEntry.userId, userId));
 
       // Goals, plans, and body measurements.
       await tx.delete(goal).where(eq(goal.userId, userId));
@@ -1658,7 +1664,7 @@ export async function getActivityDaysSince(
   since: Date
 ): Promise<Date[]> {
   try {
-    const [meals, workouts, waters, progress] = await Promise.all([
+    const [meals, workouts, waters, progress, sleeps] = await Promise.all([
       db
         .select({ t: sql<Date>`coalesce(${mealAnalysis.recordedAt}, ${mealAnalysis.createdAt})` })
         .from(mealAnalysis)
@@ -1697,13 +1703,19 @@ export async function getActivityDaysSince(
             gte(progressEntry.recordedAt, since)
           )
         ),
+      db
+        .select({ t: sleepEntry.recordedAt })
+        .from(sleepEntry)
+        .where(
+          and(eq(sleepEntry.userId, userId), gte(sleepEntry.recordedAt, since))
+        ),
     ]);
     // The meal query's `t` comes from a raw `sql<Date>` coalesce, which Drizzle
     // does NOT run through the column's Date codec — the driver hands it back as
     // a string. The other three select typed columns and are real Dates. Coerce
     // everything to a Date so downstream `dayKey`/streak math never sees a string
     // (which would throw `getFullYear is not a function` and 500 /today).
-    return [...meals, ...workouts, ...waters, ...progress]
+    return [...meals, ...workouts, ...waters, ...progress, ...sleeps]
       .map((r) => (r.t instanceof Date ? r.t : new Date(r.t as unknown as string)))
       .filter((t): t is Date => t != null && !Number.isNaN(t.getTime()));
   } catch (_error) {
@@ -1749,6 +1761,118 @@ export async function deleteLatestWaterLog({
     }
   } catch (_error) {
     throw new ChatbotError("bad_request:database", "Failed to update water");
+  }
+}
+
+// --- Sleep log (nightly recovery on /today) ---
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Record a night's sleep. Sleep is one value per night, so an existing entry for
+ * the same calendar day is replaced (re-logging a night overwrites it rather
+ * than stacking, which would double-count in the trend). The day window is the
+ * noon-UTC calendar-day convention (see lib/date.ts).
+ */
+export async function createSleepEntry(entry: {
+  userId: string;
+  recordedAt: Date;
+  minutes: number;
+  quality: number | null;
+}): Promise<SleepEntry> {
+  try {
+    const dayStart = startOfDayUTC(entry.recordedAt);
+    const dayEnd = new Date(dayStart.getTime() + DAY_MS);
+    return await db.transaction(async (tx) => {
+      await tx
+        .delete(sleepEntry)
+        .where(
+          and(
+            eq(sleepEntry.userId, entry.userId),
+            gte(sleepEntry.recordedAt, dayStart),
+            lt(sleepEntry.recordedAt, dayEnd)
+          )
+        );
+      const [created] = await tx
+        .insert(sleepEntry)
+        .values({
+          userId: entry.userId,
+          recordedAt: entry.recordedAt,
+          minutes: entry.minutes,
+          quality: entry.quality,
+        })
+        .returning();
+      return created;
+    });
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to log sleep");
+  }
+}
+
+/** The most recent night's sleep entry, for the "last night" readout. */
+export async function getLatestSleepEntry(
+  userId: string
+): Promise<SleepEntry | null> {
+  try {
+    const [latest] = await db
+      .select()
+      .from(sleepEntry)
+      .where(eq(sleepEntry.userId, userId))
+      .orderBy(desc(sleepEntry.recordedAt))
+      .limit(1);
+    return latest ?? null;
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get sleep");
+  }
+}
+
+/**
+ * Nightly sleep over the last `sinceDays` days, oldest first, for the sleep
+ * trend chart + the /today week strip. One row per night (writes dedupe per
+ * day); keyed to that day's midnight-UTC ms, the same timezone-stable bucketing
+ * the water/volume trends use (see lib/date.ts).
+ */
+export async function getSleepDailyTotals(
+  userId: string,
+  sinceDays = 90
+): Promise<{ t: number; minutes: number; quality: number | null }[]> {
+  try {
+    const since = new Date(Date.now() - sinceDays * DAY_MS);
+    const rows = await db
+      .select({
+        recordedAt: sleepEntry.recordedAt,
+        minutes: sleepEntry.minutes,
+        quality: sleepEntry.quality,
+        createdAt: sleepEntry.createdAt,
+      })
+      .from(sleepEntry)
+      .where(
+        and(eq(sleepEntry.userId, userId), gte(sleepEntry.recordedAt, since))
+      );
+    // Bucket by UTC day, keeping the latest-written entry for each (a guard in
+    // case any pre-dedupe duplicates exist for a night).
+    const byDay = new Map<
+      number,
+      { minutes: number; quality: number | null; createdAt: number }
+    >();
+    for (const r of rows) {
+      const d = r.recordedAt;
+      const t = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+      const prev = byDay.get(t);
+      const createdAt = r.createdAt.getTime();
+      if (!prev || createdAt >= prev.createdAt) {
+        byDay.set(t, { minutes: r.minutes, quality: r.quality, createdAt });
+      }
+    }
+    return [...byDay.entries()]
+      .map(([t, v]) => ({
+        t,
+        minutes: Math.max(0, v.minutes),
+        quality: v.quality,
+      }))
+      .sort((a, b) => a.t - b.t);
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get sleep history");
   }
 }
 
