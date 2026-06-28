@@ -1,6 +1,7 @@
 "use client";
 
 import { CreditCard, Dumbbell, LogOut, MenuIcon, Sparkles } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
@@ -132,31 +133,68 @@ function Wordmark() {
 export function StandaloneHeader({ active }: { active?: string }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const reduce = useReducedMotion();
 
   const isActive = (href: string) =>
     active ? active === href : pathname === href;
+
+  // Mobile-sheet entrance: links slide in one after another when the sheet
+  // opens (reduced-motion → instant). Variants live on the wrapper so they
+  // replay every open.
+  const sheetList = {
+    hidden: {},
+    show: {
+      transition: {
+        delayChildren: reduce ? 0 : 0.04,
+        staggerChildren: reduce ? 0 : 0.05,
+      },
+    },
+  };
+  const sheetItem = reduce
+    ? { hidden: { opacity: 1 }, show: { opacity: 1 } }
+    : { hidden: { opacity: 0, x: 12 }, show: { opacity: 1, x: 0 } };
 
   return (
     <nav className="mb-8 flex items-center justify-between gap-4 border-border border-b pb-3 sm:items-start">
       <Wordmark />
 
-      {/* Desktop / tablet: every link in a wrapping row — no scrollbar ever. */}
+      {/* Desktop / tablet: every link in a wrapping row — no scrollbar ever.
+          The active highlight is a single shared-layout pill that slides between
+          sections as you navigate (ACC-11). */}
       <div className="hidden flex-1 flex-wrap items-center justify-end gap-x-0.5 gap-y-1 sm:flex">
         {headerLinks.map((link) => {
           const Icon = link.icon;
+          const activeLink = isActive(link.href);
           return (
             <Link
               className={cn(
-                "flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium text-sm transition-colors",
-                isActive(link.href)
-                  ? "bg-accent text-foreground"
+                "relative flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium text-sm transition-colors",
+                activeLink
+                  ? "text-foreground"
                   : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
               )}
               href={link.href}
               key={link.href}
             >
-              <Icon className="size-4" />
-              <span>{link.label}</span>
+              {activeLink && (
+                <motion.span
+                  aria-hidden
+                  className="absolute inset-0 rounded-lg bg-accent"
+                  layoutId="standalone-nav-active"
+                  transition={
+                    reduce
+                      ? { duration: 0 }
+                      : { damping: 32, stiffness: 380, type: "spring" }
+                  }
+                />
+              )}
+              <Icon
+                className={cn(
+                  "relative z-10 size-4",
+                  activeLink && "text-blood"
+                )}
+              />
+              <span className="relative z-10">{link.label}</span>
             </Link>
           );
         })}
@@ -186,53 +224,74 @@ export function StandaloneHeader({ active }: { active?: string }) {
               CHAD
             </SheetTitle>
           </div>
-          <div className="flex flex-col gap-1 p-3">
+          <motion.div
+            animate="show"
+            className="flex flex-col gap-1 p-3"
+            initial="hidden"
+            variants={sheetList}
+          >
             {headerLinks.map((link) => {
               const Icon = link.icon;
+              const activeLink = isActive(link.href);
               return (
-                <SheetClose asChild key={link.href}>
-                  <Link
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-3 font-medium text-base transition-colors",
-                      isActive(link.href)
-                        ? "bg-accent text-foreground"
-                        : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-                    )}
-                    href={link.href}
-                  >
-                    <Icon className="size-5" />
-                    <span>{link.label}</span>
-                  </Link>
-                </SheetClose>
+                <motion.div key={link.href} variants={sheetItem}>
+                  <SheetClose asChild>
+                    <Link
+                      className={cn(
+                        "flex items-center gap-3 rounded-lg px-3 py-3 font-medium text-base transition-colors",
+                        activeLink
+                          ? "bg-accent text-foreground"
+                          : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                      )}
+                      href={link.href}
+                    >
+                      <Icon
+                        className={cn("size-5", activeLink && "text-blood")}
+                      />
+                      <span>{link.label}</span>
+                    </Link>
+                  </SheetClose>
+                </motion.div>
               );
             })}
-            <SheetClose asChild>
-              <Link
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-3 font-medium text-base transition-colors",
-                  isActive("/pricing")
-                    ? "bg-accent text-foreground"
-                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-                )}
-                href="/pricing"
-              >
-                <Sparkles className="size-5" />
-                <span>Plans &amp; pricing</span>
-              </Link>
-            </SheetClose>
-            <div className="my-1 border-border border-t" />
-            <button
+            <motion.div variants={sheetItem}>
+              <SheetClose asChild>
+                <Link
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-3 font-medium text-base transition-colors",
+                    isActive("/pricing")
+                      ? "bg-accent text-foreground"
+                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                  )}
+                  href="/pricing"
+                >
+                  <Sparkles
+                    className={cn(
+                      "size-5",
+                      isActive("/pricing") && "text-blood"
+                    )}
+                  />
+                  <span>Plans &amp; pricing</span>
+                </Link>
+              </SheetClose>
+            </motion.div>
+            <motion.div
+              className="my-1 border-border border-t"
+              variants={sheetItem}
+            />
+            <motion.button
               className="flex items-center gap-3 rounded-lg px-3 py-3 text-left font-medium text-base text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
               onClick={() => {
                 setOpen(false);
                 signOut({ redirectTo: "/" });
               }}
               type="button"
+              variants={sheetItem}
             >
               <LogOut className="size-5" />
               <span>Sign out</span>
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
         </SheetContent>
       </Sheet>
     </nav>

@@ -1,4 +1,4 @@
-import { Camera, Check, Sparkles, Zap } from "lucide-react";
+import { Camera, Check, Sparkles, TriangleAlert, Zap } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { getUserById } from "@/lib/db/queries";
 import { PLANS } from "@/lib/stripe";
 import { hasActiveAccess } from "@/lib/subscription";
+import { cn } from "@/lib/utils";
 import { openBillingPortal, upgradeToPro } from "./actions";
 
 function formatDate(date: Date | null): string {
@@ -70,6 +71,11 @@ async function MembershipCard() {
   // goes through Stripe's hosted plan-change flow (no second subscription).
   const canUpgrade = hasAccess && tier === "basic";
 
+  // Revenue at risk: a past-due card is a failed payment one update away from a
+  // churned member, so the card itself goes destructive-tinted (not just a faint
+  // badge) and the primary action becomes a red "fix it now" button.
+  const isPastDue = status === "past_due";
+
   // Friendly, retention-minded status line. We always surface the actual price
   // so a renewal never reads as a surprise charge.
   let statusLine: string;
@@ -88,28 +94,47 @@ async function MembershipCard() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="rounded-2xl border border-border bg-card p-6">
+      <div
+        className={cn(
+          "rounded-2xl border p-6",
+          isPastDue
+            ? "border-destructive/50 bg-destructive/[0.06] ring-1 ring-destructive/20"
+            : "border-border bg-card"
+        )}
+      >
         <div className="mb-3 flex flex-wrap items-center gap-3">
           <span className="font-medium text-lg">{planName}</span>
           {hasAccess && status === "trialing" && (
             <Badge variant="secondary">Free trial</Badge>
           )}
           {hasAccess && status === "active" && <Badge>Active</Badge>}
-          {status === "past_due" && (
-            <Badge variant="destructive">Payment needed</Badge>
-          )}
+          {isPastDue && <Badge variant="destructive">Payment needed</Badge>}
         </div>
 
-        <p className="text-muted-foreground text-sm">{statusLine}</p>
+        <p
+          className={cn(
+            "text-sm",
+            isPastDue
+              ? "flex items-start gap-2 font-medium text-foreground"
+              : "text-muted-foreground"
+          )}
+        >
+          {isPastDue && (
+            <TriangleAlert className="mt-0.5 size-4 shrink-0 text-destructive" />
+          )}
+          <span>{statusLine}</span>
+        </p>
 
         <div className="mt-6 flex flex-wrap gap-3">
           {user.stripeCustomerId ? (
             <form action={openBillingPortal}>
               <Button
                 type="submit"
-                variant={canUpgrade ? "outline" : "default"}
+                variant={
+                  isPastDue ? "destructive" : canUpgrade ? "outline" : "default"
+                }
               >
-                Manage billing
+                {isPastDue ? "Update payment" : "Manage billing"}
               </Button>
             </form>
           ) : (

@@ -1,3 +1,4 @@
+import { Ban, Dumbbell, ShieldCheck, Star } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -28,17 +29,23 @@ export default function PricingPage() {
           goes to the marketing site; signed-in users can also log out. */}
       <header className="mb-12 flex w-full max-w-5xl items-center justify-between">
         <a
-          className="font-semibold text-lg tracking-tight"
+          aria-label="Chad — home"
+          className="flex shrink-0 items-center gap-2"
           href="https://chadcoach.ai"
         >
-          Chad
+          <span className="flex size-7 items-center justify-center rounded-lg bg-muted/60 ring-1 ring-border/50">
+            <Dumbbell className="text-blood" size={14} strokeWidth={2.5} />
+          </span>
+          <span className="font-display font-bold text-[15px] tracking-[0.14em]">
+            CHAD
+          </span>
         </a>
         <Suspense fallback={null}>
           <AccountControls />
         </Suspense>
       </header>
 
-      <div className="mb-10 flex max-w-2xl flex-col items-center text-center">
+      <div className="mb-6 flex max-w-2xl flex-col items-center text-center">
         <h1 className="font-semibold text-3xl tracking-tight sm:text-4xl">
           Train with Chad
         </h1>
@@ -47,6 +54,8 @@ export default function PricingPage() {
           cancel anytime, no hard feelings.
         </p>
       </div>
+
+      <TrustStrip />
 
       <Suspense
         fallback={
@@ -64,6 +73,35 @@ export default function PricingPage() {
         whenever you like.
       </p>
     </main>
+  );
+}
+
+/**
+ * Thin trust strip under the headline — the conversion table-stakes a pricing
+ * page is expected to carry: a "your card is safe" signal (Stripe), the
+ * risk-reversal (cancel anytime), and social proof (stars). Kept deliberately
+ * quiet (xs, muted) so it reassures without competing with the plan cards.
+ */
+function TrustStrip() {
+  return (
+    <div className="mb-10 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-muted-foreground text-xs">
+      <span className="flex items-center gap-1.5">
+        <ShieldCheck className="size-3.5" />
+        Secured by Stripe
+      </span>
+      <span className="flex items-center gap-1.5">
+        <Ban className="size-3.5" />
+        Cancel anytime
+      </span>
+      <span className="flex items-center gap-1.5">
+        <span className="flex items-center gap-0.5 text-amber-500">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <Star className="size-3.5 fill-current" key={i} />
+          ))}
+        </span>
+        Loved by lifters
+      </span>
+    </div>
   );
 }
 
