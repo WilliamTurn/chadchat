@@ -7,6 +7,7 @@ import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { AnalysisCard } from "@/components/nutrition/analysis-card";
 import { AnalyzeForm } from "@/components/nutrition/analyze-form";
+import { MacroRings } from "@/components/nutrition/macro-rings";
 import { MacroTrendChart } from "@/components/nutrition/macro-trend-chart";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -177,39 +178,6 @@ async function Feed({ userId }: { userId: string }) {
   );
 }
 
-function MacroStat({
-  label,
-  consumed,
-  target,
-  unit,
-}: {
-  label: string;
-  consumed: number;
-  target: number | null;
-  unit: string;
-}) {
-  const remaining = target != null ? target - consumed : null;
-  const over = remaining != null && remaining < 0;
-  return (
-    <div className="rounded-xl border border-border bg-background/40 px-3 py-2 text-center">
-      <div className="font-display font-semibold text-base">
-        {Math.round(consumed)}
-        <span className="ml-0.5 text-muted-foreground text-xs">{unit}</span>
-      </div>
-      <div className="text-muted-foreground text-[11px]">{label}</div>
-      {remaining != null && (
-        <div
-          className={`text-[11px] ${over ? "text-blood" : "text-emerald-500"}`}
-        >
-          {over
-            ? `${Math.round(-remaining)}${unit} over`
-            : `${Math.round(remaining)}${unit} left`}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function TodaySection({
   meals,
   target,
@@ -241,31 +209,17 @@ function TodaySection({
         <AskChadButton prompt="Review my nutrition over the last few days — calories, protein, and the quality of what I've been eating. What's working and what should I fix?" />
       </div>
 
-      {/* Totals + remaining */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <MacroStat
-          consumed={sumMacro(meals, "calories")}
-          label="Calories"
-          target={target?.calories ?? null}
-          unit=""
-        />
-        <MacroStat
-          consumed={sumMacro(meals, "protein")}
-          label="Protein"
-          target={target?.protein ?? null}
-          unit="g"
-        />
-        <MacroStat
-          consumed={sumMacro(meals, "carbs")}
-          label="Carbs"
-          target={target?.carbs ?? null}
-          unit="g"
-        />
-        <MacroStat
-          consumed={sumMacro(meals, "fat")}
-          label="Fat"
-          target={target?.fat ?? null}
-          unit="g"
+      {/* Totals + remaining — hero calorie dial + macro bars */}
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <MacroRings
+          caloriesConsumed={sumMacro(meals, "calories")}
+          caloriesTarget={target?.calories ?? null}
+          carbsConsumed={sumMacro(meals, "carbs")}
+          carbsTarget={target?.carbs ?? null}
+          fatConsumed={sumMacro(meals, "fat")}
+          fatTarget={target?.fat ?? null}
+          proteinConsumed={sumMacro(meals, "protein")}
+          proteinTarget={target?.protein ?? null}
         />
       </div>
 
