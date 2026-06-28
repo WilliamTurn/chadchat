@@ -10,7 +10,14 @@
  */
 
 import { useMemo } from "react";
-import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ReferenceLine,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { ChartCard } from "@/components/dashboard/chart-card";
 import { Kpi } from "@/components/dashboard/kpi";
 import {
@@ -38,8 +45,52 @@ function fmtK(n: number): string {
   return n >= 1000 ? `${Math.round(n / 100) / 10}k` : String(Math.round(n));
 }
 
+/**
+ * One bar, drawn as a rounded-top path so we can grow it up from the axis with a
+ * staggered, per-bar CSS animation (Recharts only animates the whole series in
+ * lockstep). The most recent day reads at full opacity; the rest sit back.
+ */
+function StaggeredBar(props: {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  index?: number;
+  payload?: Point;
+  lastT?: number;
+  animate?: boolean;
+}) {
+  const { x, y, width, height, index = 0, payload, lastT, animate } = props;
+  if (x == null || y == null || width == null || height == null) {
+    return null;
+  }
+  const isLatest = payload?.t === lastT;
+  const r = Math.min(3, width / 2, height);
+  const d = `M${x},${y + height} L${x},${y + r} Q${x},${y} ${x + r},${y} L${x + width - r},${y} Q${x + width},${y} ${x + width},${y + r} L${x + width},${y + height} Z`;
+  return (
+    <path
+      d={d}
+      fill={ACCENT}
+      fillOpacity={isLatest ? 0.95 : 0.4}
+      style={
+        animate
+          ? {
+              transformBox: "fill-box",
+              transformOrigin: "bottom",
+              animation: "bar-grow 460ms cubic-bezier(0.22, 1, 0.36, 1) both",
+              animationDelay: `${Math.min(index, 24) * 45}ms`,
+            }
+          : undefined
+      }
+    />
+  );
+}
+
 export function VolumeChart({ points }: { points: Point[] }) {
-  const reveal = useMountReveal();
+  // Hold the mount reveal open long enough to cover the full left→right stagger
+  // (base duration + per-bar delay), so no bar gets cut off mid-grow. Computed
+  // from the fixed point count so a range toggle doesn't re-trigger it.
+  const reveal = useMountReveal(460 + Math.min(points.length, 24) * 45);
   const { rows, control } = useChartRange(points, { minPoints: 6 });
 
   const stats = useMemo(() => {
@@ -48,7 +99,8 @@ export function VolumeChart({ points }: { points: Point[] }) {
     }
     const latest = rows.at(-1)?.volume ?? 0;
     const top = Math.max(...rows.map((r) => r.volume));
-    return { latest, top };
+    const avg = rows.reduce((s, r) => s + r.volume, 0) / rows.length;
+    return { latest, top, avg };
   }, [rows]);
 
   const yMax = useMemo(() => {
@@ -84,6 +136,7 @@ export function VolumeChart({ points }: { points: Point[] }) {
     >
       <ChartContainer className="h-[220px] w-full" config={chartConfig}>
         <BarChart
+          barCategoryGap="20%"
           data={rows}
           margin={{ top: 8, right: 8, bottom: 0, left: -8 }}
         >
@@ -91,13 +144,12 @@ export function VolumeChart({ points }: { points: Point[] }) {
           <XAxis
             axisLine={false}
             dataKey="t"
-            domain={["dataMin", "dataMax"]}
-            minTickGap={32}
-            scale="time"
+            interval="preserveStartEnd"
+            scale="band"
             tickFormatter={formatTick}
             tickLine={false}
             tickMargin={8}
-            type="number"
+            type="category"
           />
           <YAxis
             axisLine={false}
@@ -112,22 +164,27 @@ export function VolumeChart({ points }: { points: Point[] }) {
             content={<VolumeTooltip />}
             cursor={{ fill: "var(--muted-foreground)", fillOpacity: 0.08 }}
           />
+          {stats && rows.length >= 3 && (
+            <ReferenceLine
+              label={{
+                value: `avg ${fmtK(stats.avg)}`,
+                position: "insideTopLeft",
+                fill: "var(--muted-foreground)",
+                fontSize: 11,
+              }}
+              stroke="var(--muted-foreground)"
+              strokeDasharray="5 4"
+              strokeOpacity={0.45}
+              strokeWidth={1.5}
+              y={stats.avg}
+            />
+          )}
           <Bar
-            animationDuration={750}
-            animationEasing="ease-out"
             dataKey="volume"
-            isAnimationActive={reveal}
+            isAnimationActive={false}
             maxBarSize={36}
-            radius={[3, 3, 0, 0]}
-          >
-            {rows.map((r) => (
-              <Cell
-                fill={ACCENT}
-                fillOpacity={r.t === lastT ? 0.95 : 0.4}
-                key={r.t}
-              />
-            ))}
-          </Bar>
+            shape={<StaggeredBar animate={reveal} lastT={lastT} />}
+          />
         </BarChart>
       </ChartContainer>
     </ChartCard>

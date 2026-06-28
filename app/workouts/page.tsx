@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
+import { Kpi } from "@/components/dashboard/kpi";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PersonalRecords } from "@/components/workouts/personal-records";
@@ -161,46 +162,45 @@ async function Dashboard({ userId }: { userId: string }) {
     <div className="flex flex-col gap-8">
       {/* Action + summary */}
       <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex gap-6">
-            <Stat label="Workouts" value={String(workouts.length)} />
-            <Stat label="This week" value={String(weekWorkouts.length)} />
-            <Stat
-              label="Volume / 7d"
-              value={
-                weekVolume > 0 ? `${weekVolume.toLocaleString()} lb` : "—"
-              }
-            />
-          </div>
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            {workouts.length > 0 && (
-              <AskChadButton prompt="Review my recent workouts and training — volume, consistency, and PRs. How am I progressing, and what should I focus on next?" />
-            )}
-            {workouts.length > 0 && (
-              <WorkoutBuilder
-                customExercises={customExercises}
-                initial={workouts[0]}
-                mode="repeat"
-                trigger={
-                  <Button className="gap-1.5" variant="outline">
-                    <Repeat className="size-4" />
-                    Repeat last
-                  </Button>
-                }
-              />
-            )}
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {workouts.length > 0 && (
+            <AskChadButton prompt="Review my recent workouts and training — volume, consistency, and PRs. How am I progressing, and what should I focus on next?" />
+          )}
+          {workouts.length > 0 && (
             <WorkoutBuilder
               customExercises={customExercises}
-              mode="create"
+              initial={workouts[0]}
+              mode="repeat"
               trigger={
-                <Button className="gap-1.5">
-                  <Plus className="size-4" />
-                  Log a workout
+                <Button className="gap-1.5" variant="outline">
+                  <Repeat className="size-4" />
+                  Repeat last
                 </Button>
               }
             />
-          </div>
+          )}
+          <WorkoutBuilder
+            customExercises={customExercises}
+            mode="create"
+            trigger={
+              <Button className="gap-1.5">
+                <Plus className="size-4" />
+                Log a workout
+              </Button>
+            }
+          />
         </div>
+
+        {workouts.length > 0 && (
+          <div className="grid grid-cols-3 gap-3">
+            <StatCard label="Workouts" value={String(workouts.length)} />
+            <StatCard label="This week" value={String(weekWorkouts.length)} />
+            <StatCard
+              label="Volume / 7d"
+              value={weekVolume > 0 ? `${weekVolume.toLocaleString()} lb` : "—"}
+            />
+          </div>
+        )}
       </div>
 
       {workouts.length === 0 ? (
@@ -242,13 +242,15 @@ async function Dashboard({ userId }: { userId: string }) {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+/**
+ * One summary stat, given the shared dashboard `Kpi` treatment (count-up value +
+ * caption) inside a card so the top-of-page numbers match the chart KPIs rather
+ * than reading as three bare figures.
+ */
+function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <div className="font-display font-bold text-2xl leading-none">{value}</div>
-      <div className="mt-1 text-muted-foreground text-xs uppercase tracking-wide">
-        {label}
-      </div>
+    <div className="rounded-xl border border-border bg-card px-4 py-3.5">
+      <Kpi label={label} size="lg" value={value} />
     </div>
   );
 }

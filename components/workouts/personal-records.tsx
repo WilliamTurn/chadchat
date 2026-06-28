@@ -9,9 +9,12 @@
 "use client";
 
 import { ChevronDown, Trophy } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
 import type { PersonalRecord } from "@/lib/workouts/stats";
 import { ExerciseTrendChart } from "./exercise-trend-chart";
+
+const SPRING = { type: "spring", stiffness: 260, damping: 30 } as const;
 
 export type PersonalRecordWithTrend = PersonalRecord & {
   /** Best est-1RM per session (lb), oldest → newest. */
@@ -24,12 +27,20 @@ export function PersonalRecords({
   records: PersonalRecordWithTrend[];
 }) {
   const [openName, setOpenName] = useState<string | null>(null);
+  const reduced = useReducedMotion() ?? false;
 
   if (records.length === 0) {
     return null;
   }
 
   const open = records.find((r) => r.exerciseName === openName) ?? null;
+  // Strength gained from the first logged session to the latest, for the badge.
+  const first = open?.trend[0]?.value;
+  const last = open?.trend.at(-1)?.value;
+  const gain =
+    open && open.trend.length >= 2 && first != null && last != null
+      ? last - first
+      : null;
 
   return (
     <div className="flex flex-col gap-3">
@@ -79,35 +90,62 @@ export function PersonalRecords({
                     </div>
                   </div>
                 ) : null}
-                <ChevronDown
-                  className={`size-4 text-muted-foreground transition-transform ${
-                    isOpen ? "rotate-180" : ""
-                  }`}
-                />
+                <motion.span
+                  animate={{ rotate: isOpen ? 180 : 0 }}
+                  className="text-muted-foreground"
+                  transition={reduced ? { duration: 0 } : SPRING}
+                >
+                  <ChevronDown className="size-4" />
+                </motion.span>
               </div>
             </button>
           );
         })}
       </div>
 
-      {open && (
-        <section className="rounded-2xl border border-border bg-card p-5">
-          <div className="mb-3 flex items-baseline justify-between gap-3">
-            <h3 className="font-medium text-sm">{open.exerciseName}</h3>
-            <span className="text-muted-foreground text-xs">
-              est. 1RM over time
-            </span>
-          </div>
-          {open.trend.length >= 2 ? (
-            <ExerciseTrendChart points={open.trend} unit={open.est1RMUnit} />
-          ) : (
-            <p className="py-6 text-center text-muted-foreground text-sm">
-              Log {open.exerciseName} again to see your strength trend. One
-              session isn't a trend yet.
-            </p>
-          )}
-        </section>
-      )}
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.section
+            animate={reduced ? undefined : { height: "auto", opacity: 1 }}
+            className="overflow-hidden"
+            exit={reduced ? undefined : { height: 0, opacity: 0 }}
+            initial={reduced ? false : { height: 0, opacity: 0 }}
+            key={open.exerciseName}
+            transition={reduced ? { duration: 0 } : SPRING}
+          >
+            <div className="rounded-2xl border border-border bg-card p-5">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-medium text-sm">{open.exerciseName}</h3>
+                  {gain != null && gain !== 0 && (
+                    <span
+                      className={`rounded-full px-2 py-0.5 font-medium text-[11px] ${
+                        gain > 0
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {gain > 0 ? "+" : "−"}
+                      {Math.abs(gain)} {open.est1RMUnit} since first
+                    </span>
+                  )}
+                </div>
+                <span className="text-muted-foreground text-xs">
+                  est. 1RM over time
+                </span>
+              </div>
+              {open.trend.length >= 2 ? (
+                <ExerciseTrendChart points={open.trend} unit={open.est1RMUnit} />
+              ) : (
+                <p className="py-6 text-center text-muted-foreground text-sm">
+                  Log {open.exerciseName} again to see your strength trend. One
+                  session isn't a trend yet.
+                </p>
+              )}
+            </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

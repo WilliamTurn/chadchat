@@ -110,11 +110,11 @@ export function ExerciseTrendChart({
         />
 
         <Area
-          activeDot={{ r: 4.5, fill: ACCENT, strokeWidth: 0 }}
+          activeDot={{ r: 5, fill: ACCENT, stroke: "var(--background)", strokeWidth: 1.5 }}
           animationDuration={750}
           animationEasing="ease-out"
           dataKey="value"
-          dot={{ r: 2.5, fill: ACCENT, fillOpacity: 0.55, strokeWidth: 0 }}
+          dot={{ r: 3, fill: ACCENT, stroke: "var(--background)", strokeWidth: 1 }}
           fill="url(#oneRmTrendFill)"
           isAnimationActive={reveal}
           stroke={ACCENT}

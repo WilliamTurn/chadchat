@@ -366,6 +366,18 @@ textarea:focus-visible {
   }
 }
 
+/* Volume-trend bars grow up from the axis. Applied per-bar with a staggered
+   animation-delay so the chart "stacks up" left → right on mount. Pairs with
+   transform-box: fill-box + transform-origin: bottom set inline on each bar. */
+@keyframes bar-grow {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
 @utility fade-up {
   animation: fade-up 0.25s var(--ease-spring) both;
 }
