@@ -96,7 +96,7 @@ function AccountMenu() {
         <DropdownMenuItem asChild>
           <Link className="cursor-pointer" href="/account">
             <CreditCard className="size-4" />
-            Membership &amp; billing
+            Account
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

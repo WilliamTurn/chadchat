@@ -1,6 +1,7 @@
 "use client";
 
 import { Dumbbell } from "lucide-react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { type EditablePlan, PlanEditor } from "./plan-editor";
 import { PlanViewer } from "./plan-viewer";
@@ -41,12 +42,20 @@ export function PlanList({
 }) {
   return (
     <>
-      <div className="mb-3 flex items-start justify-between">
+      <div className="mb-3 flex items-start justify-between gap-2">
         <h2 className="flex items-center gap-2 font-medium text-muted-foreground text-sm uppercase tracking-wide">
           <Dumbbell className="size-4 text-blood" />
           Your training
         </h2>
-        {plans.length > 0 && <PlanEditor variant="add" />}
+        <div className="flex items-center gap-2">
+          <Link
+            className="whitespace-nowrap text-muted-foreground text-xs underline-offset-4 transition-colors hover:text-foreground hover:underline"
+            href="/workouts"
+          >
+            All workouts →
+          </Link>
+          {plans.length > 0 && <PlanEditor variant="add" />}
+        </div>
       </div>
 
       {plans.length > 0 ? (

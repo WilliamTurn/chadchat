@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { guestRegex, isDevelopmentEnvironment } from "./lib/constants";
+import { isDevelopmentEnvironment } from "./lib/constants";
 
 /**
  * Validate a `redirectUrl` query param before bouncing a freshly-signed-in user
@@ -92,17 +92,11 @@ export async function proxy(request: NextRequest) {
     );
   }
 
-  const isGuest = guestRegex.test(token?.email ?? "");
-
   // After signing in, honor where the user was originally headed (the
   // `redirectUrl` the paywall stamped on, validated same-origin); otherwise
   // land them on the dashboard — a populated home screen that reads as a real
   // product, not a bare chat box.
-  if (
-    token &&
-    !isGuest &&
-    (pathname === "/login" || pathname === "/register")
-  ) {
+  if (token && (pathname === "/login" || pathname === "/register")) {
     const target = safeRedirectPath(
       request.nextUrl.searchParams.get("redirectUrl")
     );
