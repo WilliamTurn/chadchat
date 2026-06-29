@@ -44,6 +44,14 @@ export const user = pgTable("User", {
   // maintained and injected into his prompt). Default on — it's the
   // recommended experience; users can turn it off from /account.
   memoryEnabled: boolean("memoryEnabled").notNull().default(true),
+  // --- /today hero figure (DSH-21) ---
+  // Which decorative figure bleeds into the /today header. Null = use the
+  // gender-derived default silhouette (male/female from Chad's memory "Sex",
+  // falling back to male). "custom" pairs with heroImageUrl below.
+  heroFigure: varchar("heroFigure", { enum: ["male", "female", "custom"] }),
+  // A user-uploaded background image (Blob URL) for the /today header, used
+  // when heroFigure === "custom".
+  heroImageUrl: text("heroImageUrl"),
 });
 
 export type User = InferSelectModel<typeof user>;

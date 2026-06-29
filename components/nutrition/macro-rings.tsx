@@ -424,7 +424,7 @@ export function MacroRings({
             barColor="bg-amber-400"
             consumed={carbsConsumed}
             consumedLabel={consumedLabel}
-            label="Carbs"
+            label="Carb"
             reduced={reduced}
             target={carbsTarget}
             textColor="text-amber-400"

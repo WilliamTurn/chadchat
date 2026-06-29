@@ -1,5 +1,6 @@
 "use server";
 
+import { put } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/app/(auth)/auth";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
@@ -14,6 +15,7 @@ import {
   getUserMemory,
   updateGoal,
   updatePlan,
+  updateUserHero,
   upsertUserMemory,
 } from "@/lib/db/queries";
 import type { User } from "@/lib/db/schema";
@@ -292,6 +294,85 @@ export async function logSleep(
     minutes,
     quality: quality ?? null,
   });
+
+  revalidatePath("/today");
+  return { ok: true };
+}
+
+// --- /today hero figure (DSH-21) ---
+
+/** Switch the decorative /today header figure to a built-in silhouette. */
+export async function setHeroFigure(
+  figure: "male" | "female"
+): Promise<TodayActionState> {
+  const gate = await requireChadUser();
+  if ("error" in gate) {
+    return { ok: false, error: gate.error };
+  }
+  if (figure !== "male" && figure !== "female") {
+    return { ok: false, error: "Unknown figure." };
+  }
+  await updateUserHero(gate.user.id, { heroFigure: figure });
+  revalidatePath("/today");
+  return { ok: true };
+}
+
+/** Clear the choice so the header falls back to the gender-derived default. */
+export async function resetHeroFigure(): Promise<TodayActionState> {
+  const gate = await requireChadUser();
+  if ("error" in gate) {
+    return { ok: false, error: gate.error };
+  }
+  await updateUserHero(gate.user.id, { heroFigure: null });
+  revalidatePath("/today");
+  return { ok: true };
+}
+
+const MAX_HERO_BYTES = 5 * 1024 * 1024;
+const HERO_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+/** Upload a custom background image for the /today header and select it. */
+export async function uploadHeroImage(
+  formData: FormData
+): Promise<TodayActionState> {
+  const gate = await requireChadUser();
+  if ("error" in gate) {
+    return { ok: false, error: gate.error };
+  }
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, error: "No image selected." };
+  }
+  if (file.size > MAX_HERO_BYTES) {
+    return { ok: false, error: "Image must be under 5MB." };
+  }
+  if (!HERO_TYPES.has(file.type)) {
+    return { ok: false, error: "Use a JPEG, PNG, or WebP image." };
+  }
+
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    return {
+      ok: false,
+      error: "Image storage isn't set up yet. Try again shortly.",
+    };
+  }
+
+  try {
+    const buffer = await file.arrayBuffer();
+    const safeName = (file.name || "hero").replace(/[^a-zA-Z0-9._-]/g, "_");
+    const blob = await put(`hero/${gate.user.id}/${safeName}`, buffer, {
+      access: "public",
+      addRandomSuffix: true,
+      contentType: file.type,
+    });
+    await updateUserHero(gate.user.id, {
+      heroFigure: "custom",
+      heroImageUrl: blob.url,
+    });
+  } catch (_error) {
+    return { ok: false, error: "Couldn't save that image. Try again." };
+  }
 
   revalidatePath("/today");
   return { ok: true };

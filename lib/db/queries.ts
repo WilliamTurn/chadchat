@@ -335,6 +335,35 @@ export async function setUserStripeCustomerId(
   }
 }
 
+/** Set the /today hero figure choice (DSH-21) for a user. */
+export async function updateUserHero(
+  userId: string,
+  hero: {
+    heroFigure: "male" | "female" | "custom" | null;
+    heroImageUrl?: string | null;
+  }
+) {
+  try {
+    return await db
+      .update(user)
+      .set({
+        heroFigure: hero.heroFigure,
+        // Only touch the URL when one is provided (a figure switch keeps any
+        // previously-uploaded image around so toggling back to "custom" works).
+        ...(hero.heroImageUrl !== undefined
+          ? { heroImageUrl: hero.heroImageUrl }
+          : {}),
+        updatedAt: new Date(),
+      })
+      .where(eq(user.id, userId));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to update hero figure"
+    );
+  }
+}
+
 // --- Memory layer (Phase 3) ---
 
 /** The user's durable memory profile, or undefined if none yet. */

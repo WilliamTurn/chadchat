@@ -39,7 +39,40 @@ const GOAL_BASE =
   "head plain and featureless (no face), fitness-app body-diagram style, sharp edges. " +
   GREEN_BG;
 
+// DSH-21 — gender hero silhouettes. The original photographic `hero-figure`
+// read as a stock "random guy"; these replace it with a clean near-black
+// silhouette traced in blood-red rim light (one consistent style, varied by
+// build/sex). A near-black + red subject contains no green, so it keys cleanly.
+const HERO_SIL_BASE =
+  "A full-body dramatic athletic SILHOUETTE: a near-black charcoal body shape " +
+  "with almost no interior detail, traced by an intense glowing blood-red (#a4161a) " +
+  "rim light running along the entire contour of the figure, confident powerful " +
+  "heroic three-quarter standing stance, head plain and faceless, premium cinematic " +
+  "fitness-brand hero aesthetic, dark and moody, high contrast. ";
+
 const ASSETS = [
+  {
+    id: "hero-male",
+    file: `${OUT}/hero-male.png`,
+    size: "1024x1536",
+    key: true,
+    prompt:
+      HERO_SIL_BASE +
+      "Subject: a powerful broad-shouldered muscular male athlete with a strong " +
+      "V-taper physique. " +
+      GREEN_BG,
+  },
+  {
+    id: "hero-female",
+    file: `${OUT}/hero-female.png`,
+    size: "1024x1536",
+    key: true,
+    prompt:
+      HERO_SIL_BASE +
+      "Subject: a strong toned athletic female with a fit feminine physique and a " +
+      "high ponytail. " +
+      GREEN_BG,
+  },
   {
     id: "hero-figure",
     file: `${OUT}/hero-figure.png`,

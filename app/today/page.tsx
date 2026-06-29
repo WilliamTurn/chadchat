@@ -62,7 +62,12 @@ import {
 } from "@/lib/date";
 import type { ProgressEntry } from "@/lib/db/schema";
 import { toPlanStatusSummary } from "@/lib/subscription";
-import { goalDiagram, HERO_FIGURE_SRC } from "@/lib/today/goal-diagram";
+import {
+  goalDiagram,
+  normalizeSex,
+  resolveHero,
+} from "@/lib/today/goal-diagram";
+import { HeroCustomizer } from "@/components/today/hero-customizer";
 
 const LB_PER_KG = 2.204_62;
 const DAY_MS = 86_400_000;
@@ -262,6 +267,14 @@ async function TodayContent() {
   const goal = clientField(profile, "Primary goal");
   const workoutPlan = clientField(profile, "Current workout plan");
 
+  // Decorative header figure (DSH-21): explicit choice → else gender-derived
+  // silhouette (sex from Chad's memory) → else the male default.
+  const hero = resolveHero(
+    user.heroFigure,
+    user.heroImageUrl,
+    normalizeSex(clientField(profile, "Sex"))
+  );
+
   // Weight summary (Pro).
   const weighed = entries.filter(
     (e): e is ProgressEntry & { weight: number } => e.weight != null
@@ -373,15 +386,26 @@ async function TodayContent() {
           aria-hidden
           className="-right-16 -top-16 pointer-events-none absolute size-56 rounded-full bg-blood/25 blur-3xl"
         />
-        {/* Brand hero figure — decorative, bleeds off the right edge and fades
-            into the card. Plain <img> (not next/image) so the proxy serves it on
-            this authenticated route; hidden on small screens. */}
-        <img
-          alt=""
-          aria-hidden
-          className="pointer-events-none absolute right-0 bottom-0 hidden h-[112%] w-auto select-none object-contain object-bottom opacity-90 [mask-image:linear-gradient(to_left,black_55%,transparent)] lg:block"
-          src={HERO_FIGURE_SRC}
-        />
+        {/* Brand hero figure (DSH-21) — decorative, bleeds off the right edge
+            and fades into the card. A built-in silhouette cutout bleeds up from
+            the bottom; a user-uploaded photo covers the right strip. Plain <img>
+            (not next/image) so the proxy serves it on this authenticated route;
+            hidden on small screens. */}
+        {hero.kind === "custom" ? (
+          <img
+            alt=""
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 right-0 hidden h-full w-3/5 select-none object-cover opacity-80 [mask-image:linear-gradient(to_left,black_35%,transparent)] lg:block"
+            src={hero.src}
+          />
+        ) : (
+          <img
+            alt=""
+            aria-hidden
+            className="pointer-events-none absolute right-0 bottom-0 hidden h-[112%] w-auto select-none object-contain object-bottom opacity-90 [mask-image:linear-gradient(to_left,black_55%,transparent)] lg:block"
+            src={hero.src}
+          />
+        )}
         <div className="relative flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-muted-foreground text-sm">
@@ -433,6 +457,11 @@ async function TodayContent() {
         {/* Streak strip */}
         <div className="relative">
           <StreakStrip streak={streak} week={week} />
+        </div>
+
+        {/* Personalize the header figure (lg+ only, where it's visible) */}
+        <div className="absolute right-4 bottom-4 z-10">
+          <HeroCustomizer hero={hero} />
         </div>
       </header>
 
@@ -506,7 +535,7 @@ async function TodayContent() {
             <img
               alt=""
               aria-hidden
-              className="pointer-events-none absolute right-0 bottom-0 hidden h-[94%] w-auto select-none object-contain object-bottom opacity-[0.2] [mask-image:linear-gradient(to_left,black,transparent_80%)] sm:block"
+              className="pointer-events-none absolute right-0 bottom-0 hidden h-[104%] w-auto select-none object-contain object-bottom opacity-60 [mask-image:linear-gradient(to_left,black_45%,transparent_92%)] sm:block"
               src={goalArt.src}
             />
           )}
