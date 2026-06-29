@@ -13,6 +13,7 @@ import { createResumableStreamContext } from "resumable-stream";
 import { auth } from "@/app/(auth)/auth";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import { formatTodaySnapshot, summarizeWeight } from "@/lib/ai/dashboard";
+import { stripModelInternals } from "@/lib/ai/sanitize-output";
 import { getEntitlements, getUsageWarning } from "@/lib/ai/entitlements";
 import {
   formatGoalsForPrompt,
@@ -88,6 +89,17 @@ function getStreamContext() {
 }
 
 export { getStreamContext };
+
+// BLK-3: scrub any leaked internal reasoning / tool plumbing out of assistant
+// text parts before they're persisted, so the saved transcript is always clean
+// (the client render path scrubs too, via sanitizeText — defense in depth).
+function sanitizeParts(parts: ChatMessage["parts"]): ChatMessage["parts"] {
+  return parts.map((part) =>
+    part.type === "text"
+      ? { ...part, text: stripModelInternals(part.text) }
+      : part
+  );
+}
 
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
@@ -401,7 +413,7 @@ export async function POST(request: Request) {
             if (existingMsg) {
               await updateMessage({
                 id: finishedMsg.id,
-                parts: finishedMsg.parts,
+                parts: sanitizeParts(finishedMsg.parts),
               });
             } else {
               await saveMessages({
@@ -409,7 +421,7 @@ export async function POST(request: Request) {
                   {
                     id: finishedMsg.id,
                     role: finishedMsg.role,
-                    parts: finishedMsg.parts,
+                    parts: sanitizeParts(finishedMsg.parts),
                     createdAt: new Date(),
                     attachments: [],
                     chatId: id,
@@ -423,7 +435,7 @@ export async function POST(request: Request) {
             messages: finishedMessages.map((currentMessage) => ({
               id: currentMessage.id,
               role: currentMessage.role,
-              parts: currentMessage.parts,
+              parts: sanitizeParts(currentMessage.parts),
               createdAt: new Date(),
               attachments: [],
               chatId: id,

@@ -6,6 +6,7 @@ import { type ClassValue, clsx } from 'clsx';
 import { formatISO } from 'date-fns';
 import { twMerge } from 'tailwind-merge';
 import type { DBMessage, Document } from '@/lib/db/schema';
+import { stripModelInternals } from './ai/sanitize-output';
 import { ChatbotError, type ErrorCode } from './errors';
 import type { ChatMessage, ChatTools, CustomUIDataTypes } from './types';
 
@@ -65,7 +66,10 @@ export function getDocumentTimestampByIndex(
 }
 
 export function sanitizeText(text: string) {
-  return text.replace('<has_function_call>', '');
+  // Strips Chad's internal reasoning + tool plumbing (Gemini control tokens,
+  // chain-of-thought, tool-selection scaffolding) so it never paints on screen,
+  // even mid-stream. See lib/ai/sanitize-output.ts (BLK-3).
+  return stripModelInternals(text);
 }
 
 export function convertToUIMessages(messages: DBMessage[]): ChatMessage[] {

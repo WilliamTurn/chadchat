@@ -16,7 +16,8 @@
     "db:check": "drizzle-kit check",
     "db:up": "drizzle-kit up",
     "stripe:setup": "tsx scripts/stripe-setup.ts",
-    "test": "export PLAYWRIGHT=True && pnpm exec playwright test"
+    "test": "export PLAYWRIGHT=True && pnpm exec playwright test",
+    "test:unit": "node --import tsx --test tests/unit/*.test.ts"
   },
   "dependencies": {
     "@ai-sdk/provider": "^3.0.3",
