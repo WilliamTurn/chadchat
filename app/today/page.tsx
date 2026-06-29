@@ -21,7 +21,9 @@ import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { MacroRings } from "@/components/nutrition/macro-rings";
 import { WeightChartInteractive } from "@/components/progress/weight-chart-interactive";
 import { GoalList } from "@/components/today/goal-list";
+import { type ChipTone, IconChip } from "@/components/today/icon-chip";
 import { PlanList } from "@/components/today/plan-list";
+import { StatPills } from "@/components/today/stat-pills";
 import {
   type LastNight,
   type SleepNight,
@@ -60,6 +62,7 @@ import {
 } from "@/lib/date";
 import type { ProgressEntry } from "@/lib/db/schema";
 import { toPlanStatusSummary } from "@/lib/subscription";
+import { goalDiagram, HERO_FIGURE_SRC } from "@/lib/today/goal-diagram";
 
 const LB_PER_KG = 2.204_62;
 const DAY_MS = 86_400_000;
@@ -325,6 +328,12 @@ async function TodayContent() {
       isToday: i === 6,
     };
   });
+  const activeThisWeek = week.filter((d) => d.active).length;
+
+  // The body diagram for the user's primary active goal — a decorative anatomical
+  // figure (Phase 2 asset) recolored per goal intent, rendered faintly in the
+  // Goals card. goalDiagram is a pure client-safe helper, so it runs here too.
+  const goalArt = goalItems[0] ? goalDiagram(goalItems[0]) : null;
 
   // Sleep & recovery (Pro): last night's entry + a 7-night week strip. The
   // daily totals are keyed to midnight-UTC ms, which equals each week day's
@@ -362,7 +371,16 @@ async function TodayContent() {
       <header className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 sm:p-8">
         <div
           aria-hidden
-          className="-right-16 -top-16 pointer-events-none absolute size-56 rounded-full bg-blood/20 blur-3xl"
+          className="-right-16 -top-16 pointer-events-none absolute size-56 rounded-full bg-blood/25 blur-3xl"
+        />
+        {/* Brand hero figure — decorative, bleeds off the right edge and fades
+            into the card. Plain <img> (not next/image) so the proxy serves it on
+            this authenticated route; hidden on small screens. */}
+        <img
+          alt=""
+          aria-hidden
+          className="pointer-events-none absolute right-0 bottom-0 hidden h-[112%] w-auto select-none object-contain object-bottom opacity-90 [mask-image:linear-gradient(to_left,black_55%,transparent)] lg:block"
+          src={HERO_FIGURE_SRC}
         />
         <div className="relative flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -399,68 +417,30 @@ async function TodayContent() {
           </div>
         </div>
 
+        {/* KPI vital strip (Pro) — at-a-glance numbers the page already computes */}
+        {isPro && (
+          <div className="relative">
+            <StatPills
+              activeThisWeek={activeThisWeek}
+              calorieTarget={target?.calories ?? null}
+              calories={caloriesToday}
+              weightChange={weightChange}
+              weightUnit={displayUnit}
+            />
+          </div>
+        )}
+
         {/* Streak strip */}
-        <StreakStrip streak={streak} week={week} />
+        <div className="relative">
+          <StreakStrip streak={streak} week={week} />
+        </div>
       </header>
 
-      {/* Goal + Training */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <GoalList
-            currentWeight={currentWeight}
-            goals={goalItems}
-            memoryGoalHint={goal}
-            pastGoals={pastGoalItems}
-          />
-        </Card>
-
-        <Card>
-          <PlanList memoryPlanHint={workoutPlan} plans={planItems} />
-        </Card>
-      </div>
-
-      {/* Last workout (Pro) */}
-      {isPro && (
-        <Card>
-          <div className="flex items-center justify-between">
-            <CardTitle icon={<Dumbbell className="size-4 text-blood" />}>
-              Last workout
-            </CardTitle>
-            <Button asChild className="gap-1.5" size="sm" variant="outline">
-              <Link href="/workouts">
-                <Dumbbell className="size-3.5" />
-                View all
-              </Link>
-            </Button>
-          </div>
-          {lastWorkout ? (
-            <div>
-              <div className="font-display font-semibold text-lg leading-tight">
-                {lastWorkout.title}
-              </div>
-              <div className="mt-0.5 text-muted-foreground text-sm">
-                {relativeDay(lastWorkout.performedAt)} ·{" "}
-                {lastWorkout.exerciseCount} exercise
-                {lastWorkout.exerciseCount === 1 ? "" : "s"} ·{" "}
-                {lastWorkout.setCount} set
-                {lastWorkout.setCount === 1 ? "" : "s"}
-              </div>
-            </div>
-          ) : (
-            <EmptyHint
-              cta="Log a workout"
-              href="/workouts"
-              text="No workouts logged yet. Log your first session and Chad starts tracking your PRs and volume."
-            />
-          )}
-        </Card>
-      )}
-
-      {/* Today's fuel (Pro) — the daily centerpiece, full width */}
+      {/* Today's meal log (Pro) — the daily centerpiece, full width */}
       {isPro ? (
         <Card>
           <div className="flex items-center justify-between">
-            <CardTitle icon={<Utensils className="size-4 text-blood" />}>
+            <CardTitle icon={<Utensils className="size-4" />} tone="amber">
               Today's meal log
             </CardTitle>
             <TargetEditor
@@ -519,46 +499,117 @@ async function TodayContent() {
         />
       )}
 
-      {/* Active meal plan (Pro) */}
-      {isPro && (
-        <Card>
-          <div className="flex items-center justify-between">
-            <CardTitle icon={<ChefHat className="size-4 text-blood" />}>
-              Meal plan
-            </CardTitle>
-            {mealPlanSummary && (
-              <Button asChild className="gap-1.5" size="sm" variant="outline">
-                <Link href="/meal-plan">
-                  <ChefHat className="size-3.5" />
-                  View plan
-                </Link>
-              </Button>
-            )}
-          </div>
-          {mealPlanSummary ? (
-            <div>
-              <div className="font-display font-semibold text-lg leading-tight">
-                {mealPlanSummary.title}
-              </div>
-              <div className="mt-0.5 text-muted-foreground text-sm">
-                {mealPlanSummary.dayCount}-day plan
-                {mealPlanSummary.targetLine
-                  ? ` · ${mealPlanSummary.targetLine}`
-                  : ""}
-              </div>
-            </div>
-          ) : (
-            <EmptyHint
-              cta="Build a meal plan"
-              href="/meal-plan"
-              text="No meal plan yet. Have Chad build a structured plan around your macro target — real foods, exact portions."
+      {/* Goal + Training */}
+      <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
+        <section className="relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card p-6">
+          {goalArt && (
+            <img
+              alt=""
+              aria-hidden
+              className="pointer-events-none absolute right-0 bottom-0 hidden h-[94%] w-auto select-none object-contain object-bottom opacity-[0.2] [mask-image:linear-gradient(to_left,black,transparent_80%)] sm:block"
+              src={goalArt.src}
             />
           )}
+          <div className="relative flex flex-1 flex-col">
+            <GoalList
+              currentWeight={currentWeight}
+              goals={goalItems}
+              memoryGoalHint={goal}
+              pastGoals={pastGoalItems}
+            />
+          </div>
+        </section>
+
+        <Card>
+          <PlanList memoryPlanHint={workoutPlan} plans={planItems} />
         </Card>
+      </div>
+
+      {/* Last workout + Meal plan (Pro) */}
+      {isPro && (
+        <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
+          <Card>
+            <div className="flex items-center justify-between">
+              <CardTitle icon={<Dumbbell className="size-4" />} tone="blood">
+                Last workout
+              </CardTitle>
+              <Button asChild className="gap-1.5" size="sm" variant="outline">
+                <Link href="/workouts">
+                  <Dumbbell className="size-3.5" />
+                  View all
+                </Link>
+              </Button>
+            </div>
+            {lastWorkout ? (
+              <div className="flex flex-1 flex-col justify-center">
+                <div className="font-display font-semibold text-lg leading-tight">
+                  {lastWorkout.title}
+                </div>
+                <div className="mt-0.5 text-muted-foreground text-sm">
+                  {relativeDay(lastWorkout.performedAt)} ·{" "}
+                  {lastWorkout.exerciseCount} exercise
+                  {lastWorkout.exerciseCount === 1 ? "" : "s"} ·{" "}
+                  {lastWorkout.setCount} set
+                  {lastWorkout.setCount === 1 ? "" : "s"}
+                </div>
+              </div>
+            ) : (
+              <EmptyHint
+                cta="Log a workout"
+                href="/workouts"
+                text="No workouts logged yet. Log your first session and Chad starts tracking your PRs and volume."
+              />
+            )}
+          </Card>
+
+          <Card>
+            <div className="flex items-center justify-between">
+              <CardTitle icon={<ChefHat className="size-4" />} tone="amber">
+                Meal plan
+              </CardTitle>
+              {mealPlanSummary && (
+                <Button asChild className="gap-1.5" size="sm" variant="outline">
+                  <Link href="/meal-plan">
+                    <ChefHat className="size-3.5" />
+                    View plan
+                  </Link>
+                </Button>
+              )}
+            </div>
+            {mealPlanSummary ? (
+              <div className="flex flex-1 items-center gap-4">
+                {/* Plain <img> (proxy serves it on this authed route) */}
+                <img
+                  alt=""
+                  aria-hidden
+                  className="size-16 shrink-0 select-none rounded-xl object-cover ring-1 ring-border"
+                  src="/today/food-salmon-bowl.png"
+                />
+                <div className="min-w-0">
+                  <div className="font-display font-semibold text-lg leading-tight">
+                    {mealPlanSummary.title}
+                  </div>
+                  <div className="mt-0.5 text-muted-foreground text-sm">
+                    {mealPlanSummary.dayCount}-day plan
+                    {mealPlanSummary.targetLine
+                      ? ` · ${mealPlanSummary.targetLine}`
+                      : ""}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <EmptyHint
+                cta="Build a meal plan"
+                href="/meal-plan"
+                text="No meal plan yet. Have Chad build a structured plan around your macro target — real foods, exact portions."
+              />
+            )}
+          </Card>
+        </div>
       )}
 
       {/* Hydration + Weight (Pro) */}
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
         {isPro ? (
           <WaterTracker totalMl={waterMl} />
         ) : (
@@ -572,7 +623,7 @@ async function TodayContent() {
         {isPro ? (
           <Card>
             <div className="flex items-center justify-between">
-              <CardTitle icon={<LineChart className="size-4 text-blood" />}>
+              <CardTitle icon={<LineChart className="size-4" />} tone="violet">
                 Weight trend
               </CardTitle>
               {currentWeight != null && (
@@ -699,14 +750,16 @@ function Card({ children }: { children: React.ReactNode }) {
 
 function CardTitle({
   icon,
+  tone,
   children,
 }: {
   icon: React.ReactNode;
+  tone: ChipTone;
   children: React.ReactNode;
 }) {
   return (
-    <h2 className="mb-3 flex items-center gap-2 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-      {icon}
+    <h2 className="mb-3 flex items-center gap-2.5 font-medium text-muted-foreground text-sm uppercase tracking-wide">
+      <IconChip tone={tone}>{icon}</IconChip>
       {children}
     </h2>
   );
@@ -742,8 +795,10 @@ function LockedCard({
 }) {
   return (
     <section className="flex flex-col rounded-2xl border border-border border-dashed bg-card p-6">
-      <h2 className="mb-3 flex items-center gap-2 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-        {icon}
+      <h2 className="mb-3 flex items-center gap-2.5 font-medium text-muted-foreground text-sm uppercase tracking-wide">
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+          {icon}
+        </span>
         {title}
       </h2>
       <div className="flex flex-1 flex-col items-start justify-center gap-3 py-4">

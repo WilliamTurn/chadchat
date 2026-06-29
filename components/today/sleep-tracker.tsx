@@ -16,6 +16,7 @@ import { Bar, BarChart, Cell, ReferenceLine, XAxis } from "recharts";
 import { toast } from "sonner";
 import { logSleep } from "@/app/today/actions";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
+import { IconChip } from "@/components/today/icon-chip";
 import { Button } from "@/components/ui/button";
 import {
   type ChartConfig,
@@ -246,8 +247,10 @@ export function SleepTracker({
     <section className="flex flex-col rounded-2xl border border-border bg-card p-6">
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Moon className="size-4 text-indigo-400" />
+        <div className="flex items-center gap-2.5">
+          <IconChip tone="indigo">
+            <Moon className="size-4" />
+          </IconChip>
           <h2 className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
             Sleep & recovery
           </h2>

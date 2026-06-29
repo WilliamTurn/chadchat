@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { type EditableGoal, GoalEditor } from "./goal-editor";
 import { GoalViewer } from "./goal-viewer";
+import { IconChip } from "./icon-chip";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -215,8 +216,10 @@ export function GoalList({
   return (
     <>
       <div className="mb-3 flex items-start justify-between">
-        <h2 className="flex items-center gap-2 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-          <Target className="size-4 text-blood" />
+        <h2 className="flex items-center gap-2.5 font-medium text-muted-foreground text-sm uppercase tracking-wide">
+          <IconChip tone="blood">
+            <Target className="size-4" />
+          </IconChip>
           Your goals
         </h2>
         {goals.length > 0 && <GoalEditor variant="add" />}

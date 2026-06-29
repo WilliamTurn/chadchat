@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { removePlan } from "@/app/today/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { IconChip } from "./icon-chip";
 import { type EditablePlan, PlanEditor } from "./plan-editor";
 import { PlanViewer } from "./plan-viewer";
 
@@ -158,8 +159,10 @@ export function PlanList({
   return (
     <>
       <div className="mb-3 flex items-start justify-between gap-2">
-        <h2 className="flex items-center gap-2 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-          <Dumbbell className="size-4 text-blood" />
+        <h2 className="flex items-center gap-2.5 font-medium text-muted-foreground text-sm uppercase tracking-wide">
+          <IconChip tone="blood">
+            <Dumbbell className="size-4" />
+          </IconChip>
           Your training
         </h2>
         <div className="flex items-center gap-2">
