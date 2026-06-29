@@ -126,7 +126,11 @@ export function AppSidebar({
             <SidebarGroupContent>
               <SidebarMenu>
                 {/* Section links come from the shared nav list (NAV-3) so the
-                    sidebar and the StandaloneHeader can't drift apart. The
+                    sidebar and the StandaloneHeader can't drift apart. As of
+                    NAV-31 the sidebar carries the full feature inventory
+                    (Dashboard, Workouts, Calorie Tracker, Meal Plan, Kitchen,
+                    Progress, Sleep, Help) — same nav model as the header — so
+                    the product is discoverable from the chat landing. The
                     "New chat" action is sidebar-only, so it's rendered inline
                     right after Dashboard (the first link) rather than living in
                     the shared list. */}

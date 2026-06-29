@@ -7,6 +7,7 @@ import {
   LineChart,
   type LucideIcon,
   MessageSquare,
+  Moon,
   Refrigerator,
   UtensilsCrossed,
 } from "lucide-react";
@@ -22,14 +23,17 @@ import {
  * - `header`  → the StandaloneHeader bar on /today, /nutrition, /progress, …
  * - `sidebar` → the chat sidebar.
  *
- * The sidebar is deliberately kept lean (FEAT-1): only Dashboard and Help are
- * tagged `sidebar`. Chat, Workouts, Nutrition, Meal Plan, Kitchen, Progress and
- * Account are all header-only — the chat sidebar is for chat (New chat / history
- * / Delete all), and feature discovery happens through the StandaloneHeader and
- * dashboard quick-actions, not by cramming every section into the sidebar.
- * Adding a new feature link here won't bloat the sidebar unless it's explicitly
- * tagged `sidebar`. Order matters: both navs render the list in order
- * (left-to-right in the header, top-to-bottom in the sidebar).
+ * NAV-31 (reverses the FEAT-1 lean-sidebar call): the chat surface is the
+ * default landing, but the chat route has no StandaloneHeader — so when the
+ * sidebar only carried Dashboard/Help, a new user literally could not see
+ * Workouts, Nutrition, Meal Plan, Kitchen, Progress or Sleep from where they
+ * start. Three first-week audits flagged this as a real discovery gap, so every
+ * feature section is now tagged `sidebar` too: the chat sidebar exposes the same
+ * labelled inventory as the StandaloneHeader and the mobile drawer — one nav
+ * model everywhere. Chat stays header-only (the sidebar IS chat: New chat +
+ * history cover it) and Account stays header-only (the sidebar footer user menu
+ * already carries Account + sign-out). Order matters: both navs render the list
+ * in order (left-to-right in the header, top-to-bottom in the sidebar).
  */
 export type NavSurface = "header" | "sidebar";
 
@@ -52,31 +56,37 @@ export const NAV_LINKS: NavLink[] = [
     href: "/workouts",
     label: "Workouts",
     icon: Dumbbell,
-    surfaces: ["header"],
+    surfaces: ["header", "sidebar"],
   },
   {
     href: "/nutrition",
     label: "Calorie Tracker",
     icon: Camera,
-    surfaces: ["header"],
+    surfaces: ["header", "sidebar"],
   },
   {
     href: "/meal-plan",
     label: "Meal Plan",
     icon: UtensilsCrossed,
-    surfaces: ["header"],
+    surfaces: ["header", "sidebar"],
   },
   {
     href: "/kitchen",
     label: "Kitchen",
     icon: Refrigerator,
-    surfaces: ["header"],
+    surfaces: ["header", "sidebar"],
   },
   {
     href: "/progress",
     label: "Progress",
     icon: LineChart,
-    surfaces: ["header"],
+    surfaces: ["header", "sidebar"],
+  },
+  {
+    href: "/sleep",
+    label: "Sleep",
+    icon: Moon,
+    surfaces: ["header", "sidebar"],
   },
   {
     href: "/account",
