@@ -8,16 +8,25 @@ const nextConfig: NextConfig = {
     ? {
         basePath,
         assetPrefix: "/demo-assets",
-        redirects: async () => [
+      }
+    : {}),
+  redirects: async () => [
+    // "Dashboard" is the nav label for /today; /dashboard itself was never a
+    // route and used to hard-404 (NAV-32). Alias it to the real dashboard so a
+    // guessed/bookmarked /dashboard lands somewhere sensible. Runs before the
+    // auth proxy, so it works whether or not the visitor is signed in.
+    { source: "/dashboard", destination: "/today", permanent: false },
+    ...(basePath
+      ? [
           {
             source: "/",
             destination: basePath,
             permanent: false,
-            basePath: false,
+            basePath: false as const,
           },
-        ],
-      }
-    : {}),
+        ]
+      : []),
+  ],
   env: {
     NEXT_PUBLIC_BASE_PATH: basePath,
   },
