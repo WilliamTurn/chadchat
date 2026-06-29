@@ -1,6 +1,6 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { ArrowDownIcon } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useMessages } from "@/hooks/use-messages";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
@@ -8,6 +8,7 @@ import { ChatError } from "./chat-error";
 import { useDataStream } from "./data-stream-provider";
 import { Greeting } from "./greeting";
 import { PreviewMessage, ThinkingMessage } from "./message";
+import { submitRegenerateMessage } from "./message-editor";
 
 type MessagesProps = {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
@@ -57,6 +58,13 @@ function PureMessages({
 
   useDataStream();
 
+  // Regenerate the last assistant turn (deletes the stale turn from the DB first
+  // so the route doesn't duplicate the user message — see submitRegenerateMessage).
+  const handleRegenerate = useCallback(
+    () => submitRegenerateMessage({ messages, setMessages, regenerate }),
+    [messages, setMessages, regenerate]
+  );
+
   const prevChatIdRef = useRef(chatId);
   useEffect(() => {
     if (prevChatIdRef.current !== chatId) {
@@ -79,6 +87,7 @@ function PureMessages({
             <PreviewMessage
               addToolApprovalResponse={addToolApprovalResponse}
               chatId={chatId}
+              isLastMessage={index === messages.length - 1}
               isLoading={
                 status === "streaming" && messages.length - 1 === index
               }
@@ -86,6 +95,7 @@ function PureMessages({
               key={message.id}
               message={message}
               onEdit={onEditMessage}
+              onRegenerate={handleRegenerate}
               regenerate={regenerate}
               requiresScrollPadding={
                 hasSentMessage && index === messages.length - 1

@@ -1,4 +1,5 @@
 import equal from "fast-deep-equal";
+import { RefreshCw } from "lucide-react";
 import { memo } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
@@ -17,12 +18,16 @@ export function PureMessageActions({
   vote,
   isLoading,
   onEdit,
+  onRegenerate,
+  showRegenerate,
 }: {
   chatId: string;
   message: ChatMessage;
   vote: Vote | undefined;
   isLoading: boolean;
   onEdit?: () => void;
+  onRegenerate?: () => void;
+  showRegenerate?: boolean;
 }) {
   const { mutate } = useSWRConfig();
   const [_, copyToClipboard] = useCopyToClipboard();
@@ -82,6 +87,17 @@ export function PureMessageActions({
       >
         <CopyIcon />
       </Action>
+
+      {showRegenerate && onRegenerate && (
+        <Action
+          className="text-muted-foreground/50 hover:text-foreground"
+          data-testid="message-regenerate"
+          onClick={onRegenerate}
+          tooltip="Regenerate"
+        >
+          <RefreshCw size={15} />
+        </Action>
+      )}
 
       <Action
         className="text-muted-foreground/50 hover:text-foreground"
@@ -199,6 +215,9 @@ export const MessageActions = memo(
       return false;
     }
     if (prevProps.isLoading !== nextProps.isLoading) {
+      return false;
+    }
+    if (prevProps.showRegenerate !== nextProps.showRegenerate) {
       return false;
     }
 

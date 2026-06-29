@@ -388,6 +388,10 @@ export const MessageResponse = memo(
       )}
       plugins={streamdownPlugins}
       remarkPlugins={[remarkChadRed, ...(remarkPlugins ?? [])]}
+      // App-palette code theme: github-dark-default's near-black bg (#0d1117)
+      // matches Chad's dark surfaces (card #0b0f17) instead of streamdown's
+      // default grey github-dark (#24292e).
+      shikiTheme={["github-light", "github-dark-default"]}
       {...props}
     />
   ),

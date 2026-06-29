@@ -20,6 +20,22 @@ import { MessageActions } from "./message-actions";
 import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
 
+// Chad's dumbbell avatar. `glow` lights it with a breathing blood-red halo while
+// he's working (thinking / streaming) — a streaming-only flourish, reduced-motion safe.
+const ChadAvatar = ({ glow = false }: { glow?: boolean }) => (
+  <div className="flex h-[calc(16px*1.65)] shrink-0 items-center">
+    <div
+      className={cn(
+        "flex size-7 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground ring-1 ring-border/50 transition-shadow duration-300",
+        glow &&
+          "animate-pulse shadow-[0_0_12px_2px_rgba(164,22,26,0.45)] ring-blood/50 motion-reduce:animate-none"
+      )}
+    >
+      <Dumbbell className="text-blood" size={14} strokeWidth={2.5} />
+    </div>
+  </div>
+);
+
 const PurePreviewMessage = ({
   addToolApprovalResponse: _addToolApprovalResponse,
   chatId,
@@ -30,7 +46,9 @@ const PurePreviewMessage = ({
   regenerate: _regenerate,
   isReadonly,
   requiresScrollPadding: _requiresScrollPadding,
+  isLastMessage,
   onEdit,
+  onRegenerate,
 }: {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
   chatId: string;
@@ -41,7 +59,9 @@ const PurePreviewMessage = ({
   regenerate: UseChatHelpers<ChatMessage>["regenerate"];
   isReadonly: boolean;
   requiresScrollPadding: boolean;
+  isLastMessage?: boolean;
   onEdit?: (message: ChatMessage) => void;
+  onRegenerate?: () => void;
 }) => {
   const attachmentsFromMessage = message.parts.filter(
     (part) => part.type === "file"
@@ -220,6 +240,8 @@ const PurePreviewMessage = ({
       key={`action-${message.id}`}
       message={message}
       onEdit={onEdit ? () => onEdit(message) : undefined}
+      onRegenerate={onRegenerate}
+      showRegenerate={isAssistant && Boolean(isLastMessage)}
       vote={vote}
     />
   );
@@ -249,13 +271,7 @@ const PurePreviewMessage = ({
           isUser ? "flex flex-col items-end gap-2" : "flex items-start gap-3"
         )}
       >
-        {isAssistant && (
-          <div className="flex h-[calc(16px*1.65)] shrink-0 items-center">
-            <div className="flex size-7 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground ring-1 ring-border/50">
-              <Dumbbell className="text-blood" size={14} strokeWidth={2.5} />
-            </div>
-          </div>
-        )}
+        {isAssistant && <ChadAvatar glow={isLoading} />}
         {isAssistant ? (
           <div className="flex min-w-0 flex-1 flex-col gap-2">{content}</div>
         ) : (
@@ -276,11 +292,7 @@ export const ThinkingMessage = () => {
       data-testid="message-assistant-loading"
     >
       <div className="flex items-start gap-3">
-        <div className="flex h-[calc(16px*1.65)] shrink-0 items-center">
-          <div className="flex size-7 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground ring-1 ring-border/50">
-            <Dumbbell className="text-blood" size={14} strokeWidth={2.5} />
-          </div>
-        </div>
+        <ChadAvatar glow />
 
         <div className="flex h-[calc(16px*1.65)] items-center text-[15px] leading-[1.65]">
           <Shimmer className="font-medium" duration={1}>
