@@ -39,7 +39,7 @@ export default function KitchenPage() {
             className="text-foreground underline underline-offset-4"
             href="/nutrition"
           >
-            Nutrition diary
+            Calorie Tracker
           </Link>{" "}
           ·{" "}
           <Link

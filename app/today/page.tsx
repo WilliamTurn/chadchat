@@ -474,7 +474,7 @@ async function TodayContent() {
         <Card>
           <div className="flex items-center justify-between">
             <CardTitle icon={<Utensils className="size-4" />} tone="amber">
-              Today's meal log
+              Calorie Tracker
             </CardTitle>
             <TargetEditor
               calories={target?.calories ?? null}
@@ -528,7 +528,7 @@ async function TodayContent() {
         <LockedCard
           icon={<Utensils className="size-4" />}
           text="Snap a meal, fridge, or pantry and Chad grades the macros, then tracks your calories and protein against a daily target. Pro only."
-          title="Today's meal log"
+          title="Calorie Tracker"
         />
       )}
 
@@ -746,7 +746,7 @@ async function TodayContent() {
         <QuickAction
           href="/nutrition"
           icon={<Camera className="size-4" />}
-          label="Nutrition"
+          label="Calorie Tracker"
         />
         <QuickAction
           href="/meal-plan"

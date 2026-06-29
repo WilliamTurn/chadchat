@@ -48,7 +48,7 @@ export function SidebarPlanStatus({ plan }: { plan: PlanStatusSummary }) {
           >
             <Link href="/nutrition">
               <Camera className="size-3.5" />
-              Nutrition
+              Calorie Tracker
             </Link>
           </Button>
           <Button

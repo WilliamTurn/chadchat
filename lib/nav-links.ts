@@ -56,7 +56,7 @@ export const NAV_LINKS: NavLink[] = [
   },
   {
     href: "/nutrition",
-    label: "Nutrition",
+    label: "Calorie Tracker",
     icon: Camera,
     surfaces: ["header"],
   },

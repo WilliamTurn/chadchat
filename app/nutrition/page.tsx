@@ -1,3 +1,4 @@
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -52,7 +53,7 @@ export default function NutritionPage() {
       <div className="mb-8">
         <div className="flex items-center gap-3">
           <h1 className="font-semibold text-2xl tracking-tight">
-            Nutrition diary
+            Calorie Tracker
           </h1>
           <Badge variant="secondary">Pro</Badge>
         </div>
@@ -285,18 +286,39 @@ function HistorySection({ meals }: { meals: MealAnalysis[] }) {
   }
 
   return (
-    <section className="flex flex-col gap-6">
+    <section className="flex flex-col gap-4">
       <h2 className="font-medium text-lg">Earlier</h2>
-      {days.map((day) => (
-        <div className="flex flex-col gap-3" key={day.key}>
-          <h3 className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
-            {day.label}
-          </h3>
-          {day.items.map((entry) => (
-            <AnalysisCard entry={entry} key={entry.id} />
-          ))}
-        </div>
-      ))}
+      {/* Each past day is a collapsible group so a long history stays scannable
+          instead of one endless scroll (NUT-12). The most recent past day is
+          open by default; older days collapse to a one-line date + meal-count +
+          calorie summary you can expand on demand. Native <details> keeps this
+          server-rendered with zero client JS. */}
+      {days.map((day, i) => {
+        const cals = Math.round(sumMacro(day.items, "calories"));
+        return (
+          <details
+            className="group flex flex-col gap-3 border-border border-t pt-4 first:border-t-0 first:pt-0"
+            key={day.key}
+            open={i === 0}
+          >
+            <summary className="flex cursor-pointer list-none items-center gap-2 [&::-webkit-details-marker]:hidden">
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-90" />
+              <span className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
+                {day.label}
+              </span>
+              <span className="ml-auto whitespace-nowrap text-muted-foreground/70 text-xs">
+                {day.items.length} meal{day.items.length === 1 ? "" : "s"}
+                {cals > 0 ? ` · ${cals.toLocaleString()} cal` : ""}
+              </span>
+            </summary>
+            <div className="flex flex-col gap-3">
+              {day.items.map((entry) => (
+                <AnalysisCard entry={entry} key={entry.id} />
+              ))}
+            </div>
+          </details>
+        );
+      })}
     </section>
   );
 }
