@@ -501,7 +501,7 @@ async function TodayContent() {
 
       {/* Goal + Training */}
       <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
-        <section className="relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card p-6">
+        <section className="relative flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card p-6">
           {goalArt && (
             <img
               alt=""
@@ -742,7 +742,7 @@ async function TodayContent() {
 
 function Card({ children }: { children: React.ReactNode }) {
   return (
-    <section className="flex flex-col rounded-2xl border border-border bg-card p-6">
+    <section className="flex min-w-0 flex-col rounded-2xl border border-border bg-card p-6">
       {children}
     </section>
   );
@@ -794,7 +794,7 @@ function LockedCard({
   text: string;
 }) {
   return (
-    <section className="flex flex-col rounded-2xl border border-border border-dashed bg-card p-6">
+    <section className="flex min-w-0 flex-col rounded-2xl border border-border border-dashed bg-card p-6">
       <h2 className="mb-3 flex items-center gap-2.5 font-medium text-muted-foreground text-sm uppercase tracking-wide">
         <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
           {icon}

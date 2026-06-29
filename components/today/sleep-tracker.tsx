@@ -244,7 +244,7 @@ export function SleepTracker({
   );
 
   return (
-    <section className="flex flex-col rounded-2xl border border-border bg-card p-6">
+    <section className="flex min-w-0 flex-col rounded-2xl border border-border bg-card p-6">
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2.5">
