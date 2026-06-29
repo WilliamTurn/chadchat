@@ -67,6 +67,7 @@ import {
   normalizeSex,
   resolveHero,
 } from "@/lib/today/goal-diagram";
+import { DEFAULT_WATER_GOAL_ML } from "@/lib/today/water-units";
 import { HeroCustomizer } from "@/components/today/hero-customizer";
 
 const LB_PER_KG = 2.204_62;
@@ -317,6 +318,9 @@ async function TodayContent() {
         );
 
   // Today's intake (Pro).
+  // Daily hydration goal (DSH-24): user-set in ml, else one gallon.
+  const waterGoalMl = user.waterGoalMl ?? DEFAULT_WATER_GOAL_ML;
+
   const caloriesToday = todaysMeals.reduce(
     (sum, m) => sum + (m.calories ?? 0),
     0
@@ -640,7 +644,7 @@ async function TodayContent() {
       {/* Hydration + Weight (Pro) */}
       <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
         {isPro ? (
-          <WaterTracker totalMl={waterMl} />
+          <WaterTracker goalMl={waterGoalMl} totalMl={waterMl} />
         ) : (
           <LockedCard
             icon={<Droplet className="size-4" />}
@@ -719,7 +723,7 @@ async function TodayContent() {
 
       {/* Hydration trend (Pro) — full-width, once there's history to show */}
       {isPro && waterDaily.length >= 2 && (
-        <WaterTrendChart days={waterDaily} />
+        <WaterTrendChart days={waterDaily} goalMl={waterGoalMl} />
       )}
 
       {/* Sleep trend (Pro) — full-width, once there's history to show */}

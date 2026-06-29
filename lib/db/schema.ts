@@ -52,6 +52,10 @@ export const user = pgTable("User", {
   // A user-uploaded background image (Blob URL) for the /today header, used
   // when heroFigure === "custom".
   heroImageUrl: text("heroImageUrl"),
+  // --- Hydration goal (DSH-24) ---
+  // Daily water target in milliliters (stored in ml like the WaterLog rows, but
+  // shown to the user in oz/gallons). Null = use the default of one US gallon.
+  waterGoalMl: integer("waterGoalMl"),
 });
 
 export type User = InferSelectModel<typeof user>;

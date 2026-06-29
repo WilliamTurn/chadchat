@@ -29,9 +29,15 @@ import {
 import { useChartRange } from "@/hooks/use-chart-range";
 import { useMountReveal } from "@/hooks/use-mount-reveal";
 import { formatTick } from "@/lib/chart/format";
+import {
+  DEFAULT_WATER_GOAL_ML,
+  formatOz,
+  formatOzAxis,
+  formatVolume,
+  glassesFromMl,
+} from "@/lib/today/water-units";
 
 const SKY = "#0ea5e9";
-const GLASS_ML = 250;
 
 const ASK_CHAD_PROMPT =
   "Look at my water intake over the last couple of weeks. Am I hitting my hydration goal consistently, and what would help me stay on top of it?";
@@ -42,29 +48,14 @@ const chartConfig = {
 
 type Point = { t: number; ml: number };
 
-/** "1.25 L" / "750 ml". */
-function formatMl(ml: number): string {
-  if (ml >= 1000) {
-    const liters = ml / 1000;
-    const text = liters.toFixed(ml % 1000 === 0 ? 0 : 2).replace(/\.?0+$/, "");
-    return `${text} L`;
-  }
-  return `${Math.round(ml)} ml`;
-}
-
-/** Compact axis number in liters, e.g. "1.5L". */
-function fmtAxis(ml: number): string {
-  return `${Math.round(ml / 100) / 10}L`;
-}
-
 export function WaterTrendChart({
   days,
-  goalMl = 2000,
+  goalMl = DEFAULT_WATER_GOAL_ML,
 }: {
   days: Point[];
   goalMl?: number;
 }) {
-  const safeGoal = goalMl > 0 ? goalMl : 2000;
+  const safeGoal = goalMl > 0 ? goalMl : DEFAULT_WATER_GOAL_ML;
   const reveal = useMountReveal();
   const { rows, control } = useChartRange(days, { minPoints: 7 });
 
@@ -95,14 +86,16 @@ export function WaterTrendChart({
       footer={
         <span>
           Goal{" "}
-          <span className="font-medium text-sky-400">{formatMl(safeGoal)}</span>{" "}
+          <span className="font-medium text-sky-400">
+            {formatVolume(safeGoal)}
+          </span>{" "}
           a day · each bar is one day's total
         </span>
       }
       kpis={
         stats && (
           <>
-            <Kpi label="Avg / day" size="lg" value={formatMl(stats.avg)} />
+            <Kpi label="Avg / day" size="lg" value={formatOz(stats.avg)} />
             <Kpi
               label="Days hit goal"
               tone={stats.hit > 0 ? "good" : "neutral"}
@@ -135,7 +128,7 @@ export function WaterTrendChart({
             axisLine={false}
             domain={[0, yMax]}
             tickCount={4}
-            tickFormatter={fmtAxis}
+            tickFormatter={formatOzAxis}
             tickLine={false}
             tickMargin={4}
             width={36}
@@ -189,7 +182,7 @@ function WaterTooltip({
   if (!row) {
     return null;
   }
-  const glasses = Math.round(row.ml / GLASS_ML);
+  const glasses = glassesFromMl(row.ml);
   const hit = row.ml >= goalMl;
   return (
     <div className="min-w-[11rem] rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
@@ -204,7 +197,7 @@ function WaterTooltip({
             <span className="text-muted-foreground">Water</span>
           </div>
           <span className="ml-auto font-medium text-foreground tabular-nums">
-            {formatMl(row.ml)}
+            {formatOz(row.ml)}
           </span>
         </div>
         <div className="flex items-center justify-between gap-4 text-muted-foreground">
@@ -212,7 +205,7 @@ function WaterTooltip({
           <span className={hit ? "font-medium text-emerald-500" : ""}>
             {hit
               ? "goal hit"
-              : `${formatMl(Math.max(0, goalMl - row.ml))} short`}
+              : `${formatOz(Math.max(0, goalMl - row.ml))} short`}
           </span>
         </div>
       </div>

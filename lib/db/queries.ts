@@ -364,6 +364,24 @@ export async function updateUserHero(
   }
 }
 
+/** Set the user's daily hydration goal in ml (null = the default gallon). */
+export async function updateUserWaterGoal(
+  userId: string,
+  waterGoalMl: number | null
+) {
+  try {
+    return await db
+      .update(user)
+      .set({ waterGoalMl, updatedAt: new Date() })
+      .where(eq(user.id, userId));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to update water goal"
+    );
+  }
+}
+
 // --- Memory layer (Phase 3) ---
 
 /** The user's durable memory profile, or undefined if none yet. */

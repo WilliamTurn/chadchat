@@ -15,6 +15,7 @@ import {
   deleteMealAnalysis,
   getUserById,
   updateMealAnalysis,
+  updateUserWaterGoal,
   upsertNutritionTarget,
 } from "@/lib/db/queries";
 import {
@@ -29,9 +30,6 @@ import {
 } from "@/lib/validation/nutrition";
 
 export type NutritionActionState = { ok: boolean; error?: string };
-
-/** A single glass logged by the water counter on /today. */
-const GLASS_ML = 250;
 
 /**
  * Resolve the signed-in user and confirm Pro. Photo analysis is a Chad Pro
@@ -248,17 +246,6 @@ export async function removeMealAnalysis(
 // calendar-day convention (see lib/date.ts). Not server-local midnight.
 const startOfToday = startOfTodayUTC;
 
-/** Add one glass (250 ml) to today's water count. */
-export async function addWater(): Promise<NutritionActionState> {
-  const user = await requirePro();
-  if (!user) {
-    return { ok: false, error: "Not authorized." };
-  }
-  await addWaterLog({ userId: user.id, amountMl: GLASS_ML });
-  revalidatePath("/today");
-  return { ok: true };
-}
-
 /** Remove the most recent glass logged today. */
 export async function removeWater(): Promise<NutritionActionState> {
   const user = await requirePro();
@@ -291,6 +278,31 @@ export async function logWaterAmount(
   }
   const clamped = Math.min(Math.round(amountMl), MAX_WATER_ML);
   await addWaterLog({ userId: user.id, amountMl: clamped });
+  revalidatePath("/today");
+  return { ok: true };
+}
+
+// Sane bounds for a daily hydration goal, in ml: a single glass up to two
+// gallons. Stops a typo'd custom goal from making the tracker nonsensical.
+const MIN_WATER_GOAL_ML = 237; // ~8 oz
+const MAX_WATER_GOAL_ML = 7600; // ~2 gallons
+
+/** Set the user's daily hydration goal (DSH-24). Amount arrives in ml. */
+export async function saveWaterGoal(
+  amountMl: number
+): Promise<NutritionActionState> {
+  const user = await requirePro();
+  if (!user) {
+    return { ok: false, error: "Setting a goal is a Chad Pro feature." };
+  }
+  if (!Number.isFinite(amountMl) || amountMl <= 0) {
+    return { ok: false, error: "Enter a daily goal." };
+  }
+  const clamped = Math.min(
+    Math.max(Math.round(amountMl), MIN_WATER_GOAL_ML),
+    MAX_WATER_GOAL_ML
+  );
+  await updateUserWaterGoal(user.id, clamped);
   revalidatePath("/today");
   return { ok: true };
 }

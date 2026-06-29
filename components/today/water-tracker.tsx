@@ -5,6 +5,7 @@ import {
   Droplet,
   Droplets,
   GlassWater,
+  Pencil,
   Plus,
   Undo2,
 } from "lucide-react";
@@ -12,7 +13,11 @@ import { motion, useReducedMotion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useId, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { addWater, logWaterAmount, removeWater } from "@/app/nutrition/actions";
+import {
+  logWaterAmount,
+  removeWater,
+  saveWaterGoal,
+} from "@/app/nutrition/actions";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { IconChip } from "@/components/today/icon-chip";
 import { Button } from "@/components/ui/button";
@@ -22,30 +27,31 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  BOTTLE_ML,
+  DEFAULT_WATER_GOAL_ML,
+  formatOz,
+  formatVolume,
+  GLASS_ML,
+  glassesFromMl,
+  mlToOz,
+  ozToMl,
+} from "@/lib/today/water-units";
 
-const GLASS_ML = 250;
-const MAX_CUSTOM_ML = 2000;
-
-/** Pretty-print a milliliter amount as "1.25 L" / "750 ml". */
-function formatMl(ml: number): string {
-  if (ml >= 1000) {
-    const liters = ml / 1000;
-    const text = liters.toFixed(ml % 1000 === 0 ? 0 : 2).replace(/\.?0+$/, "");
-    return `${text} L`;
-  }
-  return `${Math.round(ml)} ml`;
-}
+const MAX_CUSTOM_OZ = 64;
 
 /**
  * Hydration module for the /today dashboard. Renders a WaterMinder-style
  * vessel that visually fills with an animated wave proportional to
  * totalMl / goalMl, plus quick-add controls (glass / bottle / custom) and an
- * undo. Reads totalMl from props and re-renders after router.refresh() so the
- * fill always reflects the live server total.
+ * undo. Volumes are shown in US ounces & gallons (DSH-24) though stored in ml;
+ * the daily goal defaults to one gallon and is user-customizable. Reads totalMl
+ * from props and re-renders after router.refresh() so the fill always reflects
+ * the live server total.
  */
 export function WaterTracker({
   totalMl,
-  goalMl = 2000,
+  goalMl = DEFAULT_WATER_GOAL_ML,
 }: {
   totalMl: number;
   goalMl?: number;
@@ -55,12 +61,13 @@ export function WaterTracker({
   const [pending, startTransition] = useTransition();
   const [customOpen, setCustomOpen] = useState(false);
   const [customValue, setCustomValue] = useState("");
+  const [goalOpen, setGoalOpen] = useState(false);
   const clipId = useId();
 
-  const safeGoal = goalMl > 0 ? goalMl : 2000;
+  const safeGoal = goalMl > 0 ? goalMl : DEFAULT_WATER_GOAL_ML;
   const ratio = Math.min(totalMl / safeGoal, 1);
   const percent = Math.round(ratio * 100);
-  const glasses = Math.round(totalMl / GLASS_ML);
+  const glasses = glassesFromMl(totalMl);
   const remaining = Math.max(safeGoal - totalMl, 0);
   const reached = totalMl >= safeGoal;
 
@@ -77,12 +84,12 @@ export function WaterTracker({
 
   function onCustomSubmit(e: FormEvent) {
     e.preventDefault();
-    const ml = Math.round(Number(customValue));
-    if (!Number.isFinite(ml) || ml <= 0) {
-      toast.error("Enter how much you drank, in ml.");
+    const oz = Number(customValue);
+    if (!Number.isFinite(oz) || oz <= 0) {
+      toast.error("Enter how much you drank, in ounces.");
       return;
     }
-    run(() => logWaterAmount(ml));
+    run(() => logWaterAmount(ozToMl(oz)));
     setCustomValue("");
     setCustomOpen(false);
   }
@@ -93,10 +100,10 @@ export function WaterTracker({
   const fillTop = VIEW - ratio * VIEW;
 
   const fillLabel = reached
-    ? `Hydration goal reached: ${formatMl(totalMl)} of ${formatMl(safeGoal)}.`
-    : `Hydration ${percent}% of goal: ${formatMl(totalMl)} of ${formatMl(
+    ? `Hydration goal reached: ${formatOz(totalMl)} of ${formatVolume(safeGoal)}.`
+    : `Hydration ${percent}% of goal: ${formatOz(totalMl)} of ${formatVolume(
         safeGoal
-      )}, ${formatMl(remaining)} to go.`;
+      )}, ${formatOz(remaining)} to go.`;
 
   return (
     <section className="flex min-w-0 flex-col rounded-2xl border border-border bg-card p-6">
@@ -110,7 +117,16 @@ export function WaterTracker({
             Hydration
           </h2>
         </div>
-        <AskChadButton prompt="How's my water intake today? Am I drinking enough, and when should I top up?" />
+        <div className="flex items-center gap-1">
+          <WaterGoalEditor
+            goalMl={safeGoal}
+            onOpenChange={setGoalOpen}
+            open={goalOpen}
+            pending={pending}
+            run={run}
+          />
+          <AskChadButton prompt="How's my water intake today? Am I drinking enough, and when should I top up?" />
+        </div>
       </div>
 
       {/* Hero vessel + readout */}
@@ -249,10 +265,10 @@ export function WaterTracker({
         <div className="flex min-w-0 flex-col gap-1">
           <div className="flex items-baseline gap-1.5">
             <span className="font-display font-bold text-2xl text-foreground tabular-nums">
-              {formatMl(totalMl)}
+              {formatOz(totalMl)}
             </span>
             <span className="text-muted-foreground text-sm">
-              / {formatMl(safeGoal)}
+              / {formatVolume(safeGoal)}
             </span>
           </div>
           <p className="text-muted-foreground text-sm">
@@ -269,7 +285,7 @@ export function WaterTracker({
                 <Droplet className="size-4 fill-sky-400 text-sky-400" />
               </span>
             ) : (
-              `${formatMl(remaining)} to go`
+              `${formatOz(remaining)} to go`
             )}
           </p>
         </div>
@@ -278,31 +294,31 @@ export function WaterTracker({
       {/* Quick-add controls */}
       <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3">
         <Button
-          aria-label="Add a glass, 250 milliliters"
+          aria-label="Add a glass, 8 ounces"
           className="h-11 flex-col gap-0.5"
           disabled={pending}
-          onClick={() => run(addWater)}
+          onClick={() => run(() => logWaterAmount(GLASS_ML))}
           variant="outline"
         >
           <span className="flex items-center gap-1.5 font-medium text-sm">
             <Droplet className="size-4 text-sky-400" />
             Glass
           </span>
-          <span className="text-muted-foreground text-xs">+250 ml</span>
+          <span className="text-muted-foreground text-xs">+8 oz</span>
         </Button>
 
         <Button
-          aria-label="Add a bottle, 500 milliliters"
+          aria-label="Add a bottle, 16 ounces"
           className="h-11 flex-col gap-0.5"
           disabled={pending}
-          onClick={() => run(() => logWaterAmount(500))}
+          onClick={() => run(() => logWaterAmount(BOTTLE_ML))}
           variant="outline"
         >
           <span className="flex items-center gap-1.5 font-medium text-sm">
             <GlassWater className="size-4 text-sky-400" />
             Bottle
           </span>
-          <span className="text-muted-foreground text-xs">+500 ml</span>
+          <span className="text-muted-foreground text-xs">+16 oz</span>
         </Button>
 
         <Popover onOpenChange={setCustomOpen} open={customOpen}>
@@ -325,11 +341,11 @@ export function WaterTracker({
               <div className="flex flex-col gap-1.5">
                 <span className="font-medium text-sm">Add water</span>
                 <span className="text-muted-foreground text-xs">
-                  Enter an amount in milliliters (max {MAX_CUSTOM_ML} ml).
+                  Enter an amount in ounces (max {MAX_CUSTOM_OZ} oz).
                 </span>
               </div>
               <div className="flex gap-2">
-                {[330, 750, 1000].map((preset) => (
+                {[12, 24, 32].map((preset) => (
                   <Button
                     className="h-8 flex-1 px-0 text-xs"
                     key={preset}
@@ -337,18 +353,18 @@ export function WaterTracker({
                     type="button"
                     variant="secondary"
                   >
-                    {preset}
+                    {preset} oz
                   </Button>
                 ))}
               </div>
               <div className="flex gap-2">
                 <Input
-                  aria-label="Custom water amount in milliliters"
+                  aria-label="Custom water amount in ounces"
                   autoFocus
                   className="h-10"
                   inputMode="numeric"
                   onChange={(e) => setCustomValue(e.target.value)}
-                  placeholder="e.g. 350"
+                  placeholder="e.g. 20"
                   value={customValue}
                 />
                 <Button
@@ -379,5 +395,106 @@ export function WaterTracker({
         </Button>
       </div>
     </section>
+  );
+}
+
+/**
+ * Popover to set the daily hydration goal in ounces, with whole-gallon presets.
+ * Defaults the input to the current goal. Stored back in ml by the action.
+ */
+function WaterGoalEditor({
+  goalMl,
+  open,
+  onOpenChange,
+  pending,
+  run,
+}: {
+  goalMl: number;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  pending: boolean;
+  run: (action: () => Promise<{ ok: boolean; error?: string }>) => void;
+}) {
+  const [value, setValue] = useState("");
+
+  // Seed the input with the current goal each time the popover opens.
+  function handleOpenChange(next: boolean) {
+    if (next) {
+      setValue(String(Math.round(mlToOz(goalMl))));
+    }
+    onOpenChange(next);
+  }
+
+  function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    const oz = Number(value);
+    if (!Number.isFinite(oz) || oz <= 0) {
+      toast.error("Enter a daily goal in ounces.");
+      return;
+    }
+    run(async () => {
+      const res = await saveWaterGoal(ozToMl(oz));
+      if (res.ok) {
+        onOpenChange(false);
+      }
+      return res;
+    });
+  }
+
+  return (
+    <Popover onOpenChange={handleOpenChange} open={open}>
+      <PopoverTrigger asChild>
+        <Button
+          aria-label="Edit daily hydration goal"
+          className="h-8 gap-1.5 text-muted-foreground text-xs"
+          size="sm"
+          variant="ghost"
+        >
+          <Pencil className="size-3.5" />
+          Goal
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-64">
+        <form className="flex flex-col gap-3" onSubmit={onSubmit}>
+          <div className="flex flex-col gap-1.5">
+            <span className="font-medium text-sm">Daily goal</span>
+            <span className="text-muted-foreground text-xs">
+              How much water to aim for each day, in ounces. A gallon is 128 oz.
+            </span>
+          </div>
+          <div className="flex gap-2">
+            {[
+              { oz: 64, label: "½ gal" },
+              { oz: 96, label: "¾ gal" },
+              { oz: 128, label: "1 gal" },
+            ].map((preset) => (
+              <Button
+                className="h-8 flex-1 px-0 text-xs"
+                key={preset.oz}
+                onClick={() => setValue(String(preset.oz))}
+                type="button"
+                variant="secondary"
+              >
+                {preset.label}
+              </Button>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Input
+              aria-label="Daily hydration goal in ounces"
+              autoFocus
+              className="h-10"
+              inputMode="numeric"
+              onChange={(e) => setValue(e.target.value)}
+              placeholder="e.g. 128"
+              value={value}
+            />
+            <Button className="h-10 shrink-0" disabled={pending} type="submit">
+              Save
+            </Button>
+          </div>
+        </form>
+      </PopoverContent>
+    </Popover>
   );
 }

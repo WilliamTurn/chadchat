@@ -5,27 +5,22 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { generatePlan } from "@/app/meal-plan/actions";
+import { PlanSkeleton } from "@/components/meal-plan/plan-skeleton";
+import { SegmentedPicker } from "@/components/meal-plan/segmented-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  type Budget,
   BUDGET_LABEL,
   BUDGETS,
+  type CookTime,
   COOK_TIME_LABEL,
   COOK_TIMES,
+  type DietStyle,
   DIET_STYLE_LABEL,
   DIET_STYLES,
-  type DietStyle,
-  type Budget,
-  type CookTime,
 } from "@/lib/validation/meal-plan";
 
 function toList(raw: string): string[] {
@@ -36,15 +31,35 @@ function toList(raw: string): string[] {
     .slice(0, 20);
 }
 
+// Tap-target option lists built from the validation label maps, so the form and
+// the schema can never drift apart.
+const DIET_OPTIONS = DIET_STYLES.map((s) => ({
+  value: s,
+  label: DIET_STYLE_LABEL[s],
+}));
+const BUDGET_OPTIONS = BUDGETS.map((b) => ({ value: b, label: BUDGET_LABEL[b] }));
+const COOK_OPTIONS = COOK_TIMES.map((c) => ({
+  value: c,
+  label: COOK_TIME_LABEL[c],
+}));
+const MEALS_OPTIONS = [2, 3, 4, 5, 6].map((n) => ({
+  value: String(n),
+  label: String(n),
+}));
+const DAYS_OPTIONS = [1, 2, 3, 4, 5, 6, 7].map((n) => ({
+  value: String(n),
+  label: String(n),
+}));
+
 /**
  * The preferences form that generates a structured meal plan from the dashboard.
- * Generation takes a minute or two (one Opus design pass + food-DB lookups), so
- * the submit state is an explicit, reassuring full-button progress state.
+ * Every preference is a segmented pill picker (NUT-4) rather than a native
+ * dropdown, and generation (one Opus design pass + food-DB lookups, a minute or
+ * two) shows a shape-matched skeleton of the plan that's forming.
  */
 export function GenerateForm({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [, setBusy] = useState(false);
 
   const [dietStyle, setDietStyle] = useState<DietStyle>("balanced");
   const [mealsPerDay, setMealsPerDay] = useState("4");
@@ -57,7 +72,6 @@ export function GenerateForm({ compact = false }: { compact?: boolean }) {
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setBusy(true);
     startTransition(async () => {
       const res = await generatePlan({
         dietStyle,
@@ -69,7 +83,6 @@ export function GenerateForm({ compact = false }: { compact?: boolean }) {
         dislikes: toList(dislikes),
         notes: notes.trim(),
       });
-      setBusy(false);
       if (res.ok) {
         toast.success("Your meal plan is ready.");
         router.refresh();
@@ -91,91 +104,62 @@ export function GenerateForm({ compact = false }: { compact?: boolean }) {
         </div>
       )}
 
+      <div className="flex flex-col gap-1.5">
+        <Label>Eating style</Label>
+        <SegmentedPicker
+          ariaLabel="Eating style"
+          className="grid-cols-2 sm:grid-cols-3"
+          onChange={(v) => setDietStyle(v as DietStyle)}
+          options={DIET_OPTIONS}
+          value={dietStyle}
+        />
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="diet-style">Eating style</Label>
-          <Select
-            onValueChange={(v) => setDietStyle(v as DietStyle)}
-            value={dietStyle}
-          >
-            <SelectTrigger id="diet-style">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {DIET_STYLES.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {DIET_STYLE_LABEL[s]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Label>Meals per day</Label>
+          <SegmentedPicker
+            ariaLabel="Meals per day"
+            className="grid-cols-5"
+            onChange={setMealsPerDay}
+            options={MEALS_OPTIONS}
+            value={mealsPerDay}
+          />
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="meals-per-day">Meals per day</Label>
-          <Select onValueChange={setMealsPerDay} value={mealsPerDay}>
-            <SelectTrigger id="meals-per-day">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {[2, 3, 4, 5, 6].map((n) => (
-                <SelectItem key={n} value={String(n)}>
-                  {n} meals
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Label>Days to plan</Label>
+          <SegmentedPicker
+            ariaLabel="Days to plan"
+            className="grid-cols-7"
+            onChange={setDays}
+            options={DAYS_OPTIONS}
+            value={days}
+          />
         </div>
+      </div>
 
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="days">Days to plan</Label>
-          <Select onValueChange={setDays} value={days}>
-            <SelectTrigger id="days">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {[1, 2, 3, 4, 5, 6, 7].map((n) => (
-                <SelectItem key={n} value={String(n)}>
-                  {n} {n === 1 ? "day" : "days"}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="cook-time">Cooking effort</Label>
-          <Select
-            onValueChange={(v) => setCookTime(v as CookTime)}
+          <Label>Cooking effort</Label>
+          <SegmentedPicker
+            ariaLabel="Cooking effort"
+            className="grid-cols-1 sm:grid-cols-3"
+            onChange={(v) => setCookTime(v as CookTime)}
+            options={COOK_OPTIONS}
             value={cookTime}
-          >
-            <SelectTrigger id="cook-time">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {COOK_TIMES.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {COOK_TIME_LABEL[c]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          />
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="budget">Budget</Label>
-          <Select onValueChange={(v) => setBudget(v as Budget)} value={budget}>
-            <SelectTrigger id="budget">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {BUDGETS.map((b) => (
-                <SelectItem key={b} value={b}>
-                  {BUDGET_LABEL[b]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Label>Budget</Label>
+          <SegmentedPicker
+            ariaLabel="Budget"
+            className="grid-cols-3"
+            onChange={(v) => setBudget(v as Budget)}
+            options={BUDGET_OPTIONS}
+            value={budget}
+          />
         </div>
       </div>
 
@@ -231,11 +215,15 @@ export function GenerateForm({ compact = false }: { compact?: boolean }) {
           </>
         )}
       </Button>
+
       {pending && (
-        <p className="-mt-2 text-center text-muted-foreground text-xs">
-          Chad is designing every meal and pulling real macros from the food
-          database. Hang tight.
-        </p>
+        <div className="flex flex-col gap-3">
+          <p className="text-center text-muted-foreground text-xs">
+            Chad is designing every meal and pulling real macros from the food
+            database. Hang tight.
+          </p>
+          <PlanSkeleton meals={Number(mealsPerDay)} />
+        </div>
       )}
     </form>
   );
