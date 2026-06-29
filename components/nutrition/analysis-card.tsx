@@ -34,6 +34,59 @@ function scoreColor(score: number | null): string {
   return "text-emerald-500";
 }
 
+function scoreStroke(score: number): string {
+  if (score <= 3) {
+    return "stroke-blood";
+  }
+  if (score <= 6) {
+    return "stroke-amber-500";
+  }
+  return "stroke-emerald-500";
+}
+
+/** Chad's grade as a radial ring filling score/10, the number centered (NUT-8). */
+function ScoreRing({ score }: { score: number }) {
+  const r = 26;
+  const circumference = 2 * Math.PI * r;
+  const pct = Math.max(0, Math.min(1, score / 10));
+  return (
+    <div className="shrink-0 text-center">
+      <div className="relative size-16">
+        <svg className="-rotate-90 size-16" viewBox="0 0 60 60">
+          <circle
+            className="stroke-border/60"
+            cx="30"
+            cy="30"
+            fill="none"
+            r={r}
+            strokeWidth="4"
+          />
+          <circle
+            className={scoreStroke(score)}
+            cx="30"
+            cy="30"
+            fill="none"
+            r={r}
+            strokeDasharray={circumference}
+            strokeDashoffset={circumference * (1 - pct)}
+            strokeLinecap="round"
+            strokeWidth="4"
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-baseline justify-center">
+          <span
+            className={`font-bold font-display text-2xl leading-none ${scoreColor(score)}`}
+          >
+            {score}
+          </span>
+          <span className="text-[10px] text-muted-foreground">/10</span>
+        </div>
+      </div>
+      <div className="mt-1 text-[11px] text-muted-foreground">Chad's grade</div>
+    </div>
+  );
+}
+
 function Macro({ label, value, unit }: { label: string; value: number | null; unit: string }) {
   if (value == null) {
     return null;
@@ -61,7 +114,7 @@ export function AnalysisCard({ entry }: { entry: MealAnalysis }) {
     entry.fat != null;
 
   return (
-    <article className="message-fade-in overflow-hidden rounded-2xl border border-border bg-card">
+    <article className="message-fade-in overflow-hidden rounded-2xl border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-float)]">
       <div className="flex flex-col gap-0 sm:flex-row">
         {/* Photo (absent for manual entries) */}
         {entry.photoUrl && (
@@ -105,17 +158,7 @@ export function AnalysisCard({ entry }: { entry: MealAnalysis }) {
               </div>
             </div>
             {entry.healthScore != null && (
-              <div className="shrink-0 text-right">
-                <div
-                  className={`font-display font-bold text-2xl ${scoreColor(entry.healthScore)}`}
-                >
-                  {entry.healthScore}
-                  <span className="text-muted-foreground text-sm">/10</span>
-                </div>
-                <div className="text-muted-foreground text-[11px]">
-                  Chad's grade
-                </div>
-              </div>
+              <ScoreRing score={entry.healthScore} />
             )}
           </div>
 

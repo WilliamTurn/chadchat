@@ -15,7 +15,11 @@ const KINDS: { value: Kind; label: string; hint: string }[] = [
   { value: "pantry", label: "Pantry", hint: "Your cupboard / staples" },
 ];
 
-export function KitchenForm() {
+export function KitchenForm({
+  onAnalyzingChange,
+}: {
+  onAnalyzingChange?: (analyzing: boolean) => void;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
@@ -72,6 +76,7 @@ export function KitchenForm() {
     }
     setUploading(false);
 
+    onAnalyzingChange?.(true);
     startTransition(async () => {
       const result = await analyzeMeal({
         photoUrl,
@@ -90,6 +95,7 @@ export function KitchenForm() {
       } else {
         toast.error(result.error ?? "Couldn't analyze that.");
       }
+      onAnalyzingChange?.(false);
     });
   }
 

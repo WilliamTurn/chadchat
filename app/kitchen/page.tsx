@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
-import { KitchenForm } from "@/components/kitchen/kitchen-form";
+import { KitchenFeed } from "@/components/kitchen/kitchen-feed";
 import { AnalysisCard } from "@/components/nutrition/analysis-card";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
@@ -102,23 +102,11 @@ async function Feed({ userId }: { userId: string }) {
   const entries = await getKitchenAnalysesByUserId(userId);
 
   return (
-    <div className="flex flex-col gap-8">
-      <section className="rounded-2xl border border-border bg-card p-6">
-        <KitchenForm />
-      </section>
-
-      {entries.length > 0 ? (
-        <section className="flex flex-col gap-4">
-          <h2 className="font-medium text-lg">History</h2>
-          {entries.map((entry) => (
-            <AnalysisCard entry={entry} key={entry.id} />
-          ))}
-        </section>
-      ) : (
-        <p className="text-center text-muted-foreground text-sm">
-          No kitchen checks yet. Show Chad your fridge and brace yourself.
-        </p>
-      )}
-    </div>
+    <KitchenFeed
+      hasEntries={entries.length > 0}
+      history={entries.map((entry) => (
+        <AnalysisCard entry={entry} key={entry.id} />
+      ))}
+    />
   );
 }
