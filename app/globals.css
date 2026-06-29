@@ -178,12 +178,19 @@
 
 @layer base {
   body {
-    overflow-x: hidden;
+    /* `clip`, not `hidden`: `overflow-x: hidden` forces the computed
+       `overflow-y` to `auto`, which turns <body> into a second scroll
+       container nested under the viewport (made worse by `position: relative`).
+       That double scroll container can strand the lower half of a tall page in
+       Chrome (the /today dashboard stopped scrolling past the hydration/weight
+       row — DSH-20). `clip` prevents horizontal overflow without creating a
+       scroll container, so the viewport stays the only vertical scroller. */
+    overflow-x: clip;
     position: relative;
   }
 
   html {
-    overflow-x: hidden;
+    overflow-x: clip;
   }
 
   h1,
