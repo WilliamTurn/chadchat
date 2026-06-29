@@ -7,6 +7,7 @@ import { auth } from "@/app/(auth)/auth";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Kpi } from "@/components/dashboard/kpi";
+import { WorkoutsSkeleton } from "@/components/dashboard/page-skeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PersonalRecords } from "@/components/workouts/personal-records";
@@ -82,11 +83,7 @@ export default function WorkoutsPage() {
         </p>
       </div>
 
-      <Suspense
-        fallback={
-          <div className="h-96 animate-pulse rounded-2xl border border-border bg-card" />
-        }
-      >
+      <Suspense fallback={<WorkoutsSkeleton />}>
         <WorkoutsContent />
       </Suspense>
     </main>

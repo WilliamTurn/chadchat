@@ -2,6 +2,7 @@ import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { NutritionSkeleton } from "@/components/dashboard/page-skeletons";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
@@ -77,11 +78,7 @@ export default function NutritionPage() {
         </p>
       </div>
 
-      <Suspense
-        fallback={
-          <div className="h-96 animate-pulse rounded-2xl border border-border bg-card" />
-        }
-      >
+      <Suspense fallback={<NutritionSkeleton />}>
         <NutritionContent />
       </Suspense>
     </main>

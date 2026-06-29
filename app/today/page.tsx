@@ -14,6 +14,7 @@ import {
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
@@ -145,11 +146,7 @@ export default function TodayPage() {
         }}
       />
       <StandaloneHeader active="/today" />
-      <Suspense
-        fallback={
-          <div className="h-[600px] animate-pulse rounded-2xl border border-border bg-card" />
-        }
-      >
+      <Suspense fallback={<TodaySkeleton />}>
         <TodayContent />
       </Suspense>
     </main>

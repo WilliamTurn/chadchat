@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useMessages } from "@/hooks/use-messages";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
+import { ChatError } from "./chat-error";
 import { useDataStream } from "./data-stream-provider";
 import { Greeting } from "./greeting";
 import { PreviewMessage, ThinkingMessage } from "./message";
@@ -21,6 +22,9 @@ type MessagesProps = {
   isLoading?: boolean;
   selectedModelId: string;
   onEditMessage?: (message: ChatMessage) => void;
+  chatError?: string | null;
+  onRetry?: () => void;
+  onDismissError?: () => void;
 };
 
 function PureMessages({
@@ -36,6 +40,9 @@ function PureMessages({
   isLoading,
   selectedModelId: _selectedModelId,
   onEditMessage,
+  chatError,
+  onRetry,
+  onDismissError,
 }: MessagesProps) {
   const {
     containerRef: messagesContainerRef,
@@ -94,6 +101,14 @@ function PureMessages({
 
           {status === "submitted" && messages.at(-1)?.role !== "assistant" && (
             <ThinkingMessage />
+          )}
+
+          {chatError && status !== "streaming" && status !== "submitted" && (
+            <ChatError
+              message={chatError}
+              onDismiss={() => onDismissError?.()}
+              onRetry={() => onRetry?.()}
+            />
           )}
 
           <div

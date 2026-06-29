@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
+import { KitchenSkeleton } from "@/components/dashboard/page-skeletons";
 import { KitchenFeed } from "@/components/kitchen/kitchen-feed";
 import { AnalysisCard } from "@/components/nutrition/analysis-card";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
@@ -52,11 +53,7 @@ export default function KitchenPage() {
         </p>
       </div>
 
-      <Suspense
-        fallback={
-          <div className="h-96 animate-pulse rounded-2xl border border-border bg-card" />
-        }
-      >
+      <Suspense fallback={<KitchenSkeleton />}>
         <KitchenContent />
       </Suspense>
     </main>

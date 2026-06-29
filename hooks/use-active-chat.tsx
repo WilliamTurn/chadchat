@@ -9,6 +9,7 @@ import {
   type Dispatch,
   type ReactNode,
   type SetStateAction,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -25,7 +26,6 @@ import type { VisibilityType } from "@/components/chat/visibility-selector";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
 import type { Vote } from "@/lib/db/schema";
-import { ChatbotError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 
@@ -48,6 +48,12 @@ type ActiveChatContextValue = {
   setCurrentModelId: (id: string) => void;
   showCreditCardAlert: boolean;
   setShowCreditCardAlert: Dispatch<SetStateAction<boolean>>;
+  /** Last streaming/network error, kept around as a persistent banner (FEAT-5). */
+  chatError: string | null;
+  /** Re-run the last turn after an error, clearing the banner. */
+  retry: () => void;
+  /** Dismiss the error banner without retrying. */
+  dismissError: () => void;
 };
 
 const ActiveChatContext = createContext<ActiveChatContextValue | null>(null);
@@ -82,6 +88,9 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
 
   const [input, setInput] = useState("");
   const [showCreditCardAlert, setShowCreditCardAlert] = useState(false);
+  // Persistent chat error (FEAT-5). The disappearing error toast dead-ended the
+  // user — this drives an in-thread banner with a Retry button instead.
+  const [chatError, setChatError] = useState<string | null>(null);
 
   const { data: chatData, isLoading } = useSWR(
     isNewChat
@@ -169,16 +178,31 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
     onError: (error) => {
       if (error.message?.includes("AI Gateway requires a valid credit card")) {
         setShowCreditCardAlert(true);
-      } else if (error instanceof ChatbotError) {
-        toast({ type: "error", description: error.message });
       } else {
-        toast({
-          type: "error",
-          description: error.message || "Oops, an error occurred!",
-        });
+        // Persistent banner instead of a disappearing toast (FEAT-5) so a failed
+        // turn can always be retried. ChatbotError carries a friendly message;
+        // anything else falls back to a generic line.
+        setChatError(error.message || "Something went wrong. Please try again.");
       }
     },
   });
+
+  // Clear the error banner the moment a new request is in flight (a retry or a
+  // fresh message), so it never lingers over a turn that's now succeeding.
+  useEffect(() => {
+    if (status === "submitted" || status === "streaming") {
+      setChatError(null);
+    }
+  }, [status]);
+
+  // Retry re-runs the last turn (regenerate reuses the last user message) and
+  // optimistically clears the banner.
+  const retry = useCallback(() => {
+    setChatError(null);
+    regenerate();
+  }, [regenerate]);
+
+  const dismissError = useCallback(() => setChatError(null), []);
 
   const loadedChatIds = useRef(new Set<string>());
 
@@ -273,6 +297,9 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
       setCurrentModelId,
       showCreditCardAlert,
       setShowCreditCardAlert,
+      chatError,
+      retry,
+      dismissError,
     }),
     [
       chatId,
@@ -291,6 +318,9 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
       votes,
       currentModelId,
       showCreditCardAlert,
+      chatError,
+      retry,
+      dismissError,
     ]
   );
 

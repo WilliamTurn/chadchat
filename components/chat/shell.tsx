@@ -46,6 +46,9 @@ export function ChatShell() {
     setCurrentModelId,
     showCreditCardAlert,
     setShowCreditCardAlert,
+    chatError,
+    retry,
+    dismissError,
   } = useActiveChat();
 
   const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(
@@ -88,11 +91,13 @@ export function ChatShell() {
           <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-background md:rounded-tl-[12px] md:border-t md:border-l md:border-border/40">
             <Messages
               addToolApprovalResponse={addToolApprovalResponse}
+              chatError={chatError}
               chatId={chatId}
               isArtifactVisible={isArtifactVisible}
               isLoading={isLoading}
               isReadonly={isReadonly}
               messages={messages}
+              onDismissError={dismissError}
               onEditMessage={(msg) => {
                 const text = msg.parts
                   ?.filter((p) => p.type === "text")
@@ -101,6 +106,7 @@ export function ChatShell() {
                 setInput(text ?? "");
                 setEditingMessage(msg);
               }}
+              onRetry={retry}
               regenerate={regenerate}
               selectedModelId={currentModelId}
               setMessages={setMessages}

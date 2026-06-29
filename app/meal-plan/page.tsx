@@ -2,6 +2,7 @@ import { ChefHat } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { MealPlanSkeleton } from "@/components/dashboard/page-skeletons";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { GenerateForm } from "@/components/meal-plan/generate-form";
@@ -61,11 +62,7 @@ export default function MealPlanPage() {
         </p>
       </div>
 
-      <Suspense
-        fallback={
-          <div className="h-96 animate-pulse rounded-2xl border border-border bg-card" />
-        }
-      >
+      <Suspense fallback={<MealPlanSkeleton />}>
         <MealPlanContent />
       </Suspense>
     </main>
