@@ -155,16 +155,20 @@ export function StandaloneHeader({ active }: { active?: string }) {
     : { hidden: { opacity: 0, x: 12 }, show: { opacity: 1, x: 0 } };
 
   return (
-    <nav className="mb-8 flex items-center justify-between gap-4 border-border border-b pb-3">
-      <Wordmark />
+    <nav className="mb-8 flex items-center gap-4 border-border border-b pb-3">
+      {/* Left zone. flex-1 mirrors the right zone's width so the center icon bar
+          sits truly page-centered, not shoved between two unequal-width ends. */}
+      <div className="flex flex-1 items-center">
+        <Wordmark />
+      </div>
 
-      {/* Desktop / tablet: a single, non-wrapping icon bar. Inactive sections are
-          icon-only (with a native tooltip + aria-label); the active section
-          expands to icon + label inside the shared-layout pill that slides
-          between sections (ACC-11). Icon-forward keeps every section on one line
-          at the page's narrow max-width instead of wrapping into a ragged second
-          row. */}
-      <div className="hidden flex-1 items-center justify-end gap-0.5 sm:flex">
+      {/* Desktop / tablet: a single, non-wrapping icon bar, centered at the top
+          (NAV-29). Inactive sections are icon-only (with a native tooltip +
+          aria-label); the active section expands to icon + label inside the
+          shared-layout pill that slides between sections (ACC-11). Icon-forward
+          keeps every section on one line at the page's narrow max-width instead
+          of wrapping into a ragged second row. */}
+      <div className="hidden items-center justify-center gap-0.5 sm:flex">
         {headerLinks.map((link) => {
           const Icon = link.icon;
           const activeLink = isActive(link.href);
@@ -205,102 +209,107 @@ export function StandaloneHeader({ active }: { active?: string }) {
             </Link>
           );
         })}
-        <div className="ml-1 self-center">
-          <AccountMenu />
-        </div>
       </div>
 
-      {/* Mobile: hamburger → full-height sheet with the same links, stacked. */}
-      <Sheet onOpenChange={setOpen} open={open}>
-        <SheetTrigger asChild className="sm:hidden">
-          <Button
-            aria-label="Open menu"
-            className="shrink-0"
-            size="icon"
-            variant="outline"
-          >
-            <MenuIcon className="size-5" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent className="w-72 p-0" side="right">
-          <div className="flex items-center gap-2 border-border border-b px-5 py-4">
-            <span className="flex size-7 items-center justify-center rounded-lg bg-muted/60 ring-1 ring-border/50">
-              <Dumbbell className="text-blood" size={14} strokeWidth={2.5} />
-            </span>
-            <SheetTitle className="font-display font-bold text-[15px] tracking-[0.14em]">
-              CHAD
-            </SheetTitle>
-          </div>
-          <motion.div
-            animate="show"
-            className="flex flex-col gap-1 p-3"
-            initial="hidden"
-            variants={sheetList}
-          >
-            {headerLinks.map((link) => {
-              const Icon = link.icon;
-              const activeLink = isActive(link.href);
-              return (
-                <motion.div key={link.href} variants={sheetItem}>
-                  <SheetClose asChild>
-                    <Link
-                      className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-3 font-medium text-base transition-colors",
-                        activeLink
-                          ? "bg-accent text-foreground"
-                          : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-                      )}
-                      href={link.href}
-                    >
-                      <Icon
-                        className={cn("size-5", activeLink && "text-blood")}
-                      />
-                      <span>{link.label}</span>
-                    </Link>
-                  </SheetClose>
-                </motion.div>
-              );
-            })}
-            <motion.div variants={sheetItem}>
-              <SheetClose asChild>
-                <Link
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-3 font-medium text-base transition-colors",
-                    isActive("/pricing")
-                      ? "bg-accent text-foreground"
-                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-                  )}
-                  href="/pricing"
-                >
-                  <Sparkles
-                    className={cn(
-                      "size-5",
-                      isActive("/pricing") && "text-blood"
-                    )}
-                  />
-                  <span>Plans &amp; pricing</span>
-                </Link>
-              </SheetClose>
-            </motion.div>
-            <motion.div
-              className="my-1 border-border border-t"
-              variants={sheetItem}
-            />
-            <motion.button
-              className="flex items-center gap-3 rounded-lg px-3 py-3 text-left font-medium text-base text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
-              onClick={() => {
-                setOpen(false);
-                signOut({ redirectTo: "/" });
-              }}
-              type="button"
-              variants={sheetItem}
+      {/* Right zone: account menu (desktop) + hamburger (mobile). flex-1 +
+          justify-end balances the left zone so the center bar stays centered. */}
+      <div className="flex flex-1 items-center justify-end gap-2">
+        <div className="hidden sm:block">
+          <AccountMenu />
+        </div>
+
+        {/* Mobile: hamburger → full-height sheet with the same links, stacked. */}
+        <Sheet onOpenChange={setOpen} open={open}>
+          <SheetTrigger asChild className="sm:hidden">
+            <Button
+              aria-label="Open menu"
+              className="shrink-0"
+              size="icon"
+              variant="outline"
             >
-              <LogOut className="size-5" />
-              <span>Sign out</span>
-            </motion.button>
-          </motion.div>
-        </SheetContent>
-      </Sheet>
+              <MenuIcon className="size-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent className="w-72 p-0" side="right">
+            <div className="flex items-center gap-2 border-border border-b px-5 py-4">
+              <span className="flex size-7 items-center justify-center rounded-lg bg-muted/60 ring-1 ring-border/50">
+                <Dumbbell className="text-blood" size={14} strokeWidth={2.5} />
+              </span>
+              <SheetTitle className="font-display font-bold text-[15px] tracking-[0.14em]">
+                CHAD
+              </SheetTitle>
+            </div>
+            <motion.div
+              animate="show"
+              className="flex flex-col gap-1 p-3"
+              initial="hidden"
+              variants={sheetList}
+            >
+              {headerLinks.map((link) => {
+                const Icon = link.icon;
+                const activeLink = isActive(link.href);
+                return (
+                  <motion.div key={link.href} variants={sheetItem}>
+                    <SheetClose asChild>
+                      <Link
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg px-3 py-3 font-medium text-base transition-colors",
+                          activeLink
+                            ? "bg-accent text-foreground"
+                            : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                        )}
+                        href={link.href}
+                      >
+                        <Icon
+                          className={cn("size-5", activeLink && "text-blood")}
+                        />
+                        <span>{link.label}</span>
+                      </Link>
+                    </SheetClose>
+                  </motion.div>
+                );
+              })}
+              <motion.div variants={sheetItem}>
+                <SheetClose asChild>
+                  <Link
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-3 font-medium text-base transition-colors",
+                      isActive("/pricing")
+                        ? "bg-accent text-foreground"
+                        : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                    )}
+                    href="/pricing"
+                  >
+                    <Sparkles
+                      className={cn(
+                        "size-5",
+                        isActive("/pricing") && "text-blood"
+                      )}
+                    />
+                    <span>Plans &amp; pricing</span>
+                  </Link>
+                </SheetClose>
+              </motion.div>
+              <motion.div
+                className="my-1 border-border border-t"
+                variants={sheetItem}
+              />
+              <motion.button
+                className="flex items-center gap-3 rounded-lg px-3 py-3 text-left font-medium text-base text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+                onClick={() => {
+                  setOpen(false);
+                  signOut({ redirectTo: "/" });
+                }}
+                type="button"
+                variants={sheetItem}
+              >
+                <LogOut className="size-5" />
+                <span>Sign out</span>
+              </motion.button>
+            </motion.div>
+          </SheetContent>
+        </Sheet>
+      </div>
     </nav>
   );
 }
