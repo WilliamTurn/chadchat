@@ -179,7 +179,11 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="inset-x-0 bottom-0 top-auto h-[70dvh] w-full rounded-t-2xl border-t border-border/30 bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+          // data-[side=bottom]:h-[70dvh] (variant-prefixed) so it overrides the
+          // base SheetContent's data-[side=bottom]:h-auto — a plain h-[70dvh]
+          // can't dedupe against the prefixed h-auto, so the sheet would size to
+          // content and grow taller than the screen (nav scrolls off the top).
+          className="inset-x-0 bottom-0 top-auto flex h-[70dvh] w-full flex-col rounded-t-2xl border-t border-border/30 bg-sidebar p-0 text-sidebar-foreground data-[side=bottom]:h-[70dvh] [&>button]:hidden"
           showCloseButton={false}
           side="bottom"
         >
@@ -187,8 +191,15 @@ function Sidebar({
             <SheetTitle>Sidebar</SheetTitle>
             <SheetDescription>Displays the mobile sidebar.</SheetDescription>
           </SheetHeader>
-          <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-sidebar-foreground/20" />
-          <div className="flex h-full w-full flex-col overflow-y-auto pt-2">{children}</div>
+          <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-sidebar-foreground/20" />
+          {/* flex-1 + min-h-0 + overflow-hidden (not overflow-y-auto): the drawer
+              itself must not be the scroller, or the pinned-nav / scrolling-history
+              split inside SidebarContent collapses and the whole drawer scrolls as
+              one (nav scrolls off the top). The inner SidebarContent owns the
+              layout; only its history region scrolls. */}
+          <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden pt-2">
+            {children}
+          </div>
         </SheetContent>
       </Sheet>
     )

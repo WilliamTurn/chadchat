@@ -121,8 +121,14 @@ export function AppSidebar({
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarHeader>
-        <SidebarContent>
-          <SidebarGroup className="pt-1">
+        {/* overflow-hidden (not the default overflow-auto) so the content area
+            itself doesn't scroll: the nav group below is pinned (shrink-0) and
+            stays anchored, while SidebarHistory owns its own scroll region. The
+            full app nav therefore stays visible at the top no matter how long
+            the chat history grows — on desktop AND in the mobile bottom drawer,
+            which reuses this same markup (ChatGPT/Claude pattern). */}
+        <SidebarContent className="overflow-hidden">
+          <SidebarGroup className="shrink-0 pt-1">
             <SidebarGroupContent>
               <SidebarMenu>
                 {/* Section links come from the shared nav list (NAV-3) so the

@@ -230,7 +230,11 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
 
   return (
     <>
-      <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+      {/* flex-1 + min-h-0 + overflow-y-auto: history is the only scrolling
+          region, so it fills the space under the pinned nav and scrolls within
+          itself instead of pushing the nav off-screen (the AppSidebar content
+          area is overflow-hidden). no-scrollbar matches the rest of the chrome. */}
+      <SidebarGroup className="no-scrollbar min-h-0 flex-1 overflow-y-auto group-data-[collapsible=icon]:hidden">
         <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/70">
           History
         </SidebarGroupLabel>
