@@ -81,28 +81,39 @@ export function CheckInSettings({
       </div>
 
       {enabled && (
-        <div className="inline-flex flex-wrap gap-1 self-start rounded-lg border border-border bg-background/40 p-1">
-          {FREQUENCIES.map((f) => (
-            <button
-              className={cn(
-                "rounded-md px-3 py-1.5 font-medium text-sm transition-colors",
-                frequency === f.value
-                  ? "bg-blood/10 text-blood"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-              disabled={isPending}
-              key={f.value}
-              onClick={() => {
-                if (f.value !== frequency) {
-                  save(enabled, f.value, `Chad will check in ${f.label.toLowerCase()}.`);
-                }
-              }}
-              type="button"
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
+        <>
+          <div className="inline-flex flex-wrap gap-1 self-start rounded-lg border border-border bg-background/40 p-1">
+            {FREQUENCIES.map((f) => (
+              <button
+                className={cn(
+                  "rounded-md px-3 py-1.5 font-medium text-sm transition-colors",
+                  frequency === f.value
+                    ? "bg-blood/10 text-blood"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                disabled={isPending}
+                key={f.value}
+                onClick={() => {
+                  if (f.value !== frequency) {
+                    save(
+                      enabled,
+                      f.value,
+                      `Chad will check in ${f.label.toLowerCase()}.`
+                    );
+                  }
+                }}
+                type="button"
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-muted-foreground text-xs">
+            Check-ins come from noreply@send.chadcoach.ai. If you don't see
+            one, check your spam or promotions folder and mark it "Not spam"
+            so the rest reach your inbox.
+          </p>
+        </>
       )}
     </div>
   );
