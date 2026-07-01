@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
+import { ADMIN_PATH } from "@/lib/admin";
 import { requireAdmin } from "@/lib/admin-guard";
 import { getChatById, getMessagesByChatId } from "@/lib/db/queries";
 
@@ -68,7 +69,7 @@ async function Transcript({
           </p>
         </div>
         <Button asChild size="sm" variant="ghost">
-          <Link href={`/admin/users/${id}`}>Back to member</Link>
+          <Link href={`${ADMIN_PATH}/users/${id}`}>Back to member</Link>
         </Button>
       </div>
 

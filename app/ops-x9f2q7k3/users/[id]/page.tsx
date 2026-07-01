@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { PlanBadge } from "@/app/admin/users/page";
+import { PlanBadge } from "@/app/ops-x9f2q7k3/users/page";
 import { DeleteMemberButton } from "@/components/admin/delete-member-button";
 import { Button } from "@/components/ui/button";
-import { isAdminEmail } from "@/lib/admin";
+import { ADMIN_PATH, isAdminEmail } from "@/lib/admin";
 import { requireAdmin } from "@/lib/admin-guard";
 import {
   getChatsByUserId,
@@ -22,7 +22,7 @@ export default function AdminUserDetailPage({
       <div className="mb-8 flex items-center justify-between">
         <h1 className="font-semibold text-2xl tracking-tight">Member</h1>
         <Button asChild size="sm" variant="ghost">
-          <Link href="/admin/users">Back to members</Link>
+          <Link href={`${ADMIN_PATH}/users`}>Back to members</Link>
         </Button>
       </div>
 
@@ -102,7 +102,7 @@ async function Detail({ params }: { params: Promise<{ id: string }> }) {
                 className={`flex items-center justify-between gap-4 bg-card px-5 py-3.5 transition-colors hover:bg-muted/40 ${
                   i === 0 ? "" : "border-border border-t"
                 }`}
-                href={`/admin/users/${id}/chats/${c.id}`}
+                href={`${ADMIN_PATH}/users/${id}/chats/${c.id}`}
                 key={c.id}
               >
                 <span className="truncate text-sm">{c.title}</span>

@@ -1,5 +1,5 @@
 /**
- * Admin allowlist. Who may access the /admin dashboard is controlled by the
+ * Admin allowlist. Who may access the admin dashboard is controlled by the
  * ADMIN_EMAILS env var (comma-separated, case-insensitive). Keeping this in an
  * env var — not the database — means admin rights can never be granted by
  * editing a normal user row, and the list is identical to whatever is set in
@@ -10,6 +10,16 @@
 
 import { getEntitlements } from "@/lib/ai/entitlements";
 import { hasActiveAccess, type PlanTier } from "@/lib/subscription";
+
+/**
+ * The admin dashboard's URL base. Deliberately an obscure, unguessable slug
+ * (NAV-33) so the panel can't be found by accident or by probing `/admin` —
+ * it is owner-only and never linked anywhere on the site. This MUST stay in
+ * sync with the route folder name under `app/` (currently `app/ops-x9f2q7k3`).
+ * To change it: rename that folder and update this one constant. Access is
+ * additionally gated by the admin email allowlist and a passphrase (NAV-34).
+ */
+export const ADMIN_PATH = "/ops-x9f2q7k3";
 
 /** The configured admin emails, normalized to lowercase. */
 function adminEmails(): string[] {

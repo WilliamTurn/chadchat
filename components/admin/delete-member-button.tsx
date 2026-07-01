@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import { deleteMemberAction, type GrantState } from "@/app/admin/actions";
+import { deleteMemberAction, type GrantState } from "@/app/ops-x9f2q7k3/actions";
 import { Button } from "@/components/ui/button";
 
 const INITIAL: GrantState = { status: "idle", message: "" };

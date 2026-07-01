@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/app/(auth)/auth";
-import { isAdminEmail } from "@/lib/admin";
+import { ADMIN_PATH, isAdminEmail } from "@/lib/admin";
+import { clearPanelCookie, isPanelUnlocked } from "@/lib/admin-gate";
 import {
   deleteUserByEmail,
   getUserById,
@@ -16,14 +17,22 @@ export type GrantState = {
   message: string;
 };
 
-/** Re-check admin on every privileged action — the page check alone isn't a security boundary. */
+/**
+ * Re-check admin on every privileged action — the page check alone isn't a
+ * security boundary. Requires BOTH the email allowlist and the passphrase
+ * unlock (NAV-34), so a destructive action can't run without the secret even
+ * if the admin's session is valid.
+ */
 async function assertAdmin(): Promise<boolean> {
   const session = await auth();
   if (!session?.user?.id) {
     return false;
   }
   const me = await getUserById(session.user.id);
-  return isAdminEmail(me?.email);
+  if (!isAdminEmail(me?.email)) {
+    return false;
+  }
+  return await isPanelUnlocked();
 }
 
 /**
@@ -63,7 +72,7 @@ export async function grantTierAction(
     };
   }
 
-  revalidatePath("/admin");
+  revalidatePath(ADMIN_PATH);
 
   if (tier) {
     return {
@@ -122,7 +131,7 @@ export async function deleteUserAction(
     };
   }
 
-  revalidatePath("/admin");
+  revalidatePath(ADMIN_PATH);
 
   return {
     status: "success",
@@ -176,8 +185,18 @@ export async function deleteMemberAction(
     return { status: "error", message: "Nothing was deleted." };
   }
 
-  revalidatePath("/admin");
-  revalidatePath("/admin/users");
+  revalidatePath(ADMIN_PATH);
+  revalidatePath(`${ADMIN_PATH}/users`);
   // The member no longer exists — return to the directory.
-  redirect("/admin/users");
+  redirect(`${ADMIN_PATH}/users`);
+}
+
+/**
+ * Lock the panel: drop the passphrase cookie and bounce back to the unlock
+ * screen. Wired to the "Lock panel" button in the dashboard header so an admin
+ * can end their session on a shared machine.
+ */
+export async function lockPanelAction(): Promise<void> {
+  await clearPanelCookie();
+  redirect(`${ADMIN_PATH}/unlock`);
 }

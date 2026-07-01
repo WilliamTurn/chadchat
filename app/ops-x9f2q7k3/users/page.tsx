@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ADMIN_PATH } from "@/lib/admin";
 import { requireAdmin } from "@/lib/admin-guard";
 import { type AdminUserRow, getUserDirectory } from "@/lib/db/queries";
 
@@ -22,7 +23,7 @@ export default function AdminUsersPage({
           </p>
         </div>
         <Button asChild size="sm" variant="ghost">
-          <Link href="/admin">Back to admin</Link>
+          <Link href={ADMIN_PATH}>Back to admin</Link>
         </Button>
       </div>
 
@@ -83,7 +84,7 @@ function UserRow({ user, first }: { user: AdminUserRow; first: boolean }) {
       className={`flex items-center justify-between gap-4 bg-card px-5 py-4 transition-colors hover:bg-muted/40 ${
         first ? "" : "border-border border-t"
       }`}
-      href={`/admin/users/${user.id}`}
+      href={`${ADMIN_PATH}/users/${user.id}`}
     >
       <div className="min-w-0">
         <div className="truncate font-medium text-sm">

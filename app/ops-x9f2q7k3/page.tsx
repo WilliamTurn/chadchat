@@ -1,13 +1,13 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { auth } from "@/app/(auth)/auth";
 import { DeleteUserForm } from "@/components/admin/delete-user-form";
 import { GrantAccessForm } from "@/components/admin/grant-access-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { isAdminEmail } from "@/lib/admin";
-import { getUsageStats, getUserById, getUserStats } from "@/lib/db/queries";
+import { ADMIN_PATH } from "@/lib/admin";
+import { requireAdmin } from "@/lib/admin-guard";
+import { getUsageStats, getUserStats } from "@/lib/db/queries";
+import { lockPanelAction } from "./actions";
 
 // Placeholder controls — visible so the dashboard reflects the full intended
 // surface, but not yet wired. Each becomes a real card as it's built.
@@ -46,9 +46,16 @@ export default function AdminPage() {
             Control the site, manage members, and monitor usage.
           </p>
         </div>
-        <Button asChild size="sm" variant="ghost">
-          <Link href="/">Back to Chad</Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <form action={lockPanelAction}>
+            <Button size="sm" type="submit" variant="ghost">
+              Lock panel
+            </Button>
+          </form>
+          <Button asChild size="sm" variant="ghost">
+            <Link href="/">Back to Chad</Link>
+          </Button>
+        </div>
       </div>
 
       <Suspense
@@ -63,13 +70,9 @@ export default function AdminPage() {
 }
 
 async function AdminContent() {
-  // Security boundary #1: only allowlisted admins past this point. A non-admin
-  // (or signed-out) visitor gets a 404, so the page's existence isn't leaked.
-  const session = await auth();
-  const me = session?.user?.id ? await getUserById(session.user.id) : undefined;
-  if (!isAdminEmail(me?.email)) {
-    notFound();
-  }
+  // Security boundary: allowlisted admin (404s otherwise, so the page's
+  // existence isn't leaked) AND passphrase-unlocked (redirects to /unlock).
+  await requireAdmin();
 
   const [stats, usage] = await Promise.all([getUserStats(), getUsageStats()]);
 
@@ -101,7 +104,7 @@ async function AdminContent() {
           conversations with Chad — for safety and abuse checks.
         </p>
         <Button asChild>
-          <Link href="/admin/users">Open member directory</Link>
+          <Link href={`${ADMIN_PATH}/users`}>Open member directory</Link>
         </Button>
       </section>
 
