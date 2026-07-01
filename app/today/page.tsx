@@ -10,6 +10,7 @@ import {
   Moon,
   Refrigerator,
   Utensils,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -63,11 +64,7 @@ import {
 } from "@/lib/date";
 import type { ProgressEntry } from "@/lib/db/schema";
 import { toPlanStatusSummary } from "@/lib/subscription";
-import {
-  goalDiagram,
-  normalizeSex,
-  resolveHero,
-} from "@/lib/today/goal-diagram";
+import { normalizeSex, resolveHero } from "@/lib/today/goal-diagram";
 import { DEFAULT_WATER_GOAL_ML } from "@/lib/today/water-units";
 import { HeroCustomizer } from "@/components/today/hero-customizer";
 import type { LiftProgress } from "@/components/today/goal-list";
@@ -403,11 +400,6 @@ async function TodayContent() {
   });
   const activeThisWeek = week.filter((d) => d.active).length;
 
-  // The body diagram for the user's primary active goal — a decorative anatomical
-  // figure (Phase 2 asset) recolored per goal intent, rendered faintly in the
-  // Goals card. goalDiagram is a pure client-safe helper, so it runs here too.
-  const goalArt = goalItems[0] ? goalDiagram(goalItems[0]) : null;
-
   // Sleep & recovery (Pro): last night's entry + a 7-night week strip. The
   // daily totals are keyed to midnight-UTC ms, which equals each week day's
   // startOfDayUTC time, so the lookup lines up across timezones (see lib/date.ts).
@@ -441,31 +433,38 @@ async function TodayContent() {
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
-      <header className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 sm:p-8">
+      <header className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 sm:p-8 lg:pr-64">
         <div
           aria-hidden
           className="-right-16 -top-16 pointer-events-none absolute size-56 rounded-full bg-blood/25 blur-3xl"
         />
-        {/* Brand hero figure (DSH-21) — decorative, bleeds off the right edge
-            and fades into the card. A built-in silhouette cutout bleeds up from
-            the bottom; a user-uploaded photo covers the right strip. Plain <img>
-            (not next/image) so the proxy serves it on this authenticated route;
-            hidden on small screens. */}
-        {hero.kind === "custom" ? (
-          <img
-            alt=""
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 right-0 hidden h-full w-3/5 select-none object-cover opacity-80 [mask-image:linear-gradient(to_left,black_35%,transparent)] lg:block"
-            src={hero.src}
-          />
-        ) : (
-          <img
-            alt=""
-            aria-hidden
-            className="pointer-events-none absolute right-0 bottom-0 hidden h-[112%] w-auto select-none object-contain object-bottom opacity-90 [mask-image:linear-gradient(to_left,black_55%,transparent)] lg:block"
-            src={hero.src}
-          />
-        )}
+        {/* Brand hero figure (DSH-21/DSH-29) — decorative, confined to its own
+            clipped right column with a left-fading mask so it can never overlap
+            the stat pills, streak strip, or CTA (the lg:pr-64 gutter above keeps
+            the content clear of this column). A built-in silhouette bleeds up
+            from the bottom; a user photo fills the column. Plain <img> (not
+            next/image) so the proxy serves it on this authenticated route;
+            hidden below lg where the header stacks. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 right-0 hidden w-60 overflow-hidden lg:block"
+        >
+          {hero.kind === "custom" ? (
+            <img
+              alt=""
+              aria-hidden
+              className="h-full w-full select-none object-cover opacity-80 [mask-image:linear-gradient(to_left,black_55%,transparent)]"
+              src={hero.src}
+            />
+          ) : (
+            <img
+              alt=""
+              aria-hidden
+              className="absolute right-0 bottom-0 h-[116%] w-auto max-w-none select-none object-contain object-bottom opacity-90 [mask-image:linear-gradient(to_left,black_45%,transparent)]"
+              src={hero.src}
+            />
+          )}
+        </div>
         <div className="relative flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-muted-foreground text-sm">
@@ -482,7 +481,13 @@ async function TodayContent() {
           </div>
           <div className="flex flex-col items-end gap-2">
             {plan.tier === "pro" ? (
-              <Badge variant="secondary">Pro</Badge>
+              <Badge
+                className="gap-1 border-blood/40 bg-blood/15 px-2.5 font-semibold text-blood uppercase tracking-wide shadow-[0_0_12px_-2px_var(--color-blood)]"
+                variant="secondary"
+              >
+                <Zap className="size-3" fill="currentColor" />
+                Pro
+              </Badge>
             ) : plan.status === "trialing" && plan.trialDaysLeft !== null ? (
               <Badge variant="secondary">
                 {plan.trialDaysLeft <= 0
@@ -588,28 +593,20 @@ async function TodayContent() {
         />
       )}
 
-      {/* Goal + Training */}
+      {/* Goal + Training — one consistent card treatment (DSH-30: the goals card
+          no longer floats detailed anatomy art behind the text; the header
+          silhouette is now the page's single body-visualization style). */}
       <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
-        <section className="relative flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card p-6">
-          {goalArt && (
-            <img
-              alt=""
-              aria-hidden
-              className="pointer-events-none absolute right-0 bottom-0 hidden h-[104%] w-auto select-none object-contain object-bottom opacity-60 [mask-image:linear-gradient(to_left,black_45%,transparent_92%)] sm:block"
-              src={goalArt.src}
-            />
-          )}
-          <div className="relative flex flex-1 flex-col">
-            <GoalList
-              currentWeight={currentWeight}
-              exerciseNames={exerciseNames}
-              goals={goalItems}
-              liftProgress={liftProgress}
-              memoryGoalHint={goal}
-              pastGoals={pastGoalItems}
-            />
-          </div>
-        </section>
+        <Card>
+          <GoalList
+            currentWeight={currentWeight}
+            exerciseNames={exerciseNames}
+            goals={goalItems}
+            liftProgress={liftProgress}
+            memoryGoalHint={goal}
+            pastGoals={pastGoalItems}
+          />
+        </Card>
 
         <Card>
           <PlanList memoryPlanHint={workoutPlan} plans={planItems} />
