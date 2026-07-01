@@ -447,6 +447,33 @@ export async function setWeightUnit(userId: string, unit: "lb" | "kg") {
   }
 }
 
+/**
+ * Mark the first-run onboarding as done (ONB-1). Called when the user completes
+ * OR skips the /welcome wizard, so it never shows again. Optionally persists the
+ * body-weight unit they picked in the wizard. Stamps `onboardedAt` idempotently
+ * (only if not already set) so re-entry can't reset it.
+ */
+export async function markOnboarded(
+  userId: string,
+  opts?: { weightUnit?: "lb" | "kg" }
+) {
+  try {
+    return await db
+      .update(user)
+      .set({
+        onboardedAt: new Date(),
+        ...(opts?.weightUnit ? { weightUnit: opts.weightUnit } : {}),
+        updatedAt: new Date(),
+      })
+      .where(and(eq(user.id, userId), isNull(user.onboardedAt)));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to save onboarding"
+    );
+  }
+}
+
 /** Wipe the user's stored profile (privacy / reset). Leaves the toggle as-is. */
 export async function clearUserMemory(userId: string) {
   try {

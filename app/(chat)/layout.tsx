@@ -46,6 +46,11 @@ async function SidebarShell({ children }: { children: React.ReactNode }) {
     if (!(dbUser && canAccessChad(dbUser))) {
       redirect("/pricing");
     }
+    // First-run onboarding (ONB-1): send a new member through the welcome wizard
+    // once before they land straight in the chat.
+    if (!dbUser.onboardedAt) {
+      redirect("/welcome");
+    }
     plan = toPlanStatusSummary(dbUser);
     // Soft verification: nudge unverified real accounts without blocking them.
     showVerifyBanner = !(dbUser.emailVerified || dbUser.isAnonymous);

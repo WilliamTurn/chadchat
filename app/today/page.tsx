@@ -195,6 +195,11 @@ async function TodayContent() {
   if (!canAccessChad(user)) {
     redirect("/pricing");
   }
+  // First-run onboarding (ONB-1): a new member with access hasn't set up yet —
+  // route them through the welcome wizard once before the dashboard.
+  if (!user.onboardedAt) {
+    redirect("/welcome");
+  }
 
   const isPro = canAccessProFeatures(user);
   const plan = toPlanStatusSummary(user);

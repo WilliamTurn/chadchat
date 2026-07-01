@@ -61,6 +61,12 @@ export const user = pgTable("User", {
   // Null = infer from the latest weigh-in (falling back to "lb"), so nothing
   // changes for existing users until they pick one on /account.
   weightUnit: varchar("weightUnit", { enum: ["lb", "kg"] }),
+  // --- First-run onboarding (ONB-1) ---
+  // When the user finished (or skipped) the first-run onboarding wizard. Null =
+  // never onboarded → they get routed to /welcome once they have access.
+  // Backfilled to now() for all pre-existing users by migration 0016 so only
+  // genuinely new signups see the wizard.
+  onboardedAt: timestamp("onboardedAt"),
 });
 
 export type User = InferSelectModel<typeof user>;
