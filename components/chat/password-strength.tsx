@@ -53,6 +53,12 @@ function getStrengthText(score: number) {
 }
 
 export function PasswordStrength({ password }: { password: string }) {
+  // Only appear once the user starts typing, so the empty sign-up form stays
+  // short and the submit button is visible without scrolling.
+  if (!password) {
+    return null;
+  }
+
   const strength = PASSWORD_REQUIREMENTS.map((req) => ({
     met: req.test(password),
     text: req.label,
@@ -60,51 +66,55 @@ export function PasswordStrength({ password }: { password: string }) {
   const strengthScore = strength.filter((req) => req.met).length;
 
   return (
-    <div>
-      {/* Password strength indicator */}
-      <div
-        aria-label="Password strength"
-        aria-valuemax={4}
-        aria-valuemin={0}
-        aria-valuenow={strengthScore}
-        className="mt-3 mb-3 h-1 w-full overflow-hidden rounded-full bg-border"
-        role="progressbar"
-        tabIndex={-1}
-      >
+    <div className="mt-2">
+      {/* Strength bar + inline label — compact, secondary helper, not a
+          centerpiece. */}
+      <div className="flex items-center gap-2">
         <div
-          className={cn(
-            "h-full transition-all duration-500 ease-out",
-            getStrengthColor(strengthScore)
-          )}
-          style={{ width: `${(strengthScore / 4) * 100}%` }}
-        />
+          aria-label="Password strength"
+          aria-valuemax={4}
+          aria-valuemin={0}
+          aria-valuenow={strengthScore}
+          className="h-1 flex-1 overflow-hidden rounded-full bg-border"
+          role="progressbar"
+          tabIndex={-1}
+        >
+          <div
+            className={cn(
+              "h-full transition-all duration-500 ease-out",
+              getStrengthColor(strengthScore)
+            )}
+            style={{ width: `${(strengthScore / 4) * 100}%` }}
+          />
+        </div>
+        <span className="shrink-0 text-[10px] text-muted-foreground uppercase tracking-wide">
+          {getStrengthText(strengthScore)}
+        </span>
       </div>
 
-      {/* Password strength description */}
-      <p className="mb-2 font-medium text-foreground text-sm">
-        {getStrengthText(strengthScore)}. Must contain:
-      </p>
-
-      {/* Password requirements list */}
-      <ul aria-label="Password requirements" className="space-y-1.5">
+      {/* Requirements checklist — tiny, two columns so it stays two short rows. */}
+      <ul
+        aria-label="Password requirements"
+        className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1"
+      >
         {strength.map((req) => (
-          <li className="flex items-center gap-2" key={req.text}>
+          <li className="flex items-center gap-1.5" key={req.text}>
             {req.met ? (
               <CheckIcon
                 aria-hidden="true"
-                className="text-emerald-500"
-                size={16}
+                className="shrink-0 text-emerald-500"
+                size={12}
               />
             ) : (
               <XIcon
                 aria-hidden="true"
-                className="text-muted-foreground/80"
-                size={16}
+                className="shrink-0 text-muted-foreground/60"
+                size={12}
               />
             )}
             <span
               className={cn(
-                "text-xs",
+                "text-[11px] leading-none",
                 req.met
                   ? "text-emerald-600 dark:text-emerald-500"
                   : "text-muted-foreground"

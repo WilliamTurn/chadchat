@@ -20,7 +20,10 @@ export default function AuthLayout({
             "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
         }}
       />
-      <div className="relative flex w-full flex-col overflow-hidden bg-background p-8 xl:w-[600px] xl:shrink-0 xl:rounded-r-2xl xl:border-r xl:border-border/40 md:p-16">
+      {/* overflow-y-auto (not hidden): a tall form (e.g. sign-up with the
+          password checklist + confirm field) must scroll, never clip the
+          submit button. justify-center still centers it when it fits. */}
+      <div className="relative flex w-full flex-col overflow-y-auto bg-background p-8 xl:w-[600px] xl:shrink-0 xl:rounded-r-2xl xl:border-r xl:border-border/40 md:p-16">
         {/* Brand warmth on the screens too narrow for the showcase panel (below
             xl): a faint blood glow so the form doesn't sit on a flat slab. */}
         <div
