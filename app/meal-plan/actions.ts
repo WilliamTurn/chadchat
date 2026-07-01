@@ -18,6 +18,7 @@ import {
   getUserMemory,
   updateMealPlan as updateMealPlanQuery,
 } from "@/lib/db/queries";
+import { reconcilePlanTarget } from "@/lib/nutrition/target-sync";
 import {
   type MealPlanPreferences,
   mealPlanPreferencesSchema,
@@ -77,15 +78,20 @@ async function buildAndSavePlan(
     memory: memory?.profile || undefined,
   });
 
+  // NUT-13: unify the plan's target with the daily Calorie-Tracker target so
+  // there's one set of numbers driving the dashboard rings. Snapshot the plan
+  // against the SAME merged target that's now the user's daily target.
+  const effectiveTarget = await reconcilePlanTarget(userId, target, plan.target);
+
   const created = await createMealPlan({
     userId,
     title: plan.title,
     source: "user",
     sourceChatId: null,
-    targetCalories: plan.target.calories,
-    targetProtein: plan.target.protein,
-    targetCarbs: plan.target.carbs,
-    targetFat: plan.target.fat,
+    targetCalories: effectiveTarget.calories,
+    targetProtein: effectiveTarget.protein,
+    targetCarbs: effectiveTarget.carbs,
+    targetFat: effectiveTarget.fat,
     preferences,
     coachIntro: plan.coachIntro,
     days: plan.days,
@@ -124,6 +130,10 @@ export async function generatePlan(
       });
     }
     revalidatePath("/meal-plan");
+    // The build may have set/updated the daily target (NUT-13) — refresh the
+    // surfaces whose rings read it.
+    revalidatePath("/today");
+    revalidatePath("/nutrition");
     return { ok: true, planId };
   } catch (error) {
     console.error("Meal plan generation failed:", error);
@@ -163,6 +173,8 @@ export async function regeneratePlan(
       status: "archived",
     });
     revalidatePath("/meal-plan");
+    revalidatePath("/today");
+    revalidatePath("/nutrition");
     return { ok: true, planId: newId };
   } catch (error) {
     console.error("Meal plan regeneration failed:", error);

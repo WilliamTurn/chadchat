@@ -53,6 +53,13 @@ export type MealPlanViewData = {
   status: "active" | "archived";
   coachIntro: string;
   target: Macros | null;
+  /**
+   * Whether `target` is the user's live daily Calorie-Tracker target (NUT-13).
+   * When true the plan is measured against the same numbers that drive the
+   * dashboard rings, so we can honestly say so; when false (`target` is the
+   * plan's own historical snapshot) we don't claim they match.
+   */
+  targetIsDaily?: boolean;
   days: PlanDay[];
 };
 
@@ -298,6 +305,12 @@ export function MealPlanView({ plan }: { plan: MealPlanViewData }) {
               Target {plan.target.calories.toLocaleString()} cal ·{" "}
               {plan.target.protein}P / {plan.target.carbs}C / {plan.target.fat}F
               per day
+              {plan.targetIsDaily && (
+                <span className="text-muted-foreground/70">
+                  {" "}
+                  — your daily Calorie Tracker targets, too
+                </span>
+              )}
             </p>
           )}
         </div>

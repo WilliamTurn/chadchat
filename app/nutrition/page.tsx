@@ -9,6 +9,7 @@ import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { AnalysisCard } from "@/components/nutrition/analysis-card";
 import { AnalyzeForm } from "@/components/nutrition/analyze-form";
+import { NutritionEmptyState } from "@/components/nutrition/empty-state";
 import { MacroRings } from "@/components/nutrition/macro-rings";
 import { MacroTrendChart } from "@/components/nutrition/macro-trend-chart";
 import { TargetEditor } from "@/components/today/target-editor";
@@ -152,11 +153,18 @@ async function Feed({ userId }: { userId: string }) {
 
   return (
     <div className="flex flex-col gap-8">
-      <section className="rounded-2xl border border-border bg-card p-6">
+      <section
+        className="rounded-2xl border border-border bg-card p-6"
+        id="log-meal"
+      >
         <AnalyzeForm recentFoods={recentFoods} />
       </section>
 
-      <TodaySection meals={todays} target={target} />
+      <TodaySection
+        firstEver={meals.length === 0}
+        meals={todays}
+        target={target}
+      />
 
       {macroDays.length >= 2 && (
         <MacroTrendChart
@@ -175,13 +183,6 @@ async function Feed({ userId }: { userId: string }) {
       )}
 
       {earlier.length > 0 && <HistorySection meals={earlier} />}
-
-      {meals.length === 0 && (
-        <p className="text-center text-muted-foreground text-sm">
-          Nothing logged yet. Log your next meal above and Chad will start
-          tracking your day.
-        </p>
-      )}
     </div>
   );
 }
@@ -189,9 +190,11 @@ async function Feed({ userId }: { userId: string }) {
 function TodaySection({
   meals,
   target,
+  firstEver,
 }: {
   meals: MealAnalysis[];
   target: NutritionTarget | undefined;
+  firstEver: boolean;
 }) {
   const grouped: { label: string; items: MealAnalysis[] }[] = [];
   for (const cat of MEAL_CATEGORIES) {
@@ -240,9 +243,13 @@ function TodaySection({
       </div>
 
       {meals.length === 0 ? (
-        <p className="text-muted-foreground text-sm">
-          No meals logged today. Add your first above.
-        </p>
+        firstEver ? (
+          <NutritionEmptyState />
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            No meals logged today. Add your first above.
+          </p>
+        )
       ) : (
         grouped.map((group) => (
           <div className="flex flex-col gap-3" key={group.label}>

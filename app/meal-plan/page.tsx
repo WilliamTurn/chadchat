@@ -14,7 +14,11 @@ import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
-import { getActiveMealPlanByUserId, getUserById } from "@/lib/db/queries";
+import {
+  getActiveMealPlanByUserId,
+  getNutritionTarget,
+  getUserById,
+} from "@/lib/db/queries";
 import type { Macros } from "@/lib/nutrition/macros";
 import { planDaysSchema } from "@/lib/validation/meal-plan";
 
@@ -107,7 +111,10 @@ function UpgradePrompt() {
 }
 
 async function PlanArea({ userId }: { userId: string }) {
-  const plan = await getActiveMealPlanByUserId(userId);
+  const [plan, daily] = await Promise.all([
+    getActiveMealPlanByUserId(userId),
+    getNutritionTarget(userId),
+  ]);
 
   // No active plan → the preferences form + a short pitch.
   if (!plan) {
@@ -136,7 +143,20 @@ async function PlanArea({ userId }: { userId: string }) {
     );
   }
 
-  const target: Macros | null =
+  // NUT-13: measure the plan against the user's LIVE daily Calorie-Tracker
+  // target — the same numbers that drive the dashboard rings — so there's one
+  // target, not two that can silently disagree. Fall back to the plan's own
+  // stored snapshot only when no daily target is set (legacy plans / never set).
+  const dailyTarget: Macros | null =
+    daily?.calories != null
+      ? {
+          calories: daily.calories,
+          protein: daily.protein ?? 0,
+          carbs: daily.carbs ?? 0,
+          fat: daily.fat ?? 0,
+        }
+      : null;
+  const snapshot: Macros | null =
     plan.targetCalories != null
       ? {
           calories: plan.targetCalories,
@@ -145,6 +165,7 @@ async function PlanArea({ userId }: { userId: string }) {
           fat: plan.targetFat ?? 0,
         }
       : null;
+  const target = dailyTarget ?? snapshot;
 
   const data: MealPlanViewData = {
     id: plan.id,
@@ -152,6 +173,7 @@ async function PlanArea({ userId }: { userId: string }) {
     status: plan.status,
     coachIntro: plan.coachIntro,
     target,
+    targetIsDaily: dailyTarget != null,
     days: parsedDays.data,
   };
 

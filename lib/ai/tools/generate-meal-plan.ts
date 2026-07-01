@@ -1,4 +1,5 @@
 import { tool } from "ai";
+import { revalidatePath } from "next/cache";
 import type { Session } from "next-auth";
 import { z } from "zod";
 import { generateMealPlan } from "@/lib/ai/meal-plan";
@@ -9,6 +10,7 @@ import {
   getNutritionTarget,
   getUserMemory,
 } from "@/lib/db/queries";
+import { reconcilePlanTarget } from "@/lib/nutrition/target-sync";
 import {
   BUDGETS,
   COOK_TIMES,
@@ -110,26 +112,47 @@ export const generateMealPlanTool = ({
         memory: memory?.profile || undefined,
       });
 
+      // NUT-13: unify the plan's target with the client's daily Calorie-Tracker
+      // target so one set of numbers drives their dashboard rings. This also
+      // sets the daily target when they had none — so the plan you just built
+      // actually shows up in their tracker.
+      const effectiveTarget = await reconcilePlanTarget(
+        userId,
+        target,
+        plan.target
+      );
+      const hadTarget = target?.calories != null;
+
       const created = await createMealPlan({
         userId,
         title: plan.title,
         source: "chad",
         sourceChatId: chatId,
-        targetCalories: plan.target.calories,
-        targetProtein: plan.target.protein,
-        targetCarbs: plan.target.carbs,
-        targetFat: plan.target.fat,
+        targetCalories: effectiveTarget.calories,
+        targetProtein: effectiveTarget.protein,
+        targetCarbs: effectiveTarget.carbs,
+        targetFat: effectiveTarget.fat,
         preferences,
         coachIntro: plan.coachIntro,
         days: plan.days,
       });
+
+      // The daily target may have just changed — refresh the surfaces whose
+      // rings read it.
+      revalidatePath("/today");
+      revalidatePath("/nutrition");
+      revalidatePath("/meal-plan");
+
+      const targetNote = hadTarget
+        ? "Their daily Calorie Tracker targets already drive this plan."
+        : "Their daily Calorie Tracker targets are now set to match this plan, so their dashboard rings track toward it.";
 
       return {
         id: created.id,
         title: created.title,
         days: plan.days.length,
         mealsPerDay: preferences.mealsPerDay,
-        message: `Structured meal plan "${created.title}" built and saved to the client's Meal Plan dashboard (${plan.days.length} days). Tell them it's ready and they can view, tweak, download, or log meals from it there. Do not list the macros yourself.`,
+        message: `Structured meal plan "${created.title}" built and saved to the client's Meal Plan dashboard (${plan.days.length} days). ${targetNote} Tell them it's ready and they can view, tweak, download, or log meals from it there. Do not list the macros yourself.`,
       };
     },
   });
