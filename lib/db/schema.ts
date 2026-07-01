@@ -102,6 +102,20 @@ export const user = pgTable("User", {
   })
     .notNull()
     .default("daily"),
+  // --- Weekly Report (FEAT-12, Elite) ---
+  // Whether Chad writes this member a weekly coach's review. Default ON — like
+  // check-ins, the report IS the Elite product; one-click off on /account.
+  weeklyReportsEnabled: boolean("weeklyReportsEnabled").notNull().default(true),
+  // When the report lands, in the member's OWN local time: day of week
+  // (0 = Sunday … 6 = Saturday) + hour (0-23). Defaults to Sunday 5pm — the
+  // classic "Sunday Report" — but fully customizable on /account.
+  weeklyReportDay: integer("weeklyReportDay").notNull().default(0),
+  weeklyReportHour: integer("weeklyReportHour").notNull().default(17),
+  // IANA timezone ("America/Chicago"), captured silently from the browser when
+  // the member saves their report schedule — never asked as a question. Null =
+  // fall back to US Eastern. FEAT-8 will grow this into the app-wide per-user
+  // timezone (captured at login) that day-bucketing + check-in crons also use.
+  timezone: text("timezone"),
 });
 
 export type User = InferSelectModel<typeof user>;
@@ -649,3 +663,23 @@ export const checkIn = pgTable("CheckIn", {
 });
 
 export type CheckIn = InferSelectModel<typeof checkIn>;
+
+// --- Weekly Report (FEAT-12, Elite) ---
+// One row per weekly coach's report Chad wrote. The row IS the artifact: the
+// /reports page and the PDF render `content` (structured sections + next week's
+// adjustments), and the row doubles as the dedup ledger so the hourly cron can
+// never send two reports in one week.
+export const weeklyReport = pgTable("WeeklyReport", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  // The email subject line, in Chad's voice.
+  subject: text("subject").notNull(),
+  // WeeklyReportContent (see lib/reports/content.ts): headline, intro,
+  // sections, next week's adjustments with reasons, bottom line.
+  content: json("content").notNull(),
+  sentAt: timestamp("sentAt").notNull().defaultNow(),
+});
+
+export type WeeklyReport = InferSelectModel<typeof weeklyReport>;

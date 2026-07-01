@@ -134,6 +134,13 @@
       "when": 1782943520086,
       "tag": "0018_fresh_black_bolt",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1782948969625,
+      "tag": "0019_lumpy_oracle",
+      "breakpoints": true
     }
   ]
 }

@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { CheckInSettings } from "@/components/account/check-in-settings";
+import { WeeklyReportSettings } from "@/components/account/weekly-report-settings";
 import { ProfileForm } from "@/components/account/profile-form";
 import { UnitPreference } from "@/components/account/unit-preference";
 import { PageShell } from "@/components/nav/page-shell";
@@ -169,15 +170,25 @@ async function AccountSettings() {
               <UnitPreference initialUnit={user.weightUnit} />
             </div>
 
-            {/* Proactive check-ins (FEAT-11) — Elite only, so members who
-                don't have the feature never see a dead control. */}
+            {/* Proactive check-ins (FEAT-11) + the weekly report (FEAT-12) —
+                Elite only, so members who don't have the features never see a
+                dead control. */}
             {canAccessEliteFeatures(user) && (
-              <div className="mt-6 border-border border-t pt-6">
-                <CheckInSettings
-                  initialEnabled={user.checkInsEnabled}
-                  initialFrequency={user.checkInFrequency}
-                />
-              </div>
+              <>
+                <div className="mt-6 border-border border-t pt-6">
+                  <CheckInSettings
+                    initialEnabled={user.checkInsEnabled}
+                    initialFrequency={user.checkInFrequency}
+                  />
+                </div>
+                <div className="mt-6 border-border border-t pt-6">
+                  <WeeklyReportSettings
+                    initialDay={user.weeklyReportDay}
+                    initialEnabled={user.weeklyReportsEnabled}
+                    initialHour={user.weeklyReportHour}
+                  />
+                </div>
+              </>
             )}
           </div>
         </section>

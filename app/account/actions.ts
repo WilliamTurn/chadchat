@@ -8,10 +8,12 @@ import {
   getUserById,
   setCheckInSettings,
   setMemoryEnabled,
+  setWeeklyReportSettings,
   setWeightUnit,
   updateUserProfile,
 } from "@/lib/db/queries";
 import { type ProfileInput, profileSchema } from "@/lib/profile";
+import { isValidTimezone } from "@/lib/reports/schedule";
 import { getAppUrl, getStripe } from "@/lib/stripe";
 
 /**
@@ -124,6 +126,49 @@ export async function saveCheckInSettings(input: {
     checkInFrequency: input.frequency,
   });
   revalidatePath("/account");
+}
+
+/**
+ * Save the member's weekly-report schedule (FEAT-12, Elite). The browser's
+ * IANA timezone rides along silently so the hourly cron can hit their chosen
+ * local day + hour; a missing/garbled zone just leaves the stored one alone.
+ */
+export async function saveWeeklyReportSettings(input: {
+  enabled: boolean;
+  day: number;
+  hour: number;
+  timezone?: string;
+}) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  if (
+    typeof input.enabled !== "boolean" ||
+    !Number.isInteger(input.day) ||
+    input.day < 0 ||
+    input.day > 6 ||
+    !Number.isInteger(input.hour) ||
+    input.hour < 0 ||
+    input.hour > 23
+  ) {
+    throw new Error("Invalid weekly-report settings");
+  }
+
+  const timezone =
+    typeof input.timezone === "string" && isValidTimezone(input.timezone)
+      ? input.timezone
+      : undefined;
+
+  await setWeeklyReportSettings(session.user.id, {
+    weeklyReportsEnabled: input.enabled,
+    weeklyReportDay: input.day,
+    weeklyReportHour: input.hour,
+    ...(timezone ? { timezone } : {}),
+  });
+  revalidatePath("/account");
+  revalidatePath("/reports");
 }
 
 /** Turn Chad's cross-chat memory on or off for the current user. */

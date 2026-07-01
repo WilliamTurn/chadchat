@@ -61,10 +61,12 @@ import {
   user,
   userMemory,
   vote,
+  type WeeklyReport,
   type Workout,
   type WorkoutExercise,
   type WorkoutSet,
   waterLog,
+  weeklyReport,
   workout,
   workoutExercise,
   workoutSet,
@@ -733,6 +735,9 @@ export async function deleteUserByEmail(
 
       // Chad's proactive check-in ledger.
       await tx.delete(checkIn).where(eq(checkIn.userId, userId));
+
+      // Chad's weekly coach's reports.
+      await tx.delete(weeklyReport).where(eq(weeklyReport.userId, userId));
 
       // Any outstanding auth-email tokens.
       await tx
@@ -2978,6 +2983,101 @@ export async function setCheckInSettings(
     throw new ChatbotError(
       "bad_request:database",
       "Failed to save check-in settings"
+    );
+  }
+}
+
+/**
+ * Everyone who may get a weekly report this pass: Elite members with reports
+ * on and a live subscription. Same shape + bound as the check-in query — the
+ * hourly cron then filters down to whoever's local day/hour is actually due.
+ */
+export async function getWeeklyReportEligibleUsers(): Promise<User[]> {
+  try {
+    return await db
+      .select()
+      .from(user)
+      .where(
+        and(
+          eq(user.subscriptionTier, "elite"),
+          eq(user.weeklyReportsEnabled, true),
+          inArray(user.subscriptionStatus, ["active", "trialing", "past_due"])
+        )
+      )
+      .limit(MAX_CHECK_IN_USERS_PER_PASS);
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get weekly-report eligible users"
+    );
+  }
+}
+
+/** A member's weekly reports, newest first (the /reports page + dedup). */
+export async function getWeeklyReportsByUserId(
+  userId: string,
+  limit = 26
+): Promise<WeeklyReport[]> {
+  try {
+    return await db
+      .select()
+      .from(weeklyReport)
+      .where(eq(weeklyReport.userId, userId))
+      .orderBy(desc(weeklyReport.sentAt))
+      .limit(limit);
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get weekly reports"
+    );
+  }
+}
+
+/** The member's most recent weekly report, if any (once-per-week dedup). */
+export async function getLatestWeeklyReport(
+  userId: string
+): Promise<WeeklyReport | null> {
+  const [latest] = await getWeeklyReportsByUserId(userId, 1);
+  return latest ?? null;
+}
+
+/** Persist a composed weekly report (the artifact + the dedup ledger row). */
+export async function createWeeklyReport(entry: {
+  userId: string;
+  subject: string;
+  content: unknown;
+}): Promise<WeeklyReport> {
+  try {
+    const [created] = await db.insert(weeklyReport).values(entry).returning();
+    return created;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to record weekly report"
+    );
+  }
+}
+
+/** Save the member's weekly-report schedule from /account. */
+export async function setWeeklyReportSettings(
+  userId: string,
+  settings: {
+    weeklyReportsEnabled: boolean;
+    weeklyReportDay: number;
+    weeklyReportHour: number;
+    // Captured silently from the browser; undefined leaves the stored zone.
+    timezone?: string;
+  }
+): Promise<void> {
+  try {
+    await db
+      .update(user)
+      .set({ ...settings, updatedAt: new Date() })
+      .where(eq(user.id, userId));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to save weekly-report settings"
     );
   }
 }
