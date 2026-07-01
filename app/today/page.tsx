@@ -488,7 +488,15 @@ async function TodayContent() {
             </p>
           </div>
           <div className="flex flex-col items-end gap-2">
-            {plan.tier === "pro" ? (
+            {plan.tier === "elite" ? (
+              <Badge
+                className="gap-1 border-foreground/30 bg-foreground/10 px-2.5 font-semibold uppercase tracking-wide"
+                variant="secondary"
+              >
+                <Zap className="size-3" fill="currentColor" />
+                Elite
+              </Badge>
+            ) : plan.tier === "pro" ? (
               <Badge
                 className="gap-1 border-blood/40 bg-blood/15 px-2.5 font-semibold text-blood uppercase tracking-wide shadow-[0_0_12px_-2px_var(--color-blood)]"
                 variant="secondary"

@@ -3,7 +3,7 @@
  * use from both client and server components.
  */
 
-export type PlanTier = "basic" | "pro";
+export type PlanTier = "basic" | "pro" | "elite";
 
 // Raw Stripe subscription statuses that grant access to Chad.
 // - trialing / active: full access.

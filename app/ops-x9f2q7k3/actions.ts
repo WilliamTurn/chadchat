@@ -54,8 +54,8 @@ export async function grantTierAction(
     return { status: "error", message: "Enter an email address." };
   }
 
-  let tier: "basic" | "pro" | null;
-  if (tierRaw === "basic" || tierRaw === "pro") {
+  let tier: "basic" | "pro" | "elite" | null;
+  if (tierRaw === "basic" || tierRaw === "pro" || tierRaw === "elite") {
     tier = tierRaw;
   } else if (tierRaw === "none") {
     tier = null;

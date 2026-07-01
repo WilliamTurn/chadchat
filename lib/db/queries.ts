@@ -29,8 +29,10 @@ import {
   type BodyMeasurement,
   bodyMeasurement,
   type Chat,
+  type CheckIn,
   type CustomExercise,
   chat,
+  checkIn,
   customExercise,
   type DBMessage,
   document,
@@ -538,7 +540,7 @@ export async function clearUserMemory(userId: string) {
 type SubscriptionUpdate = {
   stripeSubscriptionId: string | null;
   subscriptionStatus: string | null;
-  subscriptionTier: "basic" | "pro" | null;
+  subscriptionTier: "basic" | "pro" | "elite" | null;
   currentPeriodEnd: Date | null;
   cancelAtPeriodEnd: boolean;
   trialEndsAt: Date | null;
@@ -613,7 +615,7 @@ export type ManualGrantResult =
  */
 export async function setManualSubscriptionByEmail(
   email: string,
-  tier: "basic" | "pro" | null
+  tier: "basic" | "pro" | "elite" | null
 ): Promise<ManualGrantResult> {
   try {
     const normalized = email.trim().toLowerCase();
@@ -729,6 +731,9 @@ export async function deleteUserByEmail(
       await tx.delete(workout).where(eq(workout.userId, userId));
       await tx.delete(customExercise).where(eq(customExercise.userId, userId));
 
+      // Chad's proactive check-in ledger.
+      await tx.delete(checkIn).where(eq(checkIn.userId, userId));
+
       // Any outstanding auth-email tokens.
       await tx
         .delete(emailVerificationToken)
@@ -779,7 +784,7 @@ export type AdminUserRow = {
   id: string;
   email: string;
   name: string | null;
-  subscriptionTier: "basic" | "pro" | null;
+  subscriptionTier: "basic" | "pro" | "elite" | null;
   subscriptionStatus: string | null;
   createdAt: Date;
   chatCount: number;
@@ -877,7 +882,9 @@ export async function getUsageStats(): Promise<{
     for (const row of tierRows) {
       if (row.status === "trialing") {
         trialing += row.value;
-      } else if (row.tier === "pro") {
+      } else if (row.tier === "pro" || row.tier === "elite") {
+        // Elite folds into the "pro" bucket until the admin overview grows a
+        // dedicated Elite stat (part of ACC-17).
         pro += row.value;
       } else {
         basic += row.value;
@@ -2887,6 +2894,90 @@ export async function deleteCustomExercise({
     throw new ChatbotError(
       "bad_request:database",
       "Failed to delete custom exercise"
+    );
+  }
+}
+
+// --- Proactive check-ins (FEAT-11, Elite) ---
+
+// Bound one cron pass so a runaway user table can never turn a scheduled job
+// into an unbounded LLM/email bill. Revisit when Elite membership approaches it.
+const MAX_CHECK_IN_USERS_PER_PASS = 500;
+
+/**
+ * Everyone Chad may proactively email this pass: Elite members with check-ins
+ * switched on and a subscription status that grants access. The engine applies
+ * the finer-grained checks (period-end grace, frequency caps, dedup) in code.
+ */
+export async function getCheckInEligibleUsers(): Promise<User[]> {
+  try {
+    return await db
+      .select()
+      .from(user)
+      .where(
+        and(
+          eq(user.subscriptionTier, "elite"),
+          eq(user.checkInsEnabled, true),
+          inArray(user.subscriptionStatus, ["active", "trialing", "past_due"])
+        )
+      )
+      .limit(MAX_CHECK_IN_USERS_PER_PASS);
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get check-in eligible users"
+    );
+  }
+}
+
+/** Check-ins sent to a user since `since`, newest first (dedup + weekly caps). */
+export async function getCheckInsSince(
+  userId: string,
+  since: Date
+): Promise<CheckIn[]> {
+  try {
+    return await db
+      .select()
+      .from(checkIn)
+      .where(and(eq(checkIn.userId, userId), gte(checkIn.sentAt, since)))
+      .orderBy(desc(checkIn.sentAt));
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get check-ins");
+  }
+}
+
+/** Record a check-in that was actually delivered (the dedup/frequency ledger). */
+export async function createCheckIn(entry: {
+  userId: string;
+  slot: "morning" | "evening";
+  subject: string;
+  body: string;
+}): Promise<CheckIn> {
+  try {
+    const [created] = await db.insert(checkIn).values(entry).returning();
+    return created;
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to record check-in");
+  }
+}
+
+/** Save the member's check-in preferences from /account. */
+export async function setCheckInSettings(
+  userId: string,
+  settings: {
+    checkInsEnabled: boolean;
+    checkInFrequency: "daily" | "three_per_week" | "weekly";
+  }
+): Promise<void> {
+  try {
+    await db
+      .update(user)
+      .set({ ...settings, updatedAt: new Date() })
+      .where(eq(user.id, userId));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to save check-in settings"
     );
   }
 }

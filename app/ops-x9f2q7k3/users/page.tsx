@@ -109,7 +109,7 @@ export function PlanBadge({
   tier,
   status,
 }: {
-  tier: "basic" | "pro" | null;
+  tier: "basic" | "pro" | "elite" | null;
   status: string | null;
 }) {
   if (!status) {
@@ -118,7 +118,14 @@ export function PlanBadge({
   if (status === "trialing") {
     return <Badge variant="secondary">Trial · {tier ?? "—"}</Badge>;
   }
-  const label = tier === "pro" ? "Pro" : tier === "basic" ? "Basic" : status;
+  const label =
+    tier === "elite"
+      ? "Elite"
+      : tier === "pro"
+        ? "Pro"
+        : tier === "basic"
+          ? "Basic"
+          : status;
   const active = status === "active" || status === "past_due";
   return <Badge variant={active ? "default" : "outline"}>{label}</Badge>;
 }

@@ -4,12 +4,14 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
+import { CheckInSettings } from "@/components/account/check-in-settings";
 import { ProfileForm } from "@/components/account/profile-form";
 import { UnitPreference } from "@/components/account/unit-preference";
 import { PageShell } from "@/components/nav/page-shell";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { canAccessEliteFeatures } from "@/lib/admin";
 import { getUserById } from "@/lib/db/queries";
 import { PRO_PERKS } from "@/lib/plans";
 import { PLANS } from "@/lib/stripe";
@@ -27,6 +29,10 @@ function accentForCard({
 }): string {
   if (isPastDue) {
     return "bg-destructive";
+  }
+  // Elite's accent is deliberately NOT red — red stays Pro's "pick me" color.
+  if (tier === "elite") {
+    return "bg-foreground/70";
   }
   if (tier === "pro") {
     return "bg-blood";
@@ -162,6 +168,17 @@ async function AccountSettings() {
               </div>
               <UnitPreference initialUnit={user.weightUnit} />
             </div>
+
+            {/* Proactive check-ins (FEAT-11) — Elite only, so members who
+                don't have the feature never see a dead control. */}
+            {canAccessEliteFeatures(user) && (
+              <div className="mt-6 border-border border-t pt-6">
+                <CheckInSettings
+                  initialEnabled={user.checkInsEnabled}
+                  initialFrequency={user.checkInFrequency}
+                />
+              </div>
+            )}
           </div>
         </section>
 

@@ -25,7 +25,8 @@ function trialLabel(days: number): string {
 export function SidebarPlanStatus({ plan }: { plan: PlanStatusSummary }) {
   const isTrialing = plan.status === "trialing";
   const canUpgrade = plan.tier === "basic";
-  const isPro = plan.tier === "pro";
+  // Elite gets the same quick links — it's a superset of Pro.
+  const isPro = plan.tier === "pro" || plan.tier === "elite";
 
   if (!(isTrialing || canUpgrade || isPro)) {
     return null;

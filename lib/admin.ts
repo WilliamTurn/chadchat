@@ -72,3 +72,23 @@ export function canAccessProFeatures(
   }
   return isAdminEmail(user.email) || getEntitlements(user).photoAnalysis;
 }
+
+/**
+ * Elite-feature gate, admin-aware. Elite is additive on top of Pro (proactive
+ * check-ins, the Sunday Report) — Pro keeps everything it has today. Requires
+ * live access so a lapsed Elite subscription doesn't keep receiving outreach.
+ */
+export function canAccessEliteFeatures(
+  user:
+    | (AccessUser & { subscriptionTier: PlanTier | null })
+    | null
+    | undefined
+): boolean {
+  if (!user) {
+    return false;
+  }
+  return (
+    isAdminEmail(user.email) ||
+    (user.subscriptionTier === "elite" && hasActiveAccess(user))
+  );
+}

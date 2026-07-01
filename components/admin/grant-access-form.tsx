@@ -42,6 +42,7 @@ export function GrantAccessForm() {
           id="admin-tier"
           name="tier"
         >
+          <option value="elite">Chad Elite</option>
           <option value="pro">Chad Pro</option>
           <option value="basic">Chad Basic</option>
           <option value="none">Revoke access</option>

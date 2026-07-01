@@ -32,7 +32,9 @@ export const user = pgTable("User", {
   // | unpaid | paused | incomplete | incomplete_expired. Null = never subscribed.
   subscriptionStatus: text("subscriptionStatus"),
   // Which plan they're on, derived from the Stripe price id.
-  subscriptionTier: varchar("subscriptionTier", { enum: ["basic", "pro"] }),
+  subscriptionTier: varchar("subscriptionTier", {
+    enum: ["basic", "pro", "elite"],
+  }),
   // When the current paid/trial period ends (drives access + renewal display).
   currentPeriodEnd: timestamp("currentPeriodEnd"),
   // True if they've asked to cancel but still have access until period end.
@@ -87,9 +89,23 @@ export const user = pgTable("User", {
     enum: ["muscle", "fat_loss", "strength", "health"],
   }),
   trainingDaysPerWeek: integer("trainingDaysPerWeek"),
+  // --- Proactive check-ins (FEAT-11, Elite) ---
+  // Whether Chad may email this member first (morning briefs, missed-workout
+  // callouts). Default ON — it's the flagship of the Elite tier — with a
+  // one-click off switch + a frequency control on /account.
+  checkInsEnabled: boolean("checkInsEnabled").notNull().default(true),
+  // How often Chad is allowed to reach out. "daily" = up to a morning brief +
+  // an evening callout per day; the other two are rolling-7-day send caps so
+  // nobody ever feels spammed.
+  checkInFrequency: varchar("checkInFrequency", {
+    enum: ["daily", "three_per_week", "weekly"],
+  })
+    .notNull()
+    .default("daily"),
 });
 
 export type User = InferSelectModel<typeof user>;
+export type CheckInFrequency = User["checkInFrequency"];
 
 // One durable "what Chad knows about you" profile per user. Populated by a
 // cheap background LLM call after chats (see lib/ai/memory.ts) and injected
@@ -613,3 +629,23 @@ export const mealPlan = pgTable("MealPlan", {
 });
 
 export type MealPlan = InferSelectModel<typeof mealPlan>;
+
+// --- Proactive check-ins (FEAT-11, Elite) ---
+// One row per check-in email Chad actually sent. This is the dedup + frequency
+// ledger: the cron pass consults it so a user never gets the same slot twice in
+// a day and never exceeds their chosen weekly frequency — and it keeps the full
+// text so a future in-app "check-in history" can render what Chad said.
+export const checkIn = pgTable("CheckIn", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  // Which cron pass produced it: the morning brief or the evening callout.
+  slot: varchar("slot", { enum: ["morning", "evening"] }).notNull(),
+  subject: text("subject").notNull(),
+  // The plain-text body as composed (pre-HTML-templating).
+  body: text("body").notNull(),
+  sentAt: timestamp("sentAt").notNull().defaultNow(),
+});
+
+export type CheckIn = InferSelectModel<typeof checkIn>;

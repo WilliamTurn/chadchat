@@ -33,6 +33,13 @@ export const entitlementsByTier: Record<PlanTier, Entitlements> = {
     photoAnalysis: true,
     photoMessageCost: 5,
   },
+  elite: {
+    // Elite ⊇ Pro everywhere: photoAnalysis true means every existing Pro gate
+    // (canAccessProFeatures) passes for Elite with zero call-site changes.
+    maxMessagesPerDay: 2000,
+    photoAnalysis: true,
+    photoMessageCost: 5,
+  },
 };
 
 /**
@@ -82,8 +89,9 @@ export function getUsageWarning(args: {
 
   const trialing = status === "trialing";
 
-  // Honor the Pro "unlimited" promise — never warn an active Pro member.
-  if (tier === "pro" && !trialing) {
+  // Honor the Pro/Elite "unlimited" promise — never warn an active paid-up
+  // member on those tiers.
+  if ((tier === "pro" || tier === "elite") && !trialing) {
     return null;
   }
 

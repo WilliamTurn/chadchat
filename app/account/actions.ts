@@ -6,6 +6,7 @@ import { auth } from "@/app/(auth)/auth";
 import {
   clearUserMemory,
   getUserById,
+  setCheckInSettings,
   setMemoryEnabled,
   setWeightUnit,
   updateUserProfile,
@@ -99,6 +100,30 @@ export async function saveProfile(input: ProfileInput) {
   await updateUserProfile(session.user.id, parsed.data);
   revalidatePath("/account");
   revalidatePath("/today");
+}
+
+/** Save the member's proactive check-in preferences (FEAT-11, Elite). */
+export async function saveCheckInSettings(input: {
+  enabled: boolean;
+  frequency: "daily" | "three_per_week" | "weekly";
+}) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  if (
+    typeof input.enabled !== "boolean" ||
+    !["daily", "three_per_week", "weekly"].includes(input.frequency)
+  ) {
+    throw new Error("Invalid check-in settings");
+  }
+
+  await setCheckInSettings(session.user.id, {
+    checkInsEnabled: input.enabled,
+    checkInFrequency: input.frequency,
+  });
+  revalidatePath("/account");
 }
 
 /** Turn Chad's cross-chat memory on or off for the current user. */

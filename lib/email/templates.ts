@@ -89,3 +89,61 @@ export function passwordResetEmailTemplate(url: string): {
     }),
   };
 }
+
+/** Escape text for safe interpolation into the HTML email shell. */
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/**
+ * A proactive check-in from Chad (FEAT-11, Elite). The body is the plain-text
+ * message the compose pass wrote in Chad's voice; it's escaped and split into
+ * paragraphs here, so the model never injects HTML. Same dark shell as the
+ * auth/billing emails, but the copy IS the message (no generic heading), the
+ * CTA drops the reader into chat, and the footer says exactly how to dial the
+ * frequency down — the anti-spam escape hatch is always one click away.
+ */
+export function checkInEmailTemplate({
+  body,
+  chatUrl,
+  settingsUrl,
+}: {
+  body: string;
+  chatUrl: string;
+  settingsUrl: string;
+}): string {
+  const paragraphs = escapeHtml(body.trim())
+    .split(/\n{2,}/)
+    .map(
+      (p) =>
+        `<p style="margin:0 0 14px 0;">${p.replace(/\n/g, "<br/>")}</p>`
+    )
+    .join("");
+
+  return `<!doctype html>
+<html>
+  <body style="margin:0;padding:0;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:32px 0;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#141414;border:1px solid #262626;border-radius:12px;padding:32px;">
+            <tr><td style="color:#fff;font-size:18px;font-weight:700;letter-spacing:1px;padding-bottom:24px;">CHAD</td></tr>
+            <tr><td style="color:#e5e5e5;font-size:15px;line-height:24px;padding-bottom:10px;">${paragraphs}</td></tr>
+            <tr>
+              <td style="padding-bottom:24px;">
+                <a href="${chatUrl}" style="display:inline-block;background:${BRAND_RED};color:#fff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 24px;border-radius:8px;">Reply to Chad</a>
+              </td>
+            </tr>
+            <tr><td style="color:#737373;font-size:12px;line-height:20px;border-top:1px solid #262626;padding-top:16px;">You get these check-ins as a Chad Elite member — it's Chad holding you accountable between sessions. Choose how often he reaches out, or pause check-ins, anytime on <a href="${settingsUrl}" style="color:#a3a3a3;">your account page</a>.</td></tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+}

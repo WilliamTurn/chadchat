@@ -49,12 +49,25 @@ export const PLANS: Record<PlanTier, PlanConfig> = {
     priceId: process.env.STRIPE_PRICE_PRO ?? "",
     monthlyPriceLabel: "$39",
   },
+  elite: {
+    tier: "elite",
+    name: "Chad Elite",
+    // Not sold yet (ACC-17): no Stripe price exists until the owner creates it
+    // and sets STRIPE_PRICE_ELITE. Until then Elite is grantable only via the
+    // admin comp tool, and tierFromPriceId can never match (priceId is never
+    // the empty string — the !priceId guard returns first).
+    priceId: process.env.STRIPE_PRICE_ELITE ?? "",
+    monthlyPriceLabel: "$59",
+  },
 };
 
 /** Map a Stripe price id back to our internal tier. */
 export function tierFromPriceId(priceId: string | null | undefined): PlanTier | null {
   if (!priceId) {
     return null;
+  }
+  if (priceId === PLANS.elite.priceId) {
+    return "elite";
   }
   if (priceId === PLANS.pro.priceId) {
     return "pro";
