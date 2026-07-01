@@ -9,19 +9,30 @@ import { removeGoal, updateGoalRecord } from "@/app/today/actions";
 import { computeGoalProgress } from "@/lib/goals/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ExerciseTrendChart } from "@/components/workouts/exercise-trend-chart";
 import { type EditableGoal, GoalEditor } from "./goal-editor";
 import { GoalViewer } from "./goal-viewer";
 import { IconChip } from "./icon-chip";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
+/** Est.-1RM history for a lift goal's exercise, plus its current/first values. */
+export type LiftProgress = {
+  current: number | null;
+  first: number | null;
+  points: { t: number; value: number }[];
+};
+
 /** Live progress for a measurable goal, given a current value. */
 function GoalProgress({
   goal,
   current,
+  firstValue,
 }: {
   goal: EditableGoal;
   current: number | null;
+  /** Fallback start anchor when the goal has no stored startValue (lift goals). */
+  firstValue?: number | null;
 }) {
   const reduced = useReducedMotion() ?? false;
 
@@ -31,6 +42,7 @@ function GoalProgress({
     startValue: goal.startValue,
     targetValue: goal.targetValue,
     current,
+    firstWeight: firstValue,
   });
   if (progress == null) {
     return null;
@@ -65,16 +77,31 @@ function GoalProgress({
 function GoalItem({
   goal,
   currentWeight,
+  lift,
+  exerciseNames,
 }: {
   goal: EditableGoal;
   currentWeight: number | null;
+  lift: LiftProgress | undefined;
+  exerciseNames: string[];
 }) {
-  const current = goal.metric === "weight" ? currentWeight : null;
+  const isLift = goal.metric === "lift";
+  const current = isLift ? (lift?.current ?? null) : goal.metric === "weight" ? currentWeight : null;
+  const unit = goal.unit ? ` ${goal.unit}` : "";
+  // A lift goal whose exercise has no logged sets yet — show the target, and a
+  // nudge to start logging it, instead of a bar that can't move.
+  const liftAwaitingData =
+    isLift && current == null && goal.targetValue != null;
   return (
     <div className="rounded-xl border border-border bg-background/40 p-3">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="font-medium leading-snug">{goal.title}</p>
+          {isLift && goal.metricRef && (
+            <p className="text-muted-foreground text-xs">
+              Tracking {goal.metricRef} · est. 1RM
+            </p>
+          )}
           {goal.targetDate && (
             <p className="text-muted-foreground text-xs">
               Target: {goal.targetDate}
@@ -85,10 +112,30 @@ function GoalItem({
           <Badge variant="secondary">{goal.status}</Badge>
         )}
       </div>
-      <GoalProgress current={current} goal={goal} />
+      <GoalProgress
+        current={current}
+        firstValue={lift?.first}
+        goal={goal}
+      />
+      {liftAwaitingData && (
+        <p className="mt-2 text-muted-foreground text-xs">
+          Target {goal.targetValue}
+          {unit} — no sets logged for {goal.metricRef ?? "this lift"} yet. Log it
+          in Workouts and the chart fills in.
+        </p>
+      )}
+      {isLift && lift && lift.points.length >= 2 && (
+        <div className="mt-3">
+          <ExerciseTrendChart
+            points={lift.points}
+            target={goal.targetValue}
+            unit={goal.unit ?? "lb"}
+          />
+        </div>
+      )}
       <div className="mt-1 flex items-center gap-1">
         <GoalViewer goal={goal} />
-        <GoalEditor goal={goal} variant="icon" />
+        <GoalEditor exerciseNames={exerciseNames} goal={goal} variant="icon" />
         <RowDeleteGoal id={goal.id} />
       </div>
     </div>
@@ -206,11 +253,17 @@ export function GoalList({
   currentWeight,
   memoryGoalHint,
   pastGoals = [],
+  liftProgress = {},
+  exerciseNames = [],
 }: {
   goals: EditableGoal[];
   currentWeight: number | null;
   memoryGoalHint: string | null;
   pastGoals?: EditableGoal[];
+  /** Est.-1RM history per lift-goal id, for live progress + the trend chart. */
+  liftProgress?: Record<string, LiftProgress>;
+  /** Logged exercise names, offered as suggestions when adding a lift goal. */
+  exerciseNames?: string[];
 }) {
   return (
     <>
@@ -221,13 +274,21 @@ export function GoalList({
           </IconChip>
           Your goals
         </h2>
-        {goals.length > 0 && <GoalEditor variant="add" />}
+        {goals.length > 0 && (
+          <GoalEditor exerciseNames={exerciseNames} variant="add" />
+        )}
       </div>
 
       {goals.length > 0 ? (
         <div className="flex flex-col gap-2">
           {goals.map((g) => (
-            <GoalItem currentWeight={currentWeight} goal={g} key={g.id} />
+            <GoalItem
+              currentWeight={currentWeight}
+              exerciseNames={exerciseNames}
+              goal={g}
+              key={g.id}
+              lift={liftProgress[g.id]}
+            />
           ))}
         </div>
       ) : (
@@ -246,7 +307,7 @@ export function GoalList({
               the plan around it.
             </p>
           )}
-          <GoalEditor variant="cta" />
+          <GoalEditor exerciseNames={exerciseNames} variant="cta" />
         </div>
       )}
 

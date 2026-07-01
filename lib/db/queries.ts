@@ -986,6 +986,7 @@ export async function createGoal(entry: {
   source: Goal["source"];
   sourceChatId: string | null;
   metric: Goal["metric"];
+  metricRef: string | null;
   startValue: number | null;
   targetValue: number | null;
   unit: string | null;
@@ -1051,6 +1052,7 @@ export async function updateGoal(entry: {
   targetDate: string | null;
   status: Goal["status"];
   metric: Goal["metric"];
+  metricRef: string | null;
   startValue: number | null;
   targetValue: number | null;
   unit: string | null;

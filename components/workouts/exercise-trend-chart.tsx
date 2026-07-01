@@ -20,6 +20,7 @@ import {
   CartesianGrid,
   ComposedChart,
   ReferenceDot,
+  ReferenceLine,
   XAxis,
   YAxis,
 } from "recharts";
@@ -42,22 +43,30 @@ type Point = { t: number; value: number };
 export function ExerciseTrendChart({
   points,
   unit = "lb",
+  target,
 }: {
   points: Point[];
   unit?: string;
+  /** Optional goal line (e.g. a lift-goal target 1RM), drawn dashed. */
+  target?: number | null;
 }) {
   const reveal = useMountReveal();
   const yDomain = useMemo<[number, number]>(() => {
     if (points.length === 0) {
       return [0, 1];
     }
+    // Include the target so its line is always in view, even before the client
+    // is anywhere near it.
     const vs = points.map((p) => p.value);
+    if (target != null) {
+      vs.push(target);
+    }
     const min = Math.min(...vs);
     const max = Math.max(...vs);
     const spread = max - min;
     const pad = spread > 0 ? spread * 0.15 : Math.max(max * 0.05, 1);
     return [Math.floor(min - pad), Math.ceil(max + pad)];
-  }, [points]);
+  }, [points, target]);
 
   if (points.length === 0) {
     return null;
@@ -108,6 +117,20 @@ export function ExerciseTrendChart({
             strokeWidth: 1,
           }}
         />
+
+        {target != null && (
+          <ReferenceLine
+            label={{
+              value: `Goal ${target} ${unit}`,
+              position: "insideTopRight",
+              fill: "var(--muted-foreground)",
+              fontSize: 11,
+            }}
+            stroke="var(--muted-foreground)"
+            strokeDasharray="5 5"
+            y={target}
+          />
+        )}
 
         <Area
           activeDot={{ r: 5, fill: ACCENT, stroke: "var(--background)", strokeWidth: 1.5 }}

@@ -70,12 +70,44 @@ import {
 } from "@/lib/today/goal-diagram";
 import { DEFAULT_WATER_GOAL_ML } from "@/lib/today/water-units";
 import { HeroCustomizer } from "@/components/today/hero-customizer";
+import type { LiftProgress } from "@/components/today/goal-list";
+import type { WorkoutWithChildren } from "@/lib/db/queries";
+import { exercise1RMTrend, type WorkoutData } from "@/lib/workouts/stats";
 
 const LB_PER_KG = 2.204_62;
 const DAY_MS = 86_400_000;
 
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
+}
+
+// How much workout history to hydrate for the /today lift-goal trends +
+// last-workout card. Bounded and cheaper than the /workouts page's 200, but
+// plenty for a strength-goal trend line.
+const TODAY_WORKOUT_LIMIT = 60;
+
+/** DB workout rows → the serializable shape the stats helpers consume. */
+function toWorkoutData(w: WorkoutWithChildren): WorkoutData {
+  return {
+    id: w.id,
+    title: w.title,
+    performedAt: w.performedAt.toISOString(),
+    durationSeconds: w.durationSeconds,
+    notes: w.notes,
+    exercises: w.exercises.map((ex) => ({
+      name: ex.exerciseName,
+      muscleGroup: ex.muscleGroup,
+      notes: ex.notes,
+      sets: ex.sets.map((s) => ({
+        weight: s.weight,
+        reps: s.reps,
+        unit: s.unit,
+        rpe: s.rpe,
+        setType: s.setType,
+        completed: s.completed,
+      })),
+    })),
+  };
 }
 
 /** Pull a value from the "## Client file" block of Chad's memory profile. */
@@ -202,7 +234,7 @@ async function TodayContent() {
     getInactiveGoalsByUserId(user.id),
     getActivePlansByUserId(user.id),
     canAccessProFeatures(user)
-      ? getWorkoutsByUserId(user.id, 1)
+      ? getWorkoutsByUserId(user.id, TODAY_WORKOUT_LIMIT)
       : Promise.resolve([]),
     isPro
       ? getActivityDaysSince(user.id, activitySince)
@@ -245,12 +277,39 @@ async function TodayContent() {
     targetDate: g.targetDate,
     status: g.status,
     metric: g.metric,
+    metricRef: g.metricRef,
     startValue: g.startValue,
     targetValue: g.targetValue,
     unit: g.unit,
   });
   const goalItems = goals.map(toGoalItem);
   const pastGoalItems = pastGoals.map(toGoalItem);
+
+  // Lift goals (DSH-28): read the est.-1RM trend for each tracked exercise from
+  // the logged workouts, so the goal card shows live progress + charts against
+  // the PR data already collected. Exercise names double as add-a-goal
+  // suggestions.
+  const workoutData = recentWorkouts.map(toWorkoutData);
+  const exerciseNames = [
+    ...new Map(
+      workoutData
+        .flatMap((w) => w.exercises.map((ex) => ex.name.trim()))
+        .filter(Boolean)
+        .map((name) => [name.toLowerCase(), name] as const)
+    ).values(),
+  ].sort((a, b) => a.localeCompare(b));
+
+  const liftProgress: Record<string, LiftProgress> = {};
+  for (const g of goalItems) {
+    if (g.metric === "lift" && g.metricRef) {
+      const points = exercise1RMTrend(workoutData, g.metricRef);
+      liftProgress[g.id] = {
+        current: points.at(-1)?.value ?? null,
+        first: points[0]?.value ?? null,
+        points,
+      };
+    }
+  }
   const planItems = plans.map((p) => ({
     id: p.id,
     title: p.title,
@@ -543,7 +602,9 @@ async function TodayContent() {
           <div className="relative flex flex-1 flex-col">
             <GoalList
               currentWeight={currentWeight}
+              exerciseNames={exerciseNames}
               goals={goalItems}
+              liftProgress={liftProgress}
               memoryGoalHint={goal}
               pastGoals={pastGoalItems}
             />

@@ -1,12 +1,14 @@
 import { z } from "zod";
 
 // The measurable-target metrics a goal can be pinned to (optional). A `weight`
-// goal renders live progress by reading the latest ProgressEntry.
+// goal renders live progress by reading the latest ProgressEntry; a `lift` goal
+// tracks the est. 1RM of the exercise named in `metricRef` against the target.
 export const GOAL_METRICS = [
   "weight",
   "bodyfat",
   "measurement",
   "custom",
+  "lift",
 ] as const;
 
 export const GOAL_STATUSES = ["active", "achieved", "archived"] as const;
@@ -16,6 +18,8 @@ export const PLAN_KINDS = ["training", "diet"] as const;
 // give a target value. Both target and start are optional otherwise.
 const measurableTarget = {
   metric: z.enum(GOAL_METRICS).nullable().optional(),
+  // The exercise a "lift" goal tracks (its est. 1RM). Ignored for other metrics.
+  metricRef: z.string().trim().max(80).nullable().optional(),
   startValue: z.number().finite().nullable().optional(),
   targetValue: z.number().finite().nullable().optional(),
   unit: z.string().trim().max(20).nullable().optional(),

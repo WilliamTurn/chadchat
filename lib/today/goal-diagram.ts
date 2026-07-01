@@ -108,7 +108,7 @@ export function diagramForIntent(intent: GoalIntent): GoalDiagram {
 
 type GoalLike = {
   title?: string | null;
-  metric?: "weight" | "bodyfat" | "measurement" | "custom" | null;
+  metric?: "weight" | "bodyfat" | "measurement" | "custom" | "lift" | null;
   startValue?: number | null;
   targetValue?: number | null;
 };

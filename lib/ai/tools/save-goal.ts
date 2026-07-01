@@ -17,7 +17,7 @@ type SaveGoalProps = {
 export const saveGoal = ({ session, chatId }: SaveGoalProps) =>
   tool({
     description:
-      "Save a fitness goal to the client's dashboard so it's tracked and visible to them. Use this when you and the client agree on a concrete goal. Put the full goal — what they're chasing, why, and how you'll measure it — in `detail`. If it's a measurable bodyweight goal, set metric:'weight' with startValue/targetValue/unit so the dashboard shows live progress.",
+      "Save a fitness goal to the client's dashboard so it's tracked and visible to them. Use this when you and the client agree on a concrete goal. Put the full goal — what they're chasing, why, and how you'll measure it — in `detail`. If it's a measurable bodyweight goal, set metric:'weight' with startValue/targetValue/unit so the dashboard shows live progress. For a strength goal, set metric:'lift' with metricRef=the exact exercise name (e.g. 'Back Squat') and targetValue/unit=the target est. 1RM — the dashboard charts it against the client's logged PR data.",
     inputSchema: z.object({
       title: z
         .string()
@@ -37,7 +37,17 @@ export const saveGoal = ({ session, chatId }: SaveGoalProps) =>
         .enum(GOAL_METRICS)
         .nullable()
         .optional()
-        .describe("Set 'weight' for a bodyweight goal to show live progress."),
+        .describe(
+          "'weight' for a bodyweight goal or 'lift' for a strength (est. 1RM) goal — both show live progress."
+        ),
+      metricRef: z
+        .string()
+        .max(80)
+        .nullable()
+        .optional()
+        .describe(
+          "For metric:'lift', the exact exercise name to track (e.g. 'Back Squat')."
+        ),
       startValue: z.number().nullable().optional(),
       targetValue: z.number().nullable().optional(),
       unit: z
@@ -52,6 +62,7 @@ export const saveGoal = ({ session, chatId }: SaveGoalProps) =>
       detail,
       targetDate,
       metric,
+      metricRef,
       startValue,
       targetValue,
       unit,
@@ -65,6 +76,7 @@ export const saveGoal = ({ session, chatId }: SaveGoalProps) =>
         source: "chad",
         sourceChatId: chatId,
         metric: metric ?? null,
+        metricRef: metricRef ?? null,
         startValue: startValue ?? null,
         targetValue: targetValue ?? null,
         unit: unit ?? null,

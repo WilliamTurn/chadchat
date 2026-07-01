@@ -189,7 +189,15 @@ async function Dashboard({ userId }: { userId: string }) {
         </div>
 
         {workouts.length > 0 && (
-          <div className="grid grid-cols-3 gap-3">
+          // DSH-27: after logging a workout the page refetches (revalidatePath +
+          // router.refresh), so the chart and PRs update — but the count-up
+          // counters kept the old total until a manual reload. Keying the block
+          // on the live figures remounts the StatCards whenever they change, so
+          // the numbers can't go stale (and re-count to the new total as feedback).
+          <div
+            className="grid grid-cols-3 gap-3"
+            key={`${workouts.length}-${weekWorkouts.length}-${weekVolume}`}
+          >
             <StatCard label="Workouts" value={String(workouts.length)} />
             <StatCard label="This week" value={String(weekWorkouts.length)} />
             <StatCard

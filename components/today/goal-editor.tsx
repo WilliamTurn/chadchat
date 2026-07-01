@@ -32,7 +32,9 @@ export type EditableGoal = {
   detail: string;
   targetDate: string | null;
   status: "active" | "achieved" | "archived";
-  metric: "weight" | "bodyfat" | "measurement" | "custom" | null;
+  metric: "weight" | "bodyfat" | "measurement" | "custom" | "lift" | null;
+  /** Exercise a "lift" goal tracks (its est. 1RM). Null for other metrics. */
+  metricRef: string | null;
   startValue: number | null;
   targetValue: number | null;
   unit: string | null;
@@ -56,10 +58,13 @@ function numOrNull(s: string): number | null {
 export function GoalEditor({
   goal,
   variant = "icon",
+  exerciseNames = [],
 }: {
   goal?: EditableGoal;
   /** "icon" = pencil (edit); "cta" = full button (empty state); "add" = small + (has goals). */
   variant?: "icon" | "cta" | "add";
+  /** Logged exercise names, offered as suggestions for a "lift" goal's target. */
+  exerciseNames?: string[];
 }) {
   const router = useRouter();
   const isEdit = Boolean(goal);
@@ -73,6 +78,7 @@ export function GoalEditor({
     goal?.status ?? "active"
   );
   const [metric, setMetric] = useState<string>(goal?.metric ?? NONE);
+  const [metricRef, setMetricRef] = useState(goal?.metricRef ?? "");
   const [startValue, setStartValue] = useState(
     goal?.startValue != null ? String(goal.startValue) : ""
   );
@@ -80,6 +86,16 @@ export function GoalEditor({
     goal?.targetValue != null ? String(goal.targetValue) : ""
   );
   const [unit, setUnit] = useState(goal?.unit ?? "");
+  const isLift = metric === "lift";
+
+  // Switching to a lift goal, default the unit to lb (the est.-1RM unit) so the
+  // user only has to name the lift and its target number.
+  function onMetricChange(value: string) {
+    setMetric(value);
+    if (value === "lift" && !unit.trim()) {
+      setUnit("lb");
+    }
+  }
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -88,13 +104,20 @@ export function GoalEditor({
       return;
     }
     const hasMetric = metric !== NONE;
+    if (isLift && !metricRef.trim()) {
+      toast.error("Name the lift to track (e.g. Back Squat).");
+      return;
+    }
     const payload = {
       title: title.trim(),
       detail: detail.trim(),
       targetDate: targetDate.trim() || null,
       status,
       metric: hasMetric ? (metric as EditableGoal["metric"]) : null,
-      startValue: hasMetric ? numOrNull(startValue) : null,
+      metricRef: isLift ? metricRef.trim() || null : null,
+      // A lift goal reads its start from the client's first logged e1RM, so the
+      // Start field is hidden and left null.
+      startValue: hasMetric && !isLift ? numOrNull(startValue) : null,
       targetValue: hasMetric ? numOrNull(targetValue) : null,
       unit: hasMetric ? unit.trim() || null : null,
     };
@@ -198,19 +221,73 @@ export function GoalEditor({
             <p className="text-muted-foreground text-xs">
               Pin a number to track live progress on the dashboard.
             </p>
-            <Select onValueChange={setMetric} value={metric}>
+            <Select onValueChange={onMetricChange} value={metric}>
               <SelectTrigger id="g-metric">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={NONE}>No number — just a goal</SelectItem>
                 <SelectItem value="weight">Bodyweight</SelectItem>
+                <SelectItem value="lift">A lift (est. 1RM)</SelectItem>
                 <SelectItem value="bodyfat">Body fat %</SelectItem>
                 <SelectItem value="measurement">A measurement</SelectItem>
                 <SelectItem value="custom">Something else</SelectItem>
               </SelectContent>
             </Select>
-            {metric !== NONE && (
+            {isLift && (
+              <>
+                <div className="flex flex-col gap-1">
+                  <Label className="text-xs" htmlFor="g-lift">
+                    Lift
+                  </Label>
+                  <Input
+                    autoComplete="off"
+                    id="g-lift"
+                    list="g-lift-options"
+                    onChange={(e) => setMetricRef(e.target.value)}
+                    placeholder="e.g. Back Squat"
+                    value={metricRef}
+                  />
+                  {exerciseNames.length > 0 && (
+                    <datalist id="g-lift-options">
+                      {exerciseNames.map((name) => (
+                        <option key={name} value={name} />
+                      ))}
+                    </datalist>
+                  )}
+                  <p className="text-muted-foreground text-xs">
+                    Chad reads your current best est. 1RM for this lift from your
+                    logged sets and charts it against the target.
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex flex-col gap-1">
+                    <Label className="text-xs" htmlFor="g-targetval">
+                      Target 1RM
+                    </Label>
+                    <Input
+                      id="g-targetval"
+                      inputMode="decimal"
+                      onChange={(e) => setTargetValue(e.target.value)}
+                      placeholder="405"
+                      value={targetValue}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <Label className="text-xs" htmlFor="g-unit">
+                      Unit
+                    </Label>
+                    <Input
+                      id="g-unit"
+                      onChange={(e) => setUnit(e.target.value)}
+                      placeholder="lb"
+                      value={unit}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+            {metric !== NONE && !isLift && (
               <div className="grid grid-cols-3 gap-2">
                 <div className="flex flex-col gap-1">
                   <Label className="text-xs" htmlFor="g-start">

@@ -329,8 +329,13 @@ export const goal = pgTable("Goal", {
   sourceChatId: uuid("sourceChatId"),
   // Measurable target (optional) — lets a goal render live progress.
   metric: varchar("metric", {
-    enum: ["weight", "bodyfat", "measurement", "custom"],
+    enum: ["weight", "bodyfat", "measurement", "custom", "lift"],
   }),
+  // Which entity the metric refers to, when it isn't implied. For a "lift" goal
+  // this is the exercise name (e.g. "Back Squat") whose est. 1RM is tracked
+  // against the target, charted from the PR data already collected. Null for
+  // metrics that need no reference (weight, body-fat %).
+  metricRef: text("metricRef"),
   startValue: doublePrecision("startValue"),
   targetValue: doublePrecision("targetValue"),
   unit: text("unit"),

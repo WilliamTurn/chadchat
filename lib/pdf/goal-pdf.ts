@@ -106,6 +106,7 @@ export async function downloadGoalPdf(g: {
   targetDate: string | null;
   status: string;
   metric: string | null;
+  metricRef?: string | null;
   startValue: number | null;
   targetValue: number | null;
   unit: string | null;
@@ -113,6 +114,9 @@ export async function downloadGoalPdf(g: {
   const meta: string[] = [];
   if (g.targetDate) {
     meta.push(`Target: ${g.targetDate}`);
+  }
+  if (g.metric === "lift" && g.metricRef) {
+    meta.push(`Lift: ${g.metricRef} (est. 1RM)`);
   }
   if (g.metric && g.targetValue != null) {
     const start = g.startValue != null ? `${g.startValue} → ` : "";

@@ -99,6 +99,13 @@
       "when": 1782702584539,
       "tag": "0013_parallel_betty_brant",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1782893169692,
+      "tag": "0014_furry_goblin_queen",
+      "breakpoints": true
     }
   ]
 }
