@@ -53,6 +53,7 @@ import {
   round1,
   type TrendRow,
 } from "@/lib/chart/trend";
+import { computeGoalProgress } from "@/lib/goals/progress";
 
 const ACCENT = "#a4161a"; // brand blood red
 const GOAL_COLOR = "#10b981"; // emerald
@@ -72,11 +73,14 @@ export function WeightChartInteractive({
   points,
   unit,
   goalWeight = null,
+  goalStartWeight = null,
   variant = "full",
 }: {
   points: { t: number; weight: number }[];
   unit: string;
   goalWeight?: number | null;
+  /** The active weight goal's stored start weight, in `unit` (DSH-26 anchor). */
+  goalStartWeight?: number | null;
   variant?: "full" | "compact";
 }) {
   // Trend is computed over the FULL history so the smoothing never restarts at a
@@ -120,23 +124,26 @@ export function WeightChartInteractive({
     };
   }, [rows, goalWeight, n]);
 
-  // How far along the journey from the very first weigh-in to the goal — the
-  // "you're 60% there" bar pro scale apps lead with. Computed over ALL history
-  // (not the range) so it answers "how close am I overall?".
+  // How far along the journey to the goal — the "you're 60% there" bar pro scale
+  // apps lead with. Anchored on the goal's stored start weight and the latest
+  // actual weigh-in via the SHARED calc (`lib/goals/progress`), so this bar
+  // matches the `/today` goal card exactly (DSH-26). Falls back to the first
+  // weigh-in for older goals with no stored start.
   const goalProgress = useMemo(() => {
-    if (goalWeight == null || allRows.length < 2) {
+    if (points.length < 2) {
       return null;
     }
-    const start = allRows[0].trend;
-    const current = allRows[allRows.length - 1].trend;
-    const total = start - goalWeight; // signed distance to cover
-    if (Math.abs(total) < 0.1) {
+    const p = computeGoalProgress({
+      startValue: goalStartWeight,
+      targetValue: goalWeight,
+      current: points[points.length - 1].weight,
+      firstWeight: points[0].weight,
+    });
+    if (p == null || p.start === p.target) {
       return null; // started at goal — nothing meaningful to show
     }
-    const done = start - current; // signed progress made so far
-    const pct = Math.max(0, Math.min(1, done / total));
-    return { pct, reached: pct >= 0.999 };
-  }, [allRows, goalWeight]);
+    return { pct: p.pct / 100, reached: p.reached };
+  }, [points, goalWeight, goalStartWeight]);
 
   if (n === 0) {
     return null; // page renders the empty-state prompt

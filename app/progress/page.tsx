@@ -47,20 +47,49 @@ function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }
 
+/** The active weight goal, if any (metric "weight" with a target set). */
+function activeWeightGoal(goals: Goal[]): Goal | null {
+  return goals.find((g) => g.metric === "weight" && g.targetValue != null) ?? null;
+}
+
+/** Convert a goal-native weight value into `displayUnit`. */
+function toDisplayWeight(
+  value: number,
+  goalUnit: string | null,
+  displayUnit: "lb" | "kg"
+): number {
+  const from: "lb" | "kg" = (goalUnit ?? "").trim().toLowerCase().startsWith("k")
+    ? "kg"
+    : "lb";
+  return round1(convert(value, from, displayUnit));
+}
+
 /** The target weight (in `displayUnit`) from the user's active weight goal, if any. */
 function weightGoalTarget(
   goals: Goal[],
   displayUnit: "lb" | "kg"
 ): number | null {
-  const wg = goals.find(
-    (g) => g.metric === "weight" && g.targetValue != null
-  );
+  const wg = activeWeightGoal(goals);
   if (!wg || wg.targetValue == null) {
     return null;
   }
-  const from: "lb" | "kg" =
-    (wg.unit ?? "").trim().toLowerCase().startsWith("k") ? "kg" : "lb";
-  return round1(convert(wg.targetValue, from, displayUnit));
+  return toDisplayWeight(wg.targetValue, wg.unit, displayUnit);
+}
+
+/**
+ * The stored start weight (in `displayUnit`) of the active weight goal, if any.
+ * This is the shared anchor for goal progress (DSH-26) — the same one `/today`
+ * uses — so the "Progress to goal" bar agrees across screens.
+ */
+function weightGoalStart(
+  goals: Goal[],
+  displayUnit: "lb" | "kg"
+): number | null {
+  const wg = activeWeightGoal(goals);
+  if (!wg || wg.startValue == null) {
+    return null;
+  }
+  return toDisplayWeight(wg.startValue, wg.unit, displayUnit);
 }
 
 export default function ProgressPage() {
@@ -146,6 +175,7 @@ async function Dashboard({ userId }: { userId: string }) {
   }));
 
   const goalWeight = weightGoalTarget(goals, displayUnit);
+  const goalStartWeight = weightGoalStart(goals, displayUnit);
 
   const photos = entries.filter((e) => e.photoUrl).reverse();
   const recent = [...entries].reverse();
@@ -155,6 +185,7 @@ async function Dashboard({ userId }: { userId: string }) {
       {/* Weight trend — the chart owns its card chrome, KPI strip and toggle. */}
       {points.length > 0 ? (
         <WeightChartInteractive
+          goalStartWeight={goalStartWeight}
           goalWeight={goalWeight}
           points={points}
           unit={displayUnit}

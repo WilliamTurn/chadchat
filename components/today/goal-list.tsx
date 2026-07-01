@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { removeGoal, updateGoalRecord } from "@/app/today/actions";
+import { computeGoalProgress } from "@/lib/goals/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { type EditableGoal, GoalEditor } from "./goal-editor";
@@ -24,20 +25,18 @@ function GoalProgress({
 }) {
   const reduced = useReducedMotion() ?? false;
 
-  if (goal.targetValue == null || current == null) {
+  // Shared start-weight + progress-% calc — the same one `/progress` uses, so the
+  // two screens never disagree (DSH-26).
+  const progress = computeGoalProgress({
+    startValue: goal.startValue,
+    targetValue: goal.targetValue,
+    current,
+  });
+  if (progress == null) {
     return null;
   }
-  const start = goal.startValue ?? current;
-  const span = goal.targetValue - start;
-  const done = current - start;
-  // Works whether the target is above or below the start (gain or loss).
-  const pct =
-    span === 0
-      ? 100
-      : Math.max(0, Math.min(100, Math.round((done / span) * 100)));
-  const toGo = Math.round(Math.abs(goal.targetValue - current) * 10) / 10;
+  const { pct, toGo, reached } = progress;
   const unit = goal.unit ? ` ${goal.unit}` : "";
-  const reached = pct >= 100;
 
   return (
     <div className="mt-2">
