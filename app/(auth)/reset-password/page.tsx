@@ -1,28 +1,27 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { CheckIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useActionState, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 
 import { AuthStatus } from "@/components/chat/auth-status";
 import { AuthSubmitButton } from "@/components/chat/auth-submit-button";
+import { PasswordInput } from "@/components/chat/password-input";
 import { PasswordStrength } from "@/components/chat/password-strength";
 import { toast } from "@/components/chat/toast";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import {
-  PASSWORD_REQUIREMENT,
-  type ResetPasswordValues,
-  resetPasswordSchema,
+  type ResetPasswordFormValues,
+  resetPasswordFormSchema,
 } from "@/lib/validation/auth";
 import { type ResetPasswordActionState, resetPassword } from "../actions";
 
@@ -38,9 +37,9 @@ function ResetPasswordForm() {
   const token = useSearchParams().get("token") ?? "";
   const [isDone, setIsDone] = useState(false);
 
-  const form = useForm<Pick<ResetPasswordValues, "password">>({
-    resolver: zodResolver(resetPasswordSchema.pick({ password: true })),
-    defaultValues: { password: "" },
+  const form = useForm<ResetPasswordFormValues>({
+    resolver: zodResolver(resetPasswordFormSchema),
+    defaultValues: { password: "", confirmPassword: "" },
     mode: "onTouched",
   });
 
@@ -65,6 +64,15 @@ function ResetPasswordForm() {
     }
   }, [state.status]);
 
+  // useWatch (not form.watch) so this component re-renders on each keystroke
+  // even with the React Compiler enabled.
+  const password = useWatch({ control: form.control, name: "password" });
+  const confirmPassword = useWatch({
+    control: form.control,
+    name: "confirmPassword",
+  });
+  const confirmMatches = !!confirmPassword && confirmPassword === password;
+
   if (isDone) {
     return (
       <AuthStatus
@@ -87,7 +95,7 @@ function ResetPasswordForm() {
     );
   }
 
-  const onSubmit = (values: Pick<ResetPasswordValues, "password">) => {
+  const onSubmit = (values: ResetPasswordFormValues) => {
     const formData = new FormData();
     formData.set("token", token);
     formData.set("password", values.password);
@@ -111,25 +119,47 @@ function ResetPasswordForm() {
           <FormField
             control={form.control}
             name="password"
-            render={({ field, fieldState }) => (
+            render={({ field }) => (
               <FormItem>
                 <FormLabel className="font-normal text-muted-foreground">
                   New password
                 </FormLabel>
                 <FormControl>
-                  <Input
+                  <PasswordInput
                     autoComplete="new-password"
                     autoFocus
                     placeholder="••••••••"
-                    type="password"
                     {...field}
                   />
                 </FormControl>
                 <PasswordStrength password={field.value} />
-                {!fieldState.error && (
-                  <FormDescription>{PASSWORD_REQUIREMENT}</FormDescription>
-                )}
                 <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="font-normal text-muted-foreground">
+                  Confirm new password
+                </FormLabel>
+                <FormControl>
+                  <PasswordInput
+                    autoComplete="new-password"
+                    placeholder="••••••••"
+                    {...field}
+                  />
+                </FormControl>
+                {confirmMatches ? (
+                  <p className="flex items-center gap-1.5 text-[12px] text-emerald-600 dark:text-emerald-500">
+                    <CheckIcon className="size-3.5" strokeWidth={3} />
+                    Passwords match
+                  </p>
+                ) : (
+                  <FormMessage />
+                )}
               </FormItem>
             )}
           />

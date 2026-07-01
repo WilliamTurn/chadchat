@@ -1,80 +1,123 @@
 "use client";
 
+import { CheckIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PASSWORD_REQUIREMENTS } from "@/lib/validation/auth";
 
 /**
- * Lightweight, dependency-free password-strength feedback for the new-password
- * screens (register + reset). This is UX nudging only — it is NOT the security
- * control. The real rule (8+ characters) is enforced by zod on the client and
- * re-enforced in the server action.
+ * Password strength indicator for the new-password screens (sign up + reset).
  *
- * Score 0–4 from two axes: length tiers (8+, 12+) and character variety
- * (lower/upper/digit/symbol). A password under the 8-char minimum can never
- * read above "Weak" so the meter and the hard rule never contradict.
+ * This is a faithful port of Origin UI's `comp-51` — the "Input with password
+ * strength indicator" component from github.com/origin-space/originui
+ * (commit 731f798, apps/origin/registry/default/components/comp-51.tsx, installable
+ * via `npx shadcn@latest add https://originui.com/r/comp-51.json`). Its
+ * strength-scoring, color/label helpers, single progress bar, and Check/X
+ * requirement list are kept as in the original.
+ *
+ * Two deliberate adaptations: (1) the <input> + show/hide toggle live in
+ * <PasswordInput> inside our react-hook-form field, so this component just takes
+ * the current `password` as a prop instead of owning input state; and (2) it
+ * reads its requirement list from PASSWORD_REQUIREMENTS (our shared source of
+ * truth) so the checklist is exactly what zod enforces on submit.
  */
-function scorePassword(password: string): number {
-  if (!password) {
-    return 0;
-  }
 
-  let score = 0;
-  if (password.length >= 8) {
-    score++;
+// Origin UI comp-51, verbatim.
+function getStrengthColor(score: number) {
+  if (score === 0) {
+    return "bg-border";
   }
-  if (password.length >= 12) {
-    score++;
+  if (score <= 1) {
+    return "bg-red-500";
   }
-
-  const variety =
-    (/[a-z]/.test(password) ? 1 : 0) +
-    (/[A-Z]/.test(password) ? 1 : 0) +
-    (/\d/.test(password) ? 1 : 0) +
-    (/[^A-Za-z0-9]/.test(password) ? 1 : 0);
-  if (variety >= 2) {
-    score++;
+  if (score <= 2) {
+    return "bg-orange-500";
   }
-  if (variety >= 3) {
-    score++;
+  if (score === 3) {
+    return "bg-amber-500";
   }
-
-  if (password.length < 8) {
-    return Math.min(score, 1);
-  }
-  return Math.min(score, 4);
+  return "bg-emerald-500";
 }
 
-const LEVELS = [
-  { label: "", className: "" },
-  { label: "Weak", className: "bg-destructive" },
-  { label: "Fair", className: "bg-orange-500" },
-  { label: "Good", className: "bg-yellow-500" },
-  { label: "Strong", className: "bg-emerald-500" },
-] as const;
+// Origin UI comp-51, verbatim.
+function getStrengthText(score: number) {
+  if (score === 0) {
+    return "Enter a password";
+  }
+  if (score <= 2) {
+    return "Weak password";
+  }
+  if (score === 3) {
+    return "Medium password";
+  }
+  return "Strong password";
+}
 
 export function PasswordStrength({ password }: { password: string }) {
-  if (!password) {
-    return null;
-  }
-
-  const score = scorePassword(password);
-  const level = LEVELS[score];
+  const strength = PASSWORD_REQUIREMENTS.map((req) => ({
+    met: req.test(password),
+    text: req.label,
+  }));
+  const strengthScore = strength.filter((req) => req.met).length;
 
   return (
-    <div aria-live="polite" className="flex items-center gap-2">
-      <div className="flex flex-1 gap-1">
-        {[1, 2, 3, 4].map((segment) => (
-          <span
-            className={cn(
-              "h-1 flex-1 rounded-full transition-colors",
-              segment <= score ? level.className : "bg-border"
-            )}
-            key={segment}
-          />
-        ))}
+    <div>
+      {/* Password strength indicator */}
+      <div
+        aria-label="Password strength"
+        aria-valuemax={4}
+        aria-valuemin={0}
+        aria-valuenow={strengthScore}
+        className="mt-3 mb-3 h-1 w-full overflow-hidden rounded-full bg-border"
+        role="progressbar"
+        tabIndex={-1}
+      >
+        <div
+          className={cn(
+            "h-full transition-all duration-500 ease-out",
+            getStrengthColor(strengthScore)
+          )}
+          style={{ width: `${(strengthScore / 4) * 100}%` }}
+        />
       </div>
-      <span className="w-10 shrink-0 text-right text-[11px] text-muted-foreground tabular-nums">
-        {level.label}
-      </span>
+
+      {/* Password strength description */}
+      <p className="mb-2 font-medium text-foreground text-sm">
+        {getStrengthText(strengthScore)}. Must contain:
+      </p>
+
+      {/* Password requirements list */}
+      <ul aria-label="Password requirements" className="space-y-1.5">
+        {strength.map((req) => (
+          <li className="flex items-center gap-2" key={req.text}>
+            {req.met ? (
+              <CheckIcon
+                aria-hidden="true"
+                className="text-emerald-500"
+                size={16}
+              />
+            ) : (
+              <XIcon
+                aria-hidden="true"
+                className="text-muted-foreground/80"
+                size={16}
+              />
+            )}
+            <span
+              className={cn(
+                "text-xs",
+                req.met
+                  ? "text-emerald-600 dark:text-emerald-500"
+                  : "text-muted-foreground"
+              )}
+            >
+              {req.text}
+              <span className="sr-only">
+                {req.met ? " - Requirement met" : " - Requirement not met"}
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

@@ -2,208 +2,363 @@
 
 import { Dumbbell } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 /**
- * Right-hand showcase panel on the auth screens (≥ xl only). Its job is to
- * sell Chad, not the infra underneath (ACC-2): a looping, animated preview of
- * what coaching with Chad actually feels like — a question comes in, Chad
- * "types", then answers in his voice — followed by a rotating real-customer
- * result. Replaces the old "Powered by AI Gateway" + suggestion-chip filler.
+ * Right-hand showcase panel on the auth screens (≥ xl only), ACC-16.
+ *
+ * Replaces the old full-height chat demo with a cinematic, auto-advancing
+ * montage — the login equivalent of a hard-cut hype reel. Gritty, desaturated
+ * black-and-white training photography (single blood-red accent) is intercut
+ * with two "product" beats — a dashboard stat and Chad firing off a text — so
+ * the panel sells both the intensity AND the fact that there's a real product
+ * behind it. Story-style progress bars, Ken Burns push-ins, and hard cross-cuts
+ * do the dazzling; there is no live chat stream to out-run the reader.
  */
 
-// Short exchanges that each showcase a different pillar: accountability, photo
-// form-checks, and meal planning — in Chad's blunt, concrete voice.
-const SCENES = [
+type Scene =
+  | {
+      kind: "photo";
+      src: string;
+      // Object position so the crop keeps the subject in frame on a tall panel.
+      position?: string;
+      kicker: string;
+      caption: string;
+      ms: number;
+    }
+  | { kind: "stat"; ms: number }
+  | { kind: "text"; ms: number };
+
+const SCENES: Scene[] = [
   {
-    user: "I've been stuck at the same weight for months.",
-    chad: "Because you're guessing. Send me everything you ate today — all of it. We fix the diet first, then we talk training.",
+    kind: "photo",
+    src: "/images/login/lift.webp",
+    position: "50% 35%",
+    kicker: "Day 41",
+    caption: "The day you don't want to.\nThat's the one that counts.",
+    ms: 4200,
+  },
+  { kind: "stat", ms: 4200 },
+  {
+    kind: "photo",
+    src: "/images/login/squat.webp",
+    position: "50% 40%",
+    kicker: "No excuses",
+    caption: "Chad doesn't negotiate.\nAnd neither will you.",
+    ms: 4200,
+  },
+  { kind: "text", ms: 5600 },
+  {
+    kind: "photo",
+    src: "/images/login/dawn.webp",
+    position: "50% 30%",
+    kicker: "4:17 AM",
+    caption: "Nobody is coming to save you.\nGet up.",
+    ms: 4600,
   },
   {
-    user: "Can you check my squat form?",
-    chad: "Send the video. I'll tell you exactly what's breaking down and the one cue that fixes it.",
-  },
-  {
-    user: "I don't have time to cook.",
-    chad: "Nobody does. I'll build you four meals you can make in ten minutes that hit your protein. No excuses.",
+    kind: "photo",
+    src: "/images/login/grip.webp",
+    position: "50% 50%",
+    kicker: "Chalk up",
+    caption: "Stop thinking.\nStart working.",
+    ms: 4000,
   },
 ];
 
-// Real customer results (names changed for privacy — same source as the
-// landing page's testimonials, trimmed for this narrow panel).
-const REVIEWS = [
-  {
-    quote:
-      "I paid a trainer for 2 years and got nowhere. Chad found the problem in the first week.",
-    name: "Mike R.",
-    result: "Lost 22 lbs in 3 months",
-  },
-  {
-    quote:
-      "Chad doesn't sugarcoat. He simplified everything and I'm finally seeing results.",
-    name: "Sarah T.",
-    result: "Finally seeing definition",
-  },
-  {
-    quote: "Like having a coach in my pocket 24/7 who has zero reason to BS me.",
-    name: "James K.",
-    result: "Down 15 lbs, up in energy",
-  },
-  {
-    quote:
-      "The photo analysis blew me away. Chad spotted things I couldn't see.",
-    name: "Rachel P.",
-    result: "First 5K after years",
-  },
-];
-
-function ChadAvatar() {
+function ChadMark() {
   return (
-    <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-blood/10 ring-1 ring-blood/20">
-      <Dumbbell className="text-blood" size={13} strokeWidth={2.5} />
+    <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-blood/15 ring-1 ring-blood/30">
+      <Dumbbell className="text-blood" size={14} strokeWidth={2.5} />
     </span>
   );
 }
 
-function TypingDots() {
+/** Word-by-word rise used for every scene's caption. */
+function Caption({ kicker, text }: { kicker: string; text: string }) {
+  const lines = text.split("\n");
   return (
-    <span className="flex items-center gap-1 rounded-2xl rounded-tl-sm border border-border/40 bg-card/40 px-3.5 py-3">
-      {[0, 1, 2].map((i) => (
-        <motion.span
-          animate={{ opacity: [0.25, 1, 0.25] }}
-          className="size-1.5 rounded-full bg-muted-foreground/70"
-          key={i}
-          transition={{
-            duration: 1,
-            repeat: Number.POSITIVE_INFINITY,
-            delay: i * 0.18,
-          }}
+    <div>
+      <motion.span
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-3 inline-block font-mono text-[11px] text-blood uppercase tracking-[0.24em]"
+        initial={{ opacity: 0, y: 10 }}
+        transition={{ duration: 0.5, delay: 0.15 }}
+      >
+        {kicker}
+      </motion.span>
+      <p className="font-display font-bold text-[26px] text-white leading-[1.15] tracking-tight [text-shadow:0_2px_20px_rgba(0,0,0,0.6)]">
+        {lines.map((line, li) => (
+          <span className="block overflow-hidden" key={line}>
+            <motion.span
+              animate={{ y: "0%" }}
+              className="inline-block"
+              initial={{ y: "110%" }}
+              transition={{
+                duration: 0.65,
+                delay: 0.25 + li * 0.12,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+            >
+              {line}
+            </motion.span>
+          </span>
+        ))}
+      </p>
+    </div>
+  );
+}
+
+function PhotoScene({
+  src,
+  position,
+  priority,
+}: {
+  src: string;
+  position?: string;
+  priority?: boolean;
+}) {
+  return (
+    <motion.div
+      animate={{ scale: 1.12 }}
+      className="absolute inset-0"
+      initial={{ scale: 1 }}
+      transition={{ duration: 6, ease: "linear" }}
+    >
+      <Image
+        alt=""
+        className="object-cover grayscale-[0.15]"
+        fill
+        priority={priority}
+        sizes="(min-width: 1280px) 55vw, 0px"
+        src={src}
+        style={{ objectPosition: position ?? "50% 50%" }}
+        // These are already resized/compressed WebPs (≤130 KB); skip the
+        // Next optimizer so they render identically in every environment.
+        unoptimized
+      />
+    </motion.div>
+  );
+}
+
+/** A dashboard beat — animated numbers + a red trend line, "screen-recording" feel. */
+function StatScene() {
+  return (
+    <div className="absolute inset-0 flex flex-col justify-center gap-8 bg-[#0a0a0b] px-10">
+      <motion.div
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center gap-2 text-[12px] text-muted-foreground"
+        initial={{ opacity: 0, y: 10 }}
+        transition={{ duration: 0.5 }}
+      >
+        <span className="size-1.5 rounded-full bg-emerald-500" />
+        Your progress · this month
+      </motion.div>
+
+      <div className="flex gap-10">
+        {[
+          { value: "−9", unit: "lbs", label: "Body weight" },
+          { value: "41", unit: "days", label: "Streak" },
+          { value: "+25", unit: "lbs", label: "Squat 1RM" },
+        ].map((s, i) => (
+          <motion.div
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col gap-1"
+            initial={{ opacity: 0, y: 14 }}
+            key={s.label}
+            transition={{ duration: 0.5, delay: 0.15 + i * 0.12 }}
+          >
+            <span className="flex items-baseline gap-1">
+              <span className="font-display font-bold text-[40px] text-white leading-none tabular-nums">
+                {s.value}
+              </span>
+              <span className="text-[13px] text-muted-foreground">
+                {s.unit}
+              </span>
+            </span>
+            <span className="text-[11px] text-muted-foreground uppercase tracking-[0.14em]">
+              {s.label}
+            </span>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Sparkline that draws itself, in blood-red. */}
+      <svg
+        aria-hidden
+        className="w-full"
+        fill="none"
+        height="64"
+        preserveAspectRatio="none"
+        viewBox="0 0 320 64"
+      >
+        <title>Trend</title>
+        <motion.path
+          animate={{ pathLength: 1 }}
+          d="M0 52 C40 50 60 40 90 38 S150 30 180 24 240 16 320 6"
+          initial={{ pathLength: 0 }}
+          stroke="#a4161a"
+          strokeLinecap="round"
+          strokeWidth="2.5"
+          transition={{ duration: 1.8, ease: "easeInOut", delay: 0.4 }}
         />
-      ))}
-    </span>
+      </svg>
+
+      <div className="font-display font-bold text-[22px] text-white leading-tight">
+        A coach who actually
+        <span className="text-blood"> keeps score.</span>
+      </div>
+    </div>
+  );
+}
+
+/** Chad firing off a text — the product's blunt accountability, verbatim. */
+function TextScene() {
+  const [typed, setTyped] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => setTyped(true), 1400);
+    return () => clearTimeout(id);
+  }, []);
+
+  return (
+    <div className="absolute inset-0 flex flex-col justify-center gap-4 bg-[#0a0a0b] px-10">
+      <div className="mb-1 flex items-center gap-2.5">
+        <ChadMark />
+        <span className="font-medium text-[13px] text-white">Chad</span>
+        <span className="ml-auto flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <span className="size-1.5 rounded-full bg-emerald-500" />
+          now
+        </span>
+      </div>
+
+      {/* User's excuse */}
+      <motion.p
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-[75%] self-end rounded-2xl rounded-tr-sm bg-muted px-4 py-2.5 text-[14px] text-foreground leading-relaxed"
+        initial={{ opacity: 0, y: 10 }}
+        transition={{ duration: 0.4 }}
+      >
+        Not feeling it today.
+      </motion.p>
+
+      {/* Chad: typing → the line */}
+      <div className="min-h-[92px]">
+        <AnimatePresence mode="wait">
+          {typed ? (
+            <motion.p
+              animate={{ opacity: 1, y: 0 }}
+              className="max-w-[86%] rounded-2xl rounded-tl-sm border border-blood/30 bg-blood/10 px-4 py-3 font-medium text-[16px] text-white leading-snug"
+              initial={{ opacity: 0, y: 10 }}
+              key="msg"
+              transition={{ duration: 0.4 }}
+            >
+              Nobody is coming to save you. Go put in the fucking work. NOW.
+            </motion.p>
+          ) : (
+            <motion.span
+              className="inline-flex items-center gap-1 rounded-2xl rounded-tl-sm border border-border/40 bg-card/40 px-4 py-3.5"
+              exit={{ opacity: 0 }}
+              key="dots"
+            >
+              {[0, 1, 2].map((i) => (
+                <motion.span
+                  animate={{ opacity: [0.25, 1, 0.25] }}
+                  className="size-1.5 rounded-full bg-muted-foreground/70"
+                  key={i}
+                  transition={{
+                    duration: 1,
+                    repeat: Number.POSITIVE_INFINITY,
+                    delay: i * 0.18,
+                  }}
+                />
+              ))}
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
   );
 }
 
 export function Preview() {
   const reduce = useReducedMotion();
-  const [scene, setScene] = useState(0);
-  // 0 = just the question · 1 = Chad typing · 2 = Chad's reply
-  const [phase, setPhase] = useState(reduce ? 2 : 0);
-  const [review, setReview] = useState(0);
+  const [index, setIndex] = useState(0);
 
-  // Drive the conversation timeline for the current scene, then advance.
-  useEffect(() => {
-    if (reduce) {
-      setPhase(2);
-      return;
-    }
-    setPhase(0);
-    const toTyping = setTimeout(() => setPhase(1), 650);
-    const toReply = setTimeout(() => setPhase(2), 1600);
-    const toNext = setTimeout(
-      () => setScene((s) => (s + 1) % SCENES.length),
-      5400
-    );
-    return () => {
-      clearTimeout(toTyping);
-      clearTimeout(toReply);
-      clearTimeout(toNext);
-    };
-  }, [scene, reduce]);
-
-  // Rotate the testimonial independently.
   useEffect(() => {
     if (reduce) {
       return;
     }
-    const id = setInterval(
-      () => setReview((rev) => (rev + 1) % REVIEWS.length),
-      4500
+    const id = setTimeout(
+      () => setIndex((i) => (i + 1) % SCENES.length),
+      SCENES[index].ms
     );
-    return () => clearInterval(id);
-  }, [reduce]);
+    return () => clearTimeout(id);
+  }, [index, reduce]);
 
-  const current = SCENES[scene];
-  const r = REVIEWS[review];
+  const scene = SCENES[index];
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-tl-2xl border border-border/20 border-b-0 bg-background">
-      {/* Chat-window header */}
-      <div className="flex h-14 shrink-0 items-center gap-3 border-b border-border/20 px-5">
-        <ChadAvatar />
-        <span className="font-medium text-[13px]">Chad</span>
-        <span className="ml-auto flex items-center gap-1.5 text-[11px] text-muted-foreground/70">
-          <span className="size-1.5 rounded-full bg-emerald-500" />
-          Online
-        </span>
+    <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/20 bg-black">
+      {/* Story-style progress segments */}
+      <div className="absolute inset-x-0 top-0 z-20 flex gap-1.5 p-4">
+        {SCENES.map((s, i) => (
+          <span
+            className="h-0.5 flex-1 overflow-hidden rounded-full bg-white/20"
+            key={`${s.kind}-${i}`}
+          >
+            <motion.span
+              animate={{
+                width: i < index ? "100%" : i === index ? "100%" : "0%",
+              }}
+              className="block h-full bg-white"
+              initial={{ width: i < index ? "100%" : "0%" }}
+              transition={{
+                duration: i === index && !reduce ? scene.ms / 1000 : 0,
+                ease: "linear",
+              }}
+            />
+          </span>
+        ))}
       </div>
 
-      {/* The animated conversation */}
-      <div className="flex flex-1 flex-col justify-center gap-4 px-7">
-        <AnimatePresence mode="wait">
-          <motion.div
-            animate={{ opacity: 1 }}
-            className="flex flex-col gap-3"
-            exit={{ opacity: 0 }}
-            initial={{ opacity: reduce ? 1 : 0 }}
-            key={scene}
-            transition={{ duration: 0.3 }}
-          >
-            {/* User question */}
-            <motion.div
-              animate={{ opacity: 1, y: 0 }}
-              className="flex justify-end"
-              initial={reduce ? false : { opacity: 0, y: 8 }}
-              transition={{ duration: 0.3 }}
-            >
-              <p className="max-w-[78%] rounded-2xl rounded-tr-sm bg-muted px-3.5 py-2.5 text-[13px] leading-relaxed">
-                {current.user}
-              </p>
-            </motion.div>
+      {/* Brand chip, always visible */}
+      <div className="absolute top-7 left-4 z-20 flex items-center gap-2 text-[12px] text-white/80">
+        <Dumbbell className="text-blood" size={14} strokeWidth={2.5} />
+        <span className="font-medium">The coach that won't let you quit.</span>
+      </div>
 
-            {/* Chad: typing → reply */}
-            <div className="flex items-start gap-2.5">
-              <ChadAvatar />
-              <div className="min-h-9">
-                {phase === 1 && <TypingDots />}
-                {phase === 2 && (
-                  <motion.p
-                    animate={{ opacity: 1, y: 0 }}
-                    className="max-w-[80%] rounded-2xl rounded-tl-sm border border-border/40 bg-card/50 px-3.5 py-2.5 text-[13px] leading-relaxed"
-                    initial={reduce ? false : { opacity: 0, y: 8 }}
-                    transition={{ duration: 0.35 }}
-                  >
-                    {current.chad}
-                  </motion.p>
-                )}
+      {/* The montage */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          animate={{ opacity: 1 }}
+          className="absolute inset-0"
+          exit={{ opacity: 0 }}
+          initial={{ opacity: reduce ? 1 : 0 }}
+          key={index}
+          transition={{ duration: 0.5 }}
+        >
+          {scene.kind === "photo" && (
+            <PhotoScene
+              position={scene.position}
+              priority={index === 0}
+              src={scene.src}
+            />
+          )}
+          {scene.kind === "stat" && <StatScene />}
+          {scene.kind === "text" && <TextScene />}
+
+          {/* Legibility gradient + caption for photo scenes */}
+          {scene.kind === "photo" && (
+            <>
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-black/10" />
+              <div className="absolute inset-x-0 bottom-0 p-10">
+                <Caption kicker={scene.kicker} text={scene.caption} />
               </div>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      {/* Rotating proof */}
-      <div className="shrink-0 border-t border-border/20 px-7 py-6">
-        <AnimatePresence mode="wait">
-          <motion.figure
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduce ? undefined : { opacity: 0, y: -6 }}
-            initial={reduce ? false : { opacity: 0, y: 6 }}
-            key={r.name}
-            transition={{ duration: 0.4 }}
-          >
-            <blockquote className="text-[13px] leading-relaxed text-muted-foreground">
-              &ldquo;{r.quote}&rdquo;
-            </blockquote>
-            <figcaption className="mt-2.5 flex items-center gap-2">
-              <span className="font-medium text-[12px]">{r.name}</span>
-              <span className="font-mono text-[10px] text-blood uppercase tracking-[0.12em]">
-                {r.result}
-              </span>
-            </figcaption>
-          </motion.figure>
-        </AnimatePresence>
-      </div>
+            </>
+          )}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

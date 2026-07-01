@@ -51,14 +51,10 @@ export default function AuthLayout({
         </div>
       </div>
 
-      <div className="hidden flex-1 flex-col overflow-hidden pl-12 xl:flex">
-        <div className="flex items-center gap-2 pt-8 text-[13px] text-muted-foreground">
-          <Dumbbell className="text-blood" size={14} strokeWidth={2.5} />
-          <span className="font-medium">The coach that won't let you quit.</span>
-        </div>
-        <div className="flex-1 pt-4">
-          <Preview />
-        </div>
+      {/* ACC-16: the cinematic hype-reel montage carries its own branding, so
+          it bleeds to the panel edges (just a little inset breathing room). */}
+      <div className="hidden flex-1 overflow-hidden p-3 xl:block">
+        <Preview />
       </div>
     </div>
   );

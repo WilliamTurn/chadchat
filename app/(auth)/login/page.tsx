@@ -7,11 +7,11 @@ import { useSession } from "next-auth/react";
 import { Suspense, useActionState, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
-import { AuthForm } from "@/components/chat/auth-form";
+import { AuthForm, type AuthFormValues } from "@/components/chat/auth-form";
 import { AuthSubmitButton } from "@/components/chat/auth-submit-button";
 import { GoogleSignIn } from "@/components/chat/google-sign-in";
 import { toast } from "@/components/chat/toast";
-import { type LoginFormValues, loginFormSchema } from "@/lib/validation/auth";
+import { loginFormSchema } from "@/lib/validation/auth";
 import { type LoginActionState, login } from "../actions";
 
 /** Friendly copy for the `?error=` code Auth.js appends after a failed OAuth flow. */
@@ -39,7 +39,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const [isSuccessful, setIsSuccessful] = useState(false);
 
-  const form = useForm<LoginFormValues>({
+  const form = useForm<AuthFormValues>({
     resolver: zodResolver(loginFormSchema),
     defaultValues: { email: "", password: "" },
     mode: "onTouched",
@@ -77,7 +77,7 @@ function LoginForm() {
     }
   }, [searchParams]);
 
-  const onSubmit = (values: LoginFormValues) => {
+  const onSubmit = (values: AuthFormValues) => {
     const formData = new FormData();
     formData.set("email", values.email);
     formData.set("password", values.password);

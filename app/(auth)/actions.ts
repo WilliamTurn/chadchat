@@ -25,7 +25,7 @@ import {
 } from "@/lib/email/auth-emails";
 import {
   loginFormSchema,
-  registerFormSchema,
+  registerSchema,
   requestResetSchema,
   resetPasswordSchema,
 } from "@/lib/validation/auth";
@@ -113,7 +113,7 @@ export const register = async (
   formData: FormData
 ): Promise<RegisterActionState> => {
   try {
-    const validatedData = registerFormSchema.parse({
+    const validatedData = registerSchema.parse({
       email: formData.get("email"),
       password: formData.get("password"),
     });

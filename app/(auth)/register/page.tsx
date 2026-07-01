@@ -5,25 +5,24 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useActionState, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { type Resolver, useForm } from "react-hook-form";
 
-import { AuthForm } from "@/components/chat/auth-form";
+import { AuthForm, type AuthFormValues } from "@/components/chat/auth-form";
 import { AuthSubmitButton } from "@/components/chat/auth-submit-button";
 import { GoogleSignIn } from "@/components/chat/google-sign-in";
 import { toast } from "@/components/chat/toast";
-import {
-  type RegisterFormValues,
-  registerFormSchema,
-} from "@/lib/validation/auth";
+import { registerFormSchema } from "@/lib/validation/auth";
 import { type RegisterActionState, register } from "../actions";
 
 export default function Page() {
   const router = useRouter();
   const [isSuccessful, setIsSuccessful] = useState(false);
 
-  const form = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerFormSchema),
-    defaultValues: { email: "", password: "" },
+  const form = useForm<AuthFormValues>({
+    // Cast: the schema makes confirmPassword required (for the match rule) while
+    // the shared AuthFormValues keeps it optional (login has no such field).
+    resolver: zodResolver(registerFormSchema) as Resolver<AuthFormValues>,
+    defaultValues: { email: "", password: "", confirmPassword: "" },
     mode: "onTouched",
   });
 
@@ -53,7 +52,7 @@ export default function Page() {
     }
   }, [state.status]);
 
-  const onSubmit = (values: RegisterFormValues) => {
+  const onSubmit = (values: AuthFormValues) => {
     const formData = new FormData();
     formData.set("email", values.email);
     formData.set("password", values.password);
@@ -68,7 +67,7 @@ export default function Page() {
       <AuthForm
         form={form}
         onSubmit={onSubmit}
-        showPasswordRequirement
+        showConfirmPassword
         showPasswordStrength
       >
         <AuthSubmitButton isPending={isPending} isSuccessful={isSuccessful}>

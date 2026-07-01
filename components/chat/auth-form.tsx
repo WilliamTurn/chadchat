@@ -1,41 +1,59 @@
 "use client";
 
-import type { UseFormReturn } from "react-hook-form";
+import { CheckIcon } from "lucide-react";
+import { type UseFormReturn, useWatch } from "react-hook-form";
 
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { PASSWORD_REQUIREMENT } from "@/lib/validation/auth";
+import { PasswordInput } from "./password-input";
 import { PasswordStrength } from "./password-strength";
 
 // Login and register share the same field shape; only their validation differs.
-type AuthFormValues = {
+// Register also carries a confirm-password field (optional here so login, which
+// never renders it, still type-checks). Both pages type their form to this
+// superset so this component can stay concrete (a generic form type trips
+// react-hook-form's `Path<T>` inference).
+export type AuthFormValues = {
   email: string;
   password: string;
+  confirmPassword?: string;
 };
 
 export function AuthForm({
   form,
   onSubmit,
-  showPasswordRequirement = false,
   showPasswordStrength = false,
+  showConfirmPassword = false,
   children,
 }: {
   form: UseFormReturn<AuthFormValues>;
   onSubmit: (values: AuthFormValues) => void;
-  // Sign-up shows the password rule as persistent helper text under the field.
-  showPasswordRequirement?: boolean;
-  // Sign-up also shows a live strength meter (UX nudge, not a hard gate).
+  // Sign-up shows a live strength meter + requirements checklist (ACC-18).
   showPasswordStrength?: boolean;
+  // Sign-up also asks the user to re-enter and match their password.
+  showConfirmPassword?: boolean;
   children: React.ReactNode;
 }) {
+  // useWatch (not form.watch) so this parent re-renders on every keystroke —
+  // form.watch's subscription gets memoized away by the React Compiler here,
+  // which left the match affordance stale.
+  const password = useWatch({ control: form.control, name: "password" });
+  const confirmPassword = useWatch({
+    control: form.control,
+    name: "confirmPassword",
+  });
+  // If the two are equal there's no mismatch error to worry about, so a plain
+  // value comparison is enough; the red FormMessage handles the not-equal case.
+  const confirmMatches =
+    showConfirmPassword && !!confirmPassword && confirmPassword === password;
+
   return (
     <Form {...form}>
       {/* noValidate: our inline messages replace the browser's native popups. */}
@@ -55,7 +73,6 @@ export function AuthForm({
               <FormControl>
                 <Input
                   autoComplete="email"
-                  // biome-ignore lint/a11y/noAutofocus: first field of a dedicated auth screen
                   autoFocus
                   placeholder="you@someo.ne"
                   type="email"
@@ -70,32 +87,58 @@ export function AuthForm({
         <FormField
           control={form.control}
           name="password"
-          render={({ field, fieldState }) => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel className="font-normal text-muted-foreground">
                 Password
               </FormLabel>
               <FormControl>
-                <Input
+                <PasswordInput
                   autoComplete={
-                    showPasswordRequirement ? "new-password" : "current-password"
+                    showConfirmPassword ? "new-password" : "current-password"
                   }
                   placeholder="••••••••"
-                  type="password"
                   {...field}
                 />
               </FormControl>
-              {showPasswordStrength && <PasswordStrength password={field.value} />}
-              {/* Show the requirement as muted helper text; once it's violated,
-                  the red FormMessage replaces it (same line turns red) rather
-                  than stacking two identical lines. */}
-              {showPasswordRequirement && !fieldState.error && (
-                <FormDescription>{PASSWORD_REQUIREMENT}</FormDescription>
+              {showPasswordStrength && (
+                <PasswordStrength password={field.value} />
               )}
               <FormMessage />
             </FormItem>
           )}
         />
+
+        {showConfirmPassword && (
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="font-normal text-muted-foreground">
+                  Confirm password
+                </FormLabel>
+                <FormControl>
+                  <PasswordInput
+                    autoComplete="new-password"
+                    placeholder="••••••••"
+                    {...field}
+                  />
+                </FormControl>
+                {/* Positive affordance once the two match; the red FormMessage
+                    takes over when they don't. */}
+                {confirmMatches ? (
+                  <p className="flex items-center gap-1.5 text-[12px] text-emerald-600 dark:text-emerald-500">
+                    <CheckIcon className="size-3.5" strokeWidth={3} />
+                    Passwords match
+                  </p>
+                ) : (
+                  <FormMessage />
+                )}
+              </FormItem>
+            )}
+          />
+        )}
 
         {children}
       </form>

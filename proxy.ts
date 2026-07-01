@@ -116,6 +116,8 @@ export const config = {
     "/login",
     "/register",
 
-    "/((?!_next/static|_next/image|favicon.ico|icon.svg|sitemap.xml|robots.txt).*)",
+    // `images` is excluded so static /public marketing assets (e.g. the
+    // logged-out /login montage) aren't caught by the paywall redirect.
+    "/((?!_next/static|_next/image|images|favicon.ico|icon.svg|sitemap.xml|robots.txt).*)",
   ],
 };
