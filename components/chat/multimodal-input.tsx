@@ -4,8 +4,7 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 import equal from "fast-deep-equal";
 import { ArrowUpIcon } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useTheme } from "next-themes";
+import { useSearchParams } from "next/navigation";
 import {
   type ChangeEvent,
   type Dispatch,
@@ -32,11 +31,6 @@ import {
 import { Button } from "../ui/button";
 import { PaperclipIcon, StopIcon } from "./icons";
 import { PreviewAttachment } from "./preview-attachment";
-import {
-  type SlashCommand,
-  SlashCommandMenu,
-  slashCommands,
-} from "./slash-commands";
 import { SuggestedActions } from "./suggested-actions";
 import type { VisibilityType } from "./visibility-selector";
 
@@ -79,8 +73,6 @@ function PureMultimodalInput({
   onCancelEdit?: () => void;
   isLoading?: boolean;
 }) {
-  const router = useRouter();
-  const { setTheme, resolvedTheme } = useTheme();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
   const hasAutoFocused = useRef(false);
@@ -132,73 +124,11 @@ function PureMultimodalInput({
   }, [input, setLocalStorageInput]);
 
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const val = event.target.value;
-    setInput(val);
-
-    if (val.startsWith("/") && !val.includes(" ")) {
-      setSlashOpen(true);
-      setSlashQuery(val.slice(1));
-      setSlashIndex(0);
-    } else {
-      setSlashOpen(false);
-    }
-  };
-
-  const handleSlashSelect = (cmd: SlashCommand) => {
-    setSlashOpen(false);
-    setInput("");
-    switch (cmd.action) {
-      case "new":
-        router.push("/");
-        break;
-      case "clear":
-        setMessages(() => []);
-        break;
-      case "rename":
-        toast("Rename is available from the sidebar chat menu.");
-        break;
-      case "theme":
-        setTheme(resolvedTheme === "dark" ? "light" : "dark");
-        break;
-      case "delete":
-        toast("Delete this chat?", {
-          action: {
-            label: "Delete",
-            onClick: () => {
-              fetch(
-                `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/chat?id=${chatId}`,
-                { method: "DELETE" }
-              );
-              router.push("/");
-              toast.success("Chat deleted");
-            },
-          },
-        });
-        break;
-      case "purge":
-        toast("Delete all chats?", {
-          action: {
-            label: "Delete all",
-            onClick: () => {
-              fetch(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/history`, {
-                method: "DELETE",
-              });
-              router.push("/");
-              toast.success("All chats deleted");
-            },
-          },
-        });
-        break;
-      default:
-        break;
-    }
+    setInput(event.target.value);
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);
-  const [slashOpen, setSlashOpen] = useState(false);
-  const [slashQuery, setSlashQuery] = useState("");
-  const [slashIndex, setSlashIndex] = useState(0);
 
   const submitForm = useCallback(() => {
     window.history.pushState(
@@ -403,28 +333,9 @@ function PureMultimodalInput({
         type="file"
       />
 
-      <div className="relative">
-        {slashOpen && (
-          <SlashCommandMenu
-            onClose={() => setSlashOpen(false)}
-            onSelect={handleSlashSelect}
-            query={slashQuery}
-            selectedIndex={slashIndex}
-          />
-        )}
-      </div>
-
       <PromptInput
         className="composer-chrome [&>div]:rounded-2xl [&>div]:border [&>div]:border-border/30 [&>div]:bg-card/70 [&>div]:shadow-[var(--shadow-composer)] [&>div]:transition-shadow [&>div]:duration-300 [&>div]:focus-within:shadow-[var(--shadow-composer-focus)]"
         onSubmit={() => {
-          if (input.startsWith("/")) {
-            const query = input.slice(1).trim();
-            const cmd = slashCommands.find((c) => c.name === query);
-            if (cmd) {
-              handleSlashSelect(cmd);
-            }
-            return;
-          }
           if (!input.trim() && attachments.length === 0) {
             return;
           }
@@ -473,33 +384,6 @@ function PureMultimodalInput({
           data-testid="multimodal-input"
           onChange={handleInput}
           onKeyDown={(e) => {
-            if (slashOpen) {
-              const filtered = slashCommands.filter((cmd) =>
-                cmd.name.startsWith(slashQuery.toLowerCase())
-              );
-              if (e.key === "ArrowDown") {
-                e.preventDefault();
-                setSlashIndex((i) => Math.min(i + 1, filtered.length - 1));
-                return;
-              }
-              if (e.key === "ArrowUp") {
-                e.preventDefault();
-                setSlashIndex((i) => Math.max(i - 1, 0));
-                return;
-              }
-              if (e.key === "Enter" || e.key === "Tab") {
-                e.preventDefault();
-                if (filtered[slashIndex]) {
-                  handleSlashSelect(filtered[slashIndex]);
-                }
-                return;
-              }
-              if (e.key === "Escape") {
-                e.preventDefault();
-                setSlashOpen(false);
-                return;
-              }
-            }
             if (e.key === "Escape" && editingMessage && onCancelEdit) {
               e.preventDefault();
               onCancelEdit();
