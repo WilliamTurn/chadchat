@@ -8,23 +8,35 @@ import { finishOnboarding } from "@/app/welcome/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  EXPERIENCE_OPTIONS,
+  type ExperienceLevel,
+  experienceLabel,
+  ftInToCm,
+  GOAL_OPTIONS,
+  goalLabel,
+  type PrimaryGoal,
+  type Sex,
+  SEX_OPTIONS,
+  sexLabel,
+  TRAINING_DAY_OPTIONS,
+} from "@/lib/profile";
 import { cn } from "@/lib/utils";
 
 type UnitSystem = "imperial" | "metric";
 
-const SEXES = ["Male", "Female"] as const;
-const EXPERIENCE = ["Beginner", "Intermediate", "Advanced"] as const;
-const GOALS = [
-  "Build muscle",
-  "Lose fat",
-  "Get stronger",
-  "Overall health",
-] as const;
-const TRAINING_DAYS = [1, 2, 3, 4, 5, 6, 7] as const;
-
 const STEP_COUNT = 3;
 
-/** A compact segmented single-select, matching the /account unit picker. */
+const segmentedButtonClass = (selected: boolean) =>
+  cn(
+    "rounded-lg border px-3 py-2.5 font-medium text-sm transition-colors",
+    selected
+      ? "border-blood/60 bg-blood/10 text-blood"
+      : "border-border bg-background/40 text-muted-foreground hover:border-border hover:text-foreground"
+  );
+
+/** A compact segmented single-select over raw values, matching the /account
+ * unit picker (used for the units toggle + training days). */
 function Segmented<T extends string | number>({
   options,
   value,
@@ -40,17 +52,41 @@ function Segmented<T extends string | number>({
     <div className={cn("grid gap-2", columns ?? "grid-cols-2")}>
       {options.map((opt) => (
         <button
-          className={cn(
-            "rounded-lg border px-3 py-2.5 font-medium text-sm transition-colors",
-            value === opt
-              ? "border-blood/60 bg-blood/10 text-blood"
-              : "border-border bg-background/40 text-muted-foreground hover:border-border hover:text-foreground"
-          )}
+          className={segmentedButtonClass(value === opt)}
           key={String(opt)}
           onClick={() => onChange(opt)}
           type="button"
         >
           {opt}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Segmented single-select over {value,label} options — stores the canonical
+ * value while showing the human label (sex / experience / goal). */
+function LabeledSegmented<T extends string>({
+  options,
+  value,
+  onChange,
+  columns,
+}: {
+  options: readonly { value: T; label: string }[];
+  value: T | null;
+  onChange: (v: T) => void;
+  columns?: string;
+}) {
+  return (
+    <div className={cn("grid gap-2", columns ?? "grid-cols-2")}>
+      {options.map((opt) => (
+        <button
+          className={segmentedButtonClass(value === opt.value)}
+          key={opt.value}
+          onClick={() => onChange(opt.value)}
+          type="button"
+        >
+          {opt.label}
         </button>
       ))}
     </div>
@@ -78,7 +114,7 @@ export function OnboardingWizard({
 
   const [name, setName] = useState(initialName);
   const [age, setAge] = useState("");
-  const [sex, setSex] = useState<(typeof SEXES)[number] | null>(null);
+  const [sex, setSex] = useState<Sex | null>(null);
 
   const [units, setUnits] = useState<UnitSystem>(
     initialWeightUnit === "kg" ? "metric" : "imperial"
@@ -88,13 +124,21 @@ export function OnboardingWizard({
   const [heightCm, setHeightCm] = useState("");
   const [weight, setWeight] = useState("");
 
-  const [experience, setExperience] = useState<
-    (typeof EXPERIENCE)[number] | null
-  >(null);
-  const [goal, setGoal] = useState<(typeof GOALS)[number] | null>(null);
+  const [experience, setExperience] = useState<ExperienceLevel | null>(null);
+  const [goal, setGoal] = useState<PrimaryGoal | null>(null);
   const [trainingDays, setTrainingDays] = useState<number | null>(null);
 
   const weightUnit: "lb" | "kg" = units === "metric" ? "kg" : "lb";
+
+  /** Height in canonical whole centimeters from whichever inputs are filled. */
+  const heightCmValue: number | null =
+    units === "imperial"
+      ? heightFt.trim()
+        ? ftInToCm(Number(heightFt), Number(heightIn || "0"))
+        : null
+      : heightCm.trim()
+        ? Math.round(Number(heightCm))
+        : null;
 
   /** Build the natural-language first message Chad receives (filled fields only). */
   const firstMessage = useMemo(() => {
@@ -116,7 +160,7 @@ export function OnboardingWizard({
       lines.push(`- Age: ${age.trim()}`);
     }
     if (sex) {
-      lines.push(`- Sex: ${sex}`);
+      lines.push(`- Sex: ${sexLabel(sex)}`);
     }
     if (height) {
       lines.push(`- Height: ${height}`);
@@ -125,10 +169,10 @@ export function OnboardingWizard({
       lines.push(`- Current weight: ${weightLine}`);
     }
     if (experience) {
-      lines.push(`- Training experience: ${experience}`);
+      lines.push(`- Training experience: ${experienceLabel(experience)}`);
     }
     if (goal) {
-      lines.push(`- Primary goal: ${goal}`);
+      lines.push(`- Primary goal: ${goalLabel(goal)}`);
     }
     if (trainingDays) {
       lines.push(`- Training days per week: ${trainingDays}`);
@@ -157,7 +201,19 @@ export function OnboardingWizard({
   function handleStart() {
     startTransition(async () => {
       try {
-        await finishOnboarding({ weightUnit });
+        await finishOnboarding({
+          weightUnit,
+          // Persist the structured stats so they're the trusted source of truth
+          // from message one and editable later on /account (ONB-2).
+          profile: {
+            sex,
+            age: age.trim() ? Number(age) : null,
+            heightCm: heightCmValue,
+            experienceLevel: experience,
+            primaryGoal: goal,
+            trainingDaysPerWeek: trainingDays,
+          },
+        });
       } catch {
         toast.error("Couldn't save that. Try again.");
         return;
@@ -241,7 +297,11 @@ export function OnboardingWizard({
             </div>
             <div className="flex flex-col gap-2">
               <Label>Sex</Label>
-              <Segmented options={SEXES} onChange={setSex} value={sex} />
+              <LabeledSegmented
+                options={SEX_OPTIONS}
+                onChange={setSex}
+                value={sex}
+              />
             </div>
           </>
         )}
@@ -315,22 +375,26 @@ export function OnboardingWizard({
           <>
             <div className="flex flex-col gap-2">
               <Label>Training experience</Label>
-              <Segmented
+              <LabeledSegmented
                 columns="grid-cols-3"
-                options={EXPERIENCE}
+                options={EXPERIENCE_OPTIONS}
                 onChange={setExperience}
                 value={experience}
               />
             </div>
             <div className="flex flex-col gap-2">
               <Label>Primary goal</Label>
-              <Segmented options={GOALS} onChange={setGoal} value={goal} />
+              <LabeledSegmented
+                options={GOAL_OPTIONS}
+                onChange={setGoal}
+                value={goal}
+              />
             </div>
             <div className="flex flex-col gap-2">
               <Label>Training days per week</Label>
               <Segmented
                 columns="grid-cols-7"
-                options={TRAINING_DAYS}
+                options={TRAINING_DAY_OPTIONS}
                 onChange={setTrainingDays}
                 value={trainingDays}
               />

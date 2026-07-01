@@ -7,6 +7,7 @@ import {
   Target,
 } from "lucide-react";
 import Link from "next/link";
+import { PageShell } from "@/components/nav/page-shell";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Button } from "@/components/ui/button";
 
@@ -98,7 +99,7 @@ const SECTIONS: Section[] = [
 
 export default function HelpPage() {
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col px-4 py-12">
+    <PageShell>
       <StandaloneHeader active="/help" />
 
       <div className="mb-8">
@@ -144,6 +145,6 @@ export default function HelpPage() {
           </Link>
         </Button>
       </div>
-    </main>
+    </PageShell>
   );
 }

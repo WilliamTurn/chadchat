@@ -120,6 +120,13 @@
       "when": 1782904334812,
       "tag": "0016_tired_natasha_romanoff",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1782936201512,
+      "tag": "0017_common_stellaris",
+      "breakpoints": true
     }
   ]
 }

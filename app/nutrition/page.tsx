@@ -6,6 +6,7 @@ import { NutritionSkeleton } from "@/components/dashboard/page-skeletons";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
+import { PageShell } from "@/components/nav/page-shell";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { AnalysisCard } from "@/components/nutrition/analysis-card";
 import { AnalyzeForm } from "@/components/nutrition/analyze-form";
@@ -40,7 +41,7 @@ const MEAL_LABEL: Record<MealCategory, string> = {
 
 export default function NutritionPage() {
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col px-4 py-12">
+    <PageShell>
       <Toaster
         position="top-center"
         theme="system"
@@ -82,7 +83,7 @@ export default function NutritionPage() {
       <Suspense fallback={<NutritionSkeleton />}>
         <NutritionContent />
       </Suspense>
-    </main>
+    </PageShell>
   );
 }
 

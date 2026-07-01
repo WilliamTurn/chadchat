@@ -4,7 +4,13 @@ import { generateText } from "ai";
 import { formatCalendarDay } from "@/lib/date";
 import type { WorkoutWithChildren } from "@/lib/db/queries";
 import { getUserMemory, upsertUserMemory } from "@/lib/db/queries";
-import type { Goal, MealPlan, Plan } from "@/lib/db/schema";
+import type { Goal, MealPlan, Plan, User } from "@/lib/db/schema";
+import {
+  experienceLabel,
+  formatHeightBoth,
+  goalLabel,
+  sexLabel,
+} from "@/lib/profile";
 import { planDaysSchema } from "@/lib/validation/meal-plan";
 import {
   computePersonalRecords,
@@ -112,6 +118,58 @@ export function messagesToText(messages: TextualMessage[]): string {
     }
   }
   return lines.join("\n");
+}
+
+/**
+ * Format the client's user-confirmed stats/profile (ONB-2) for injection into
+ * Chad's system prompt. Unlike the memory blob (which Chad maintains himself and
+ * can drift), these are the stats the client entered/verified in the app, so
+ * they're the authoritative ground truth for who they are. This is a purely
+ * FACTUAL block — it grounds Chad in the client's own numbers; it does NOT tell
+ * him how to behave. Returns "" when the client hasn't set any of them yet.
+ */
+export function formatProfileForPrompt(
+  u: Pick<
+    User,
+    | "sex"
+    | "age"
+    | "heightCm"
+    | "experienceLevel"
+    | "primaryGoal"
+    | "trainingDaysPerWeek"
+  >
+): string {
+  const lines: string[] = [];
+  const sex = sexLabel(u.sex);
+  if (sex) {
+    lines.push(`- Sex: ${sex}`);
+  }
+  if (u.age != null) {
+    lines.push(`- Age: ${u.age}`);
+  }
+  const height = formatHeightBoth(u.heightCm);
+  if (height) {
+    lines.push(`- Height: ${height}`);
+  }
+  const experience = experienceLabel(u.experienceLevel);
+  if (experience) {
+    lines.push(`- Training experience: ${experience}`);
+  }
+  const goal = goalLabel(u.primaryGoal);
+  if (goal) {
+    lines.push(`- Primary goal: ${goal}`);
+  }
+  if (u.trainingDaysPerWeek != null) {
+    lines.push(`- Trains: ${u.trainingDaysPerWeek} day${u.trainingDaysPerWeek === 1 ? "" : "s"}/week`);
+  }
+
+  if (lines.length === 0) {
+    return "";
+  }
+
+  return `THIS CLIENT'S CONFIRMED PROFILE (they entered these stats themselves in the app and can correct them anytime — treat them as authoritative and current; don't re-ask for what's already here):
+
+${lines.join("\n")}`;
 }
 
 /** Format the stored profile for injection into Chad's system prompt. */

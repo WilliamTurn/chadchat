@@ -447,6 +447,55 @@ export async function setWeightUnit(userId: string, unit: "lb" | "kg") {
   }
 }
 
+/** The editable stats/profile fields (ONB-2). All optional so partial saves and
+ * the onboarding write both work; only keys that are present are updated. */
+export type UserProfileInput = {
+  sex?: "male" | "female" | null;
+  age?: number | null;
+  heightCm?: number | null;
+  experienceLevel?: "beginner" | "intermediate" | "advanced" | null;
+  primaryGoal?: "muscle" | "fat_loss" | "strength" | "health" | null;
+  trainingDaysPerWeek?: number | null;
+};
+
+/**
+ * Save the client's editable stats/profile (ONB-2). Only the keys actually
+ * present in `fields` are written, so callers can update one field or all of
+ * them, and an explicit `null` clears a field while `undefined` leaves it
+ * untouched.
+ */
+export async function updateUserProfile(
+  userId: string,
+  fields: UserProfileInput
+) {
+  const patch: Partial<typeof user.$inferInsert> = {};
+  for (const key of [
+    "sex",
+    "age",
+    "heightCm",
+    "experienceLevel",
+    "primaryGoal",
+    "trainingDaysPerWeek",
+  ] as const) {
+    if (key in fields) {
+      // biome-ignore lint/suspicious/noExplicitAny: narrowed key union assign
+      (patch as any)[key] = fields[key];
+    }
+  }
+  if (Object.keys(patch).length === 0) {
+    return;
+  }
+  patch.updatedAt = new Date();
+  try {
+    return await db.update(user).set(patch).where(eq(user.id, userId));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to update profile"
+    );
+  }
+}
+
 /**
  * Mark the first-run onboarding as done (ONB-1). Called when the user completes
  * OR skips the /welcome wizard, so it never shows again. Optionally persists the

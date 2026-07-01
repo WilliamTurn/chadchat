@@ -4,7 +4,9 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
+import { ProfileForm } from "@/components/account/profile-form";
 import { UnitPreference } from "@/components/account/unit-preference";
+import { PageShell } from "@/components/nav/page-shell";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -70,7 +72,7 @@ function formatDate(date: Date | null): string {
 
 export default function AccountPage() {
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col px-4 py-16">
+    <PageShell>
       <Toaster position="top-center" richColors theme="system" />
       <StandaloneHeader active="/account" />
 
@@ -99,7 +101,7 @@ export default function AccountPage() {
           <AccountSettings />
         </Suspense>
       </div>
-    </main>
+    </PageShell>
   );
 }
 
@@ -123,50 +125,72 @@ async function AccountSettings() {
 
   return (
     <>
-      {/* Preferences */}
+      {/* Profile / stats (ONB-2) — the trusted source of truth Chad reads. */}
       <section>
         <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-          Preferences
+          Profile
         </h2>
-        <div className="rounded-2xl border border-border bg-card p-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h3 className="font-medium text-sm">Units</h3>
-              <p className="mt-1 text-muted-foreground text-sm">
-                How your body weight shows across the app and the default for new
-                weigh-ins.
-              </p>
-            </div>
-            <UnitPreference initialUnit={user.weightUnit} />
-          </div>
-        </div>
+        <ProfileForm
+          initial={{
+            sex: user.sex,
+            age: user.age,
+            heightCm: user.heightCm,
+            experienceLevel: user.experienceLevel,
+            primaryGoal: user.primaryGoal,
+            trainingDaysPerWeek: user.trainingDaysPerWeek,
+          }}
+          weightUnit={user.weightUnit}
+        />
       </section>
 
-      {/* Your data */}
-      <section>
-        <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-          Your data
-        </h2>
-        <div className="rounded-2xl border border-border bg-card p-6">
-          <h3 className="font-medium text-sm">Export</h3>
-          <p className="mt-1 text-muted-foreground text-sm">
-            Download your logged data as CSV — it's yours, take it anywhere.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {exports.map(({ dataset, label, icon: Icon }) => (
-              <a
-                className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
-                download
-                href={`${basePath}/api/me/export?dataset=${dataset}`}
-                key={dataset}
-              >
-                <Icon className="size-4" />
-                {label}
-              </a>
-            ))}
+      {/* Preferences + Your data sit side-by-side on wide screens so the page
+          fills the standardized width instead of stranding a lonely column. */}
+      <div className="grid gap-8 lg:grid-cols-2">
+        {/* Preferences */}
+        <section>
+          <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
+            Preferences
+          </h2>
+          <div className="h-full rounded-2xl border border-border bg-card p-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h3 className="font-medium text-sm">Units</h3>
+                <p className="mt-1 text-muted-foreground text-sm">
+                  How your body weight shows across the app and the default for
+                  new weigh-ins.
+                </p>
+              </div>
+              <UnitPreference initialUnit={user.weightUnit} />
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+
+        {/* Your data */}
+        <section>
+          <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
+            Your data
+          </h2>
+          <div className="h-full rounded-2xl border border-border bg-card p-6">
+            <h3 className="font-medium text-sm">Export</h3>
+            <p className="mt-1 text-muted-foreground text-sm">
+              Download your logged data as CSV — it's yours, take it anywhere.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {exports.map(({ dataset, label, icon: Icon }) => (
+                <a
+                  className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
+                  download
+                  href={`${basePath}/api/me/export?dataset=${dataset}`}
+                  key={dataset}
+                >
+                  <Icon className="size-4" />
+                  {label}
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
     </>
   );
 }

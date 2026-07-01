@@ -10,6 +10,7 @@ import { LogEntryForm } from "@/components/progress/log-entry-form";
 import { MeasurementsSection } from "@/components/progress/measurements-section";
 import { PhotoCompare } from "@/components/progress/photo-compare";
 import { WeightChartInteractive } from "@/components/progress/weight-chart-interactive";
+import { PageShell } from "@/components/nav/page-shell";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -94,7 +95,7 @@ function weightGoalStart(
 
 export default function ProgressPage() {
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col px-4 py-12">
+    <PageShell>
       {/* richColors: success → green, error → red (the "Logged." confirmation
           reads as a clear success instead of a neutral gray toast). */}
       <Toaster position="top-center" richColors theme="system" />
@@ -116,7 +117,7 @@ export default function ProgressPage() {
       <Suspense fallback={<ProgressSkeleton />}>
         <ProgressContent />
       </Suspense>
-    </main>
+    </PageShell>
   );
 }
 

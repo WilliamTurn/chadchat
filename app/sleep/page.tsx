@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
+import { PageShell } from "@/components/nav/page-shell";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import {
   type LastNight,
@@ -56,7 +57,7 @@ function relativeDay(d: Date): string {
 
 export default function SleepPage() {
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col px-4 py-12">
+    <PageShell>
       <Toaster
         position="top-center"
         theme="system"
@@ -91,7 +92,7 @@ export default function SleepPage() {
       <Suspense fallback={<TodaySkeleton />}>
         <SleepContent />
       </Suspense>
-    </main>
+    </PageShell>
   );
 }
 

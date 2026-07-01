@@ -6,6 +6,7 @@ import { auth } from "@/app/(auth)/auth";
 import { KitchenSkeleton } from "@/components/dashboard/page-skeletons";
 import { KitchenFeed } from "@/components/kitchen/kitchen-feed";
 import { AnalysisCard } from "@/components/nutrition/analysis-card";
+import { PageShell } from "@/components/nav/page-shell";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ import { getKitchenAnalysesByUserId, getUserById } from "@/lib/db/queries";
 
 export default function KitchenPage() {
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col px-4 py-12">
+    <PageShell>
       <Toaster
         position="top-center"
         theme="system"
@@ -56,7 +57,7 @@ export default function KitchenPage() {
       <Suspense fallback={<KitchenSkeleton />}>
         <KitchenContent />
       </Suspense>
-    </main>
+    </PageShell>
   );
 }
 

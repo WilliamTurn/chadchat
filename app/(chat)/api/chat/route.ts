@@ -19,6 +19,7 @@ import {
   formatGoalsForPrompt,
   formatMealPlanForPrompt,
   formatMemoryForPrompt,
+  formatProfileForPrompt,
   formatWorkoutsForPrompt,
   maybeUpdateUserMemory,
 } from "@/lib/ai/memory";
@@ -233,6 +234,11 @@ export async function POST(request: Request) {
       country,
     };
 
+    // The client's own confirmed stats (ONB-2) — authoritative ground truth for
+    // who they are. Always loaded (independent of the memory toggle): it's their
+    // data, not Chad's inference. Empty until they set any stats.
+    const profileBlock = formatProfileForPrompt(dbUser);
+
     // Memory layer: when the member has it on, load their durable profile and
     // inject it so Chad remembers them across chats. Off → cold start as usual.
     const memoryEnabled = dbUser.memoryEnabled;
@@ -324,6 +330,7 @@ export async function POST(request: Request) {
           system: systemPrompt({
             requestHints,
             supportsTools,
+            profile: profileBlock,
             memory: memoryBlock,
             goals: goalsBlock,
             workouts: workoutsBlock,

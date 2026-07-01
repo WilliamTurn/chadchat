@@ -19,6 +19,7 @@ import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
+import { PageShell } from "@/components/nav/page-shell";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { MacroRings } from "@/components/nutrition/macro-rings";
 import { WeightChartInteractive } from "@/components/progress/weight-chart-interactive";
@@ -165,7 +166,7 @@ function computeStreak(dates: Date[]): number {
 
 export default function TodayPage() {
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-4xl flex-col px-4 py-10">
+    <PageShell>
       <Toaster
         position="top-center"
         theme="system"
@@ -178,7 +179,7 @@ export default function TodayPage() {
       <Suspense fallback={<TodaySkeleton />}>
         <TodayContent />
       </Suspense>
-    </main>
+    </PageShell>
   );
 }
 

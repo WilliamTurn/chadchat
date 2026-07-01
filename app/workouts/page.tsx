@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
+import { PageShell } from "@/components/nav/page-shell";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Kpi } from "@/components/dashboard/kpi";
 import { WorkoutsSkeleton } from "@/components/dashboard/page-skeletons";
@@ -61,7 +62,7 @@ function toWorkoutData(w: WorkoutWithChildren): WorkoutData {
 
 export default function WorkoutsPage() {
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col px-4 py-12">
+    <PageShell>
       <Toaster
         position="top-center"
         theme="system"
@@ -86,7 +87,7 @@ export default function WorkoutsPage() {
       <Suspense fallback={<WorkoutsSkeleton />}>
         <WorkoutsContent />
       </Suspense>
-    </main>
+    </PageShell>
   );
 }
 

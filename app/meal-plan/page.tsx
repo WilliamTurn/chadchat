@@ -10,6 +10,7 @@ import {
   MealPlanView,
   type MealPlanViewData,
 } from "@/components/meal-plan/meal-plan-view";
+import { PageShell } from "@/components/nav/page-shell";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,7 @@ export const maxDuration = 300;
 
 export default function MealPlanPage() {
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col px-4 py-12">
+    <PageShell>
       <Toaster
         position="top-center"
         theme="system"
@@ -69,7 +70,7 @@ export default function MealPlanPage() {
       <Suspense fallback={<MealPlanSkeleton />}>
         <MealPlanContent />
       </Suspense>
-    </main>
+    </PageShell>
   );
 }
 

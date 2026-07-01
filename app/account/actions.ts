@@ -8,7 +8,9 @@ import {
   getUserById,
   setMemoryEnabled,
   setWeightUnit,
+  updateUserProfile,
 } from "@/lib/db/queries";
+import { type ProfileInput, profileSchema } from "@/lib/profile";
 import { getAppUrl, getStripe } from "@/lib/stripe";
 
 /**
@@ -75,6 +77,28 @@ export async function setPreferredWeightUnit(unit: "lb" | "kg") {
   revalidatePath("/account");
   revalidatePath("/today");
   revalidatePath("/progress");
+}
+
+/**
+ * Save the member's editable stats/profile (ONB-2). This is their own trusted
+ * data — the source of truth Chad reads in every chat — so they can correct
+ * anything he ever got wrong. Revalidates /today because the profile's sex
+ * drives the default hero figure there.
+ */
+export async function saveProfile(input: ProfileInput) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  const parsed = profileSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new Error("Invalid profile");
+  }
+
+  await updateUserProfile(session.user.id, parsed.data);
+  revalidatePath("/account");
+  revalidatePath("/today");
 }
 
 /** Turn Chad's cross-chat memory on or off for the current user. */

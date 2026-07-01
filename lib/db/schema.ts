@@ -67,6 +67,26 @@ export const user = pgTable("User", {
   // Backfilled to now() for all pre-existing users by migration 0016 so only
   // genuinely new signups see the wizard.
   onboardedAt: timestamp("onboardedAt"),
+  // --- Editable stats / profile (ONB-2) ---
+  // The client's durable, user-confirmed stats: collected at onboarding and
+  // correctable anytime on /account. This is the TRUSTED source of truth for
+  // who they are — injected into Chad's prompt as authoritative ground truth so
+  // he's grounded in the client's own numbers, and a place to fix anything he
+  // ever gets wrong. Body weight is deliberately NOT here (it's dynamic and
+  // owned by the weigh-in log; duplicating it would create disagreeing numbers).
+  // See lib/profile.ts for the option values, labels, and height conversions.
+  sex: varchar("sex", { enum: ["male", "female"] }),
+  age: integer("age"),
+  // Height stored canonically in whole centimeters; shown in ft/in or cm
+  // depending on the user's weightUnit preference.
+  heightCm: integer("heightCm"),
+  experienceLevel: varchar("experienceLevel", {
+    enum: ["beginner", "intermediate", "advanced"],
+  }),
+  primaryGoal: varchar("primaryGoal", {
+    enum: ["muscle", "fat_loss", "strength", "health"],
+  }),
+  trainingDaysPerWeek: integer("trainingDaysPerWeek"),
 });
 
 export type User = InferSelectModel<typeof user>;

@@ -130,6 +130,7 @@ You have live read access to this client's app dashboard. The "TODAY'S DASHBOARD
 export const systemPrompt = ({
   requestHints,
   supportsTools,
+  profile,
   memory,
   goals,
   workouts,
@@ -138,6 +139,11 @@ export const systemPrompt = ({
 }: {
   requestHints: RequestHints;
   supportsTools: boolean;
+  // Pre-formatted user-confirmed profile block (see lib/ai/memory.ts
+  // formatProfileForPrompt). The client's own stats — authoritative ground
+  // truth. Purely factual; loaded regardless of the memory toggle. Empty until
+  // they set any stats.
+  profile?: string;
   // Pre-formatted memory block (see lib/ai/memory.ts). Empty/undefined when the
   // user has memory turned off or has no profile yet.
   memory?: string;
@@ -155,12 +161,15 @@ export const systemPrompt = ({
   mealPlan?: string;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
+  // The user-confirmed profile leads the data blocks: it's the authoritative
+  // "who is this client" ground truth the rest (loose memory, logs) sits under.
+  const profileBlock = profile ? `\n\n${profile}` : "";
   const memoryBlock = memory ? `\n\n${memory}` : "";
   const goalsBlock = goals ? `\n\n${goals}` : "";
   const workoutsBlock = workouts ? `\n\n${workouts}` : "";
   const dashboardBlock = dashboard ? `\n\n${dashboard}` : "";
   const mealPlanBlock = mealPlan ? `\n\n${mealPlan}` : "";
-  const dataBlocks = `${memoryBlock}${goalsBlock}${workoutsBlock}${dashboardBlock}${mealPlanBlock}`;
+  const dataBlocks = `${profileBlock}${memoryBlock}${goalsBlock}${workoutsBlock}${dashboardBlock}${mealPlanBlock}`;
 
   if (!supportsTools) {
     return `${regularPrompt}${dataBlocks}\n\n${requestPrompt}`;
