@@ -432,6 +432,21 @@ export async function setMemoryEnabled(userId: string, enabled: boolean) {
   }
 }
 
+/** Set the user's preferred body-weight unit (lb/kg) for display + new logs. */
+export async function setWeightUnit(userId: string, unit: "lb" | "kg") {
+  try {
+    return await db
+      .update(user)
+      .set({ weightUnit: unit, updatedAt: new Date() })
+      .where(eq(user.id, userId));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to update unit preference"
+    );
+  }
+}
+
 /** Wipe the user's stored profile (privacy / reset). Leaves the toggle as-is. */
 export async function clearUserMemory(userId: string) {
   try {

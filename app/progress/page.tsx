@@ -136,7 +136,11 @@ async function ProgressContent() {
 
   const isPro = canAccessProFeatures(user);
 
-  return isPro ? <Dashboard userId={user.id} /> : <UpgradePrompt />;
+  return isPro ? (
+    <Dashboard preferredUnit={user.weightUnit} userId={user.id} />
+  ) : (
+    <UpgradePrompt />
+  );
 }
 
 function UpgradePrompt() {
@@ -156,7 +160,13 @@ function UpgradePrompt() {
   );
 }
 
-async function Dashboard({ userId }: { userId: string }) {
+async function Dashboard({
+  userId,
+  preferredUnit,
+}: {
+  userId: string;
+  preferredUnit: "lb" | "kg" | null;
+}) {
   const [entries, measurements, goals] = await Promise.all([
     getProgressEntriesByUserId(userId),
     getBodyMeasurementsByUserId(userId),
@@ -166,8 +176,12 @@ async function Dashboard({ userId }: { userId: string }) {
   const weighed = entries.filter(
     (e): e is ProgressEntry & { weight: number } => e.weight != null
   );
+  // The account-level unit preference wins; otherwise infer from the most recent
+  // weigh-in (falling back to lb). All points below convert into this unit, so
+  // flipping the preference re-labels + re-scales the whole weight dashboard.
   const displayUnit: "lb" | "kg" =
-    weighed.length > 0 ? weighed[weighed.length - 1].unit : "lb";
+    preferredUnit ??
+    (weighed.length > 0 ? weighed[weighed.length - 1].unit : "lb");
 
   const points = weighed.map((e) => ({
     t: e.recordedAt.getTime(),

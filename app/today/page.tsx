@@ -333,8 +333,10 @@ async function TodayContent() {
   const weighed = entries.filter(
     (e): e is ProgressEntry & { weight: number } => e.weight != null
   );
+  // Account-level unit preference wins, else infer from the latest weigh-in.
   const displayUnit: "lb" | "kg" =
-    weighed.length > 0 ? weighed[weighed.length - 1].unit : "lb";
+    user.weightUnit ??
+    (weighed.length > 0 ? weighed[weighed.length - 1].unit : "lb");
   const points = weighed.map((e) => ({
     t: e.recordedAt.getTime(),
     weight: round1(

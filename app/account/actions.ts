@@ -7,6 +7,7 @@ import {
   clearUserMemory,
   getUserById,
   setMemoryEnabled,
+  setWeightUnit,
 } from "@/lib/db/queries";
 import { getAppUrl, getStripe } from "@/lib/stripe";
 
@@ -61,6 +62,19 @@ export async function upgradeToPro() {
   });
 
   redirect(portal.url);
+}
+
+/** Set the member's preferred body-weight unit (lb/kg). */
+export async function setPreferredWeightUnit(unit: "lb" | "kg") {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  await setWeightUnit(session.user.id, unit);
+  revalidatePath("/account");
+  revalidatePath("/today");
+  revalidatePath("/progress");
 }
 
 /** Turn Chad's cross-chat memory on or off for the current user. */

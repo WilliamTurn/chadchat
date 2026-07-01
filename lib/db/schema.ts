@@ -56,6 +56,11 @@ export const user = pgTable("User", {
   // Daily water target in milliliters (stored in ml like the WaterLog rows, but
   // shown to the user in oz/gallons). Null = use the default of one US gallon.
   waterGoalMl: integer("waterGoalMl"),
+  // --- Preferences (ACC-13) ---
+  // Preferred body-weight unit for display + as the default for new weigh-ins.
+  // Null = infer from the latest weigh-in (falling back to "lb"), so nothing
+  // changes for existing users until they pick one on /account.
+  weightUnit: varchar("weightUnit", { enum: ["lb", "kg"] }),
 });
 
 export type User = InferSelectModel<typeof user>;

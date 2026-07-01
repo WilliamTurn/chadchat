@@ -1,11 +1,13 @@
-import { Sparkles, TriangleAlert } from "lucide-react";
+import { Dumbbell, Salad, Scale, Sparkles, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
+import { UnitPreference } from "@/components/account/unit-preference";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { getUserById } from "@/lib/db/queries";
 import { PRO_PERKS } from "@/lib/plans";
 import { PLANS } from "@/lib/stripe";
@@ -69,23 +71,103 @@ function formatDate(date: Date | null): string {
 export default function AccountPage() {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col px-4 py-16">
+      <Toaster position="top-center" richColors theme="system" />
       <StandaloneHeader active="/account" />
 
       <div className="mb-8">
-        <h1 className="font-semibold text-2xl tracking-tight">
-          Your membership
-        </h1>
+        <h1 className="font-semibold text-2xl tracking-tight">Account</h1>
+        <p className="mt-1 text-muted-foreground text-sm">
+          Your membership, preferences, and your data.
+        </p>
       </div>
 
-      <Suspense fallback={<MembershipCardSkeleton />}>
-        <MembershipCard />
-      </Suspense>
+      <div className="flex flex-col gap-8">
+        <section>
+          <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
+            Membership
+          </h2>
+          <Suspense fallback={<MembershipCardSkeleton />}>
+            <MembershipCard />
+          </Suspense>
+          <p className="mt-4 text-muted-foreground text-xs">
+            Billing is handled securely by Stripe. Update your card, switch
+            plans, or cancel anytime from the billing page.
+          </p>
+        </section>
 
-      <p className="mt-6 text-center text-muted-foreground text-xs">
-        Billing is handled securely by Stripe. Update your card, switch plans,
-        or cancel anytime from the billing page.
-      </p>
+        <Suspense fallback={null}>
+          <AccountSettings />
+        </Suspense>
+      </div>
     </main>
+  );
+}
+
+/** Preferences + data export — the account table stakes beyond billing (ACC-13). */
+async function AccountSettings() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+  const user = await getUserById(session.user.id);
+  if (!user) {
+    redirect("/login");
+  }
+
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+  const exports: { dataset: string; label: string; icon: typeof Scale }[] = [
+    { dataset: "weighins", label: "Weigh-ins", icon: Scale },
+    { dataset: "meals", label: "Calorie Tracker", icon: Salad },
+    { dataset: "workouts", label: "Workouts", icon: Dumbbell },
+  ];
+
+  return (
+    <>
+      {/* Preferences */}
+      <section>
+        <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
+          Preferences
+        </h2>
+        <div className="rounded-2xl border border-border bg-card p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h3 className="font-medium text-sm">Units</h3>
+              <p className="mt-1 text-muted-foreground text-sm">
+                How your body weight shows across the app and the default for new
+                weigh-ins.
+              </p>
+            </div>
+            <UnitPreference initialUnit={user.weightUnit} />
+          </div>
+        </div>
+      </section>
+
+      {/* Your data */}
+      <section>
+        <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
+          Your data
+        </h2>
+        <div className="rounded-2xl border border-border bg-card p-6">
+          <h3 className="font-medium text-sm">Export</h3>
+          <p className="mt-1 text-muted-foreground text-sm">
+            Download your logged data as CSV — it's yours, take it anywhere.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {exports.map(({ dataset, label, icon: Icon }) => (
+              <a
+                className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
+                download
+                href={`${basePath}/api/me/export?dataset=${dataset}`}
+                key={dataset}
+              >
+                <Icon className="size-4" />
+                {label}
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    </>
   );
 }
 

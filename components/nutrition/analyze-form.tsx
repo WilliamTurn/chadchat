@@ -28,6 +28,46 @@ import {
   type RecentFood,
 } from "@/lib/nutrition/recent-foods";
 import type { MealCategory } from "@/lib/validation/nutrition";
+import { cn } from "@/lib/utils";
+
+/**
+ * A single manual-macro field. The unit ("cal"/"g") is a persistent suffix
+ * inside the input — not a placeholder that vanishes the moment you type — so
+ * the three macro boxes never collapse into undifferentiated number fields
+ * while you're filling them in (NUT-14).
+ */
+function MacroField({
+  id,
+  label,
+  unit,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  unit: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <Label htmlFor={id}>{label}</Label>
+      <div className="relative">
+        <Input
+          className="pr-9"
+          id={id}
+          inputMode="numeric"
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="0"
+          value={value}
+        />
+        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-muted-foreground text-xs">
+          {unit}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 type Mode = "photo" | "label" | "manual" | "recent";
 
@@ -401,46 +441,34 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
             />
           </div>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="m-cal">Calories</Label>
-              <Input
-                id="m-cal"
-                inputMode="numeric"
-                onChange={(e) => setCal(e.target.value)}
-                placeholder="cal"
-                value={cal}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="m-pro">Protein</Label>
-              <Input
-                id="m-pro"
-                inputMode="numeric"
-                onChange={(e) => setPro(e.target.value)}
-                placeholder="g"
-                value={pro}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="m-carb">Carbs</Label>
-              <Input
-                id="m-carb"
-                inputMode="numeric"
-                onChange={(e) => setCarb(e.target.value)}
-                placeholder="g"
-                value={carb}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="m-fat">Fat</Label>
-              <Input
-                id="m-fat"
-                inputMode="numeric"
-                onChange={(e) => setFatG(e.target.value)}
-                placeholder="g"
-                value={fatG}
-              />
-            </div>
+            <MacroField
+              id="m-cal"
+              label="Calories"
+              onChange={setCal}
+              unit="cal"
+              value={cal}
+            />
+            <MacroField
+              id="m-pro"
+              label="Protein"
+              onChange={setPro}
+              unit="g"
+              value={pro}
+            />
+            <MacroField
+              id="m-carb"
+              label="Carbs"
+              onChange={setCarb}
+              unit="g"
+              value={carb}
+            />
+            <MacroField
+              id="m-fat"
+              label="Fat"
+              onChange={setFatG}
+              unit="g"
+              value={fatG}
+            />
           </div>
         </>
       ) : recentFoods.length === 0 ? (
@@ -484,17 +512,35 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
         </div>
       )}
 
-      {mode !== "recent" && (
-        <Button
-          className="gap-2"
-          disabled={busy || ((mode === "photo" || mode === "label") && !file)}
-          size="lg"
-          type="submit"
-        >
-          {busy && <Loader2 className="size-4 animate-spin" />}
-          {renderSubmitLabel()}
-        </Button>
-      )}
+      {mode !== "recent" &&
+        (() => {
+          // At rest with no photo, don't render a dead flat-grey slab (which made
+          // the whole form look inert on first load). Keep the button live and
+          // brand-tinted with a clear "add a photo first" affordance — clicking
+          // it prompts for the photo instead of doing nothing (NUT-15).
+          const needsPhoto = (mode === "photo" || mode === "label") && !file;
+          const PhotoIcon = mode === "label" ? ScanLine : Camera;
+          return (
+            <Button
+              className={cn(
+                "gap-2",
+                needsPhoto &&
+                  "border border-blood/40 bg-blood/5 text-blood hover:bg-blood/10"
+              )}
+              disabled={busy}
+              size="lg"
+              type="submit"
+            >
+              {busy && <Loader2 className="size-4 animate-spin" />}
+              {!busy && needsPhoto && <PhotoIcon className="size-4" />}
+              {needsPhoto
+                ? mode === "label"
+                  ? "Add a label to scan"
+                  : "Add a photo to analyze"
+                : renderSubmitLabel()}
+            </Button>
+          );
+        })()}
     </form>
   );
 }
