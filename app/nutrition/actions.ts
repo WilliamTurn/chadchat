@@ -253,6 +253,7 @@ export async function removeWater(): Promise<NutritionActionState> {
     since: todayStartInTz(user.timezone),
   });
   revalidatePath("/today");
+  revalidatePath("/hydration");
   return { ok: true };
 }
 
@@ -278,6 +279,7 @@ export async function logWaterAmount(
   const clamped = Math.min(Math.round(amountMl), MAX_WATER_ML);
   await addWaterLog({ userId: user.id, amountMl: clamped });
   revalidatePath("/today");
+  revalidatePath("/hydration");
   return { ok: true };
 }
 
@@ -303,6 +305,7 @@ export async function saveWaterGoal(
   );
   await updateUserWaterGoal(user.id, clamped);
   revalidatePath("/today");
+  revalidatePath("/hydration");
   return { ok: true };
 }
 

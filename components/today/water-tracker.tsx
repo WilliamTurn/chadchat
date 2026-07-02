@@ -41,6 +41,7 @@ import {
   mlToOz,
   ozToMl,
 } from "@/lib/today/water-units";
+import type { WaterDay } from "@/lib/today/week";
 
 const MAX_CUSTOM_OZ = 64;
 
@@ -56,9 +57,15 @@ const MAX_CUSTOM_OZ = 64;
 export function WaterTracker({
   totalMl,
   goalMl = DEFAULT_WATER_GOAL_ML,
+  week,
+  viewHref,
 }: {
   totalMl: number;
   goalMl?: number;
+  /** Rolling 7-day strip (goal hit / partial / nothing) — omit to hide. */
+  week?: WaterDay[];
+  /** The detail page ("View all →" /hydration) — omit when already on it. */
+  viewHref?: string;
 }) {
   const router = useRouter();
   const reduceMotion = useReducedMotion();
@@ -115,6 +122,7 @@ export function WaterTracker({
         icon={<Droplets className="size-4" />}
         title="Hydration"
         tone="sky"
+        viewHref={viewHref}
       />
 
       {/* Hero vessel + readout */}
@@ -367,6 +375,45 @@ export function WaterTracker({
           </PopoverContent>
         </Popover>
       </div>
+
+      {/* Rolling 7-day strip — the compact in-card readout (the full history
+          chart lives on the detail page, one surface per domain). Full dot =
+          goal hit, faded dot = some water logged, hollow = nothing. */}
+      {week?.some((d) => d.logged) ? (
+        <div className="mt-4 flex items-center justify-between rounded-xl border border-border bg-background/40 px-4 py-2.5">
+          <span className="text-muted-foreground text-xs">Last 7 days</span>
+          <div className="flex items-end gap-2">
+            {week.map((day) => (
+              <div className="flex flex-col items-center gap-1" key={day.t}>
+                <span
+                  aria-hidden
+                  className={`size-3 rounded-full ${
+                    day.logged && day.ml >= safeGoal
+                      ? "bg-sky-400 shadow-[0_0_8px_var(--color-sky-400)]"
+                      : day.logged
+                        ? "bg-sky-400/40"
+                        : "bg-border"
+                  } ${day.isToday ? "ring-2 ring-sky-400/40 ring-offset-1 ring-offset-background" : ""}`}
+                  title={
+                    day.logged
+                      ? `${formatOz(day.ml)}${day.ml >= safeGoal ? " · goal hit" : ""}`
+                      : "Not logged"
+                  }
+                />
+                <span
+                  className={`text-[10px] ${
+                    day.isToday
+                      ? "font-semibold text-foreground"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  {day.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <ModuleFooter>
         <AskChadButton prompt="How's my water intake today? Am I drinking enough, and when should I top up?" />

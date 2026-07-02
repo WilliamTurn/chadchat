@@ -11,6 +11,7 @@ import {
   createSleepEntry,
   deleteGoal,
   deletePlan,
+  deleteSleepEntry,
   getUserById,
   getUserMemory,
   updateGoal,
@@ -268,17 +269,30 @@ export async function removePlan(id: string): Promise<TodayActionState> {
 
 // --- Sleep & recovery (Pro) ---
 
-/** Log (or overwrite) a night's sleep for the Sleep & Recovery card. */
-export async function logSleep(
-  input: SleepEntryInput
-): Promise<TodayActionState> {
+/** Shared gate for the sleep actions: the signed-in user, only if Pro. */
+async function requireProUser(): Promise<{ user: User } | { error: string }> {
   const session = await auth();
   if (!session?.user?.id) {
-    return { ok: false, error: "Not signed in." };
+    return { error: "Not signed in." };
   }
   const user = await getUserById(session.user.id);
   if (!(user && canAccessProFeatures(user))) {
-    return { ok: false, error: "Sleep tracking is a Chad Pro feature." };
+    return { error: "Sleep tracking is a Chad Pro feature." };
+  }
+  return { user };
+}
+
+/**
+ * Log (or overwrite) a night's sleep. Returns the created entry's id so the
+ * client can offer a one-tap "Undo" right after logging (matches the water
+ * card's undo pattern).
+ */
+export async function logSleep(
+  input: SleepEntryInput
+): Promise<TodayActionState & { id?: string }> {
+  const gate = await requireProUser();
+  if ("error" in gate) {
+    return { ok: false, error: gate.error };
   }
 
   const parsed = sleepEntrySchema.safeParse(input);
@@ -290,14 +304,27 @@ export async function logSleep(
   }
 
   const { recordedAt, minutes, quality } = parsed.data;
-  await createSleepEntry({
-    userId: user.id,
+  const created = await createSleepEntry({
+    userId: gate.user.id,
     recordedAt: parseCalendarDay(recordedAt) ?? new Date(),
     minutes,
     quality: quality ?? null,
   });
 
   revalidatePath("/today");
+  revalidatePath("/sleep");
+  return { ok: true, id: created.id };
+}
+
+/** Delete one night's sleep entry (undo toast + the /sleep history list). */
+export async function removeSleep(id: string): Promise<TodayActionState> {
+  const gate = await requireProUser();
+  if ("error" in gate) {
+    return { ok: false, error: gate.error };
+  }
+  await deleteSleepEntry({ id, userId: gate.user.id });
+  revalidatePath("/today");
+  revalidatePath("/sleep");
   return { ok: true };
 }
 

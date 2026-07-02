@@ -1994,6 +1994,46 @@ export async function createSleepEntry(entry: {
   }
 }
 
+/** Recent sleep entries, newest first, for the /sleep history list. */
+export async function getSleepEntries(
+  userId: string,
+  limit = 60
+): Promise<SleepEntry[]> {
+  try {
+    return await db
+      .select()
+      .from(sleepEntry)
+      .where(eq(sleepEntry.userId, userId))
+      .orderBy(desc(sleepEntry.recordedAt))
+      .limit(limit);
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get sleep entries"
+    );
+  }
+}
+
+/** Delete one sleep entry, scoped to its owner so a user can't delete another's. */
+export async function deleteSleepEntry({
+  id,
+  userId,
+}: {
+  id: string;
+  userId: string;
+}): Promise<void> {
+  try {
+    await db
+      .delete(sleepEntry)
+      .where(and(eq(sleepEntry.id, id), eq(sleepEntry.userId, userId)));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to delete sleep entry"
+    );
+  }
+}
+
 /** The most recent night's sleep entry, for the "last night" readout. */
 export async function getLatestSleepEntry(
   userId: string

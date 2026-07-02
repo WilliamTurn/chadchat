@@ -7,54 +7,29 @@ import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { PageShell } from "@/components/nav/page-shell";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import {
-  type LastNight,
-  type SleepNight,
-  SleepTracker,
-} from "@/components/today/sleep-tracker";
+  SleepHistory,
+  type SleepHistoryEntry,
+} from "@/components/today/sleep-history";
+import { SleepTracker } from "@/components/today/sleep-tracker";
 import { SleepTrendChart } from "@/components/today/sleep-trend-chart";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
-import {
-  calendarDayAnchorInTz,
-  formatCalendarDay,
-  todayAnchorInTz,
-} from "@/lib/date";
+import { formatCalendarDay, toCalendarDayISO } from "@/lib/date";
 import {
   getLatestSleepEntry,
   getSleepDailyTotals,
+  getSleepEntries,
   getUserById,
 } from "@/lib/db/queries";
+import { buildLastNight, buildSleepWeek } from "@/lib/today/week";
 
 /**
- * The dedicated Sleep & recovery page (NAV-30). The sleep tracker + trend were
- * only reachable as cards buried on /today, so they were easy to miss; this
- * gives the Pro sleep feature its own home in the shared nav, the same way every
- * other tracked metric (weight, workouts, nutrition) has a focused page. It
- * reuses the exact /today components (one source of truth) — the last-night
- * readout + week strip + the full nightly trend.
+ * The dedicated Sleep & recovery page (NAV-30) — sleep's ONE deep surface
+ * (audit rule 3: compact readout on /today, the full chart + history here).
+ * Tracker card + full nightly trend + an editable History list, so any logged
+ * night can be corrected or deleted (audit P1-3).
  */
-
-const DAY_MS = 86_400_000;
-const WEEKDAY_INITIALS = ["S", "M", "T", "W", "T", "F", "S"];
-
-/** "Today" / "Yesterday" / "N days ago" / a short date — matches /today,
- *  on the user's own wall clock (FEAT-8). */
-function relativeDay(d: Date, timezone: string | null): string {
-  const today = todayAnchorInTz(timezone);
-  const that = calendarDayAnchorInTz(d, timezone);
-  const diffDays = Math.round((today.getTime() - that.getTime()) / DAY_MS);
-  if (diffDays <= 0) {
-    return "Today";
-  }
-  if (diffDays === 1) {
-    return "Yesterday";
-  }
-  if (diffDays < 7) {
-    return `${diffDays} days ago`;
-  }
-  return formatCalendarDay(d, { month: "short", day: "numeric" });
-}
 
 export default function SleepPage() {
   return (
@@ -116,40 +91,31 @@ async function SleepContent() {
   }
 
   const timezone = user.timezone;
-  const [latestSleep, sleepDaily] = await Promise.all([
+  const [latestSleep, sleepDaily, sleepEntries] = await Promise.all([
     getLatestSleepEntry(user.id),
     getSleepDailyTotals(user.id, timezone),
+    getSleepEntries(user.id),
   ]);
 
-  // Last night's readout + the rolling 7-night week strip, built exactly like
-  // /today (daily totals are keyed to each local day's 00:00-UTC-anchor ms,
-  // on the user's own wall clock — FEAT-8).
-  const todayAnchor = todayAnchorInTz(timezone);
-  const sleepByDay = new Map(sleepDaily.map((s) => [s.t, s] as const));
-  const lastNight: LastNight = latestSleep
-    ? {
-        minutes: latestSleep.minutes,
-        quality: latestSleep.quality,
-        whenLabel: relativeDay(latestSleep.recordedAt, timezone),
-      }
-    : null;
-  const sleepWeek: SleepNight[] = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(todayAnchor.getTime() - (6 - i) * DAY_MS);
-    const entry = sleepByDay.get(d.getTime());
-    return {
-      t: d.getTime(),
-      label: WEEKDAY_INITIALS[d.getUTCDay()],
-      minutes: entry?.minutes ?? 0,
-      quality: entry?.quality ?? null,
-      logged: entry != null,
-      isToday: i === 6,
-    };
-  });
+  const lastNight = buildLastNight(latestSleep, timezone);
+  const sleepWeek = buildSleepWeek(sleepDaily, timezone);
+  const history: SleepHistoryEntry[] = sleepEntries.map((e) => ({
+    id: e.id,
+    iso: toCalendarDayISO(e.recordedAt),
+    dateLabel: formatCalendarDay(e.recordedAt, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    }),
+    minutes: e.minutes,
+    quality: e.quality,
+  }));
 
   return (
     <div className="flex flex-col gap-6">
       <SleepTracker last={lastNight} week={sleepWeek} />
       {sleepDaily.length >= 2 && <SleepTrendChart days={sleepDaily} />}
+      <SleepHistory entries={history} />
     </div>
   );
 }

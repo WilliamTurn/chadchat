@@ -1,6 +1,7 @@
 import {
   Camera,
   CreditCard,
+  Droplets,
   Dumbbell,
   FileText,
   HelpCircle,
@@ -81,6 +82,12 @@ export const NAV_LINKS: NavLink[] = [
     href: "/progress",
     label: "Progress",
     icon: LineChart,
+    surfaces: ["header", "sidebar"],
+  },
+  {
+    href: "/hydration",
+    label: "Hydration",
+    icon: Droplets,
     surfaces: ["header", "sidebar"],
   },
   {

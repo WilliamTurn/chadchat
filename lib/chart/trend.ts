@@ -58,6 +58,34 @@ export function spanDays(rows: { t: number }[]): number {
   return (rows[rows.length - 1].t - rows[0].t) / MS_PER_DAY;
 }
 
+/**
+ * Fill the missing calendar days of a daily series (oldest-first, one row per
+ * day keyed to its 00:00-UTC-anchor ms) with placeholder rows from `make`.
+ * Bar charts lay days out as evenly spaced bands, so without this an unlogged
+ * day silently vanishes and "Jun 27, 28, 29, Jul 2" reads as four consecutive
+ * days — the filled rows keep the date axis honest.
+ */
+export function fillDailyGaps<T extends { t: number }>(
+  rows: T[],
+  make: (t: number) => T
+): T[] {
+  if (rows.length < 2) {
+    return rows;
+  }
+  const out: T[] = [rows[0]];
+  for (let i = 1; i < rows.length; i++) {
+    for (
+      let t = rows[i - 1].t + MS_PER_DAY;
+      t < rows[i].t - MS_PER_DAY / 2;
+      t += MS_PER_DAY
+    ) {
+      out.push(make(t));
+    }
+    out.push(rows[i]);
+  }
+  return out;
+}
+
 /** Mean rate of trend change per week over the row span. 0 if span is 0. */
 export function ratePerWeek(rows: TrendRow[]): number {
   if (rows.length < 2) {

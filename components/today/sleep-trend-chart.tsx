@@ -1,12 +1,16 @@
 "use client";
 
 /**
- * Nightly sleep trend — each bar is one night's time asleep, oldest → newest,
- * with a dashed 7-hour target line and a scrub tooltip. Built on Recharts via
- * the shadcn chart primitive and the shared dashboard chart system (ChartCard /
- * Kpi / useChartRange), so it matches the weight, volume and water trends.
- * Nights that hit the target are full-strength indigo; short nights are faded.
- * KPIs report the average per night and how many nights hit the target.
+ * Nightly sleep trend (the /sleep detail page) — each bar is one night's time
+ * asleep, oldest → newest, with a dashed 7-hour recommended line and a scrub
+ * tooltip. Built on Recharts via the shadcn chart primitive and the shared
+ * dashboard chart system (ChartCard / Kpi / useChartRange), so it matches the
+ * weight, volume and water trends. Nights that reach 7h are full-strength
+ * indigo; short nights are faded.
+ *
+ * Honest axis (audit P2-5): unlogged nights render as empty slots instead of
+ * silently vanishing — the series is gap-filled per calendar day, so "3 of 7
+ * nights" means 3 of the 7 real nights in the window, misses included.
  */
 
 import { useMemo } from "react";
@@ -22,6 +26,10 @@ import {
 import { ChartCard } from "@/components/dashboard/chart-card";
 import { Kpi } from "@/components/dashboard/kpi";
 import {
+  formatSleepDuration,
+  QUALITY_LABELS,
+} from "@/components/today/sleep-log-form";
+import {
   type ChartConfig,
   ChartContainer,
   ChartTooltip,
@@ -29,6 +37,7 @@ import {
 import { useChartRange } from "@/hooks/use-chart-range";
 import { useMountReveal } from "@/hooks/use-mount-reveal";
 import { formatTick } from "@/lib/chart/format";
+import { fillDailyGaps } from "@/lib/chart/trend";
 import { SLEEP_GOAL_MINUTES } from "@/lib/validation/sleep";
 
 const INDIGO = "#818cf8";
@@ -41,22 +50,7 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 type Point = { t: number; minutes: number; quality: number | null };
-
-/** "7h 30m" / "45m". */
-function formatDuration(minutes: number): string {
-  if (minutes <= 0) {
-    return "0h";
-  }
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (h === 0) {
-    return `${m}m`;
-  }
-  if (m === 0) {
-    return `${h}h`;
-  }
-  return `${h}h ${m}m`;
-}
+type Row = Point & { logged: boolean };
 
 /** Compact axis label in hours, e.g. "7h". */
 function fmtAxis(minutes: number): string {
@@ -65,15 +59,31 @@ function fmtAxis(minutes: number): string {
 
 export function SleepTrendChart({ days }: { days: Point[] }) {
   const reveal = useMountReveal();
-  const { rows, control } = useChartRange(days, { minPoints: 7 });
+
+  // Gap-fill unlogged nights so the date axis stays honest (bars are evenly
+  // spaced bands — without the fill, missing days silently vanish).
+  const filled = useMemo<Row[]>(
+    () =>
+      fillDailyGaps<Row>(
+        days.map((d) => ({ ...d, logged: true })),
+        (t) => ({ t, minutes: 0, quality: null, logged: false })
+      ),
+    [days]
+  );
+  const { rows, control } = useChartRange(filled, { minPoints: 7 });
 
   const stats = useMemo(() => {
-    if (rows.length === 0) {
+    const loggedRows = rows.filter((r) => r.logged);
+    if (loggedRows.length === 0) {
       return null;
     }
-    const sum = rows.reduce((s, r) => s + r.minutes, 0);
-    const avg = Math.round(sum / rows.length);
-    const hit = rows.filter((r) => r.minutes >= SLEEP_GOAL_MINUTES).length;
+    const sum = loggedRows.reduce((s, r) => s + r.minutes, 0);
+    const avg = Math.round(sum / loggedRows.length);
+    const hit = loggedRows.filter(
+      (r) => r.minutes >= SLEEP_GOAL_MINUTES
+    ).length;
+    // Denominator = every night in the window, unlogged included — a missed
+    // log is a night that didn't hit 7h, not a night that didn't happen.
     return { avg, hit, total: rows.length };
   }, [rows]);
 
@@ -93,11 +103,11 @@ export function SleepTrendChart({ days }: { days: Point[] }) {
       askChadPrompt={ASK_CHAD_PROMPT}
       footer={
         <span>
-          Target{" "}
           <span className="font-medium text-indigo-400">
-            {formatDuration(SLEEP_GOAL_MINUTES)}
+            {formatSleepDuration(SLEEP_GOAL_MINUTES)}+
           </span>{" "}
-          a night · each bar is one night
+          a night recommended · each bar is one night · gaps are unlogged
+          nights
         </span>
       }
       kpis={
@@ -106,10 +116,10 @@ export function SleepTrendChart({ days }: { days: Point[] }) {
             <Kpi
               label="Avg / night"
               size="lg"
-              value={formatDuration(stats.avg)}
+              value={formatSleepDuration(stats.avg)}
             />
             <Kpi
-              label="Nights hit target"
+              label="Nights with 7h+"
               tone={stats.hit > 0 ? "good" : "neutral"}
               value={`${stats.hit} / ${stats.total}`}
             />
@@ -125,13 +135,10 @@ export function SleepTrendChart({ days }: { days: Point[] }) {
           <XAxis
             axisLine={false}
             dataKey="t"
-            domain={["dataMin", "dataMax"]}
             minTickGap={32}
-            scale="time"
             tickFormatter={formatTick}
             tickLine={false}
             tickMargin={8}
-            type="number"
           />
           <YAxis
             axisLine={false}
@@ -164,7 +171,9 @@ export function SleepTrendChart({ days }: { days: Point[] }) {
             {rows.map((r) => (
               <Cell
                 fill={INDIGO}
-                fillOpacity={r.minutes >= SLEEP_GOAL_MINUTES ? 0.9 : 0.4}
+                fillOpacity={
+                  r.logged ? (r.minutes >= SLEEP_GOAL_MINUTES ? 0.9 : 0.4) : 0
+                }
                 key={r.t}
               />
             ))}
@@ -175,20 +184,12 @@ export function SleepTrendChart({ days }: { days: Point[] }) {
   );
 }
 
-const QUALITY_LABELS: Record<number, string> = {
-  1: "Poor",
-  2: "Fair",
-  3: "OK",
-  4: "Good",
-  5: "Great",
-};
-
 function SleepTooltip({
   active,
   payload,
 }: {
   active?: boolean;
-  payload?: { payload?: Point }[];
+  payload?: { payload?: Row }[];
 }) {
   if (!active || !payload?.length) {
     return null;
@@ -201,28 +202,34 @@ function SleepTooltip({
   return (
     <div className="min-w-[11rem] rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
       <div className="mb-1.5 font-medium">{formatTick(row.t)}</div>
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5">
-            <span
-              className="size-2 shrink-0 rounded-[2px]"
-              style={{ backgroundColor: INDIGO }}
-            />
-            <span className="text-muted-foreground">Sleep</span>
+      {row.logged ? (
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <span
+                className="size-2 shrink-0 rounded-[2px]"
+                style={{ backgroundColor: INDIGO }}
+              />
+              <span className="text-muted-foreground">Sleep</span>
+            </div>
+            <span className="ml-auto font-medium text-foreground tabular-nums">
+              {formatSleepDuration(row.minutes)}
+            </span>
           </div>
-          <span className="ml-auto font-medium text-foreground tabular-nums">
-            {formatDuration(row.minutes)}
-          </span>
+          <div className="flex items-center justify-between gap-4 text-muted-foreground">
+            <span>
+              {row.quality == null ? "—" : QUALITY_LABELS[row.quality]}
+            </span>
+            <span className={hit ? "font-medium text-emerald-500" : ""}>
+              {hit
+                ? "7h+ reached"
+                : `${formatSleepDuration(SLEEP_GOAL_MINUTES - row.minutes)} short of 7h`}
+            </span>
+          </div>
         </div>
-        <div className="flex items-center justify-between gap-4 text-muted-foreground">
-          <span>{row.quality == null ? "—" : QUALITY_LABELS[row.quality]}</span>
-          <span className={hit ? "font-medium text-emerald-500" : ""}>
-            {hit
-              ? "target hit"
-              : `${formatDuration(SLEEP_GOAL_MINUTES - row.minutes)} short`}
-          </span>
-        </div>
-      </div>
+      ) : (
+        <div className="text-muted-foreground">Not logged</div>
+      )}
     </div>
   );
 }

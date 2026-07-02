@@ -1,4 +1,5 @@
 import {
+  ArrowRight,
   Camera,
   ChefHat,
   CreditCard,
@@ -31,16 +32,10 @@ import {
 } from "@/components/today/module-card";
 import { PlanList } from "@/components/today/plan-list";
 import { StatPills } from "@/components/today/stat-pills";
-import {
-  type LastNight,
-  type SleepNight,
-  SleepTracker,
-} from "@/components/today/sleep-tracker";
-import { SleepTrendChart } from "@/components/today/sleep-trend-chart";
+import { SleepTracker } from "@/components/today/sleep-tracker";
 import { StreakStrip } from "@/components/today/streak-strip";
 import { TargetEditor } from "@/components/today/target-editor";
 import { WaterTracker } from "@/components/today/water-tracker";
-import { WaterTrendChart } from "@/components/today/water-trend-chart";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
@@ -72,6 +67,12 @@ import type { ProgressEntry } from "@/lib/db/schema";
 import { toPlanStatusSummary } from "@/lib/subscription";
 import { normalizeSex, resolveHero } from "@/lib/today/goal-diagram";
 import { DEFAULT_WATER_GOAL_ML } from "@/lib/today/water-units";
+import {
+  buildLastNight,
+  buildSleepWeek,
+  buildWaterWeek,
+  WEEKDAY_INITIALS,
+} from "@/lib/today/week";
 import { HeroCustomizer } from "@/components/today/hero-customizer";
 import type { LiftProgress } from "@/components/today/goal-list";
 import type { WorkoutWithChildren } from "@/lib/db/queries";
@@ -415,7 +416,6 @@ async function TodayContent() {
   const activeDayKeys = new Set(
     activityDays.map((d) => toCalendarDayISO(calendarDayAnchorInTz(d, timezone)))
   );
-  const WEEKDAY_INITIALS = ["S", "M", "T", "W", "T", "F", "S"];
   const week = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(todayAnchor.getTime() - (6 - i) * DAY_MS);
     return {
@@ -426,29 +426,11 @@ async function TodayContent() {
   });
   const activeThisWeek = week.filter((d) => d.active).length;
 
-  // Sleep & recovery (Pro): last night's entry + a 7-night week strip. The
-  // daily totals are keyed to each local day's 00:00-UTC-anchor ms — the same
-  // anchors the week strip iterates, so the lookup lines up (see lib/date.ts).
-  const sleepByDay = new Map(sleepDaily.map((s) => [s.t, s] as const));
-  const lastNight: LastNight = latestSleep
-    ? {
-        minutes: latestSleep.minutes,
-        quality: latestSleep.quality,
-        whenLabel: relativeDay(latestSleep.recordedAt, timezone),
-      }
-    : null;
-  const sleepWeek: SleepNight[] = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(todayAnchor.getTime() - (6 - i) * DAY_MS);
-    const entry = sleepByDay.get(d.getTime());
-    return {
-      t: d.getTime(),
-      label: WEEKDAY_INITIALS[d.getUTCDay()],
-      minutes: entry?.minutes ?? 0,
-      quality: entry?.quality ?? null,
-      logged: entry != null,
-      isToday: i === 6,
-    };
-  });
+  // Sleep + hydration week strips — the compact in-card readouts (the full
+  // history charts live on /sleep and /hydration; one surface per domain).
+  const lastNight = buildLastNight(latestSleep, timezone);
+  const sleepWeek = buildSleepWeek(sleepDaily, timezone);
+  const waterWeek = buildWaterWeek(waterDaily, timezone);
 
   // First-run: a brand-new member with no profile and nothing logged yet. We
   // show a "welcome / get started" header instead of "Welcome back" (which is
@@ -611,8 +593,8 @@ async function TodayContent() {
             />
             <Button asChild className="gap-1.5" size="sm" variant="outline">
               <Link href="/nutrition">
-                <Camera className="size-4" />
                 Log a meal
+                <ArrowRight className="size-3.5" />
               </Link>
             </Button>
           </ModuleFooter>
@@ -624,6 +606,36 @@ async function TodayContent() {
           title="Calorie Tracker"
         />
       )}
+
+      {/* Hydration + Sleep (Pro) — the other daily loggers, right under the
+          calorie tracker so "am I on track today?" is answerable from the top
+          of the page (audit rule 4: STATUS → LOGGERs → PLANs → REVIEW). */}
+      <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
+        {isPro ? (
+          <WaterTracker
+            goalMl={waterGoalMl}
+            totalMl={waterMl}
+            viewHref="/hydration"
+            week={waterWeek}
+          />
+        ) : (
+          <LockedCard
+            icon={<Droplet className="size-4" />}
+            text="Track your daily water against a goal with one-tap logging. Pro only."
+            title="Hydration"
+          />
+        )}
+
+        {isPro ? (
+          <SleepTracker last={lastNight} viewHref="/sleep" week={sleepWeek} />
+        ) : (
+          <LockedCard
+            icon={<Moon className="size-4" />}
+            text="Log how you sleep each night and Chad factors recovery into your training. Pro only."
+            title="Sleep & recovery"
+          />
+        )}
+      </div>
 
       {/* Goal + Training — one consistent card treatment (DSH-30: the goals card
           no longer floats detailed anatomy art behind the text; the header
@@ -678,8 +690,8 @@ async function TodayContent() {
               <AskChadButton prompt="Look at my recent workouts. What's working, what's lagging, and what should I hit next session?" />
               <Button asChild className="gap-1.5" size="sm" variant="outline">
                 <Link href="/workouts">
-                  <Dumbbell className="size-3.5" />
                   Log a workout
+                  <ArrowRight className="size-3.5" />
                 </Link>
               </Button>
             </ModuleFooter>
@@ -730,8 +742,8 @@ async function TodayContent() {
               />
               <Button asChild className="gap-1.5" size="sm" variant="outline">
                 <Link href="/meal-plan">
-                  <ChefHat className="size-3.5" />
                   {mealPlanSummary ? "Open plan" : "Build a meal plan"}
+                  <ArrowRight className="size-3.5" />
                 </Link>
               </Button>
             </ModuleFooter>
@@ -739,91 +751,59 @@ async function TodayContent() {
         </div>
       )}
 
-      {/* Hydration + Weight (Pro) */}
-      <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
-        {isPro ? (
-          <WaterTracker goalMl={waterGoalMl} totalMl={waterMl} />
-        ) : (
-          <LockedCard
-            icon={<Droplet className="size-4" />}
-            text="Track your daily water against a goal with one-tap logging. Pro only."
-            title="Hydration"
+      {/* Weight trend (Pro) — the REVIEW finale: the slow metric the product's
+          promise hangs on gets the page's one full-width chart. */}
+      {isPro ? (
+        <ModuleCard>
+          <ModuleHeader
+            icon={<LineChart className="size-4" />}
+            title="Weight trend"
+            tone="violet"
+            viewHref="/progress"
           />
-        )}
-
-        {isPro ? (
-          <ModuleCard>
-            <ModuleHeader
-              icon={<LineChart className="size-4" />}
-              title="Weight trend"
-              tone="violet"
-              viewHref="/progress"
-            />
-            {currentWeight != null && (
-              <div className="flex items-baseline gap-2">
-                <span className="font-display font-semibold text-lg leading-none">
-                  {currentWeight} {displayUnit}
+          {currentWeight != null && (
+            <div className="flex items-baseline gap-2">
+              <span className="font-display font-semibold text-lg leading-none">
+                {currentWeight} {displayUnit}
+              </span>
+              {weightChange != null && (
+                <span className="text-muted-foreground text-xs">
+                  {weightChange > 0 ? "+" : ""}
+                  {weightChange} since start
                 </span>
-                {weightChange != null && (
-                  <span className="text-muted-foreground text-xs">
-                    {weightChange > 0 ? "+" : ""}
-                    {weightChange} since start
-                  </span>
-                )}
-              </div>
-            )}
-            <div className="mt-2">
-              {points.length > 0 ? (
-                <WeightChartInteractive
-                  goalWeight={goalWeight}
-                  points={points}
-                  unit={displayUnit}
-                  variant="compact"
-                />
-              ) : (
-                <p className="text-muted-foreground text-sm">
-                  No weigh-ins yet. Log your weight to see the trend.
-                </p>
               )}
             </div>
-            <ModuleFooter>
-              <AskChadButton prompt="Look at my weight trend and how it's tracking against my goal weight. Am I moving in the right direction, and should I change anything?" />
-              <Button asChild className="gap-1.5" size="sm" variant="outline">
-                <Link href="/progress">
-                  <LineChart className="size-3.5" />
-                  Log weight
-                </Link>
-              </Button>
-            </ModuleFooter>
-          </ModuleCard>
-        ) : (
-          <LockedCard
-            icon={<LineChart className="size-4" />}
-            text="Track your weight and progress photos over time. Pro only."
-            title="Weight trend"
-          />
-        )}
-      </div>
-
-      {/* Sleep & recovery (Pro) */}
-      {isPro ? (
-        <SleepTracker last={lastNight} week={sleepWeek} />
+          )}
+          <div className="mt-2">
+            {points.length > 0 ? (
+              <WeightChartInteractive
+                goalWeight={goalWeight}
+                points={points}
+                unit={displayUnit}
+                variant="compact"
+              />
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                No weigh-ins yet. Log your weight to see the trend.
+              </p>
+            )}
+          </div>
+          <ModuleFooter>
+            <AskChadButton prompt="Look at my weight trend and how it's tracking against my goal weight. Am I moving in the right direction, and should I change anything?" />
+            <Button asChild className="gap-1.5" size="sm" variant="outline">
+              <Link href="/progress">
+                Log weight
+                <ArrowRight className="size-3.5" />
+              </Link>
+            </Button>
+          </ModuleFooter>
+        </ModuleCard>
       ) : (
         <LockedCard
-          icon={<Moon className="size-4" />}
-          text="Log how you sleep each night and Chad factors recovery into your training. Pro only."
-          title="Sleep & recovery"
+          icon={<LineChart className="size-4" />}
+          text="Track your weight and progress photos over time. Pro only."
+          title="Weight trend"
         />
-      )}
-
-      {/* Hydration trend (Pro) — full-width, once there's history to show */}
-      {isPro && waterDaily.length >= 2 && (
-        <WaterTrendChart days={waterDaily} goalMl={waterGoalMl} />
-      )}
-
-      {/* Sleep trend (Pro) — full-width, once there's history to show */}
-      {isPro && sleepDaily.length >= 2 && (
-        <SleepTrendChart days={sleepDaily} />
       )}
 
       {/* Quick actions */}

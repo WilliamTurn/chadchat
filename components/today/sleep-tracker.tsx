@@ -1,99 +1,54 @@
 "use client";
 
 /**
- * The /today "Sleep & recovery" card: last night's hours + quality, a one-tap
- * log popover, and a 7-night week chart. The chart is built on Recharts via the
- * shadcn chart primitive (the same engine as the weight/water/volume trends), so
- * it matches the rest of the dashboard rather than being hand-rolled SVG. Nights
- * that hit the 7-hour target are drawn in full-strength indigo; short nights are
- * faded.
+ * The Sleep & recovery card (/today + /sleep): last night's hours + quality,
+ * a 7-night week chart, and the log control — in the card BODY, like the
+ * hydration quick-adds, so every daily-logger card carries its input where you
+ * read its number (audit rule 5). The chart is built on Recharts via the shadcn
+ * chart primitive (the same engine as the weight/water trends). Nights that
+ * reach the recommended 7 hours are full-strength indigo; short nights fade.
+ *
+ * Honest framing (audit P1-2): an entry only reads as "Last night" when it is
+ * actually for last night — an older entry is shown as "Last logged · Sun,
+ * Jun 29" with no freshness verdict, and the card asks for last night instead.
  */
 
 import { Moon, Star } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { type FormEvent, useState, useTransition } from "react";
+import { useState } from "react";
 import { Bar, BarChart, Cell, ReferenceLine, XAxis } from "recharts";
-import { toast } from "sonner";
-import { logSleep } from "@/app/today/actions";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
 import {
   ModuleCard,
   ModuleFooter,
   ModuleHeader,
 } from "@/components/today/module-card";
+import {
+  formatSleepDuration,
+  QUALITY_LABELS,
+  SleepLogForm,
+} from "@/components/today/sleep-log-form";
 import { Button } from "@/components/ui/button";
 import {
   type ChartConfig,
   ChartContainer,
   ChartTooltip,
 } from "@/components/ui/chart";
-import { DatePicker } from "@/components/ui/date-picker";
-import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { todayLocalISO } from "@/lib/date";
+import type { LastNight, SleepNight } from "@/lib/today/week";
 import { cn } from "@/lib/utils";
 import { SLEEP_GOAL_MINUTES } from "@/lib/validation/sleep";
+
+export type { LastNight, SleepNight } from "@/lib/today/week";
 
 const INDIGO = "#818cf8";
 
 const chartConfig = {
   minutes: { label: "Sleep", color: INDIGO },
 } satisfies ChartConfig;
-
-const QUALITY_LABELS: Record<number, string> = {
-  1: "Poor",
-  2: "Fair",
-  3: "OK",
-  4: "Good",
-  5: "Great",
-};
-
-/** One night in the rolling 7-day week strip. */
-export type SleepNight = {
-  /** Midnight-UTC ms of the day (stable key + chart x). */
-  t: number;
-  /** Single-letter weekday label. */
-  label: string;
-  /** Minutes slept that night; 0 if not logged. */
-  minutes: number;
-  quality: number | null;
-  logged: boolean;
-  isToday: boolean;
-};
-
-export type LastNight = {
-  minutes: number;
-  quality: number | null;
-  /** "Today" / "Yesterday" / "Jun 24" — when the latest entry is for. */
-  whenLabel: string;
-} | null;
-
-/** "7h 30m" / "45m" / "0h". */
-function formatDuration(minutes: number): string {
-  if (minutes <= 0) {
-    return "0h";
-  }
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (h === 0) {
-    return `${m}m`;
-  }
-  if (m === 0) {
-    return `${h}h`;
-  }
-  return `${h}h ${m}m`;
-}
 
 function Stars({ value }: { value: number }) {
   return (
@@ -113,139 +68,25 @@ function Stars({ value }: { value: number }) {
   );
 }
 
-const HOUR_OPTIONS = Array.from({ length: 13 }, (_, i) => i); // 0–12
-const MINUTE_OPTIONS = [0, 15, 30, 45];
-
 export function SleepTracker({
   last,
   week,
+  viewHref,
 }: {
   last: LastNight;
   week: SleepNight[];
+  /** The detail page ("View all →" /sleep) — omit when already on it. */
+  viewHref?: string;
 }) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
-  const [date, setDate] = useState(todayLocalISO);
-  const [hours, setHours] = useState("7");
-  const [minutes, setMinutes] = useState("30");
-  const [quality, setQuality] = useState<number | null>(null);
-
-  function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    const total = Number(hours) * 60 + Number(minutes);
-    if (!Number.isFinite(total) || total <= 0) {
-      toast.error("Enter how long you slept.");
-      return;
-    }
-    startTransition(async () => {
-      const result = await logSleep({
-        recordedAt: date,
-        minutes: total,
-        quality,
-      });
-      if (result.ok) {
-        toast.success("Sleep logged.");
-        setQuality(null);
-        setOpen(false);
-        router.refresh();
-      } else {
-        toast.error(result.error ?? "Couldn't log that.");
-      }
-    });
-  }
 
   const goalHours = SLEEP_GOAL_MINUTES / 60;
-  const reached = last != null && last.minutes >= SLEEP_GOAL_MINUTES;
-
-  const logForm = (
-    <PopoverContent align="end" className="w-72">
-      <form className="flex flex-col gap-3" onSubmit={onSubmit}>
-        <div className="flex flex-col gap-1.5">
-          <span className="font-medium text-sm">Log sleep</span>
-          <span className="text-muted-foreground text-xs">
-            How long did you sleep last night?
-          </span>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <Label className="text-xs" htmlFor="sleep-date">
-            Night of
-          </Label>
-          <DatePicker
-            id="sleep-date"
-            max={todayLocalISO()}
-            onChange={setDate}
-            value={date}
-          />
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <Label className="text-xs">Time asleep</Label>
-          <div className="flex items-center gap-2">
-            <Select onValueChange={setHours} value={hours}>
-              <SelectTrigger aria-label="Hours slept" className="h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {HOUR_OPTIONS.map((h) => (
-                  <SelectItem key={h} value={String(h)}>
-                    {h} h
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select onValueChange={setMinutes} value={minutes}>
-              <SelectTrigger aria-label="Minutes slept" className="h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {MINUTE_OPTIONS.map((m) => (
-                  <SelectItem key={m} value={String(m)}>
-                    {m} m
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <Label className="text-xs">Quality (optional)</Label>
-          <div className="flex items-center gap-1">
-            {[1, 2, 3, 4, 5].map((n) => (
-              <button
-                aria-label={`${n} star${n === 1 ? "" : "s"}: ${QUALITY_LABELS[n]}`}
-                aria-pressed={quality != null && n <= quality}
-                className="rounded p-0.5 transition-transform hover:scale-110"
-                key={n}
-                onClick={() => setQuality((q) => (q === n ? null : n))}
-                type="button"
-              >
-                <Star
-                  className={cn(
-                    "size-5",
-                    quality != null && n <= quality
-                      ? "fill-indigo-400 text-indigo-400"
-                      : "text-muted-foreground/40"
-                  )}
-                />
-              </button>
-            ))}
-            {quality != null && (
-              <span className="ml-1 text-muted-foreground text-xs">
-                {QUALITY_LABELS[quality]}
-              </span>
-            )}
-          </div>
-        </div>
-
-        <Button className="mt-1" disabled={pending} type="submit">
-          {pending ? "Saving…" : "Log sleep"}
-        </Button>
-      </form>
-    </PopoverContent>
-  );
+  // Only a genuinely-current entry gets the freshness verdict.
+  const current = last?.isCurrent ? last : null;
+  const reached = current != null && current.minutes >= SLEEP_GOAL_MINUTES;
+  const loggedNights = week
+    .filter((n) => n.logged)
+    .map((n) => ({ iso: n.iso, minutes: n.minutes }));
 
   return (
     <ModuleCard>
@@ -253,20 +94,19 @@ export function SleepTracker({
         icon={<Moon className="size-4" />}
         title="Sleep & recovery"
         tone="indigo"
+        viewHref={viewHref}
       />
 
       {/* Last night readout */}
       <div className="mt-3 flex min-w-0 flex-col gap-1">
-        <span className="text-muted-foreground text-xs">
-          {last ? `Last night · ${last.whenLabel}` : "Last night"}
-        </span>
-        {last ? (
+        <span className="text-muted-foreground text-xs">Last night</span>
+        {current ? (
           <>
             <div className="flex items-baseline gap-2">
               <span className="font-display font-bold text-3xl text-foreground tabular-nums">
-                {formatDuration(last.minutes)}
+                {formatSleepDuration(current.minutes)}
               </span>
-              {last.quality != null && <Stars value={last.quality} />}
+              {current.quality != null && <Stars value={current.quality} />}
             </div>
             <p
               className={cn(
@@ -283,7 +123,9 @@ export function SleepTracker({
               —
             </span>
             <p className="text-muted-foreground text-sm">
-              No sleep logged yet.
+              {last
+                ? `Not logged yet · last logged ${last.dateLabel} (${formatSleepDuration(last.minutes)})`
+                : "No sleep logged yet."}
             </p>
           </>
         )}
@@ -327,21 +169,32 @@ export function SleepTracker({
         </div>
       ) : null}
 
-      <p className="mt-4 text-center text-muted-foreground text-xs">
-        {goalHours}+ hrs a night recommended · last 7 nights
-      </p>
-
-      <ModuleFooter>
-        <AskChadButton prompt="Look at my sleep over the last week. Am I getting enough to recover and build muscle, and what should I change?" />
+      {/* Log control — in the body, like the hydration quick-adds. Prominent
+          when last night still needs logging; quiet once it's in. */}
+      <div className="mt-4">
         <Popover onOpenChange={setOpen} open={open}>
           <PopoverTrigger asChild>
-            <Button className="shrink-0 gap-1.5" size="sm" variant="outline">
-              <Moon className="size-3.5" />
-              Log sleep
+            <Button
+              className="h-11 w-full gap-1.5"
+              variant={current ? "outline" : "default"}
+            >
+              <Moon className="size-4" />
+              {current ? "Log sleep" : "Log last night"}
             </Button>
           </PopoverTrigger>
-          {logForm}
+          <PopoverContent align="center" className="w-72">
+            <SleepLogForm
+              loggedNights={loggedNights}
+              onDone={() => setOpen(false)}
+            />
+          </PopoverContent>
         </Popover>
+      </div>
+
+      <ModuleFooter
+        status={`${goalHours}+ hrs a night recommended · last 7 nights`}
+      >
+        <AskChadButton prompt="Look at my sleep over the last week. Am I getting enough to recover and build muscle, and what should I change?" />
       </ModuleFooter>
     </ModuleCard>
   );
@@ -367,7 +220,7 @@ function SleepTooltip({
       <div className="mb-1.5 flex items-center justify-between gap-4">
         <span className="font-medium">{row.label}</span>
         <span className="font-medium text-foreground tabular-nums">
-          {row.logged ? formatDuration(row.minutes) : "—"}
+          {row.logged ? formatSleepDuration(row.minutes) : "—"}
         </span>
       </div>
       {row.logged ? (
@@ -379,8 +232,8 @@ function SleepTooltip({
           )}
           <span className={hit ? "font-medium text-emerald-500" : ""}>
             {hit
-              ? "goal hit"
-              : `${formatDuration(SLEEP_GOAL_MINUTES - row.minutes)} short`}
+              ? "7h+ reached"
+              : `${formatSleepDuration(SLEEP_GOAL_MINUTES - row.minutes)} short of 7h`}
           </span>
         </div>
       ) : (

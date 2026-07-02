@@ -1,12 +1,16 @@
 "use client";
 
 /**
- * Daily hydration trend — each bar is one day's total water intake, oldest →
- * newest, with a dashed goal line and a scrub tooltip. Built on Recharts via the
- * shadcn chart primitive and the shared dashboard chart system (ChartCard / Kpi
- * / useChartRange), so it matches the weight and volume trends. Days that hit
- * the goal are drawn in full-strength sky; misses are faded. KPIs report the
- * average per day and how many days hit the goal over the selected range.
+ * Daily hydration trend (the /hydration detail page) — each bar is one day's
+ * total water intake, oldest → newest, with a dashed goal line and a scrub
+ * tooltip. Built on Recharts via the shadcn chart primitive and the shared
+ * dashboard chart system (ChartCard / Kpi / useChartRange), so it matches the
+ * weight and volume trends. Days that hit the goal are drawn in full-strength
+ * sky; misses are faded.
+ *
+ * Honest axis (audit P2-5): unlogged days render as empty slots instead of
+ * silently vanishing — the series is gap-filled per calendar day, so "days hit
+ * goal" counts every real day in the window, misses included.
  */
 
 import { useMemo } from "react";
@@ -29,6 +33,7 @@ import {
 import { useChartRange } from "@/hooks/use-chart-range";
 import { useMountReveal } from "@/hooks/use-mount-reveal";
 import { formatTick } from "@/lib/chart/format";
+import { fillDailyGaps } from "@/lib/chart/trend";
 import {
   DEFAULT_WATER_GOAL_ML,
   formatOz,
@@ -47,6 +52,7 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 type Point = { t: number; ml: number };
+type Row = Point & { logged: boolean };
 
 export function WaterTrendChart({
   days,
@@ -57,15 +63,28 @@ export function WaterTrendChart({
 }) {
   const safeGoal = goalMl > 0 ? goalMl : DEFAULT_WATER_GOAL_ML;
   const reveal = useMountReveal();
-  const { rows, control } = useChartRange(days, { minPoints: 7 });
+
+  // Gap-fill unlogged days so the date axis stays honest (bars are evenly
+  // spaced bands — without the fill, missing days silently vanish).
+  const filled = useMemo<Row[]>(
+    () =>
+      fillDailyGaps<Row>(
+        days.map((d) => ({ ...d, logged: true })),
+        (t) => ({ t, ml: 0, logged: false })
+      ),
+    [days]
+  );
+  const { rows, control } = useChartRange(filled, { minPoints: 7 });
 
   const stats = useMemo(() => {
-    if (rows.length === 0) {
+    const loggedRows = rows.filter((r) => r.logged);
+    if (loggedRows.length === 0) {
       return null;
     }
-    const sum = rows.reduce((s, r) => s + r.ml, 0);
-    const avg = Math.round(sum / rows.length);
-    const hit = rows.filter((r) => r.ml >= safeGoal).length;
+    const sum = loggedRows.reduce((s, r) => s + r.ml, 0);
+    const avg = Math.round(sum / loggedRows.length);
+    const hit = loggedRows.filter((r) => r.ml >= safeGoal).length;
+    // Denominator = every day in the window, unlogged included.
     return { avg, hit, total: rows.length };
   }, [rows, safeGoal]);
 
@@ -89,7 +108,7 @@ export function WaterTrendChart({
           <span className="font-medium text-sky-400">
             {formatVolume(safeGoal)}
           </span>{" "}
-          a day · each bar is one day's total
+          a day · each bar is one day's total · gaps are unlogged days
         </span>
       }
       kpis={
@@ -116,13 +135,10 @@ export function WaterTrendChart({
           <XAxis
             axisLine={false}
             dataKey="t"
-            domain={["dataMin", "dataMax"]}
             minTickGap={32}
-            scale="time"
             tickFormatter={formatTick}
             tickLine={false}
             tickMargin={8}
-            type="number"
           />
           <YAxis
             axisLine={false}
@@ -131,7 +147,7 @@ export function WaterTrendChart({
             tickFormatter={formatOzAxis}
             tickLine={false}
             tickMargin={4}
-            width={36}
+            width={48}
           />
           <ChartTooltip
             content={<WaterTooltip goalMl={safeGoal} />}
@@ -155,7 +171,7 @@ export function WaterTrendChart({
             {rows.map((r) => (
               <Cell
                 fill={SKY}
-                fillOpacity={r.ml >= safeGoal ? 0.9 : 0.35}
+                fillOpacity={r.logged ? (r.ml >= safeGoal ? 0.9 : 0.35) : 0}
                 key={r.t}
               />
             ))}
@@ -172,7 +188,7 @@ function WaterTooltip({
   goalMl,
 }: {
   active?: boolean;
-  payload?: { payload?: Point }[];
+  payload?: { payload?: Row }[];
   goalMl: number;
 }) {
   if (!active || !payload?.length) {
@@ -187,28 +203,32 @@ function WaterTooltip({
   return (
     <div className="min-w-[11rem] rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
       <div className="mb-1.5 font-medium">{formatTick(row.t)}</div>
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5">
-            <span
-              className="size-2 shrink-0 rounded-[2px]"
-              style={{ backgroundColor: SKY }}
-            />
-            <span className="text-muted-foreground">Water</span>
+      {row.logged ? (
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <span
+                className="size-2 shrink-0 rounded-[2px]"
+                style={{ backgroundColor: SKY }}
+              />
+              <span className="text-muted-foreground">Water</span>
+            </div>
+            <span className="ml-auto font-medium text-foreground tabular-nums">
+              {formatOz(row.ml)}
+            </span>
           </div>
-          <span className="ml-auto font-medium text-foreground tabular-nums">
-            {formatOz(row.ml)}
-          </span>
+          <div className="flex items-center justify-between gap-4 text-muted-foreground">
+            <span>{glasses} glasses</span>
+            <span className={hit ? "font-medium text-emerald-500" : ""}>
+              {hit
+                ? "goal hit"
+                : `${formatOz(Math.max(0, goalMl - row.ml))} short`}
+            </span>
+          </div>
         </div>
-        <div className="flex items-center justify-between gap-4 text-muted-foreground">
-          <span>{glasses} glasses</span>
-          <span className={hit ? "font-medium text-emerald-500" : ""}>
-            {hit
-              ? "goal hit"
-              : `${formatOz(Math.max(0, goalMl - row.ml))} short`}
-          </span>
-        </div>
-      </div>
+      ) : (
+        <div className="text-muted-foreground">Not logged</div>
+      )}
     </div>
   );
 }
