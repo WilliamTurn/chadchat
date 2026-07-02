@@ -6,16 +6,18 @@ import { runWeeklyReportPass } from "@/lib/reports/engine";
 export const maxDuration = 300;
 
 /**
- * Weekly-report cron (FEAT-12). Vercel invokes this HOURLY (vercel.json); each
- * pass sends the report only to members whose own local day + hour say it's
- * time — so a member in Chicago who picked "Sunday 5pm" gets it Sunday 5pm
- * Chicago time. The once-per-week dedup lives in the WeeklyReport ledger, so
- * the remaining same-day passes (and any cron retries) are no-ops.
+ * Weekly-report cron (FEAT-12), invoked HOURLY by the GitHub Actions schedule
+ * in .github/workflows/weekly-report-cron.yml (NOT vercel.json — the Vercel
+ * Hobby plan only allows daily crons; see that file). Each pass sends the
+ * report only to members whose own local day + hour say it's time — so a
+ * member in Chicago who picked "Sunday 5pm" gets it Sunday 5pm Chicago time.
+ * The once-per-week dedup lives in the WeeklyReport ledger, so the remaining
+ * same-day passes (and any retries) are no-ops.
  *
- * Auth: identical to /api/cron/check-ins — Vercel sends
- * `Authorization: Bearer ${CRON_SECRET}` on every cron invocation; anything
- * else is rejected, and the route fails CLOSED (503) if the secret was never
- * configured, so it can't be driven anonymously.
+ * Auth: identical to /api/cron/check-ins — the caller sends
+ * `Authorization: Bearer ${CRON_SECRET}`; anything else is rejected, and the
+ * route fails CLOSED (503) if the secret was never configured, so it can't be
+ * driven anonymously.
  *
  * Query params (mainly for verification):
  * - dryRun=1 — compose everything but persist nothing and send nothing.

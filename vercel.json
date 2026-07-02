@@ -8,10 +8,6 @@
     {
       "path": "/api/cron/check-ins",
       "schedule": "0 1 * * *"
-    },
-    {
-      "path": "/api/cron/weekly-reports",
-      "schedule": "0 * * * *"
     }
   ]
 }

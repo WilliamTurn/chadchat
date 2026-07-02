@@ -1,0 +1,38 @@
+# Hourly trigger for the FEAT-12 weekly-report pass.
+#
+# Why GitHub Actions and not a vercel.json cron: the Vercel account is on the
+# Hobby plan, which only allows DAILY cron schedules — an hourly cron in
+# vercel.json makes every deployment fail validation. The weekly report needs
+# an hourly pass so each Elite member gets it at their OWN local day + hour
+# (the endpoint decides who is due; almost every pass is a cheap no-op).
+# If the Vercel account ever upgrades to Pro, delete this file and add
+# { "path": "/api/cron/weekly-reports", "schedule": "0 * * * *" } back to
+# vercel.json crons instead.
+#
+# Auth: the same CRON_SECRET the Vercel crons use, stored as a GitHub Actions
+# repo secret. The endpoint fails closed without it.
+#
+# Note: GitHub may delay scheduled runs by a few minutes under load — harmless,
+# because the endpoint matches "at or AFTER the member's chosen hour" and the
+# ledger dedup makes every extra run a no-op.
+
+name: weekly-report-cron
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run the weekly-report pass
+        run: |
+          status=$(curl -s -o /tmp/body -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://app.chadcoach.ai/api/cron/weekly-reports")
+          echo "HTTP $status"
+          # Show only the counts, never the report bodies (public repo logs).
+          python3 -c "import json;d=json.load(open('/tmp/body'));print({'processed':d.get('processed'),'sent':d.get('sent'),'actions':[r.get('action') for r in d.get('results',[])]})" 2>/dev/null || true
+          test "$status" = "200"
