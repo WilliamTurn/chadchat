@@ -4,14 +4,15 @@
 // local evening (or whenever they picked), not at one fixed UTC instant.
 // No "server-only": these are pure functions, unit-tested in tests/unit.
 
+import { FALLBACK_TIMEZONE, isValidTimezone, resolveTimezone } from "@/lib/date";
+
 /** Sunday 5pm local — the classic "Sunday Report" default. */
 export const DEFAULT_REPORT_DAY = 0;
 export const DEFAULT_REPORT_HOUR = 17;
 
-// Until FEAT-8 captures a timezone at login, members who never saved a report
-// schedule have timezone=null; assume US Eastern (the user base is US lifters,
-// and it matches the fixed ~ET framing the FEAT-11 check-in crons already use).
-export const FALLBACK_TIMEZONE = "America/New_York";
+// Canonical home of the timezone plumbing is lib/date.ts (FEAT-8 made it
+// app-wide); re-exported here so existing schedule imports keep working.
+export { FALLBACK_TIMEZONE, isValidTimezone };
 
 /** Day-of-week options for the /account schedule picker (0 = Sunday). */
 export const REPORT_DAY_OPTIONS: { value: number; label: string }[] = [
@@ -36,16 +37,6 @@ export function formatReportHour(hour: number): string {
   return `${h12}:00 ${hour < 12 ? "AM" : "PM"}`;
 }
 
-/** True when `tz` is an IANA zone this runtime can actually resolve. */
-export function isValidTimezone(tz: string): boolean {
-  try {
-    new Intl.DateTimeFormat("en-US", { timeZone: tz });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 const WEEKDAY_INDEX: Record<string, number> = {
   Sun: 0,
   Mon: 1,
@@ -65,8 +56,7 @@ export function localDayHour(
   date: Date,
   timezone: string | null | undefined
 ): { day: number; hour: number } {
-  const tz =
-    timezone && isValidTimezone(timezone) ? timezone : FALLBACK_TIMEZONE;
+  const tz = resolveTimezone(timezone);
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: tz,
     weekday: "short",

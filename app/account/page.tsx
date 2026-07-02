@@ -7,6 +7,7 @@ import { auth } from "@/app/(auth)/auth";
 import { CheckInSettings } from "@/components/account/check-in-settings";
 import { WeeklyReportSettings } from "@/components/account/weekly-report-settings";
 import { ProfileForm } from "@/components/account/profile-form";
+import { TimezonePreference } from "@/components/account/timezone-preference";
 import { UnitPreference } from "@/components/account/unit-preference";
 import { PageShell } from "@/components/nav/page-shell";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
@@ -168,6 +169,18 @@ async function AccountSettings() {
                 </p>
               </div>
               <UnitPreference initialUnit={user.weightUnit} />
+            </div>
+
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-border border-t pt-6">
+              <div>
+                <h3 className="font-medium text-sm">Time zone</h3>
+                <p className="mt-1 text-muted-foreground text-sm">
+                  Detected automatically from your browser. It decides when
+                  your day rolls over — streaks, today's log, and when Chad's
+                  emails land.
+                </p>
+              </div>
+              <TimezonePreference initialTimezone={user.timezone} />
             </div>
 
             {/* Proactive check-ins (FEAT-11) + the weekly report (FEAT-12) —

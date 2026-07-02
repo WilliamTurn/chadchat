@@ -45,7 +45,7 @@ import { saveGoal } from "@/lib/ai/tools/save-goal";
 import { savePlan } from "@/lib/ai/tools/save-plan";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { isProductionEnvironment } from "@/lib/constants";
-import { startOfTodayUTC } from "@/lib/date";
+import { todayAnchorInTz, todayStartInTz } from "@/lib/date";
 import {
   createStreamId,
   deleteChatById,
@@ -268,8 +268,10 @@ export async function POST(request: Request) {
     let mealPlanBlock = "";
     if (canAccessProFeatures(dbUser)) {
       try {
-        // 00:00 UTC, matching the noon-UTC calendar-day convention (lib/date.ts).
-        const startOfToday = startOfTodayUTC();
+        // The user's own local today (FEAT-8): the query bound is their real
+        // local midnight; the anchor names the day for display (lib/date.ts).
+        const startOfToday = todayStartInTz(dbUser.timezone);
+        const todayAnchor = todayAnchorInTz(dbUser.timezone);
         const [
           todaysMeals,
           nutritionTarget,
@@ -286,7 +288,7 @@ export async function POST(request: Request) {
           getLatestSleepEntry(session.user.id),
         ]);
         dashboardBlock = formatTodaySnapshot({
-          date: startOfToday,
+          date: todayAnchor,
           meals: todaysMeals,
           target: nutritionTarget,
           waterMl,
@@ -382,7 +384,10 @@ export async function POST(request: Request) {
             savePlan: savePlan({ session, chatId: id }),
             generateMealPlan: generateMealPlanTool({ session, chatId: id }),
             logWorkout: logWorkout({ session }),
-            getDashboard: getDashboard({ session }),
+            getDashboard: getDashboard({
+              session,
+              timezone: dbUser.timezone,
+            }),
           },
           experimental_telemetry: {
             isEnabled: isProductionEnvironment,

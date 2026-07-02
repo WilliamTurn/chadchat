@@ -2,7 +2,7 @@ import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
 import { buildDayLog } from "@/lib/ai/dashboard";
-import { calendarRangeWindowUTC } from "@/lib/date";
+import { calendarRangeWindowInTz } from "@/lib/date";
 import {
   getBodyMeasurementsByUserId,
   getKitchenAnalysesBetween,
@@ -15,6 +15,9 @@ import {
 
 type GetDashboardProps = {
   session: Session;
+  // The user's IANA zone (FEAT-8): "today" and day windows are resolved on
+  // their wall clock, not the UTC date.
+  timezone: string | null;
 };
 
 /**
@@ -24,7 +27,7 @@ type GetDashboardProps = {
  * only on the always-on "today" snapshot in his prompt. Owner-scoped via the
  * session, so a user can only ever read their own data.
  */
-export const getDashboard = ({ session }: GetDashboardProps) =>
+export const getDashboard = ({ session, timezone }: GetDashboardProps) =>
   tool({
     description:
       "Read this client's logged dashboard data for a specific day or date range, including past dates. Use it whenever you need to know what they actually did — e.g. 'what did I eat last Tuesday?', 'how was my training last week?', 'am I hitting my protein?', or to review progress before giving advice. Returns logged meals with macros, workouts, progress check-ins (weigh-ins + whether a progress photo was logged), water, body measurements, and any fridge/pantry 'Rate My Kitchen' shots. The always-on snapshot in your context already covers TODAY; use this for any other day or to compare a span. Dates are calendar days in YYYY-MM-DD.",
@@ -48,7 +51,7 @@ export const getDashboard = ({ session }: GetDashboardProps) =>
     }),
     execute: async ({ date, endDate }) => {
       const userId = session.user.id;
-      const { start, end } = calendarRangeWindowUTC(date, endDate);
+      const { start, end } = calendarRangeWindowInTz(date, endDate, timezone);
 
       const [
         meals,
@@ -85,6 +88,7 @@ export const getDashboard = ({ session }: GetDashboardProps) =>
         measurements,
         kitchen,
         target,
+        timezone,
       });
     },
   });

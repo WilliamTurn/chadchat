@@ -8,12 +8,13 @@ import {
   getUserById,
   setCheckInSettings,
   setMemoryEnabled,
+  setUserTimezone,
   setWeeklyReportSettings,
   setWeightUnit,
   updateUserProfile,
 } from "@/lib/db/queries";
+import { isValidTimezone } from "@/lib/date";
 import { type ProfileInput, profileSchema } from "@/lib/profile";
-import { isValidTimezone } from "@/lib/reports/schedule";
 import { getAppUrl, getStripe } from "@/lib/stripe";
 
 /**
@@ -102,6 +103,44 @@ export async function saveProfile(input: ProfileInput) {
   await updateUserProfile(session.user.id, parsed.data);
   revalidatePath("/account");
   revalidatePath("/today");
+}
+
+/**
+ * Silent first-visit timezone capture (FEAT-8). Fired once per browser session
+ * by `TimezoneSync` with the browser's IANA zone; only ever fills an EMPTY
+ * `User.timezone` (it never overwrites a zone the member chose or a report-
+ * settings capture). Returns whether it ran against a signed-in account so the
+ * client knows to retry after login instead of marking itself done.
+ */
+export async function captureTimezone(
+  timezone: string
+): Promise<{ authed: boolean }> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { authed: false };
+  }
+  if (typeof timezone === "string" && isValidTimezone(timezone)) {
+    await setUserTimezone(session.user.id, timezone, { onlyIfUnset: true });
+  }
+  return { authed: true };
+}
+
+/** Explicitly set the member's timezone from the /account dropdown (FEAT-8). */
+export async function saveTimezone(timezone: string) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  if (!(typeof timezone === "string" && isValidTimezone(timezone))) {
+    throw new Error("Invalid timezone");
+  }
+
+  await setUserTimezone(session.user.id, timezone);
+  revalidatePath("/account");
+  revalidatePath("/today");
+  revalidatePath("/nutrition");
+  revalidatePath("/sleep");
 }
 
 /** Save the member's proactive check-in preferences (FEAT-11, Elite). */

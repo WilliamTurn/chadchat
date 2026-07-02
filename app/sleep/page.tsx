@@ -16,9 +16,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import {
+  calendarDayAnchorInTz,
   formatCalendarDay,
-  startOfDayUTC,
-  startOfTodayUTC,
+  todayAnchorInTz,
 } from "@/lib/date";
 import {
   getLatestSleepEntry,
@@ -38,10 +38,11 @@ import {
 const DAY_MS = 86_400_000;
 const WEEKDAY_INITIALS = ["S", "M", "T", "W", "T", "F", "S"];
 
-/** "Today" / "Yesterday" / "N days ago" / a short date — matches /today. */
-function relativeDay(d: Date): string {
-  const today = startOfTodayUTC();
-  const that = startOfDayUTC(d);
+/** "Today" / "Yesterday" / "N days ago" / a short date — matches /today,
+ *  on the user's own wall clock (FEAT-8). */
+function relativeDay(d: Date, timezone: string | null): string {
+  const today = todayAnchorInTz(timezone);
+  const that = calendarDayAnchorInTz(d, timezone);
   const diffDays = Math.round((today.getTime() - that.getTime()) / DAY_MS);
   if (diffDays <= 0) {
     return "Today";
@@ -114,24 +115,26 @@ async function SleepContent() {
     return <UpgradePrompt />;
   }
 
+  const timezone = user.timezone;
   const [latestSleep, sleepDaily] = await Promise.all([
     getLatestSleepEntry(user.id),
-    getSleepDailyTotals(user.id),
+    getSleepDailyTotals(user.id, timezone),
   ]);
 
   // Last night's readout + the rolling 7-night week strip, built exactly like
-  // /today (daily totals are keyed to each day's midnight-UTC ms).
-  const startOfToday = startOfTodayUTC();
+  // /today (daily totals are keyed to each local day's 00:00-UTC-anchor ms,
+  // on the user's own wall clock — FEAT-8).
+  const todayAnchor = todayAnchorInTz(timezone);
   const sleepByDay = new Map(sleepDaily.map((s) => [s.t, s] as const));
   const lastNight: LastNight = latestSleep
     ? {
         minutes: latestSleep.minutes,
         quality: latestSleep.quality,
-        whenLabel: relativeDay(latestSleep.recordedAt),
+        whenLabel: relativeDay(latestSleep.recordedAt, timezone),
       }
     : null;
   const sleepWeek: SleepNight[] = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(startOfToday.getTime() - (6 - i) * DAY_MS);
+    const d = new Date(todayAnchor.getTime() - (6 - i) * DAY_MS);
     const entry = sleepByDay.get(d.getTime());
     return {
       t: d.getTime(),

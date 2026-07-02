@@ -1,4 +1,8 @@
-import { formatCalendarDay } from "@/lib/date";
+import {
+  calendarDayAnchorInTz,
+  formatCalendarDay,
+  toCalendarDayISO,
+} from "@/lib/date";
 import type { WorkoutWithChildren } from "@/lib/db/queries";
 import type {
   BodyMeasurement,
@@ -255,6 +259,7 @@ export function buildDayLog({
   measurements,
   kitchen,
   target,
+  timezone = null,
 }: {
   start: Date;
   end: Date;
@@ -265,27 +270,25 @@ export function buildDayLog({
   measurements: BodyMeasurement[];
   kitchen?: MealAnalysis[];
   target?: NutritionTarget;
+  // The user's IANA zone (FEAT-8): window bounds are local-midnight instants
+  // and logged-now rows are instants, so day labels resolve on THEIR wall
+  // clock (noon-UTC-anchored picked days resolve to the day picked).
+  timezone?: string | null;
 }): DayLog {
+  // Which local calendar day an instant belongs to, as a 00:00-UTC anchor the
+  // UTC formatters below render correctly.
+  const dayAnchor = (d: Date) => calendarDayAnchorInTz(d, timezone);
   // The inclusive last day is one tick before the exclusive `end`.
-  const lastDay = new Date(end.getTime() - 1);
-  const singleDay =
-    formatCalendarDay(start, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    }) ===
-    formatCalendarDay(lastDay, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+  const startDay = dayAnchor(start);
+  const lastDay = dayAnchor(new Date(end.getTime() - 1));
+  const singleDay = startDay.getTime() === lastDay.getTime();
   const label = singleDay
-    ? formatCalendarDay(start, {
+    ? formatCalendarDay(startDay, {
         weekday: "short",
         month: "short",
         day: "numeric",
       })
-    : `${formatCalendarDay(start)} – ${formatCalendarDay(lastDay)}`;
+    : `${formatCalendarDay(startDay)} – ${formatCalendarDay(lastDay)}`;
 
   const totals = sumMacros(meals);
   const cappedMeals = meals.slice(0, MAX_MEALS_IN_LOG);
@@ -305,7 +308,9 @@ export function buildDayLog({
       ]
         .filter(Boolean)
         .join(" · ");
-      const when = singleDay ? "" : `${formatCalendarDay(mealDay(m))} `;
+      const when = singleDay
+        ? ""
+        : `${formatCalendarDay(dayAnchor(mealDay(m)))} `;
       const slot = m.meal ? `[${m.meal}] ` : "";
       return `  - ${when}${slot}${m.title}${macros ? ` (${macros})` : ""}`;
     });
@@ -318,7 +323,9 @@ export function buildDayLog({
 
   if (cappedWorkouts.length > 0) {
     const lines = cappedWorkouts.map((w) => {
-      const when = singleDay ? "" : `${formatCalendarDay(w.performedAt)} `;
+      const when = singleDay
+        ? ""
+        : `${formatCalendarDay(dayAnchor(w.performedAt))} `;
       return `  - ${when}${formatWorkoutLine(w)}`;
     });
     sections.push(`Workouts: ${cappedWorkouts.length}.\n${lines.join("\n")}`);
@@ -336,7 +343,7 @@ export function buildDayLog({
       const weight = e.weight == null ? null : `${round1(e.weight)} ${e.unit}`;
       const photo = e.photoUrl ? "progress photo" : null;
       const what = [weight, photo].filter(Boolean).join(" + ");
-      return `  - ${formatCalendarDay(e.recordedAt)}: ${what}${e.note ? ` — ${e.note}` : ""}`;
+      return `  - ${formatCalendarDay(dayAnchor(e.recordedAt))}: ${what}${e.note ? ` — ${e.note}` : ""}`;
     });
     sections.push(`Progress check-ins:\n${lines.join("\n")}`);
   }
@@ -348,14 +355,16 @@ export function buildDayLog({
   if (cappedMeasurements.length > 0) {
     const lines = cappedMeasurements.map(
       (b) =>
-        `  - ${formatCalendarDay(b.recordedAt)}: ${b.kind} ${round1(b.value)} ${b.unit}`
+        `  - ${formatCalendarDay(dayAnchor(b.recordedAt))}: ${b.kind} ${round1(b.value)} ${b.unit}`
     );
     sections.push(`Measurements:\n${lines.join("\n")}`);
   }
 
   if (cappedKitchen.length > 0) {
     const lines = cappedKitchen.map((k) => {
-      const when = singleDay ? "" : `${formatCalendarDay(k.createdAt)} `;
+      const when = singleDay
+        ? ""
+        : `${formatCalendarDay(dayAnchor(k.createdAt))} `;
       const score = k.healthScore != null ? ` (${k.healthScore}/10)` : "";
       return `  - ${when}${k.kind}: ${k.title}${score}`;
     });
@@ -364,10 +373,14 @@ export function buildDayLog({
     );
   }
 
-  const toISO = (d: Date) => d.toISOString().slice(0, 10);
+  const toISO = (d: Date) => toCalendarDayISO(dayAnchor(d));
 
   return {
-    range: { start: toISO(start), end: toISO(lastDay), singleDay },
+    range: {
+      start: toCalendarDayISO(startDay),
+      end: toCalendarDayISO(lastDay),
+      singleDay,
+    },
     nutrition: { ...totals, target: target ?? null },
     weighIns: loggedEntries.map((e) => ({
       date: toISO(e.recordedAt),

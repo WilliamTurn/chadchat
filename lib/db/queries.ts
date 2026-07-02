@@ -23,7 +23,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import type { ArtifactKind } from "@/components/chat/artifact";
 import type { VisibilityType } from "@/components/chat/visibility-selector";
-import { startOfDayUTC } from "../date";
+import { calendarDayAnchorInTz, startOfDayUTC } from "../date";
 import { ChatbotError } from "../errors";
 import {
   type BodyMeasurement,
@@ -447,6 +447,34 @@ export async function setWeightUnit(userId: string, unit: "lb" | "kg") {
     throw new ChatbotError(
       "bad_request:database",
       "Failed to update unit preference"
+    );
+  }
+}
+
+/**
+ * Save the user's IANA timezone (FEAT-8). `onlyIfUnset` is the silent
+ * first-login capture path — it never stomps a zone the member set (or a
+ * fresher browser capture) and is expressed in the WHERE so concurrent
+ * captures can't race each other.
+ */
+export async function setUserTimezone(
+  userId: string,
+  timezone: string,
+  opts: { onlyIfUnset?: boolean } = {}
+) {
+  try {
+    return await db
+      .update(user)
+      .set({ timezone, updatedAt: new Date() })
+      .where(
+        opts.onlyIfUnset
+          ? and(eq(user.id, userId), isNull(user.timezone))
+          : eq(user.id, userId)
+      );
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to update timezone"
     );
   }
 }
@@ -1773,6 +1801,7 @@ export async function getWaterMlBetween(
  */
 export async function getWaterDailyTotals(
   userId: string,
+  timezone: string | null,
   sinceDays = 90
 ): Promise<{ t: number; ml: number }[]> {
   try {
@@ -1788,8 +1817,9 @@ export async function getWaterDailyTotals(
       );
     const byDay = new Map<number, number>();
     for (const r of rows) {
-      const d = r.recordedAt;
-      const t = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+      // Water rows are logged-now instants, so the day they belong to is the
+      // user's local day (FEAT-8) — keyed to that day's 00:00-UTC anchor.
+      const t = calendarDayAnchorInTz(r.recordedAt, timezone).getTime();
       byDay.set(t, (byDay.get(t) ?? 0) + (r.amountMl ?? 0));
     }
     return [...byDay.entries()]
@@ -1986,6 +2016,7 @@ export async function getLatestSleepEntry(
  */
 export async function getSleepDailyTotals(
   userId: string,
+  timezone: string | null,
   sinceDays = 90
 ): Promise<{ t: number; minutes: number; quality: number | null }[]> {
   try {
@@ -2001,15 +2032,15 @@ export async function getSleepDailyTotals(
       .where(
         and(eq(sleepEntry.userId, userId), gte(sleepEntry.recordedAt, since))
       );
-    // Bucket by UTC day, keeping the latest-written entry for each (a guard in
-    // case any pre-dedupe duplicates exist for a night).
+    // Bucket by the user's local day (FEAT-8; noon-UTC-anchored picked days
+    // resolve to the same day they were picked as), keeping the latest-written
+    // entry for each (a guard in case any pre-dedupe duplicates exist).
     const byDay = new Map<
       number,
       { minutes: number; quality: number | null; createdAt: number }
     >();
     for (const r of rows) {
-      const d = r.recordedAt;
-      const t = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+      const t = calendarDayAnchorInTz(r.recordedAt, timezone).getTime();
       const prev = byDay.get(t);
       const createdAt = r.createdAt.getTime();
       if (!prev || createdAt >= prev.createdAt) {

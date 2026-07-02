@@ -7,7 +7,7 @@ import {
   analyzeFoodPhoto,
   analyzeNutritionLabel,
 } from "@/lib/ai/meal-analysis";
-import { parseCalendarDay, startOfTodayUTC } from "@/lib/date";
+import { parseCalendarDay, todayStartInTz } from "@/lib/date";
 import {
   addWaterLog,
   createMealAnalysis,
@@ -242,17 +242,16 @@ export async function removeMealAnalysis(
   return { ok: true };
 }
 
-// Lower bound for "today's ..." queries — 00:00 UTC, matching the noon-UTC
-// calendar-day convention (see lib/date.ts). Not server-local midnight.
-const startOfToday = startOfTodayUTC;
-
-/** Remove the most recent glass logged today. */
+/** Remove the most recent glass logged today — the user's local today (FEAT-8). */
 export async function removeWater(): Promise<NutritionActionState> {
   const user = await requirePro();
   if (!user) {
     return { ok: false, error: "Not authorized." };
   }
-  await deleteLatestWaterLog({ userId: user.id, since: startOfToday() });
+  await deleteLatestWaterLog({
+    userId: user.id,
+    since: todayStartInTz(user.timezone),
+  });
   revalidatePath("/today");
   return { ok: true };
 }

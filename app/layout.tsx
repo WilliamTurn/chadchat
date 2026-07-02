@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Archivo, Inter, JetBrains_Mono } from "next/font/google";
+import { TimezoneSync } from "@/components/account/timezone-sync";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -84,7 +85,11 @@ export default function RootLayout({
           <SessionProvider
             basePath={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/auth`}
           >
-            <TooltipProvider>{children}</TooltipProvider>
+            <TooltipProvider>
+              {/* Silent per-user timezone capture (FEAT-8) — renders nothing. */}
+              <TimezoneSync />
+              {children}
+            </TooltipProvider>
           </SessionProvider>
         </ThemeProvider>
       </body>

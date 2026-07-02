@@ -19,8 +19,8 @@ import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import {
   formatCalendarDay,
-  startOfTodayUTC,
   toCalendarDayISO,
+  todayStartInTz,
 } from "@/lib/date";
 import {
   getMealLogByUserId,
@@ -102,7 +102,11 @@ async function NutritionContent() {
   }
 
   const isPro = canAccessProFeatures(user);
-  return isPro ? <Feed userId={user.id} /> : <UpgradePrompt />;
+  return isPro ? (
+    <Feed timezone={user.timezone} userId={user.id} />
+  ) : (
+    <UpgradePrompt />
+  );
 }
 
 function UpgradePrompt() {
@@ -123,10 +127,6 @@ function UpgradePrompt() {
   );
 }
 
-// Lower bound for "today's ..." queries — 00:00 UTC, matching the noon-UTC
-// calendar-day convention (see lib/date.ts). Not server-local midnight.
-const startOfToday = startOfTodayUTC;
-
 /** The day a meal is logged for — its user-picked date, or its insert time for
  * rows logged before back-dating existed. */
 function mealDay(m: MealAnalysis): Date {
@@ -140,17 +140,25 @@ function sumMacro(
   return meals.reduce((s, m) => s + (m[key] ?? 0), 0);
 }
 
-async function Feed({ userId }: { userId: string }) {
+async function Feed({
+  userId,
+  timezone,
+}: {
+  userId: string;
+  timezone: string | null;
+}) {
   const [meals, target] = await Promise.all([
     getMealLogByUserId(userId),
     getNutritionTarget(userId),
   ]);
 
-  const since = startOfToday();
+  // "Today" starts at the user's own local midnight (FEAT-8), so a late-night
+  // log stays in their today instead of rolling into the next UTC day.
+  const since = todayStartInTz(timezone);
   const todays = meals.filter((m) => mealDay(m) >= since);
   const earlier = meals.filter((m) => mealDay(m) < since);
   const recentFoods = deriveRecentFoods(meals);
-  const macroDays = dailyMacroTrend(meals);
+  const macroDays = dailyMacroTrend(meals, timezone);
 
   return (
     <div className="flex flex-col gap-8">

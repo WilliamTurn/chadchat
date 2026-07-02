@@ -149,3 +149,197 @@ export function calendarRangeWindowUTC(
     end: new Date(lastDay.getTime() + MS_PER_DAY),
   };
 }
+
+/* ------------------------------------------------------------------------
+ * Per-user timezone (FEAT-8)
+ *
+ * The helpers above bucket by UTC day — right for *stored calendar days*
+ * (anchored at noon UTC, they carry their day in their UTC Y-M-D), but wrong
+ * for "which day is it for this user right now": a member in Chicago logging
+ * at 8pm is still on *their* today even though the UTC day already rolled
+ * over. These helpers answer day questions on the wall clock of the user's
+ * stored IANA zone (`User.timezone`, captured silently from the browser).
+ *
+ * Two shapes, used together:
+ *   - ANCHOR — `calendarDayAnchorInTz` / `todayAnchorInTz`: the calendar day
+ *     an instant falls on in the user's zone, as a 00:00-UTC-anchored Date.
+ *     Use for bucketing keys, streak math, week strips, and display (format
+ *     with the UTC formatters above). Day arithmetic on anchors is plain
+ *     `± MS_PER_DAY` — no DST landmines.
+ *   - INSTANT — `startOfDayInTz` / `todayStartInTz`: the real UTC instant of
+ *     the user's local midnight. Use as SQL bounds for "today's …" queries:
+ *     the window contains both noon-UTC-anchored calendar rows for that local
+ *     day (any zone within ±12h of UTC — the noon convention's buffer) and
+ *     plain `now()` rows (water logs) the user created that local day.
+ *
+ * Everything falls back to America/New_York on a missing/invalid zone — the
+ * user base is US lifters, and it matches the FEAT-11/12 email framing.
+ * No deps; Intl only. Formatters are cached per zone (they're expensive to
+ * construct and these run per-row when bucketing).
+ * ---------------------------------------------------------------------- */
+
+export const FALLBACK_TIMEZONE = "America/New_York";
+
+/** True when `tz` is an IANA zone this runtime can actually resolve. */
+export function isValidTimezone(tz: string): boolean {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** A usable IANA zone: the stored one if valid, else the US-Eastern fallback. */
+export function resolveTimezone(tz: string | null | undefined): string {
+  return tz && isValidTimezone(tz) ? tz : FALLBACK_TIMEZONE;
+}
+
+// One cached formatter per zone — construction is the expensive part.
+const DAY_PART_FORMATTERS = new Map<string, Intl.DateTimeFormat>();
+
+function dayPartsFormatter(tz: string): Intl.DateTimeFormat {
+  let fmt = DAY_PART_FORMATTERS.get(tz);
+  if (!fmt) {
+    fmt = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23",
+    });
+    DAY_PART_FORMATTERS.set(tz, fmt);
+  }
+  return fmt;
+}
+
+/** The wall-clock reading of `instant` in `tz`, re-encoded as a UTC epoch. */
+function wallClockAsUTC(instant: Date, tz: string): number {
+  const parts = dayPartsFormatter(tz).formatToParts(instant);
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((p) => p.type === type)?.value ?? "0");
+  return Date.UTC(
+    get("year"),
+    get("month") - 1,
+    get("day"),
+    get("hour") === 24 ? 0 : get("hour"),
+    get("minute"),
+    get("second")
+  );
+}
+
+/**
+ * The calendar day `date` falls on, on the wall clock of the user's zone,
+ * returned as that day anchored at 00:00 UTC (the same anchor shape the UTC
+ * bucketing above and the chart day-keys use). This is THE bucketing function
+ * for "which day does this row belong to, for this user".
+ */
+export function calendarDayAnchorInTz(
+  date: Date,
+  timezone: string | null | undefined
+): Date {
+  const wall = wallClockAsUTC(date, resolveTimezone(timezone));
+  const d = new Date(wall);
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+}
+
+/** Today's calendar day in the user's zone, as a 00:00-UTC anchor. */
+export function todayAnchorInTz(timezone: string | null | undefined): Date {
+  return calendarDayAnchorInTz(new Date(), timezone);
+}
+
+/**
+ * The UTC instant when the wall clock in `tz` reads Y-M-D 00:00 (two-pass
+ * offset derivation, so it's right across DST transitions; on a spring-forward
+ * day whose midnight doesn't exist it lands on the first hour that does).
+ */
+function localMidnightInstant(
+  y: number,
+  monthIndex: number,
+  d: number,
+  tz: string
+): Date {
+  const target = Date.UTC(y, monthIndex, d);
+  let guess = target - (wallClockAsUTC(new Date(target), tz) - target);
+  guess = target - (wallClockAsUTC(new Date(guess), tz) - guess);
+  return new Date(guess);
+}
+
+/**
+ * The real UTC instant of the user's local midnight starting the local day
+ * `date` falls in. The lower bound for "today's …" SQL queries — pairs with
+ * `now` (or `+ MS_PER_DAY` for a full-day window) as the upper bound.
+ */
+export function startOfDayInTz(
+  date: Date,
+  timezone: string | null | undefined
+): Date {
+  const tz = resolveTimezone(timezone);
+  const anchor = calendarDayAnchorInTz(date, tz);
+  return localMidnightInstant(
+    anchor.getUTCFullYear(),
+    anchor.getUTCMonth(),
+    anchor.getUTCDate(),
+    tz
+  );
+}
+
+/** Start of the user's local today, as a real UTC instant (query lower bound). */
+export function todayStartInTz(timezone: string | null | undefined): Date {
+  return startOfDayInTz(new Date(), timezone);
+}
+
+/**
+ * TZ-aware sibling of `calendarRangeWindowUTC`: resolve a picked calendar-day
+ * range into [start, end) *instants* on the user's wall clock, so the window
+ * catches both noon-UTC-anchored calendar rows and real logged-now timestamps
+ * from those local days. Same conventions: omitted start → the user's today;
+ * omitted/inverted end → a single day; `end` exclusive.
+ */
+export function calendarRangeWindowInTz(
+  start: string | null | undefined,
+  end: string | null | undefined,
+  timezone: string | null | undefined
+): { start: Date; end: Date } {
+  const tz = resolveTimezone(timezone);
+  const startAnchor = startOfDayUTC(parseCalendarDay(start) ?? todayAnchorInTz(tz));
+  const endAnchorInclusive = startOfDayUTC(parseCalendarDay(end) ?? startAnchor);
+  const lastAnchor =
+    endAnchorInclusive.getTime() < startAnchor.getTime()
+      ? startAnchor
+      : endAnchorInclusive;
+  const dayAfterLast = new Date(lastAnchor.getTime() + MS_PER_DAY);
+  return {
+    start: localMidnightInstant(
+      startAnchor.getUTCFullYear(),
+      startAnchor.getUTCMonth(),
+      startAnchor.getUTCDate(),
+      tz
+    ),
+    end: localMidnightInstant(
+      dayAfterLast.getUTCFullYear(),
+      dayAfterLast.getUTCMonth(),
+      dayAfterLast.getUTCDate(),
+      tz
+    ),
+  };
+}
+
+/**
+ * Format an instant as a date on the user's wall clock ("what day is it for
+ * them"). For stored noon-UTC calendar days keep using `formatCalendarDay` —
+ * those carry their day in UTC by design.
+ */
+export function formatDayInTz(
+  date: Date,
+  timezone: string | null | undefined,
+  opts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" }
+): string {
+  return date.toLocaleDateString("en-US", {
+    timeZone: resolveTimezone(timezone),
+    ...opts,
+  });
+}

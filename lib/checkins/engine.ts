@@ -10,7 +10,11 @@ import {
 } from "@/lib/ai/memory";
 import { memoryModel } from "@/lib/ai/models";
 import { getLanguageModel } from "@/lib/ai/providers";
-import { formatCalendarDay, startOfTodayUTC } from "@/lib/date";
+import {
+  type CheckInSlot,
+  dueCheckInSlot,
+} from "@/lib/checkins/schedule";
+import { formatCalendarDay, formatDayInTz, todayStartInTz } from "@/lib/date";
 import {
   createCheckIn,
   getActiveGoalsByUserId,
@@ -32,7 +36,7 @@ import { checkInEmailTemplate } from "@/lib/email/templates";
 import { getAppUrl } from "@/lib/stripe";
 import { hasActiveAccess } from "@/lib/subscription";
 
-export type CheckInSlot = "morning" | "evening";
+export type { CheckInSlot } from "@/lib/checkins/schedule";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -94,11 +98,13 @@ export type CheckInResult = {
     | "sent"
     | "dry_run"
     | "skipped_no_access"
+    | "skipped_outside_window"
     | "skipped_cap"
     | "skipped_dedup"
     | "skipped_nothing_to_say"
     | "skipped_email_unconfigured"
     | "error";
+  slot?: CheckInSlot;
   subject?: string;
   body?: string;
   detail?: string;
@@ -127,9 +133,10 @@ export async function runUserCheckIn(
   slot: CheckInSlot,
   opts: { dryRun?: boolean } = {}
 ): Promise<CheckInResult> {
-  const base: Pick<CheckInResult, "userId" | "email"> = {
+  const base: Pick<CheckInResult, "userId" | "email" | "slot"> = {
     userId: user.id,
     email: user.email,
+    slot,
   };
 
   // Defense in depth: the eligibility query filters status, this also honors
@@ -138,11 +145,14 @@ export async function runUserCheckIn(
     return { ...base, action: "skipped_no_access" };
   }
 
-  const startOfToday = startOfTodayUTC();
+  // The member's own local day (FEAT-8) — so "today" and the per-slot dedup
+  // track their wall clock, not the UTC date.
+  const startOfToday = todayStartInTz(user.timezone);
   const weekAgo = new Date(startOfToday.getTime() - 7 * DAY_MS);
   const recent = await getCheckInsSince(user.id, weekAgo);
 
-  // Never send the same slot twice in one (UTC) day — cron retries stay safe.
+  // Never send the same slot twice in one of the member's local days — the
+  // hourly cron re-enters the slot window several times and stays safe.
   if (
     recent.some(
       (c) => c.slot === slot && c.sentAt.getTime() >= startOfToday.getTime()
@@ -196,6 +206,7 @@ export async function runUserCheckIn(
     measurements: allMeasurements.filter((b) => inWindow(b.recordedAt)),
     kitchen,
     target,
+    timezone: user.timezone,
   });
 
   const context = [
@@ -214,7 +225,7 @@ export async function runUserCheckIn(
     model: getLanguageModel(memoryModel.id),
     schema: checkInDraftSchema,
     system: CHECK_IN_VOICE,
-    prompt: `Today is ${formatCalendarDay(new Date(), {
+    prompt: `Today is ${formatDayInTz(new Date(), user.timezone, {
       weekday: "long",
       year: "numeric",
       month: "long",
@@ -278,13 +289,15 @@ ${context}`,
 
 /**
  * One scheduled pass over every check-in-eligible member (Elite, toggled on,
- * live access). Users are processed sequentially — Elite volume is small and
- * this keeps the model/email pressure flat — and one user's failure never
- * blocks the rest.
+ * live access). Runs HOURLY (FEAT-8): each member's slot is derived from their
+ * own local hour — morning brief in their ~7-10am window, evening callout in
+ * their ~8-11pm window, nothing in between — so `slot` is only ever passed as
+ * a manual override for testing. Users are processed sequentially — Elite
+ * volume is small and this keeps the model/email pressure flat — and one
+ * user's failure never blocks the rest.
  */
 export async function runCheckInPass(
-  slot: CheckInSlot,
-  opts: { dryRun?: boolean; onlyEmail?: string } = {}
+  opts: { slot?: CheckInSlot; dryRun?: boolean; onlyEmail?: string } = {}
 ): Promise<CheckInResult[]> {
   let users = await getCheckInEligibleUsers();
   if (opts.onlyEmail) {
@@ -292,9 +305,19 @@ export async function runCheckInPass(
     users = users.filter((u) => u.email.toLowerCase() === only);
   }
 
+  const now = new Date();
   const results: CheckInResult[] = [];
   for (const user of users) {
     try {
+      const slot = opts.slot ?? dueCheckInSlot(now, user.timezone);
+      if (!slot) {
+        results.push({
+          userId: user.id,
+          email: user.email,
+          action: "skipped_outside_window",
+        });
+        continue;
+      }
       results.push(await runUserCheckIn(user, slot, opts));
     } catch (error) {
       results.push({

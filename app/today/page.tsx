@@ -58,10 +58,11 @@ import {
   getWorkoutsByUserId,
 } from "@/lib/db/queries";
 import {
+  calendarDayAnchorInTz,
   formatCalendarDay,
-  startOfDayUTC,
-  startOfTodayUTC,
   toCalendarDayISO,
+  todayAnchorInTz,
+  todayStartInTz,
 } from "@/lib/date";
 import type { ProgressEntry } from "@/lib/db/schema";
 import { toPlanStatusSummary } from "@/lib/subscription";
@@ -126,10 +127,11 @@ function clientField(
   return value;
 }
 
-/** "Today" / "Yesterday" / "N days ago" / a short date, for the last-workout card. */
-function relativeDay(d: Date): string {
-  const today = startOfTodayUTC();
-  const that = startOfDayUTC(d);
+/** "Today" / "Yesterday" / "N days ago" / a short date, for the last-workout card
+ *  — day boundaries on the user's own wall clock (FEAT-8). */
+function relativeDay(d: Date, timezone: string | null): string {
+  const today = todayAnchorInTz(timezone);
+  const that = calendarDayAnchorInTz(d, timezone);
   const diffDays = Math.round((today.getTime() - that.getTime()) / DAY_MS);
   if (diffDays <= 0) {
     return "Today";
@@ -143,13 +145,17 @@ function relativeDay(d: Date): string {
   return formatCalendarDay(d, { month: "short", day: "numeric" });
 }
 
-/** Consecutive days (ending today or yesterday) with at least one logged action. */
-function computeStreak(dates: Date[]): number {
+/** Consecutive days (ending today or yesterday) with at least one logged action.
+ *  Days are the user's local calendar days (FEAT-8) — a late-night log counts
+ *  toward THEIR today, not the next UTC day. */
+function computeStreak(dates: Date[], timezone: string | null): number {
   if (dates.length === 0) {
     return 0;
   }
-  const days = new Set(dates.map(toCalendarDayISO));
-  let cursor = startOfTodayUTC();
+  const days = new Set(
+    dates.map((d) => toCalendarDayISO(calendarDayAnchorInTz(d, timezone)))
+  );
+  let cursor = todayAnchorInTz(timezone);
   if (!days.has(toCalendarDayISO(cursor))) {
     cursor = new Date(cursor.getTime() - DAY_MS);
     if (!days.has(toCalendarDayISO(cursor))) {
@@ -205,7 +211,12 @@ async function TodayContent() {
   const isPro = canAccessProFeatures(user);
   const plan = toPlanStatusSummary(user);
 
-  const startOfToday = startOfTodayUTC();
+  // "Today" on the member's own wall clock (FEAT-8): the query bound is their
+  // real local midnight as a UTC instant, and the anchor is that calendar day
+  // for streak/week-strip math (see lib/date.ts).
+  const timezone = user.timezone;
+  const startOfToday = todayStartInTz(timezone);
+  const todayAnchor = todayAnchorInTz(timezone);
 
   // Window for the streak / week strip — long enough that a real streak isn't
   // capped, cheap because each select pulls a single timestamp column.
@@ -232,7 +243,7 @@ async function TodayContent() {
     isPro ? getMealsSince(user.id, startOfToday) : Promise.resolve([]),
     isPro ? getNutritionTarget(user.id) : Promise.resolve(undefined),
     isPro ? getWaterMlSince(user.id, startOfToday) : Promise.resolve(0),
-    isPro ? getWaterDailyTotals(user.id) : Promise.resolve([]),
+    isPro ? getWaterDailyTotals(user.id, timezone) : Promise.resolve([]),
     getActiveGoalsByUserId(user.id),
     getInactiveGoalsByUserId(user.id),
     getActivePlansByUserId(user.id),
@@ -244,7 +255,7 @@ async function TodayContent() {
       : Promise.resolve<Date[]>([]),
     isPro ? getActiveMealPlanByUserId(user.id) : Promise.resolve(null),
     isPro ? getLatestSleepEntry(user.id) : Promise.resolve(null),
-    isPro ? getSleepDailyTotals(user.id) : Promise.resolve([]),
+    isPro ? getSleepDailyTotals(user.id, timezone) : Promise.resolve([]),
   ]);
 
   // Active meal plan summary for the /today card.
@@ -395,11 +406,14 @@ async function TodayContent() {
 
   // Streak + 7-day week strip from every tracked action (meals, workouts,
   // water, weigh-ins), so engagement on any surface keeps the streak alive.
-  const streak = computeStreak(activityDays);
-  const activeDayKeys = new Set(activityDays.map(toCalendarDayISO));
+  // All day math runs on the user's local calendar days (00:00-UTC anchors).
+  const streak = computeStreak(activityDays, timezone);
+  const activeDayKeys = new Set(
+    activityDays.map((d) => toCalendarDayISO(calendarDayAnchorInTz(d, timezone)))
+  );
   const WEEKDAY_INITIALS = ["S", "M", "T", "W", "T", "F", "S"];
   const week = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(startOfToday.getTime() - (6 - i) * DAY_MS);
+    const d = new Date(todayAnchor.getTime() - (6 - i) * DAY_MS);
     return {
       label: WEEKDAY_INITIALS[d.getUTCDay()],
       active: activeDayKeys.has(toCalendarDayISO(d)),
@@ -409,18 +423,18 @@ async function TodayContent() {
   const activeThisWeek = week.filter((d) => d.active).length;
 
   // Sleep & recovery (Pro): last night's entry + a 7-night week strip. The
-  // daily totals are keyed to midnight-UTC ms, which equals each week day's
-  // startOfDayUTC time, so the lookup lines up across timezones (see lib/date.ts).
+  // daily totals are keyed to each local day's 00:00-UTC-anchor ms — the same
+  // anchors the week strip iterates, so the lookup lines up (see lib/date.ts).
   const sleepByDay = new Map(sleepDaily.map((s) => [s.t, s] as const));
   const lastNight: LastNight = latestSleep
     ? {
         minutes: latestSleep.minutes,
         quality: latestSleep.quality,
-        whenLabel: relativeDay(latestSleep.recordedAt),
+        whenLabel: relativeDay(latestSleep.recordedAt, timezone),
       }
     : null;
   const sleepWeek: SleepNight[] = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(startOfToday.getTime() - (6 - i) * DAY_MS);
+    const d = new Date(todayAnchor.getTime() - (6 - i) * DAY_MS);
     const entry = sleepByDay.get(d.getTime());
     return {
       t: d.getTime(),
@@ -650,7 +664,7 @@ async function TodayContent() {
                   {lastWorkout.title}
                 </div>
                 <div className="mt-0.5 text-muted-foreground text-sm">
-                  {relativeDay(lastWorkout.performedAt)} ·{" "}
+                  {relativeDay(lastWorkout.performedAt, timezone)} ·{" "}
                   {lastWorkout.exerciseCount} exercise
                   {lastWorkout.exerciseCount === 1 ? "" : "s"} ·{" "}
                   {lastWorkout.setCount} set

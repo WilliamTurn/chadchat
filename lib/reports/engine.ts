@@ -11,7 +11,7 @@ import {
 import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { ema, ratePerWeek, round1, withinDays } from "@/lib/chart/trend";
-import { formatCalendarDay, startOfTodayUTC } from "@/lib/date";
+import { formatCalendarDay, todayStartInTz } from "@/lib/date";
 import {
   createWeeklyReport,
   getActiveGoalsByUserId,
@@ -227,7 +227,9 @@ export async function runUserWeeklyReport(
   }
 
   // --- Assemble the week, from the same sources chat + check-ins use. ---
-  const end = new Date(startOfTodayUTC().getTime() + DAY_MS);
+  // Bounded by the member's own local days (FEAT-8), so the "week" ends at
+  // their tonight — not at a UTC midnight that may already be tomorrow.
+  const end = new Date(todayStartInTz(user.timezone).getTime() + DAY_MS);
   const start = new Date(end.getTime() - REPORT_DAYS * DAY_MS);
 
   const [
@@ -253,7 +255,7 @@ export async function runUserWeeklyReport(
     getActiveGoalsByUserId(user.id),
     getActivePlansByUserId(user.id),
     user.memoryEnabled ? getUserMemory(user.id) : Promise.resolve(undefined),
-    getSleepDailyTotals(user.id, REPORT_DAYS + 1),
+    getSleepDailyTotals(user.id, user.timezone, REPORT_DAYS + 1),
   ]);
 
   const inWindow = (d: Date) =>
@@ -283,6 +285,7 @@ export async function runUserWeeklyReport(
     measurements: allMeasurements.filter((b) => inWindow(b.recordedAt)),
     kitchen,
     target,
+    timezone: user.timezone,
   });
 
   const sleepBlock =
