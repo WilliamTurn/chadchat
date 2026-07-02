@@ -76,11 +76,13 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
+        {/* DS-14: the brand theme is dark — default everyone to it. Members can
+            still switch to light via the account/user menus; an explicit choice
+            persists in localStorage and wins over this default. */}
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="dark"
           disableTransitionOnChange
-          enableSystem
         >
           <SessionProvider
             basePath={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/auth`}

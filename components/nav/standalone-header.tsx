@@ -1,10 +1,19 @@
 "use client";
 
-import { CreditCard, Dumbbell, LogOut, MenuIcon, Sparkles } from "lucide-react";
+import {
+  CreditCard,
+  Dumbbell,
+  LogOut,
+  MenuIcon,
+  Moon,
+  Sparkles,
+  Sun,
+} from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { useTheme } from "next-themes";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -56,6 +65,7 @@ function emailToHue(email: string): number {
  */
 function AccountMenu() {
   const { data } = useSession();
+  const { setTheme, resolvedTheme } = useTheme();
   const email = data?.user?.email ?? "";
   const hue = emailToHue(email);
   const avatar = (
@@ -100,6 +110,19 @@ function AccountMenu() {
             Account
           </Link>
         </DropdownMenuItem>
+        <DropdownMenuItem
+          className="cursor-pointer"
+          onSelect={() =>
+            setTheme(resolvedTheme === "dark" ? "light" : "dark")
+          }
+        >
+          {resolvedTheme === "dark" ? (
+            <Sun className="size-4" />
+          ) : (
+            <Moon className="size-4" />
+          )}
+          {`Toggle ${resolvedTheme === "dark" ? "light" : "dark"} mode`}
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="cursor-pointer"
@@ -134,6 +157,7 @@ export function StandaloneHeader({ active }: { active?: string }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const reduce = useReducedMotion();
+  const { setTheme, resolvedTheme } = useTheme();
 
   const isActive = (href: string) =>
     active ? active === href : pathname === href;
@@ -294,6 +318,21 @@ export function StandaloneHeader({ active }: { active?: string }) {
                 className="my-1 border-border border-t"
                 variants={sheetItem}
               />
+              <motion.button
+                className="flex items-center gap-3 rounded-lg px-3 py-3 text-left font-medium text-base text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+                onClick={() =>
+                  setTheme(resolvedTheme === "dark" ? "light" : "dark")
+                }
+                type="button"
+                variants={sheetItem}
+              >
+                {resolvedTheme === "dark" ? (
+                  <Sun className="size-5" />
+                ) : (
+                  <Moon className="size-5" />
+                )}
+                <span>{`Toggle ${resolvedTheme === "dark" ? "light" : "dark"} mode`}</span>
+              </motion.button>
               <motion.button
                 className="flex items-center gap-3 rounded-lg px-3 py-3 text-left font-medium text-base text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
                 onClick={() => {
