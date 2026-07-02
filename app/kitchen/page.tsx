@@ -6,6 +6,7 @@ import { auth } from "@/app/(auth)/auth";
 import { KitchenSkeleton } from "@/components/dashboard/page-skeletons";
 import { KitchenFeed } from "@/components/kitchen/kitchen-feed";
 import { AnalysisCard } from "@/components/nutrition/analysis-card";
+import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,7 @@ export default function KitchenPage() {
       <StandaloneHeader active="/kitchen" />
 
       <div className="mb-8">
+        <BackToDashboard />
         <div className="flex items-center gap-3">
           <h1 className="font-semibold text-2xl tracking-tight">
             Rate My Kitchen

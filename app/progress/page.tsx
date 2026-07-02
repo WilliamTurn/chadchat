@@ -10,7 +10,9 @@ import { LogEntryForm } from "@/components/progress/log-entry-form";
 import { MeasurementsSection } from "@/components/progress/measurements-section";
 import { PhotoCompare } from "@/components/progress/photo-compare";
 import { WeightChartInteractive } from "@/components/progress/weight-chart-interactive";
+import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
+import { ScrollToHash } from "@/components/nav/scroll-to-hash";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -103,6 +105,7 @@ export default function ProgressPage() {
       <StandaloneHeader active="/progress" />
 
       <div className="mb-8">
+        <BackToDashboard />
         <div className="flex items-center gap-3">
           <h1 className="font-semibold text-2xl tracking-tight">
             Your progress
@@ -197,6 +200,7 @@ async function Dashboard({
 
   return (
     <div className="flex flex-col gap-8">
+      <ScrollToHash />
       {/* Weight trend — the chart owns its card chrome, KPI strip and toggle. */}
       {points.length > 0 ? (
         <WeightChartInteractive
@@ -214,8 +218,8 @@ async function Dashboard({
         </section>
       )}
 
-      {/* Log a new entry */}
-      <section className="rounded-2xl border border-border bg-card p-6">
+      {/* Log a new entry. id: the dashboard card's "Log weight" landing spot (R2-5). */}
+      <section className="rounded-2xl border border-border bg-card p-6" id="log-entry">
         <h2 className="mb-4 font-medium text-lg">Log an entry</h2>
         <LogEntryForm defaultUnit={displayUnit} />
       </section>

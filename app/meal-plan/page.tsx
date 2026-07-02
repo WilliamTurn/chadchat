@@ -10,6 +10,7 @@ import {
   MealPlanView,
   type MealPlanViewData,
 } from "@/components/meal-plan/meal-plan-view";
+import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +43,7 @@ export default function MealPlanPage() {
       <StandaloneHeader active="/meal-plan" />
 
       <div className="mb-8">
+        <BackToDashboard />
         <div className="flex items-center gap-3">
           <h1 className="font-semibold text-2xl tracking-tight">Meal plan</h1>
           <Badge variant="secondary">Pro</Badge>

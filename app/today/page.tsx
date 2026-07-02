@@ -642,7 +642,7 @@ async function TodayContent() {
             icon={<Utensils className="size-4" />}
             title="Calorie Tracker"
             tone="amber"
-            viewHref="/nutrition"
+            viewHref="/nutrition#history"
           />
           <div className="mt-2">
             <MacroRings
@@ -684,7 +684,7 @@ async function TodayContent() {
               protein={target?.protein ?? null}
             />
             <Button asChild className="gap-1.5" size="sm" variant="outline">
-              <Link href="/nutrition">
+              <Link href="/nutrition#log-meal">
                 Log a meal
                 <ArrowRight className="size-3.5" />
               </Link>
@@ -771,7 +771,7 @@ async function TodayContent() {
               icon={<Dumbbell className="size-4" />}
               title="Last workout"
               tone="blood"
-              viewHref="/workouts"
+              viewHref="/workouts#history"
             />
             {lastWorkout ? (
               <div className="flex flex-1 flex-col justify-center">
@@ -910,7 +910,7 @@ async function TodayContent() {
           <ModuleFooter>
             <AskChadButton prompt="Look at my weight trend and how it's tracking against my goal weight. Am I moving in the right direction, and should I change anything?" />
             <Button asChild className="gap-1.5" size="sm" variant="outline">
-              <Link href="/progress">
+              <Link href="/progress#log-entry">
                 Log weight
                 <ArrowRight className="size-3.5" />
               </Link>

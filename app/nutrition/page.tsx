@@ -6,7 +6,9 @@ import { NutritionSkeleton } from "@/components/dashboard/page-skeletons";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
+import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
+import { ScrollToHash } from "@/components/nav/scroll-to-hash";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { AnalysisCard } from "@/components/nutrition/analysis-card";
 import { AnalyzeForm } from "@/components/nutrition/analyze-form";
@@ -54,6 +56,7 @@ export default function NutritionPage() {
       <StandaloneHeader active="/nutrition" />
 
       <div className="mb-8">
+        <BackToDashboard />
         <div className="flex items-center gap-3">
           <h1 className="font-semibold text-2xl tracking-tight">
             Calorie Tracker
@@ -162,6 +165,7 @@ async function Feed({
 
   return (
     <div className="flex flex-col gap-8">
+      <ScrollToHash />
       <section
         className="rounded-2xl border border-border bg-card p-6"
         id="log-meal"
@@ -218,7 +222,9 @@ function TodaySection({
   }
 
   return (
-    <section className="flex flex-col gap-4">
+    // id="history": where the dashboard card's "View all" link lands (R2-5) --
+    // the day's logged meals, with Earlier right below, not the log form.
+    <section className="flex flex-col gap-4" id="history">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <div className="flex items-baseline gap-3">
           <h2 className="font-medium text-lg">Today</h2>

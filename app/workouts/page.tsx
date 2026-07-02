@@ -5,7 +5,9 @@ import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
+import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
+import { ScrollToHash } from "@/components/nav/scroll-to-hash";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Kpi } from "@/components/dashboard/kpi";
 import { WorkoutsSkeleton } from "@/components/dashboard/page-skeletons";
@@ -74,6 +76,7 @@ export default function WorkoutsPage() {
       <StandaloneHeader active="/workouts" />
 
       <div className="mb-8">
+        <BackToDashboard />
         <div className="flex items-center gap-3">
           <h1 className="font-semibold text-2xl tracking-tight">Workouts</h1>
           <Badge variant="secondary">Pro</Badge>
@@ -158,6 +161,7 @@ async function Dashboard({ userId }: { userId: string }) {
 
   return (
     <div className="flex flex-col gap-8">
+      <ScrollToHash />
       {/* Action + summary */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-end gap-2">
@@ -227,8 +231,8 @@ async function Dashboard({ userId }: { userId: string }) {
             </section>
           )}
 
-          {/* History */}
-          <section>
+          {/* History. id: the dashboard card's "View all" landing spot (R2-5). */}
+          <section id="history">
             <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
               History
             </h2>

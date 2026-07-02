@@ -18,6 +18,7 @@ import {
   updateUserWaterGoal,
   upsertNutritionTarget,
 } from "@/lib/db/queries";
+import { reconcileTarget } from "@/lib/nutrition/target-math";
 import {
   type AnalyzeMealInput,
   analyzeMealSchema,
@@ -322,6 +323,17 @@ export async function saveNutritionTarget(
     return {
       ok: false,
       error: parsed.error.errors[0]?.message ?? "Couldn't save those targets.",
+    };
+  }
+
+  // R2-3: calories and macros are one equation (4/4/9 kcal per gram). Reject
+  // physically impossible combos on the server too, so no client can store
+  // "100 calories with 900g protein".
+  const verdict = reconcileTarget(parsed.data.calories, parsed.data);
+  if (verdict.kind === "impossible") {
+    return {
+      ok: false,
+      error: `Those macros alone add up to ${verdict.macroCal.toLocaleString()} calories, more than the calorie target. The numbers have to add up.`,
     };
   }
 
