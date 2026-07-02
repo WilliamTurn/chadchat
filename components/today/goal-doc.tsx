@@ -1,17 +1,34 @@
 "use client";
 
-import { Download, MessageSquare, Trash2 } from "lucide-react";
+import { Download, MessageSquare, Trash2, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { removeGoal } from "@/app/today/actions";
+import { AskChadButton } from "@/components/chad/ask-chad-button";
+import { WeightChartInteractive } from "@/components/progress/weight-chart-interactive";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExerciseTrendChart } from "@/components/workouts/exercise-trend-chart";
 import { downloadGoalPdf } from "@/lib/pdf/goal-pdf";
 import { type EditableGoal, GoalEditor } from "./goal-editor";
 import { GoalProgress, type LiftProgress } from "./goal-list";
+
+/** The weight-goal chart's inputs, all pre-converted to the display unit. */
+export type GoalWeightChart = {
+  points: { t: number; weight: number }[];
+  unit: "lb" | "kg";
+  goalWeight: number | null;
+  goalStartWeight: number | null;
+};
+
+/** Per-goal coherence detail (VF-4): the card shows one quiet line; the full
+ *  explanation lives here on the goal's own page. */
+export type GoalCoherence = {
+  calorie: { mentioned: number; target: number } | null;
+  overlapTitles: string[];
+};
 
 /**
  * The full-page goal document (R2-9): the goal's write-up plus its live
@@ -23,6 +40,8 @@ export function GoalDoc({
   currentWeight,
   lift,
   exerciseNames,
+  weightChart = null,
+  coherence = null,
 }: {
   goal: EditableGoal;
   /** Latest weigh-in in the member's display unit, for weight goals. */
@@ -30,6 +49,10 @@ export function GoalDoc({
   /** Est.-1RM history for a lift goal's exercise. */
   lift: LiftProgress | null;
   exerciseNames: string[];
+  /** Weigh-in history for a weight goal, re-plotted against the goal line
+   *  with the projected finish date (VF-6). */
+  weightChart?: GoalWeightChart | null;
+  coherence?: GoalCoherence | null;
 }) {
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
@@ -99,6 +122,60 @@ export function GoalDoc({
           </div>
         )}
       </section>
+
+      {/* The weight trend re-plotted against this goal's line, with the
+          projected finish date: the same interactive chart /progress leads
+          with, so the goal page finally shows the journey, not one bar (VF-6). */}
+      {weightChart && weightChart.points.length >= 2 && (
+        <WeightChartInteractive
+          goalStartWeight={weightChart.goalStartWeight}
+          goalWeight={weightChart.goalWeight}
+          points={weightChart.points}
+          unit={weightChart.unit}
+        />
+      )}
+
+      {(coherence?.calorie || (coherence?.overlapTitles.length ?? 0) > 0) && (
+        <section className="rounded-2xl border border-amber-500/25 bg-amber-500/[0.05] p-5">
+          <h3 className="flex items-center gap-1.5 font-medium text-sm">
+            <TriangleAlert className="size-4 text-amber-500" />
+            Needs a look
+          </h3>
+          <div className="mt-2 flex flex-col gap-2 text-muted-foreground text-sm leading-relaxed">
+            {coherence?.calorie && (
+              <p>
+                This goal mentions{" "}
+                {coherence.calorie.mentioned.toLocaleString()} calories a day,
+                but your Calorie Tracker target is{" "}
+                {coherence.calorie.target.toLocaleString()}. One of them is out
+                of date. Ask Chad which to follow, or edit the stale one so they
+                match.
+              </p>
+            )}
+            {coherence?.overlapTitles.map((title) => (
+              <p key={title}>
+                "{title}" also tracks the same thing as this goal. The two
+                progress bars start from different points, so they will
+                disagree. Keep one and archive the other.
+              </p>
+            ))}
+          </div>
+          <div className="mt-3">
+            <AskChadButton
+              label="Sort this out with Chad"
+              prompt={`Look at my goal "${goal.title}". ${
+                coherence?.calorie
+                  ? `It says ${coherence.calorie.mentioned.toLocaleString()} calories a day but my Calorie Tracker target is ${coherence.calorie.target.toLocaleString()}; which should I follow? `
+                  : ""
+              }${
+                (coherence?.overlapTitles.length ?? 0) > 0
+                  ? `I also have another active goal tracking the same thing (${coherence?.overlapTitles.join(", ")}). Help me pick one to keep and archive the other.`
+                  : ""
+              }`.trim()}
+            />
+          </div>
+        </section>
+      )}
 
       <section className="rounded-2xl border border-border bg-card p-6">
         <h3 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">

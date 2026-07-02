@@ -15,6 +15,10 @@ import { cn } from "@/lib/utils";
  * - "default" (max-w-5xl ≈ 1024px) — the standard for every page.
  * - "wide"    (max-w-6xl ≈ 1152px) — opt-in for an exceptionally dense page that
  *   genuinely needs the extra columns. Use sparingly; the point is consistency.
+ * - "narrow"  (max-w-3xl ≈ 768px), single-column tool/reading pages (VF-6:
+ *   hydration, goals, a goal's document, reports). At the default width their
+ *   one column of controls stretched into giant buttons and mile-long bars;
+ *   ~720px of content keeps them looking composed.
  *
  * Pages render their own `<StandaloneHeader>` (and any Toaster) as the first
  * children, exactly as before — this only owns the outer frame.
@@ -26,13 +30,17 @@ export function PageShell({
 }: {
   children: ReactNode;
   className?: string;
-  size?: "default" | "wide";
+  size?: "default" | "wide" | "narrow";
 }) {
   return (
     <main
       className={cn(
         "mx-auto flex min-h-dvh w-full flex-col px-4 py-10 sm:px-6 sm:py-12",
-        size === "wide" ? "max-w-6xl" : "max-w-5xl",
+        size === "wide"
+          ? "max-w-6xl"
+          : size === "narrow"
+            ? "max-w-3xl"
+            : "max-w-5xl",
         className
       )}
     >

@@ -1,6 +1,6 @@
 "use client";
 
-import { RotateCcw, Target, Trash2 } from "lucide-react";
+import { RotateCcw, Target, Trash2, TriangleAlert } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -95,19 +95,69 @@ function metricNoun(goal: EditableGoal): string {
   return "your weight";
 }
 
+/**
+ * The card's ONE consolidated coherence notice (VF-4). The old treatment
+ * stacked a glowing calorie-conflict banner plus an identical amber strip on
+ * every overlapping goal row, so the card read as a wall of warnings. Now:
+ * one quiet row per card (small icon, one short line per issue, one action);
+ * the full explanations live on each goal's own page.
+ */
+function CoherenceNotice({
+  calorieConflict,
+  overlapNouns,
+}: {
+  calorieConflict: { goalTitle: string; mentioned: number; target: number } | null;
+  overlapNouns: string[];
+}) {
+  const lines: string[] = [];
+  const promptParts: string[] = [];
+  if (calorieConflict) {
+    lines.push(
+      `"${calorieConflict.goalTitle}" mentions ${calorieConflict.mentioned.toLocaleString()} calories a day; your Calorie Tracker target is ${calorieConflict.target.toLocaleString()}.`
+    );
+    promptParts.push(
+      `My goal "${calorieConflict.goalTitle}" says ${calorieConflict.mentioned.toLocaleString()} calories a day, but my Calorie Tracker target is ${calorieConflict.target.toLocaleString()}. Which one should I follow? Update the stale one so they match.`
+    );
+  }
+  for (const noun of overlapNouns) {
+    lines.push(
+      `Two active goals track ${noun}, so their progress bars will disagree. Keep one and archive the other.`
+    );
+    promptParts.push(
+      `Two of my active goals track ${noun.replace(/^your /, "my ")}. Help me pick the one to keep and archive the other.`
+    );
+  }
+  if (lines.length === 0) {
+    return null;
+  }
+  return (
+    <div className="mb-3 flex flex-wrap items-start justify-between gap-x-3 gap-y-2 rounded-xl border border-border bg-background/40 px-3 py-2.5">
+      <div className="flex min-w-0 flex-1 items-start gap-2">
+        <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-amber-500" />
+        <div className="flex min-w-0 flex-col gap-1 text-muted-foreground text-xs leading-relaxed">
+          {lines.map((line) => (
+            <p key={line}>{line}</p>
+          ))}
+        </div>
+      </div>
+      <AskChadButton
+        className="h-7 shrink-0 text-xs"
+        prompt={promptParts.join(" ")}
+      />
+    </div>
+  );
+}
+
 function GoalItem({
   goal,
   currentWeight,
   lift,
   exerciseNames,
-  overlaps = false,
 }: {
   goal: EditableGoal;
   currentWeight: number | null;
   lift: LiftProgress | undefined;
   exerciseNames: string[];
-  /** Another active goal tracks the same metric (P2-4). */
-  overlaps?: boolean;
 }) {
   const isLift = goal.metric === "lift";
   const current = isLift ? (lift?.current ?? null) : goal.metric === "weight" ? currentWeight : null;
@@ -136,13 +186,6 @@ function GoalItem({
           <Badge variant="secondary">{goal.status}</Badge>
         )}
       </div>
-      {overlaps && (
-        <p className="mt-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1.5 text-amber-600 text-xs dark:text-amber-400">
-          Another active goal also tracks {metricNoun(goal)}. The two progress
-          bars start from different points, so they will disagree. Keep one and
-          archive the other.
-        </p>
-      )}
       <GoalProgress
         current={current}
         firstValue={lift?.first}
@@ -328,23 +371,14 @@ export function GoalList({
         viewHref={viewHref}
       />
 
-      {calorieConflict && (
-        <div className="mb-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
-          <p className="text-sm">
-            Your goal "{calorieConflict.goalTitle}" mentions{" "}
-            {calorieConflict.mentioned.toLocaleString()} calories a day, but
-            your Calorie Tracker target is{" "}
-            {calorieConflict.target.toLocaleString()}. One of them is out of
-            date.
-          </p>
-          <div className="mt-2">
-            <AskChadButton
-              label="Ask Chad to align these"
-              prompt={`My goal "${calorieConflict.goalTitle}" says ${calorieConflict.mentioned.toLocaleString()} calories a day, but my Calorie Tracker target is ${calorieConflict.target.toLocaleString()}. Which one should I follow? Update the stale one so they match.`}
-            />
-          </div>
-        </div>
-      )}
+      <CoherenceNotice
+        calorieConflict={calorieConflict}
+        overlapNouns={[
+          ...new Set(
+            goals.filter((g) => overlapIds.includes(g.id)).map(metricNoun)
+          ),
+        ]}
+      />
 
       {goals.length > 0 ? (
         <div className="flex flex-col gap-2">
@@ -355,7 +389,6 @@ export function GoalList({
               goal={g}
               key={g.id}
               lift={liftProgress[g.id]}
-              overlaps={overlapIds.includes(g.id)}
             />
           ))}
         </div>

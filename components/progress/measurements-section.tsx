@@ -50,8 +50,13 @@ const GROW_IS_GOOD = new Set(["arms", "chest", "shoulders"]);
 
 const todayISO = todayLocalISO;
 
-/** A tiny inline sparkline for one metric's history. */
-function Spark({ values }: { values: number[] }) {
+/**
+ * A tiny inline sparkline for one metric's history. Inherits the delta's
+ * semantic color (VF-5): emerald when the change is in the good direction for
+ * that spot, quiet gray otherwise; never the blood-red brand accent, which
+ * next to a green "-0.7" read as a broken or contradictory chart.
+ */
+function Spark({ values, className }: { values: number[]; className: string }) {
   if (values.length < 2) {
     return null;
   }
@@ -67,10 +72,11 @@ function Spark({ values }: { values: number[] }) {
       return `${x.toFixed(1)} ${y.toFixed(1)}`;
     })
     .join(" L");
+  const last = pts.split(" L").at(-1)?.split(" ") ?? [];
   return (
     <svg
       aria-hidden="true"
-      className="text-blood"
+      className={className}
       height={H}
       viewBox={`0 0 ${W} ${H}`}
       width={W}
@@ -83,6 +89,9 @@ function Spark({ values }: { values: number[] }) {
         strokeLinejoin="round"
         strokeWidth="1.5"
       />
+      {last.length === 2 && (
+        <circle cx={last[0]} cy={last[1]} fill="currentColor" r="2.5" />
+      )}
     </svg>
   );
 }
@@ -268,7 +277,14 @@ export function MeasurementsSection({
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Spark values={list.map((m) => m.value)} />
+                  <Spark
+                    className={
+                      isProgress
+                        ? "text-emerald-500"
+                        : "text-muted-foreground/50"
+                    }
+                    values={list.map((m) => m.value)}
+                  />
                   {latest && (
                     <Button
                       aria-label={`Delete latest ${KIND_LABEL[k]} reading`}

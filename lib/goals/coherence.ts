@@ -52,18 +52,26 @@ export function findCalorieConflict(
   return null;
 }
 
-/** Ids of active goals that track the same metric as another active goal.
- *  Only metrics where two goals genuinely measure the same thing: weight,
+/** The comparable-metric key two goals must share to genuinely overlap: weight,
  *  body fat, or the same lift. Two "measurement" goals can be different body
  *  parts, and "custom" goals have no comparable metric. */
+function overlapKey(g: CoherenceGoal): string | null {
+  if (g.metric === "weight" || g.metric === "bodyfat") {
+    return g.metric;
+  }
+  if (g.metric === "lift" && g.metricRef) {
+    return `lift:${g.metricRef.trim().toLowerCase()}`;
+  }
+  return null;
+}
+
+/** Ids of active goals that track the same metric as another active goal. */
 export function findOverlapIds(goals: CoherenceGoal[]): string[] {
   const overlapIds: string[] = [];
   const byMetric = new Map<string, string[]>();
   for (const g of goals) {
-    if (g.metric === "weight" || g.metric === "bodyfat") {
-      byMetric.set(g.metric, [...(byMetric.get(g.metric) ?? []), g.id]);
-    } else if (g.metric === "lift" && g.metricRef) {
-      const key = `lift:${g.metricRef.trim().toLowerCase()}`;
+    const key = overlapKey(g);
+    if (key) {
       byMetric.set(key, [...(byMetric.get(key) ?? []), g.id]);
     }
   }
@@ -73,4 +81,20 @@ export function findOverlapIds(goals: CoherenceGoal[]): string[] {
     }
   }
   return overlapIds;
+}
+
+/** Titles of the OTHER active goals measuring the same thing as `goal`: the
+ *  per-goal detail behind the goal card's one-line notice (VF-4), rendered on
+ *  the goal's own page. */
+export function overlapTitlesFor(
+  goal: CoherenceGoal,
+  activeGoals: CoherenceGoal[]
+): string[] {
+  const key = overlapKey(goal);
+  if (!key) {
+    return [];
+  }
+  return activeGoals
+    .filter((g) => g.id !== goal.id && overlapKey(g) === key)
+    .map((g) => g.title);
 }
