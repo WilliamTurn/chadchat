@@ -97,9 +97,9 @@ export function MacroTrendChart({
     return Math.round(sum / rows.length);
   }, [rows, metric]);
 
-  // Round ascending y-ticks (VF-1): a 1/2/2.5/5 × 10^n step sized for ~5
+  // Round ascending y-ticks (VF-1): a 1/2/2.5/5 x 10^n step sized for ~5
   // intervals over the peak (or the target, so it always sits inside the
-  // domain), the max rounded UP to a whole step — never a raw data max.
+  // domain), the max rounded UP to a whole step, never a raw data max.
   const { yMax, yTicks } = useMemo(() => {
     const peak = Math.max(
       1,
@@ -123,7 +123,7 @@ export function MacroTrendChart({
   }
 
   const lastT = data.at(-1)?.t;
-  // Two points can't carry a smoothed trend — a line through both just
+  // Two points can't carry a smoothed trend: a line through both just
   // re-draws the bars edge-to-edge and reads as fake precision (VF-1).
   const showTrendLine = rows.length >= 3;
 
