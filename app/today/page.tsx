@@ -59,6 +59,7 @@ import {
 import {
   calendarDayAnchorInTz,
   formatCalendarDay,
+  formatDayInTz,
   toCalendarDayISO,
   todayAnchorInTz,
   todayStartInTz,
@@ -71,7 +72,8 @@ import {
   buildLastNight,
   buildSleepWeek,
   buildWaterWeek,
-  WEEKDAY_INITIALS,
+  weekSlotDateLabel,
+  weekSlotLabel,
 } from "@/lib/today/week";
 import { HeroCustomizer } from "@/components/today/hero-customizer";
 import type { LiftProgress } from "@/components/today/goal-list";
@@ -419,7 +421,8 @@ async function TodayContent() {
   const week = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(todayAnchor.getTime() - (6 - i) * DAY_MS);
     return {
-      label: WEEKDAY_INITIALS[d.getUTCDay()],
+      label: weekSlotLabel(d, i === 6),
+      dateLabel: weekSlotDateLabel(d),
       active: activeDayKeys.has(toCalendarDayISO(d)),
       isToday: i === 6,
     };
@@ -434,9 +437,20 @@ async function TodayContent() {
 
   // First-run: a brand-new member with no profile and nothing logged yet. We
   // show a "welcome / get started" header instead of "Welcome back" (which is
-  // illogical the very first time they sign in).
+  // illogical the very first time they sign in), the hero carries the page's
+  // ONE dominant first action (P1-4), and the empty cards state what will
+  // appear instead of each shouting its own CTA.
   const isReturning =
     Boolean(profile) || entries.length > 0 || todaysMeals.length > 0;
+  const firstRun = !isReturning;
+
+  // "Thursday, July 2" on the member's own wall clock (R2-11) — the page says
+  // "today" everywhere, so it should say WHICH day that is.
+  const todayLabel = formatDayInTz(new Date(), timezone, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -476,7 +490,7 @@ async function TodayContent() {
         <div className="relative flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-muted-foreground text-sm">
-              {isReturning ? "Welcome back" : "Welcome to Chad"}
+              {isReturning ? "Welcome back" : "Welcome to Chad"} · {todayLabel}
             </p>
             <h1 className="mt-1 font-display font-bold text-3xl tracking-tight sm:text-4xl">
               {firstName ?? (isReturning ? "Let's work" : "Let's get started")}
@@ -484,8 +498,22 @@ async function TodayContent() {
             <p className="mt-2 max-w-md text-muted-foreground text-sm">
               {isReturning
                 ? "Here's where you stand today. No excuses — just the numbers."
-                : "Set your goal below, then tell Chad about yourself in chat. He'll build the plan from there."}
+                : "One thing first: tell Chad about yourself. He'll set your targets and build your plan, and this page fills in as you log."}
             </p>
+            {/* First-run (P1-4): the page's ONE dominant action. Every other
+                empty state below stays quiet so this is the obvious next step. */}
+            {firstRun && (
+              <Button asChild className="mt-4 gap-2" size="lg">
+                <Link
+                  href={`/?prompt=${encodeURIComponent(
+                    "I'm new here. Ask me what you need to know about me, then set up my targets and my plan."
+                  )}`}
+                >
+                  <MessageSquare className="size-4" />
+                  Tell Chad about yourself
+                </Link>
+              </Button>
+            )}
           </div>
           <div className="flex flex-col items-end gap-2">
             {plan.tier === "elite" ? (
@@ -513,12 +541,15 @@ async function TodayContent() {
             ) : (
               <Badge variant="secondary">Basic</Badge>
             )}
-            <Button asChild className="gap-1.5" size="sm">
-              <Link href="/">
-                <MessageSquare className="size-3.5" />
-                Talk to Chad
-              </Link>
-            </Button>
+            {/* Hidden on first-run: the hero's big CTA is the one action. */}
+            {!firstRun && (
+              <Button asChild className="gap-1.5" size="sm">
+                <Link href="/">
+                  <MessageSquare className="size-3.5" />
+                  Talk to Chad
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
 
@@ -563,13 +594,17 @@ async function TodayContent() {
               carbsConsumed={carbsToday}
               carbsTarget={target?.carbs ?? null}
               emptyCta={
-                <TargetEditor
-                  calories={target?.calories ?? null}
-                  carbs={target?.carbs ?? null}
-                  fat={target?.fat ?? null}
-                  prominent
-                  protein={target?.protein ?? null}
-                />
+                // First-run keeps this quiet (P1-4): the hero owns the one CTA
+                // and Chad sets targets from the intro chat anyway.
+                firstRun ? undefined : (
+                  <TargetEditor
+                    calories={target?.calories ?? null}
+                    carbs={target?.carbs ?? null}
+                    fat={target?.fat ?? null}
+                    prominent
+                    protein={target?.protein ?? null}
+                  />
+                )
               }
               fatConsumed={fatToday}
               fatTarget={target?.fat ?? null}
@@ -627,7 +662,12 @@ async function TodayContent() {
         )}
 
         {isPro ? (
-          <SleepTracker last={lastNight} viewHref="/sleep" week={sleepWeek} />
+          <SleepTracker
+            last={lastNight}
+            quiet={firstRun}
+            viewHref="/sleep"
+            week={sleepWeek}
+          />
         ) : (
           <LockedCard
             icon={<Moon className="size-4" />}
@@ -649,11 +689,16 @@ async function TodayContent() {
             liftProgress={liftProgress}
             memoryGoalHint={goal}
             pastGoals={pastGoalItems}
+            quiet={firstRun}
           />
         </ModuleCard>
 
         <ModuleCard>
-          <PlanList memoryPlanHint={workoutPlan} plans={planItems} />
+          <PlanList
+            memoryPlanHint={workoutPlan}
+            plans={planItems}
+            quiet={firstRun}
+          />
         </ModuleCard>
       </div>
 
@@ -769,7 +814,7 @@ async function TodayContent() {
               {weightChange != null && (
                 <span className="text-muted-foreground text-xs">
                   {weightChange > 0 ? "+" : ""}
-                  {weightChange} since start
+                  {weightChange} {displayUnit} since your first weigh-in
                 </span>
               )}
             </div>

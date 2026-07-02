@@ -39,7 +39,6 @@ import {
   formatOz,
   formatOzAxis,
   formatVolume,
-  glassesFromMl,
 } from "@/lib/today/water-units";
 
 const SKY = "#0ea5e9";
@@ -198,8 +197,8 @@ function WaterTooltip({
   if (!row) {
     return null;
   }
-  const glasses = glassesFromMl(row.ml);
   const hit = row.ml >= goalMl;
+  const pctOfGoal = goalMl > 0 ? Math.round((row.ml / goalMl) * 100) : 0;
   return (
     <div className="min-w-[11rem] rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
       <div className="mb-1.5 font-medium">{formatTick(row.t)}</div>
@@ -218,7 +217,7 @@ function WaterTooltip({
             </span>
           </div>
           <div className="flex items-center justify-between gap-4 text-muted-foreground">
-            <span>{glasses} glasses</span>
+            <span>{pctOfGoal}% of goal</span>
             <span className={hit ? "font-medium text-emerald-500" : ""}>
               {hit
                 ? "goal hit"

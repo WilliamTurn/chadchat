@@ -16,7 +16,24 @@ import {
 
 const DAY_MS = 86_400_000;
 
-export const WEEKDAY_INITIALS = ["S", "M", "T", "W", "T", "F", "S"];
+/** Two-letter weekday labels (R2-1): single letters can't disambiguate S/S or
+ *  T/T in a rolling 7-day strip. */
+export const WEEKDAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+/** Strip label for a day slot: the last slot says "Today" outright (R2-1's
+ *  explicit Today marker), the rest get two-letter weekdays. */
+export function weekSlotLabel(d: Date, isToday: boolean): string {
+  return isToday ? "Today" : WEEKDAY_LABELS[d.getUTCDay()];
+}
+
+/** "Mon, Jun 29" — the real date behind a strip slot, for tooltips (R2-12). */
+export function weekSlotDateLabel(d: Date): string {
+  return formatCalendarDay(d, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
 
 /** One night in the sleep card's rolling 7-day strip. */
 export type SleepNight = {
@@ -24,8 +41,10 @@ export type SleepNight = {
   t: number;
   /** Calendar-day ISO (YYYY-MM-DD) — matches the log form's date values. */
   iso: string;
-  /** Single-letter weekday label. */
+  /** Strip label: two-letter weekday, or "Today" for the last slot. */
   label: string;
+  /** "Mon, Jun 29" — the real date, for tooltips (R2-12). */
+  dateLabel: string;
   /** Minutes slept that night; 0 if not logged. */
   minutes: number;
   quality: number | null;
@@ -50,6 +69,8 @@ export type LastNight = {
 export type WaterDay = {
   t: number;
   label: string;
+  /** "Mon, Jun 29" — the real date, for tooltips (R2-12). */
+  dateLabel: string;
   ml: number;
   logged: boolean;
   isToday: boolean;
@@ -89,7 +110,8 @@ export function buildSleepWeek(
     return {
       t: d.getTime(),
       iso: toCalendarDayISO(d),
-      label: WEEKDAY_INITIALS[d.getUTCDay()],
+      label: weekSlotLabel(d, i === 6),
+      dateLabel: weekSlotDateLabel(d),
       minutes: entry?.minutes ?? 0,
       quality: entry?.quality ?? null,
       logged: entry != null,
@@ -109,7 +131,8 @@ export function buildWaterWeek(
     const ml = byDay.get(d.getTime());
     return {
       t: d.getTime(),
-      label: WEEKDAY_INITIALS[d.getUTCDay()],
+      label: weekSlotLabel(d, i === 6),
+      dateLabel: weekSlotDateLabel(d),
       ml: ml ?? 0,
       logged: ml != null,
       isToday: i === 6,

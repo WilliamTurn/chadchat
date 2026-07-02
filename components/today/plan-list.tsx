@@ -152,9 +152,13 @@ function RowDeletePlan({ id }: { id: string }) {
 export function PlanList({
   plans,
   memoryPlanHint,
+  quiet = false,
 }: {
   plans: EditablePlan[];
   memoryPlanHint: string | null;
+  /** First-run (P1-4): the empty state describes what will appear here instead
+   *  of adding another CTA to the chorus — the hero owns the one first action. */
+  quiet?: boolean;
 }) {
   return (
     <>
@@ -185,11 +189,12 @@ export function PlanList({
             </div>
           ) : (
             <p className="text-muted-foreground text-sm">
-              No plan on file yet. Ask Chad to build your split, then save it
-              here — or add your own.
+              {quiet
+                ? "Your training plan will live here once Chad builds it. Tell him about yourself and he'll put your split together."
+                : "No plan on file yet. Ask Chad to build your split, then save it here, or add your own."}
             </p>
           )}
-          <PlanEditor variant="cta" />
+          {!quiet && <PlanEditor variant="cta" />}
         </div>
       )}
 

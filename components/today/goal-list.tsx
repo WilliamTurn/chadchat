@@ -256,6 +256,7 @@ export function GoalList({
   pastGoals = [],
   liftProgress = {},
   exerciseNames = [],
+  quiet = false,
 }: {
   goals: EditableGoal[];
   currentWeight: number | null;
@@ -265,6 +266,9 @@ export function GoalList({
   liftProgress?: Record<string, LiftProgress>;
   /** Logged exercise names, offered as suggestions when adding a lift goal. */
   exerciseNames?: string[];
+  /** First-run (P1-4): the empty state describes what will appear here instead
+   *  of adding another CTA to the chorus — the hero owns the one first action. */
+  quiet?: boolean;
 }) {
   return (
     <>
@@ -298,11 +302,12 @@ export function GoalList({
             </div>
           ) : (
             <p className="text-muted-foreground text-sm">
-              No goal set yet. Set it here, or tell Chad in chat and he'll build
-              the plan around it.
+              {quiet
+                ? "Your goals will live here once you and Chad set them. Tell him what you're after and he'll build the plan around it."
+                : "No goal set yet. Set it here, or tell Chad in chat and he'll build the plan around it."}
             </p>
           )}
-          <GoalEditor exerciseNames={exerciseNames} variant="cta" />
+          {!quiet && <GoalEditor exerciseNames={exerciseNames} variant="cta" />}
         </div>
       )}
 

@@ -1,22 +1,31 @@
 "use client";
 
 /**
- * The /today streak strip: a flickering flame + count-up day total, plus a
- * 7-dot week strip (the Duolingo / Apple-Fitness pattern) showing which of the
- * last seven days had a logged action. The flame only flickers while a streak
- * is live; everything respects reduced motion.
+ * The /today streak strip: a flickering flame + count-up day total, plus the
+ * shared 7-day dot strip (the Duolingo / Apple-Fitness pattern) showing which
+ * of the last seven days had a logged action. The flame only flickers while a
+ * streak is live; everything respects reduced motion.
+ *
+ * The copy states what a streak means in plain language (R2-2), and a "?"
+ * popover spells out exactly what counts. Dots render through the shared
+ * WeekStrip so labels, the Today marker, and the date tooltip match the
+ * tracker cards (R2-1).
  */
 
 import { Flame } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { CountUp } from "@/components/dashboard/count-up";
+import { KpiHelp } from "@/components/dashboard/kpi";
+import { WeekStrip } from "@/components/today/week-strip";
 
 export type WeekDay = {
-  /** Single-letter weekday label (S, M, T, …). */
+  /** Strip label: two-letter weekday, or "Today" for the last slot. */
   label: string;
+  /** "Mon, Jun 29" — the real date, for the tooltip. */
+  dateLabel: string;
   /** The user logged something on this day. */
   active: boolean;
-  /** This is today (rendered with a ring). */
+  /** This is today (bold label + ring). */
   isToday: boolean;
 };
 
@@ -29,6 +38,12 @@ export function StreakStrip({
 }) {
   const reduced = useReducedMotion() ?? false;
   const lit = streak > 0;
+
+  const meaning = lit
+    ? streak === 1
+      ? "You've logged something today. Come back tomorrow to make it 2."
+      : `You've logged something ${streak} days in a row. Keep it going.`
+    : "No streak yet. Log something today to start one.";
 
   return (
     <div className="relative mt-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-background/40 px-4 py-3">
@@ -57,46 +72,35 @@ export function StreakStrip({
           />
         </motion.span>
         <div>
-          <div className="font-display font-bold text-2xl leading-none">
-            <CountUp value={`${streak} day${streak === 1 ? "" : "s"}`} />
+          <div className="flex items-center gap-1.5">
+            <span className="font-display font-bold text-2xl leading-none">
+              <CountUp value={`${streak} day${streak === 1 ? "" : "s"}`} />
+            </span>
+            <span className="text-muted-foreground text-sm">streak</span>
+            <KpiHelp label="Your streak">
+              Consecutive days with at least one log. Anything counts: a meal,
+              water, sleep, a workout, or a weigh-in. Miss a day and it resets.
+            </KpiHelp>
           </div>
-          <div className="mt-1 text-muted-foreground text-sm">
-            {lit
-              ? "Current streak — keep showing up."
-              : "No streak yet. Log something today to start one."}
-          </div>
+          <div className="mt-1 text-muted-foreground text-sm">{meaning}</div>
         </div>
       </div>
 
-      {/* 7-day week strip */}
-      <div className="flex items-end gap-2">
-        {week.map((day, i) => (
-          <div
-            // Fixed 7-slot rolling window; index is a stable key here.
-            // biome-ignore lint/suspicious/noArrayIndexKey: fixed-length day slots
-            className="flex flex-col items-center gap-1.5"
-            key={i}
-          >
-            <span
-              aria-hidden
-              className={`size-3 rounded-full ${
-                day.active
-                  ? "bg-blood shadow-[0_0_8px_var(--color-blood)]"
-                  : "bg-border"
-              } ${day.isToday ? "ring-2 ring-blood/40 ring-offset-1 ring-offset-background" : ""}`}
-            />
-            <span
-              className={`text-[10px] ${
-                day.isToday
-                  ? "font-semibold text-foreground"
-                  : "text-muted-foreground"
-              }`}
-            >
-              {day.label}
-            </span>
-          </div>
-        ))}
-      </div>
+      {/* 7-day week strip (shared treatment) */}
+      <WeekStrip
+        days={week.map((day) => ({
+          key: day.dateLabel,
+          label: day.label,
+          dateLabel: day.dateLabel,
+          isToday: day.isToday,
+          dotClassName: `size-3 rounded-full ${
+            day.active
+              ? "bg-blood shadow-[0_0_8px_var(--color-blood)]"
+              : "bg-border"
+          } ${day.isToday ? "ring-2 ring-blood/40 ring-offset-1 ring-offset-background" : ""}`,
+          value: day.active ? "Logged activity" : "Nothing logged",
+        }))}
+      />
     </div>
   );
 }

@@ -58,8 +58,15 @@ export function Kpi({
   );
 }
 
-/** The "?" affordance + popover that demystifies a stat in plain English. */
-function KpiHelp({ label, children }: { label: string; children: ReactNode }) {
+/** The "?" affordance + popover that demystifies a stat in plain English.
+ *  Exported for the /today hero stats + streak (HLP-1 pattern, DSH-35/R2-2). */
+export function KpiHelp({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
   return (
     <Popover>
       <PopoverTrigger asChild>

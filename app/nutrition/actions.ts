@@ -242,7 +242,7 @@ export async function removeMealAnalysis(
   return { ok: true };
 }
 
-/** Remove the most recent glass logged today — the user's local today (FEAT-8). */
+/** Remove the most recent water entry logged today — the user's local today (FEAT-8). */
 export async function removeWater(): Promise<NutritionActionState> {
   const user = await requirePro();
   if (!user) {
@@ -263,7 +263,7 @@ const MAX_WATER_ML = 2000;
 
 /**
  * Log an arbitrary amount of water (in ml) for today — backs the water
- * tracker's quick-add buttons (glass / bottle / custom). Amount is clamped to a
+ * tracker's quick-add buttons (+8 oz / +16 oz / custom). Amount is clamped to a
  * sane single-serving range so a typo can't poison the daily total.
  */
 export async function logWaterAmount(

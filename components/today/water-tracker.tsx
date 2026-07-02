@@ -4,7 +4,6 @@ import {
   Check,
   Droplet,
   Droplets,
-  GlassWater,
   Pencil,
   Plus,
   Undo2,
@@ -32,27 +31,25 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  BOTTLE_ML,
   DEFAULT_WATER_GOAL_ML,
   formatOz,
   formatVolume,
-  GLASS_ML,
-  glassesFromMl,
   mlToOz,
   ozToMl,
 } from "@/lib/today/water-units";
 import type { WaterDay } from "@/lib/today/week";
+import { WeekStrip } from "@/components/today/week-strip";
 
 const MAX_CUSTOM_OZ = 64;
 
 /**
  * Hydration module for the /today dashboard. Renders a WaterMinder-style
  * vessel that visually fills with an animated wave proportional to
- * totalMl / goalMl, plus quick-add controls (glass / bottle / custom) and an
- * undo. Volumes are shown in US ounces & gallons (DSH-24) though stored in ml;
- * the daily goal defaults to one gallon and is user-customizable. Reads totalMl
- * from props and re-renders after router.refresh() so the fill always reflects
- * the live server total.
+ * totalMl / goalMl, plus quick-add controls (+8 oz / +16 oz / custom) and an
+ * undo. Volumes speak ONLY US ounces & gallons (DSH-24/DSH-34 — no "glasses"
+ * or "bottles") though stored in ml; the daily goal defaults to one gallon and
+ * is user-customizable. Reads totalMl from props and re-renders after
+ * router.refresh() so the fill always reflects the live server total.
  */
 export function WaterTracker({
   totalMl,
@@ -78,7 +75,6 @@ export function WaterTracker({
   const safeGoal = goalMl > 0 ? goalMl : DEFAULT_WATER_GOAL_ML;
   const ratio = Math.min(totalMl / safeGoal, 1);
   const percent = Math.round(ratio * 100);
-  const glasses = glassesFromMl(totalMl);
   const remaining = Math.max(safeGoal - totalMl, 0);
   const reached = totalMl >= safeGoal;
 
@@ -267,9 +263,6 @@ export function WaterTracker({
               / {formatVolume(safeGoal)}
             </span>
           </div>
-          <p className="text-muted-foreground text-sm">
-            {glasses} {glasses === 1 ? "glass" : "glasses"} today
-          </p>
           <p
             className={`mt-1 font-medium text-sm ${
               reached ? "text-sky-400" : "text-foreground"
@@ -287,49 +280,40 @@ export function WaterTracker({
         </div>
       </div>
 
-      {/* Quick-add controls */}
+      {/* Quick-add controls — plain ounce amounts (DSH-34) */}
       <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3">
         <Button
-          aria-label="Add a glass, 8 ounces"
-          className="h-11 flex-col gap-0.5"
+          aria-label="Add 8 ounces of water"
+          className="h-11 gap-1.5 font-medium text-sm"
           disabled={pending}
-          onClick={() => run(() => logWaterAmount(GLASS_ML))}
+          onClick={() => run(() => logWaterAmount(ozToMl(8)))}
           variant="outline"
         >
-          <span className="flex items-center gap-1.5 font-medium text-sm">
-            <Droplet className="size-4 text-sky-400" />
-            Glass
-          </span>
-          <span className="text-muted-foreground text-xs">+8 oz</span>
+          <Droplet className="size-4 text-sky-400" />
+          +8 oz
         </Button>
 
         <Button
-          aria-label="Add a bottle, 16 ounces"
-          className="h-11 flex-col gap-0.5"
+          aria-label="Add 16 ounces of water"
+          className="h-11 gap-1.5 font-medium text-sm"
           disabled={pending}
-          onClick={() => run(() => logWaterAmount(BOTTLE_ML))}
+          onClick={() => run(() => logWaterAmount(ozToMl(16)))}
           variant="outline"
         >
-          <span className="flex items-center gap-1.5 font-medium text-sm">
-            <GlassWater className="size-4 text-sky-400" />
-            Bottle
-          </span>
-          <span className="text-muted-foreground text-xs">+16 oz</span>
+          <Droplet className="size-4 text-sky-400" />
+          +16 oz
         </Button>
 
         <Popover onOpenChange={setCustomOpen} open={customOpen}>
           <PopoverTrigger asChild>
             <Button
               aria-label="Add a custom amount of water"
-              className="col-span-2 h-11 flex-col gap-0.5 sm:col-span-1"
+              className="col-span-2 h-11 gap-1.5 font-medium text-sm sm:col-span-1"
               disabled={pending}
               variant="outline"
             >
-              <span className="flex items-center gap-1.5 font-medium text-sm">
-                <Plus className="size-4 text-sky-400" />
-                Custom
-              </span>
-              <span className="text-muted-foreground text-xs">Any amount</span>
+              <Plus className="size-4 text-sky-400" />
+              Custom
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-64">
@@ -378,40 +362,30 @@ export function WaterTracker({
 
       {/* Rolling 7-day strip — the compact in-card readout (the full history
           chart lives on the detail page, one surface per domain). Full dot =
-          goal hit, faded dot = some water logged, hollow = nothing. */}
+          goal hit, faded dot = some water logged, hollow = nothing. Shared
+          WeekStrip treatment (R2-1): two-letter labels, Today marker, real
+          dates on hover. */}
       {week?.some((d) => d.logged) ? (
         <div className="mt-4 flex items-center justify-between rounded-xl border border-border bg-background/40 px-4 py-2.5">
           <span className="text-muted-foreground text-xs">Last 7 days</span>
-          <div className="flex items-end gap-2">
-            {week.map((day) => (
-              <div className="flex flex-col items-center gap-1" key={day.t}>
-                <span
-                  aria-hidden
-                  className={`size-3 rounded-full ${
-                    day.logged && day.ml >= safeGoal
-                      ? "bg-sky-400 shadow-[0_0_8px_var(--color-sky-400)]"
-                      : day.logged
-                        ? "bg-sky-400/40"
-                        : "bg-border"
-                  } ${day.isToday ? "ring-2 ring-sky-400/40 ring-offset-1 ring-offset-background" : ""}`}
-                  title={
-                    day.logged
-                      ? `${formatOz(day.ml)}${day.ml >= safeGoal ? " · goal hit" : ""}`
-                      : "Not logged"
-                  }
-                />
-                <span
-                  className={`text-[10px] ${
-                    day.isToday
-                      ? "font-semibold text-foreground"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  {day.label}
-                </span>
-              </div>
-            ))}
-          </div>
+          <WeekStrip
+            days={week.map((day) => ({
+              key: day.t,
+              label: day.label,
+              dateLabel: day.dateLabel,
+              isToday: day.isToday,
+              dotClassName: `size-3 rounded-full ${
+                day.logged && day.ml >= safeGoal
+                  ? "bg-sky-400 shadow-[0_0_8px_var(--color-sky-400)]"
+                  : day.logged
+                    ? "bg-sky-400/40"
+                    : "bg-border"
+              } ${day.isToday ? "ring-2 ring-sky-400/40 ring-offset-1 ring-offset-background" : ""}`,
+              value: day.logged ? formatOz(day.ml) : "Not logged",
+              status:
+                day.logged && day.ml >= safeGoal ? "Goal hit" : undefined,
+            }))}
+          />
         </div>
       ) : null}
 

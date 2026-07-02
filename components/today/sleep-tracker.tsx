@@ -72,11 +72,15 @@ export function SleepTracker({
   last,
   week,
   viewHref,
+  quiet = false,
 }: {
   last: LastNight;
   week: SleepNight[];
   /** The detail page ("View all →" /sleep) — omit when already on it. */
   viewHref?: string;
+  /** First-run (P1-4): keep the log button quiet so the page has ONE
+   *  dominant CTA instead of an empty-state chorus. */
+  quiet?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -176,7 +180,7 @@ export function SleepTracker({
           <PopoverTrigger asChild>
             <Button
               className="h-11 w-full gap-1.5"
-              variant={current ? "outline" : "default"}
+              variant={current || quiet ? "outline" : "default"}
             >
               <Moon className="size-4" />
               {current ? "Log sleep" : "Log last night"}
@@ -218,7 +222,7 @@ function SleepTooltip({
   return (
     <div className="min-w-[10rem] rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
       <div className="mb-1.5 flex items-center justify-between gap-4">
-        <span className="font-medium">{row.label}</span>
+        <span className="font-medium">{row.dateLabel}</span>
         <span className="font-medium text-foreground tabular-nums">
           {row.logged ? formatSleepDuration(row.minutes) : "—"}
         </span>

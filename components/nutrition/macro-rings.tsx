@@ -106,11 +106,11 @@ function CalorieDial({
     sub = consumed > 0 ? noTargetSub : "no target yet";
   } else if (over) {
     big = round(consumed - (target as number)).toLocaleString();
-    sub = "cal over";
+    sub = "calories over";
     bigClass = "fill-blood";
   } else {
     big = round(remaining).toLocaleString();
-    sub = "remaining";
+    sub = "calories remaining";
   }
 
   return (
@@ -391,7 +391,7 @@ export function MacroRings({
   fatConsumed,
   fatTarget,
   consumedLabel = "Eaten",
-  noTargetSub = "cal today",
+  noTargetSub = "calories today",
   emptyCta,
 }: RingProps) {
   const reduced = useReducedMotion() ?? false;
