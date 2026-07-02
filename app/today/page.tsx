@@ -24,7 +24,11 @@ import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { MacroRings } from "@/components/nutrition/macro-rings";
 import { WeightChartInteractive } from "@/components/progress/weight-chart-interactive";
 import { GoalList } from "@/components/today/goal-list";
-import { type ChipTone, IconChip } from "@/components/today/icon-chip";
+import {
+  ModuleCard,
+  ModuleFooter,
+  ModuleHeader,
+} from "@/components/today/module-card";
 import { PlanList } from "@/components/today/plan-list";
 import { StatPills } from "@/components/today/stat-pills";
 import {
@@ -562,18 +566,14 @@ async function TodayContent() {
 
       {/* Today's meal log (Pro) — the daily centerpiece, full width */}
       {isPro ? (
-        <Card>
-          <div className="flex items-center justify-between">
-            <CardTitle icon={<Utensils className="size-4" />} tone="amber">
-              Calorie Tracker
-            </CardTitle>
-            <TargetEditor
-              calories={target?.calories ?? null}
-              carbs={target?.carbs ?? null}
-              fat={target?.fat ?? null}
-              protein={target?.protein ?? null}
-            />
-          </div>
+        <ModuleCard>
+          <ModuleHeader
+            icon={<Utensils className="size-4" />}
+            title="Calorie Tracker"
+            tone="amber"
+            viewHref="/nutrition"
+            viewLabel="View history"
+          />
           <div className="mt-2">
             <MacroRings
               caloriesConsumed={caloriesToday}
@@ -595,26 +595,28 @@ async function TodayContent() {
               proteinTarget={target?.protein ?? null}
             />
           </div>
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-            <Link
-              className="text-muted-foreground text-sm underline-offset-4 transition-colors hover:text-foreground hover:underline"
-              href="/nutrition"
-            >
-              {todaysMeals.length > 0
+          <ModuleFooter
+            status={
+              todaysMeals.length > 0
                 ? `${todaysMeals.length} meal${todaysMeals.length === 1 ? "" : "s"} logged today`
-                : "No meals logged yet today."}
-            </Link>
-            <div className="flex items-center gap-2">
-              <AskChadButton prompt="Look at what I've eaten today and how it stacks up against my calorie and macro targets. Am I on track, and what should I eat for the rest of the day?" />
-              <Button asChild className="gap-1.5" size="sm" variant="outline">
-                <Link href="/nutrition">
-                  <Camera className="size-4" />
-                  Log a meal
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </Card>
+                : "No meals logged yet today."
+            }
+          >
+            <AskChadButton prompt="Look at what I've eaten today and how it stacks up against my calorie and macro targets. Am I on track, and what should I eat for the rest of the day?" />
+            <TargetEditor
+              calories={target?.calories ?? null}
+              carbs={target?.carbs ?? null}
+              fat={target?.fat ?? null}
+              protein={target?.protein ?? null}
+            />
+            <Button asChild className="gap-1.5" size="sm" variant="outline">
+              <Link href="/nutrition">
+                <Camera className="size-4" />
+                Log a meal
+              </Link>
+            </Button>
+          </ModuleFooter>
+        </ModuleCard>
       ) : (
         <LockedCard
           icon={<Utensils className="size-4" />}
@@ -627,7 +629,7 @@ async function TodayContent() {
           no longer floats detailed anatomy art behind the text; the header
           silhouette is now the page's single body-visualization style). */}
       <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
-        <Card>
+        <ModuleCard>
           <GoalList
             currentWeight={currentWeight}
             exerciseNames={exerciseNames}
@@ -636,28 +638,23 @@ async function TodayContent() {
             memoryGoalHint={goal}
             pastGoals={pastGoalItems}
           />
-        </Card>
+        </ModuleCard>
 
-        <Card>
+        <ModuleCard>
           <PlanList memoryPlanHint={workoutPlan} plans={planItems} />
-        </Card>
+        </ModuleCard>
       </div>
 
       {/* Last workout + Meal plan (Pro) */}
       {isPro && (
         <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
-          <Card>
-            <div className="flex items-center justify-between">
-              <CardTitle icon={<Dumbbell className="size-4" />} tone="blood">
-                Last workout
-              </CardTitle>
-              <Button asChild className="gap-1.5" size="sm" variant="outline">
-                <Link href="/workouts">
-                  <Dumbbell className="size-3.5" />
-                  View all
-                </Link>
-              </Button>
-            </div>
+          <ModuleCard>
+            <ModuleHeader
+              icon={<Dumbbell className="size-4" />}
+              title="Last workout"
+              tone="blood"
+              viewHref="/workouts"
+            />
             {lastWorkout ? (
               <div className="flex flex-1 flex-col justify-center">
                 <div className="font-display font-semibold text-lg leading-tight">
@@ -672,28 +669,30 @@ async function TodayContent() {
                 </div>
               </div>
             ) : (
-              <EmptyHint
-                cta="Log a workout"
-                href="/workouts"
-                text="No workouts logged yet. Log your first session and Chad starts tracking your PRs and volume."
-              />
+              <p className="text-muted-foreground text-sm">
+                No workouts logged yet. Log your first session and Chad starts
+                tracking your PRs and volume.
+              </p>
             )}
-          </Card>
+            <ModuleFooter>
+              <AskChadButton prompt="Look at my recent workouts. What's working, what's lagging, and what should I hit next session?" />
+              <Button asChild className="gap-1.5" size="sm" variant="outline">
+                <Link href="/workouts">
+                  <Dumbbell className="size-3.5" />
+                  Log a workout
+                </Link>
+              </Button>
+            </ModuleFooter>
+          </ModuleCard>
 
-          <Card>
-            <div className="flex items-center justify-between">
-              <CardTitle icon={<ChefHat className="size-4" />} tone="amber">
-                Meal plan
-              </CardTitle>
-              {mealPlanSummary && (
-                <Button asChild className="gap-1.5" size="sm" variant="outline">
-                  <Link href="/meal-plan">
-                    <ChefHat className="size-3.5" />
-                    View plan
-                  </Link>
-                </Button>
-              )}
-            </div>
+          <ModuleCard>
+            <ModuleHeader
+              icon={<ChefHat className="size-4" />}
+              title="Meal plan"
+              tone="amber"
+              viewHref={mealPlanSummary ? "/meal-plan" : undefined}
+              viewLabel="View plan"
+            />
             {mealPlanSummary ? (
               <div className="flex flex-1 items-center gap-4">
                 {/* Plain <img> (proxy serves it on this authed route) */}
@@ -716,13 +715,27 @@ async function TodayContent() {
                 </div>
               </div>
             ) : (
-              <EmptyHint
-                cta="Build a meal plan"
-                href="/meal-plan"
-                text="No meal plan yet. Have Chad build a structured plan around your macro target — real foods, exact portions."
-              />
+              <p className="text-muted-foreground text-sm">
+                No meal plan yet. Have Chad build a structured plan around your
+                macro target — real foods, exact portions.
+              </p>
             )}
-          </Card>
+            <ModuleFooter>
+              <AskChadButton
+                prompt={
+                  mealPlanSummary
+                    ? "Walk me through my meal plan. What am I eating today, and what can I swap if I'm missing something?"
+                    : "Should I be on a structured meal plan for my goal? What would you put in one for me?"
+                }
+              />
+              <Button asChild className="gap-1.5" size="sm" variant="outline">
+                <Link href="/meal-plan">
+                  <ChefHat className="size-3.5" />
+                  {mealPlanSummary ? "Open plan" : "Build a meal plan"}
+                </Link>
+              </Button>
+            </ModuleFooter>
+          </ModuleCard>
         </div>
       )}
 
@@ -739,25 +752,26 @@ async function TodayContent() {
         )}
 
         {isPro ? (
-          <Card>
-            <div className="flex items-center justify-between">
-              <CardTitle icon={<LineChart className="size-4" />} tone="violet">
-                Weight trend
-              </CardTitle>
-              {currentWeight != null && (
-                <div className="text-right">
-                  <div className="font-display font-semibold text-lg leading-none">
-                    {currentWeight} {displayUnit}
-                  </div>
-                  {weightChange != null && (
-                    <div className="text-muted-foreground text-xs">
-                      {weightChange > 0 ? "+" : ""}
-                      {weightChange} since start
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+          <ModuleCard>
+            <ModuleHeader
+              icon={<LineChart className="size-4" />}
+              title="Weight trend"
+              tone="violet"
+              viewHref="/progress"
+            />
+            {currentWeight != null && (
+              <div className="flex items-baseline gap-2">
+                <span className="font-display font-semibold text-lg leading-none">
+                  {currentWeight} {displayUnit}
+                </span>
+                {weightChange != null && (
+                  <span className="text-muted-foreground text-xs">
+                    {weightChange > 0 ? "+" : ""}
+                    {weightChange} since start
+                  </span>
+                )}
+              </div>
+            )}
             <div className="mt-2">
               {points.length > 0 ? (
                 <WeightChartInteractive
@@ -767,25 +781,21 @@ async function TodayContent() {
                   variant="compact"
                 />
               ) : (
-                <EmptyHint
-                  cta="Log your weight"
-                  href="/progress"
-                  text="No weigh-ins yet. Log your weight to see the trend."
-                />
+                <p className="text-muted-foreground text-sm">
+                  No weigh-ins yet. Log your weight to see the trend.
+                </p>
               )}
             </div>
-            {points.length > 0 && (
-              <div className="mt-3 flex items-center gap-2">
-                <AskChadButton prompt="Look at my weight trend and how it's tracking against my goal weight. Am I moving in the right direction, and should I change anything?" />
-                <Button asChild className="gap-1.5" size="sm" variant="outline">
-                  <Link href="/progress">
-                    <LineChart className="size-3.5" />
-                    Log weight
-                  </Link>
-                </Button>
-              </div>
-            )}
-          </Card>
+            <ModuleFooter>
+              <AskChadButton prompt="Look at my weight trend and how it's tracking against my goal weight. Am I moving in the right direction, and should I change anything?" />
+              <Button asChild className="gap-1.5" size="sm" variant="outline">
+                <Link href="/progress">
+                  <LineChart className="size-3.5" />
+                  Log weight
+                </Link>
+              </Button>
+            </ModuleFooter>
+          </ModuleCard>
         ) : (
           <LockedCard
             icon={<LineChart className="size-4" />}
@@ -854,50 +864,6 @@ async function TodayContent() {
           label="Account"
         />
       </div>
-    </div>
-  );
-}
-
-function Card({ children }: { children: React.ReactNode }) {
-  return (
-    <section className="flex min-w-0 flex-col rounded-2xl border border-border bg-card p-6">
-      {children}
-    </section>
-  );
-}
-
-function CardTitle({
-  icon,
-  tone,
-  children,
-}: {
-  icon: React.ReactNode;
-  tone: ChipTone;
-  children: React.ReactNode;
-}) {
-  return (
-    <h2 className="mb-3 flex items-center gap-2.5 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-      <IconChip tone={tone}>{icon}</IconChip>
-      {children}
-    </h2>
-  );
-}
-
-function EmptyHint({
-  text,
-  cta,
-  href = "/",
-}: {
-  text: string;
-  cta: string;
-  href?: string;
-}) {
-  return (
-    <div className="flex flex-col items-start gap-3">
-      <p className="text-muted-foreground text-sm">{text}</p>
-      <Button asChild size="sm" variant="outline">
-        <Link href={href}>{cta}</Link>
-      </Button>
     </div>
   );
 }

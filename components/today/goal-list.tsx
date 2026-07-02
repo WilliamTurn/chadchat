@@ -7,12 +7,13 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { removeGoal, updateGoalRecord } from "@/app/today/actions";
 import { computeGoalProgress } from "@/lib/goals/progress";
+import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExerciseTrendChart } from "@/components/workouts/exercise-trend-chart";
 import { type EditableGoal, GoalEditor } from "./goal-editor";
 import { GoalViewer } from "./goal-viewer";
-import { IconChip } from "./icon-chip";
+import { ModuleFooter, ModuleHeader } from "./module-card";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -267,17 +268,11 @@ export function GoalList({
 }) {
   return (
     <>
-      <div className="mb-3 flex items-start justify-between">
-        <h2 className="flex items-center gap-2.5 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-          <IconChip tone="blood">
-            <Target className="size-4" />
-          </IconChip>
-          Your goals
-        </h2>
-        {goals.length > 0 && (
-          <GoalEditor exerciseNames={exerciseNames} variant="add" />
-        )}
-      </div>
+      <ModuleHeader
+        icon={<Target className="size-4" />}
+        title="Your goals"
+        tone="blood"
+      />
 
       {goals.length > 0 ? (
         <div className="flex flex-col gap-2">
@@ -324,6 +319,13 @@ export function GoalList({
           </div>
         </details>
       )}
+
+      <ModuleFooter>
+        <AskChadButton prompt="Look at my goals and my progress toward them. Am I on track, and what should I focus on this week?" />
+        {goals.length > 0 && (
+          <GoalEditor exerciseNames={exerciseNames} variant="add" />
+        )}
+      </ModuleFooter>
     </>
   );
 }

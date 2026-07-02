@@ -145,9 +145,9 @@ export function GoalEditor({
             Set your goal
           </Button>
         ) : variant === "add" ? (
-          <Button className="gap-1.5" size="sm" variant="ghost">
+          <Button className="gap-1.5" size="sm" variant="outline">
             <Plus className="size-3.5" />
-            Add
+            Add goal
           </Button>
         ) : (
           <Button

@@ -1,14 +1,14 @@
 "use client";
 
 import { Dumbbell, Trash2 } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { removePlan } from "@/app/today/actions";
+import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { IconChip } from "./icon-chip";
+import { ModuleFooter, ModuleHeader } from "./module-card";
 import { type EditablePlan, PlanEditor } from "./plan-editor";
 import { PlanViewer } from "./plan-viewer";
 
@@ -158,23 +158,12 @@ export function PlanList({
 }) {
   return (
     <>
-      <div className="mb-3 flex items-start justify-between gap-2">
-        <h2 className="flex items-center gap-2.5 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-          <IconChip tone="blood">
-            <Dumbbell className="size-4" />
-          </IconChip>
-          Your training
-        </h2>
-        <div className="flex items-center gap-2">
-          <Link
-            className="whitespace-nowrap text-muted-foreground text-xs underline-offset-4 transition-colors hover:text-foreground hover:underline"
-            href="/workouts"
-          >
-            View all →
-          </Link>
-          {plans.length > 0 && <PlanEditor variant="add" />}
-        </div>
-      </div>
+      <ModuleHeader
+        icon={<Dumbbell className="size-4" />}
+        title="Your training"
+        tone="blood"
+        viewHref="/workouts"
+      />
 
       {plans.length > 0 ? (
         <div className="flex flex-col gap-2">
@@ -203,6 +192,11 @@ export function PlanList({
           <PlanEditor variant="cta" />
         </div>
       )}
+
+      <ModuleFooter>
+        <AskChadButton prompt="Look at my training plan. Is it right for my goal, and should anything about it change?" />
+        {plans.length > 0 && <PlanEditor variant="add" />}
+      </ModuleFooter>
     </>
   );
 }

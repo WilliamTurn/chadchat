@@ -19,7 +19,11 @@ import {
   saveWaterGoal,
 } from "@/app/nutrition/actions";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
-import { IconChip } from "@/components/today/icon-chip";
+import {
+  ModuleCard,
+  ModuleFooter,
+  ModuleHeader,
+} from "@/components/today/module-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -106,31 +110,15 @@ export function WaterTracker({
       )}, ${formatOz(remaining)} to go.`;
 
   return (
-    <section className="flex min-w-0 flex-col rounded-2xl border border-border bg-card p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2.5">
-          <IconChip tone="sky">
-            <Droplets className="size-4" />
-          </IconChip>
-          <h2 className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
-            Hydration
-          </h2>
-        </div>
-        <div className="flex items-center gap-1">
-          <WaterGoalEditor
-            goalMl={safeGoal}
-            onOpenChange={setGoalOpen}
-            open={goalOpen}
-            pending={pending}
-            run={run}
-          />
-          <AskChadButton prompt="How's my water intake today? Am I drinking enough, and when should I top up?" />
-        </div>
-      </div>
+    <ModuleCard>
+      <ModuleHeader
+        icon={<Droplets className="size-4" />}
+        title="Hydration"
+        tone="sky"
+      />
 
       {/* Hero vessel + readout */}
-      <div className="mt-6 flex items-center gap-6">
+      <div className="mt-3 flex items-center gap-6">
         <div
           aria-label={fillLabel}
           className="relative size-32 shrink-0 sm:size-36"
@@ -380,11 +368,11 @@ export function WaterTracker({
         </Popover>
       </div>
 
-      {/* Undo */}
-      <div className="mt-3 flex justify-end">
+      <ModuleFooter>
+        <AskChadButton prompt="How's my water intake today? Am I drinking enough, and when should I top up?" />
         <Button
           aria-label="Undo last water entry"
-          className="h-9 gap-1.5 text-muted-foreground text-xs"
+          className="gap-1.5 text-muted-foreground text-xs"
           disabled={pending || totalMl <= 0}
           onClick={() => run(removeWater)}
           size="sm"
@@ -393,8 +381,15 @@ export function WaterTracker({
           <Undo2 className="size-3.5" />
           Undo last
         </Button>
-      </div>
-    </section>
+        <WaterGoalEditor
+          goalMl={safeGoal}
+          onOpenChange={setGoalOpen}
+          open={goalOpen}
+          pending={pending}
+          run={run}
+        />
+      </ModuleFooter>
+    </ModuleCard>
   );
 }
 

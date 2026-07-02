@@ -16,7 +16,11 @@ import { Bar, BarChart, Cell, ReferenceLine, XAxis } from "recharts";
 import { toast } from "sonner";
 import { logSleep } from "@/app/today/actions";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
-import { IconChip } from "@/components/today/icon-chip";
+import {
+  ModuleCard,
+  ModuleFooter,
+  ModuleHeader,
+} from "@/components/today/module-card";
 import { Button } from "@/components/ui/button";
 import {
   type ChartConfig,
@@ -244,64 +248,45 @@ export function SleepTracker({
   );
 
   return (
-    <section className="flex min-w-0 flex-col rounded-2xl border border-border bg-card p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2.5">
-          <IconChip tone="indigo">
-            <Moon className="size-4" />
-          </IconChip>
-          <h2 className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
-            Sleep & recovery
-          </h2>
-        </div>
-        <AskChadButton prompt="Look at my sleep over the last week. Am I getting enough to recover and build muscle, and what should I change?" />
-      </div>
+    <ModuleCard>
+      <ModuleHeader
+        icon={<Moon className="size-4" />}
+        title="Sleep & recovery"
+        tone="indigo"
+      />
 
       {/* Last night readout */}
-      <div className="mt-6 flex items-end justify-between gap-4">
-        <div className="flex min-w-0 flex-col gap-1">
-          <span className="text-muted-foreground text-xs">
-            {last ? `Last night · ${last.whenLabel}` : "Last night"}
-          </span>
-          {last ? (
-            <>
-              <div className="flex items-baseline gap-2">
-                <span className="font-display font-bold text-3xl text-foreground tabular-nums">
-                  {formatDuration(last.minutes)}
-                </span>
-                {last.quality != null && <Stars value={last.quality} />}
-              </div>
-              <p
-                className={cn(
-                  "font-medium text-sm",
-                  reached ? "text-emerald-500" : "text-foreground"
-                )}
-              >
-                {reached ? "Well rested" : "Short on sleep"}
-              </p>
-            </>
-          ) : (
-            <>
-              <span className="font-display font-bold text-3xl text-muted-foreground tabular-nums">
-                —
+      <div className="mt-3 flex min-w-0 flex-col gap-1">
+        <span className="text-muted-foreground text-xs">
+          {last ? `Last night · ${last.whenLabel}` : "Last night"}
+        </span>
+        {last ? (
+          <>
+            <div className="flex items-baseline gap-2">
+              <span className="font-display font-bold text-3xl text-foreground tabular-nums">
+                {formatDuration(last.minutes)}
               </span>
-              <p className="text-muted-foreground text-sm">
-                No sleep logged yet.
-              </p>
-            </>
-          )}
-        </div>
-
-        <Popover onOpenChange={setOpen} open={open}>
-          <PopoverTrigger asChild>
-            <Button className="gap-1.5 shrink-0" size="sm" variant="outline">
-              <Moon className="size-3.5" />
-              Log sleep
-            </Button>
-          </PopoverTrigger>
-          {logForm}
-        </Popover>
+              {last.quality != null && <Stars value={last.quality} />}
+            </div>
+            <p
+              className={cn(
+                "font-medium text-sm",
+                reached ? "text-emerald-500" : "text-foreground"
+              )}
+            >
+              {reached ? "Well rested" : "Short on sleep"}
+            </p>
+          </>
+        ) : (
+          <>
+            <span className="font-display font-bold text-3xl text-muted-foreground tabular-nums">
+              —
+            </span>
+            <p className="text-muted-foreground text-sm">
+              No sleep logged yet.
+            </p>
+          </>
+        )}
       </div>
 
       {/* 7-night week chart */}
@@ -345,7 +330,20 @@ export function SleepTracker({
       <p className="mt-4 text-center text-muted-foreground text-xs">
         {goalHours}+ hrs a night recommended · last 7 nights
       </p>
-    </section>
+
+      <ModuleFooter>
+        <AskChadButton prompt="Look at my sleep over the last week. Am I getting enough to recover and build muscle, and what should I change?" />
+        <Popover onOpenChange={setOpen} open={open}>
+          <PopoverTrigger asChild>
+            <Button className="shrink-0 gap-1.5" size="sm" variant="outline">
+              <Moon className="size-3.5" />
+              Log sleep
+            </Button>
+          </PopoverTrigger>
+          {logForm}
+        </Popover>
+      </ModuleFooter>
+    </ModuleCard>
   );
 }
 
