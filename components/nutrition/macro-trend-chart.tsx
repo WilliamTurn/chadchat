@@ -97,12 +97,25 @@ export function MacroTrendChart({
     return Math.round(sum / rows.length);
   }, [rows, metric]);
 
-  const yMax = useMemo(() => {
-    if (data.length === 0) {
-      return 1;
+  // Round ascending y-ticks (VF-1): a 1/2/2.5/5 × 10^n step sized for ~5
+  // intervals over the peak (or the target, so it always sits inside the
+  // domain), the max rounded UP to a whole step — never a raw data max.
+  const { yMax, yTicks } = useMemo(() => {
+    const peak = Math.max(
+      1,
+      ...data.map((r) => r[metric]),
+      targetValue ?? 0
+    );
+    const rawStep = (peak * 1.1) / 5;
+    const pow = 10 ** Math.floor(Math.log10(rawStep));
+    const step =
+      ([1, 2, 2.5, 5, 10].find((m) => m * pow >= rawStep) ?? 10) * pow;
+    const max = Math.ceil((peak * 1.1) / step) * step;
+    const ticks: number[] = [];
+    for (let v = 0; v <= max; v += step) {
+      ticks.push(v);
     }
-    const peak = Math.max(...data.map((r) => r[metric]), targetValue ?? 0);
-    return Math.max(peak * 1.15, 1);
+    return { yMax: max, yTicks: ticks };
   }, [data, metric, targetValue]);
 
   if (days.length < 2) {
@@ -110,6 +123,9 @@ export function MacroTrendChart({
   }
 
   const lastT = data.at(-1)?.t;
+  // Two points can't carry a smoothed trend — a line through both just
+  // re-draws the bars edge-to-edge and reads as fake precision (VF-1).
+  const showTrendLine = rows.length >= 3;
 
   return (
     <ChartCard
@@ -121,7 +137,10 @@ export function MacroTrendChart({
             <span className="font-medium text-foreground">
               {targetValue.toLocaleString()} {meta.unit}
             </span>{" "}
-            · bars are each day, line is your trend
+            ·{" "}
+            {showTrendLine
+              ? "bars are each day, line is your trend"
+              : "bars are each day"}
           </span>
         ) : (
           <span>
@@ -171,7 +190,7 @@ export function MacroTrendChart({
       <ChartContainer className="h-[230px] w-full" config={chartConfig}>
         <ComposedChart
           data={data}
-          margin={{ top: 8, right: 8, bottom: 0, left: -8 }}
+          margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
         >
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis
@@ -188,10 +207,11 @@ export function MacroTrendChart({
           <YAxis
             axisLine={false}
             domain={[0, yMax]}
-            tickCount={4}
+            tickFormatter={(v: number) => v.toLocaleString()}
             tickLine={false}
             tickMargin={4}
-            width={40}
+            ticks={yTicks}
+            width={46}
           />
           <ChartTooltip
             content={<MacroTooltip activeMetric={metric} />}
@@ -229,16 +249,18 @@ export function MacroTrendChart({
               />
             ))}
           </Bar>
-          <Line
-            animationDuration={750}
-            animationEasing="ease-out"
-            dataKey="trend"
-            dot={false}
-            isAnimationActive={reveal}
-            stroke={meta.color}
-            strokeWidth={2.5}
-            type="monotone"
-          />
+          {showTrendLine && (
+            <Line
+              animationDuration={750}
+              animationEasing="ease-out"
+              dataKey="trend"
+              dot={false}
+              isAnimationActive={reveal}
+              stroke={meta.color}
+              strokeWidth={2.5}
+              type="monotone"
+            />
+          )}
         </ComposedChart>
       </ChartContainer>
     </ChartCard>

@@ -113,10 +113,15 @@ async function SleepContent() {
     quality: e.quality,
   }));
 
+  // One sleep chart per page (VF-2): once the full trend chart below has
+  // enough nights to render, the tracker card drops its 7-night strip and
+  // stays the readout + logger.
+  const showTrend = sleepDaily.length >= 2;
+
   return (
     <div className="flex flex-col gap-6">
-      <SleepTracker last={lastNight} week={sleepWeek} />
-      {sleepDaily.length >= 2 && <SleepTrendChart days={sleepDaily} />}
+      <SleepTracker last={lastNight} week={sleepWeek} weekChart={!showTrend} />
+      {showTrend && <SleepTrendChart days={sleepDaily} />}
       <SleepHistory entries={history} />
     </div>
   );

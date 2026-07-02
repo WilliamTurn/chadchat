@@ -38,6 +38,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useMountReveal } from "@/hooks/use-mount-reveal";
 import type { LastNight, SleepNight } from "@/lib/today/week";
 import { cn } from "@/lib/utils";
 import { SLEEP_GOAL_MINUTES } from "@/lib/validation/sleep";
@@ -73,6 +74,7 @@ export function SleepTracker({
   week,
   viewHref,
   quiet = false,
+  weekChart = true,
 }: {
   last: LastNight;
   week: SleepNight[];
@@ -81,8 +83,12 @@ export function SleepTracker({
   /** First-run (P1-4): keep the log button quiet so the page has ONE
    *  dominant CTA instead of an empty-state chorus. */
   quiet?: boolean;
+  /** /sleep hides this strip once the full Sleep-trend chart renders below,
+   *  so the page carries ONE sleep chart (VF-2). */
+  weekChart?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const reveal = useMountReveal();
 
   const goalHours = SLEEP_GOAL_MINUTES / 60;
   // Only a genuinely-current entry gets the freshness verdict.
@@ -136,7 +142,7 @@ export function SleepTracker({
       </div>
 
       {/* 7-night week chart */}
-      {week.some((d) => d.logged) ? (
+      {weekChart && week.some((d) => d.logged) ? (
         <div className="mt-6">
           <ChartContainer className="h-[120px] w-full" config={chartConfig}>
             <BarChart
@@ -157,7 +163,13 @@ export function SleepTracker({
                 strokeOpacity={0.5}
                 y={SLEEP_GOAL_MINUTES}
               />
-              <Bar dataKey="minutes" radius={[3, 3, 0, 0]}>
+              <Bar
+                animationDuration={750}
+                animationEasing="ease-out"
+                dataKey="minutes"
+                isAnimationActive={reveal}
+                radius={[3, 3, 0, 0]}
+              >
                 {week.map((d) => (
                   <Cell
                     fill={INDIGO}
