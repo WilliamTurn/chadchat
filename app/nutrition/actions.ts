@@ -154,7 +154,7 @@ export async function logMealManually(
 ): Promise<NutritionActionState> {
   const user = await requirePro();
   if (!user) {
-    return { ok: false, error: "Meal logging is a Chad Pro feature." };
+    return { ok: false, error: "The Calorie Tracker is a Chad Pro feature." };
   }
 
   const parsed = logMealSchema.safeParse(input);

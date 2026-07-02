@@ -116,7 +116,7 @@ function UpgradePrompt() {
   return (
     <div className="rounded-2xl border border-border bg-card p-8 text-center">
       <h2 className="font-medium text-lg">
-        Meal logging is a Chad Pro feature
+        The Calorie Tracker is a Chad Pro feature
       </h2>
       <p className="mx-auto mt-2 max-w-md text-muted-foreground text-sm">
         Upgrade to Pro to log meals by photo or by hand. Chad estimates the

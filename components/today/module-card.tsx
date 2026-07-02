@@ -4,20 +4,25 @@ import { type ChipTone, IconChip } from "@/components/today/icon-chip";
 import { cn } from "@/lib/utils";
 
 /**
- * The /today card grammar (DSH-32) — every dashboard module follows the same
- * three-slot layout so the page scans consistently:
+ * The /today card grammar (DSH-32 + R2-7): every dashboard module follows the
+ * same three-slot layout so the page scans consistently:
  *
  *   [IconChip TITLE]                      [View all →]   ← ModuleHeader
  *   …module content…
- *   [status line]        [Ask Chad] [config] [primary]   ← ModuleFooter
+ *   [status line, full width]
+ *   [Ask Chad]              [config] [primary action]    ← ModuleFooter
  *
  * - The header's right slot only ever holds the quiet view/history link, and
  *   only when the module has a destination page (omit it otherwise).
- * - Every interactive control lives in the footer, always in the same order:
- *   Ask Chad, then any config control (goal/target editors, undo), then the
- *   single primary action, right-aligned. Modules whose logging controls ARE
- *   the content (the hydration quick-adds) keep them in the body and use the
- *   footer for Ask Chad + config only.
+ * - Ask Chad has ONE fixed home (R2-7): anchored alone on the left edge of
+ *   every footer, via the `askChad` slot. The rest of the controls (config
+ *   editors, undo, the single primary action) stay a right-aligned cluster in
+ *   `children`, so the eye finds Ask Chad in the identical spot on every
+ *   card no matter how many other controls the card carries. Modules whose
+ *   logging controls ARE the content (the hydration quick-adds) keep them in
+ *   the body.
+ * - The optional status line sits on its own row above the controls so it can
+ *   never push Ask Chad out of position.
  * - ModuleCard is a flex column and the footer is `mt-auto`, so footers line
  *   up across equal-height grid rows.
  */
@@ -74,17 +79,26 @@ export function ModuleHeader({
 
 export function ModuleFooter({
   status,
+  askChad,
   children,
 }: {
-  /** Optional muted context line, kept left of the action cluster. */
+  /** Optional muted context line, on its own row above the controls. */
   status?: ReactNode;
-  children: ReactNode;
+  /** The card's Ask Chad button — always anchored on the left edge (R2-7). */
+  askChad?: ReactNode;
+  /** The right-aligned cluster: config controls, then the primary action. */
+  children?: ReactNode;
 }) {
   return (
-    <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-2 pt-4">
-      <div className="min-w-0 text-muted-foreground text-sm">{status}</div>
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        {children}
+    <div className="mt-auto flex flex-col gap-2 pt-4">
+      {status ? (
+        <div className="min-w-0 text-muted-foreground text-sm">{status}</div>
+      ) : null}
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <div className="shrink-0">{askChad}</div>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {children}
+        </div>
       </div>
     </div>
   );

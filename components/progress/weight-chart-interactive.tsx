@@ -21,7 +21,7 @@
  *     card + headline number), all history, shorter, no toggle/KPIs.
  */
 
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import {
   Area,
   CartesianGrid,
@@ -55,19 +55,20 @@ import {
 } from "@/lib/chart/trend";
 import { computeGoalProgress } from "@/lib/goals/progress";
 
-const ACCENT = "#a4161a"; // brand blood red
 const GOAL_COLOR = "#10b981"; // emerald
+
+// R2-10: the trend line's color is a data verdict, not the brand accent. The
+// old always-blood-red line read as "something is wrong" even mid-successful
+// cut. Emerald = the trend is moving toward the active goal (same emerald and
+// same direction test the KPI tones use); neutral = no goal, flat, or away.
+const TOWARD_COLOR = GOAL_COLOR;
+const NEUTRAL_COLOR = "var(--foreground)";
 
 // Data thresholds for honest sparse states (see spec §4.6).
 const MIN_FOR_RATE = 5; // below this, a per-week rate is too noisy to show
 
 const ASK_CHAD_PROMPT =
   "Review my progress — weight, body measurements, and photos. How am I doing, and what should I adjust?";
-
-const chartConfig = {
-  trend: { label: "Trend", color: ACCENT },
-  weight: { label: "Weighed in", color: "var(--muted-foreground)" },
-} satisfies ChartConfig;
 
 export function WeightChartInteractive({
   points,
@@ -349,6 +350,26 @@ function WeightChartBody({
 }) {
   // One-time draw-in on mount; scrub + range changes stay instant.
   const reveal = useMountReveal();
+  const gradientId = useId();
+
+  // Same direction test as the KPI "Change" tone, over the drawn rows: is the
+  // trend moving the way the active goal points? (R2-10)
+  const trendingToward = useMemo(() => {
+    if (goalWeight == null || rows.length < 2) {
+      return false;
+    }
+    const change = rows[rows.length - 1].trend - rows[0].trend;
+    if (change === 0) {
+      return false;
+    }
+    return (change < 0) === (goalWeight < rows[0].trend);
+  }, [rows, goalWeight]);
+  const lineColor = trendingToward ? TOWARD_COLOR : NEUTRAL_COLOR;
+
+  const chartConfig = {
+    trend: { label: "Trend", color: lineColor },
+    weight: { label: "Weighed in", color: "var(--muted-foreground)" },
+  } satisfies ChartConfig;
 
   // Padded y-domain that always keeps the goal line on screen.
   const yDomain = useMemo<[number, number]>(() => {
@@ -378,9 +399,9 @@ function WeightChartBody({
         }
       >
         <defs>
-          <linearGradient id="weightTrendFill" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor={ACCENT} stopOpacity={0.18} />
-            <stop offset="95%" stopColor={ACCENT} stopOpacity={0} />
+          <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor={lineColor} stopOpacity={0.18} />
+            <stop offset="95%" stopColor={lineColor} stopOpacity={0} />
           </linearGradient>
         </defs>
 
@@ -410,7 +431,7 @@ function WeightChartBody({
         {compact && <YAxis domain={yDomain} hide />}
 
         <ChartTooltip
-          content={<WeightTooltip unit={unit} />}
+          content={<WeightTooltip trendColor={lineColor} unit={unit} />}
           cursor={{
             stroke: "var(--muted-foreground)",
             strokeDasharray: "4 4",
@@ -453,14 +474,14 @@ function WeightChartBody({
 
         {/* The headline EMA trend, on top. */}
         <Area
-          activeDot={{ r: 4, fill: ACCENT, strokeWidth: 0 }}
+          activeDot={{ r: 4, fill: lineColor, strokeWidth: 0 }}
           animationDuration={750}
           animationEasing="ease-out"
           dataKey="trend"
           dot={false}
-          fill="url(#weightTrendFill)"
+          fill={`url(#${gradientId})`}
           isAnimationActive={reveal}
-          stroke={ACCENT}
+          stroke={lineColor}
           strokeWidth={2.5}
           type="monotone"
         />
@@ -477,10 +498,12 @@ function WeightTooltip({
   active,
   payload,
   unit,
+  trendColor,
 }: {
   active?: boolean;
   payload?: { dataKey?: string | number; payload?: TrendRow }[];
   unit: string;
+  trendColor: string;
 }) {
   if (!active || !payload?.length) {
     return null;
@@ -498,7 +521,11 @@ function WeightTooltip({
           label="Weighed in"
           value={`${row.weight} ${unit}`}
         />
-        <TooltipRow color={ACCENT} label="Trend" value={`${row.trend} ${unit}`} />
+        <TooltipRow
+          color={trendColor}
+          label="Trend"
+          value={`${row.trend} ${unit}`}
+        />
       </div>
     </div>
   );

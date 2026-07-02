@@ -2,6 +2,7 @@
 
 import { RotateCcw, Target, Trash2 } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -12,7 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExerciseTrendChart } from "@/components/workouts/exercise-trend-chart";
 import { type EditableGoal, GoalEditor } from "./goal-editor";
-import { GoalViewer } from "./goal-viewer";
 import { ModuleFooter, ModuleHeader } from "./module-card";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -24,8 +24,14 @@ export type LiftProgress = {
   points: { t: number; value: number }[];
 };
 
-/** Live progress for a measurable goal, given a current value. */
-function GoalProgress({
+/** The full-page goal document (R2-9). */
+function goalHref(goal: EditableGoal): string {
+  return `/goals/${goal.id}`;
+}
+
+/** Live progress for a measurable goal, given a current value. Exported for
+ *  the /goals/[id] document page, so the bar there matches the card exactly. */
+export function GoalProgress({
   goal,
   current,
   firstValue,
@@ -159,7 +165,10 @@ function GoalItem({
         </div>
       )}
       <div className="mt-1 flex items-center gap-1">
-        <GoalViewer goal={goal} />
+        {/* The goal's full-page document (R2-9), not a cramped dialog. */}
+        <Button asChild className="px-0 text-blood" size="sm" variant="link">
+          <Link href={goalHref(goal)}>View</Link>
+        </Button>
         <GoalEditor exerciseNames={exerciseNames} goal={goal} variant="icon" />
         <RowDeleteGoal id={goal.id} />
       </div>
@@ -250,7 +259,9 @@ function PastGoalItem({ goal }: { goal: EditableGoal }) {
         <Badge variant="secondary">{goal.status}</Badge>
       </div>
       <div className="flex shrink-0 items-center gap-1">
-        <GoalViewer goal={goal} />
+        <Button asChild className="px-0 text-blood" size="sm" variant="link">
+          <Link href={goalHref(goal)}>View</Link>
+        </Button>
         <Button
           aria-label="Reopen goal"
           className="size-7 text-muted-foreground"
@@ -283,6 +294,7 @@ export function GoalList({
   quiet = false,
   calorieConflict = null,
   overlapIds = [],
+  viewHref,
 }: {
   goals: EditableGoal[];
   currentWeight: number | null;
@@ -304,6 +316,8 @@ export function GoalList({
   } | null;
   /** Ids of active goals that track the same metric as another active goal. */
   overlapIds?: string[];
+  /** The goals deep page ("View all →" /goals). Omit when already on it. */
+  viewHref?: string;
 }) {
   return (
     <>
@@ -311,6 +325,7 @@ export function GoalList({
         icon={<Target className="size-4" />}
         title="Your goals"
         tone="blood"
+        viewHref={viewHref}
       />
 
       {calorieConflict && (
@@ -379,8 +394,11 @@ export function GoalList({
         </details>
       )}
 
-      <ModuleFooter>
-        <AskChadButton prompt="Look at my goals and my progress toward them. Am I on track, and what should I focus on this week?" />
+      <ModuleFooter
+        askChad={
+          <AskChadButton prompt="Look at my goals and my progress toward them. Am I on track, and what should I focus on this week?" />
+        }
+      >
         {goals.length > 0 && (
           <GoalEditor exerciseNames={exerciseNames} variant="add" />
         )}

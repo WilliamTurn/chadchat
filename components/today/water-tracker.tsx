@@ -389,8 +389,11 @@ export function WaterTracker({
         </div>
       ) : null}
 
-      <ModuleFooter>
-        <AskChadButton prompt="How's my water intake today? Am I drinking enough, and when should I top up?" />
+      <ModuleFooter
+        askChad={
+          <AskChadButton prompt="How's my water intake today? Am I drinking enough, and when should I top up?" />
+        }
+      >
         <Button
           aria-label="Undo last water entry"
           className="gap-1.5 text-muted-foreground text-xs"

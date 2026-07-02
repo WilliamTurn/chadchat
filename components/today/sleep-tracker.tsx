@@ -196,10 +196,11 @@ export function SleepTracker({
       </div>
 
       <ModuleFooter
+        askChad={
+          <AskChadButton prompt="Look at my sleep over the last week. Am I getting enough to recover and build muscle, and what should I change?" />
+        }
         status={`${goalHours}+ hrs a night recommended · last 7 nights`}
-      >
-        <AskChadButton prompt="Look at my sleep over the last week. Am I getting enough to recover and build muscle, and what should I change?" />
-      </ModuleFooter>
+      />
     </ModuleCard>
   );
 }

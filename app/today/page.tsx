@@ -74,8 +74,13 @@ import {
 } from "@/lib/today/week";
 import { HeroCustomizer } from "@/components/today/hero-customizer";
 import type { LiftProgress } from "@/components/today/goal-list";
-import type { WorkoutWithChildren } from "@/lib/db/queries";
-import { exercise1RMTrend, type WorkoutData } from "@/lib/workouts/stats";
+import { findCalorieConflict, findOverlapIds } from "@/lib/goals/coherence";
+import { clientField } from "@/lib/memory/client-field";
+import {
+  distinctExerciseNames,
+  toWorkoutData,
+} from "@/lib/workouts/serialize";
+import { exercise1RMTrend } from "@/lib/workouts/stats";
 
 const LB_PER_KG = 2.204_62;
 const DAY_MS = 86_400_000;
@@ -88,48 +93,6 @@ function round1(n: number): number {
 // last-workout card. Bounded and cheaper than the /workouts page's 200, but
 // plenty for a strength-goal trend line.
 const TODAY_WORKOUT_LIMIT = 60;
-
-/** DB workout rows → the serializable shape the stats helpers consume. */
-function toWorkoutData(w: WorkoutWithChildren): WorkoutData {
-  return {
-    id: w.id,
-    title: w.title,
-    performedAt: w.performedAt.toISOString(),
-    durationSeconds: w.durationSeconds,
-    notes: w.notes,
-    exercises: w.exercises.map((ex) => ({
-      name: ex.exerciseName,
-      muscleGroup: ex.muscleGroup,
-      notes: ex.notes,
-      sets: ex.sets.map((s) => ({
-        weight: s.weight,
-        reps: s.reps,
-        unit: s.unit,
-        rpe: s.rpe,
-        setType: s.setType,
-        completed: s.completed,
-      })),
-    })),
-  };
-}
-
-/** Pull a value from the "## Client file" block of Chad's memory profile. */
-function clientField(
-  profile: string | null | undefined,
-  label: string
-): string | null {
-  if (!profile) {
-    return null;
-  }
-  const escaped = label.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
-  const re = new RegExp(`^[-*]\\s*${escaped}\\s*:\\s*(.+)$`, "im");
-  const match = profile.match(re);
-  const value = match?.[1]?.trim();
-  if (!value || /^unknown$/i.test(value)) {
-    return null;
-  }
-  return value;
-}
 
 /** "Today" / "Yesterday" / "N days ago" / a short date, for the last-workout card
  *  — day boundaries on the user's own wall clock (FEAT-8). */
@@ -147,20 +110,6 @@ function relativeDay(d: Date, timezone: string | null): string {
     return `${diffDays} days ago`;
   }
   return formatCalendarDay(d, { month: "short", day: "numeric" });
-}
-
-/** A daily calorie figure named in free text ("1,800 cal", "calories capped at
- *  1,800"), for the goal-vs-target coherence nudge (P2-4). Bounded to a sane
- *  daily range so gram counts and dates never match. */
-function mentionedCalories(text: string): number | null {
-  const m =
-    text.match(/(\d[\d,]{2,4})\s*(?:k?cals?\b|calories?\b)/i) ??
-    text.match(/\bcalories?\b[^.\d]{0,40}(\d[\d,]{2,4})/i);
-  if (!m) {
-    return null;
-  }
-  const n = Number(m[1].replace(/,/g, ""));
-  return Number.isFinite(n) && n >= 800 && n <= 10_000 ? n : null;
 }
 
 /** Consecutive days (ending today or yesterday) with at least one logged action.
@@ -318,63 +267,16 @@ async function TodayContent() {
   const goalItems = goals.map(toGoalItem);
   const pastGoalItems = pastGoals.map(toGoalItem);
 
-  // Coherence nudges (P2-4): (a) an active goal whose text names a daily
-  // calorie figure that disagrees with the Calorie Tracker target, and (b) two
-  // active goals tracking the same metric, whose progress bars anchor on
-  // different start values and so can contradict each other on one screen.
-  let calorieConflict: {
-    goalTitle: string;
-    mentioned: number;
-    target: number;
-  } | null = null;
-  if (target?.calories) {
-    for (const g of goalItems) {
-      const mentioned = mentionedCalories(`${g.title} ${g.detail ?? ""}`);
-      if (mentioned != null && mentioned !== target.calories) {
-        calorieConflict = {
-          goalTitle: g.title,
-          mentioned,
-          target: target.calories,
-        };
-        break;
-      }
-    }
-  }
-
-  const overlapIds: string[] = [];
-  {
-    // Only metrics where two goals genuinely measure the same thing: weight,
-    // body fat, or the same lift. Two "measurement" goals can be different
-    // body parts, and "custom" goals have no comparable metric.
-    const byMetric = new Map<string, string[]>();
-    for (const g of goalItems) {
-      if (g.metric === "weight" || g.metric === "bodyfat") {
-        byMetric.set(g.metric, [...(byMetric.get(g.metric) ?? []), g.id]);
-      } else if (g.metric === "lift" && g.metricRef) {
-        const key = `lift:${g.metricRef.trim().toLowerCase()}`;
-        byMetric.set(key, [...(byMetric.get(key) ?? []), g.id]);
-      }
-    }
-    for (const ids of byMetric.values()) {
-      if (ids.length > 1) {
-        overlapIds.push(...ids);
-      }
-    }
-  }
+  // Coherence nudges (P2-4), shared with /goals via lib/goals/coherence.
+  const calorieConflict = findCalorieConflict(goalItems, target?.calories);
+  const overlapIds = findOverlapIds(goalItems);
 
   // Lift goals (DSH-28): read the est.-1RM trend for each tracked exercise from
   // the logged workouts, so the goal card shows live progress + charts against
   // the PR data already collected. Exercise names double as add-a-goal
   // suggestions.
   const workoutData = recentWorkouts.map(toWorkoutData);
-  const exerciseNames = [
-    ...new Map(
-      workoutData
-        .flatMap((w) => w.exercises.map((ex) => ex.name.trim()))
-        .filter(Boolean)
-        .map((name) => [name.toLowerCase(), name] as const)
-    ).values(),
-  ].sort((a, b) => a.localeCompare(b));
+  const exerciseNames = distinctExerciseNames(workoutData);
 
   const liftProgress: Record<string, LiftProgress> = {};
   for (const g of goalItems) {
@@ -635,7 +537,9 @@ async function TodayContent() {
         </div>
       </header>
 
-      {/* Today's meal log (Pro) — the daily centerpiece, full width */}
+      {/* Calorie Tracker (Pro) — the daily centerpiece, full width. One name
+          everywhere (R2-6): nav label, page title, this card, and Chad's own
+          copy all say "Calorie Tracker". */}
       {isPro ? (
         <ModuleCard>
           <ModuleHeader
@@ -670,13 +574,15 @@ async function TodayContent() {
             />
           </div>
           <ModuleFooter
+            askChad={
+              <AskChadButton prompt="Look at what I've eaten today and how it stacks up against my calorie and macro targets. Am I on track, and what should I eat for the rest of the day?" />
+            }
             status={
               todaysMeals.length > 0
                 ? `${todaysMeals.length} meal${todaysMeals.length === 1 ? "" : "s"} logged today`
                 : "No meals logged yet today."
             }
           >
-            <AskChadButton prompt="Look at what I've eaten today and how it stacks up against my calorie and macro targets. Am I on track, and what should I eat for the rest of the day?" />
             <TargetEditor
               calories={target?.calories ?? null}
               carbs={target?.carbs ?? null}
@@ -749,6 +655,7 @@ async function TodayContent() {
             overlapIds={overlapIds}
             pastGoals={pastGoalItems}
             quiet={firstRun}
+            viewHref="/goals"
           />
         </ModuleCard>
 
@@ -792,8 +699,11 @@ async function TodayContent() {
                 tracking your PRs and volume.
               </p>
             )}
-            <ModuleFooter>
-              <AskChadButton prompt="Look at my recent workouts. What's working, what's lagging, and what should I hit next session?" />
+            <ModuleFooter
+              askChad={
+                <AskChadButton prompt="Look at my recent workouts. What's working, what's lagging, and what should I hit next session?" />
+              }
+            >
               <Button asChild className="gap-1.5" size="sm" variant="outline">
                 <Link href="/workouts">
                   Log a workout
@@ -838,14 +748,17 @@ async function TodayContent() {
                 macro target — real foods, exact portions.
               </p>
             )}
-            <ModuleFooter>
-              <AskChadButton
-                prompt={
-                  mealPlanSummary
-                    ? "Walk me through my meal plan. What am I eating today, and what can I swap if I'm missing something?"
-                    : "Should I be on a structured meal plan for my goal? What would you put in one for me?"
-                }
-              />
+            <ModuleFooter
+              askChad={
+                <AskChadButton
+                  prompt={
+                    mealPlanSummary
+                      ? "Walk me through my meal plan. What am I eating today, and what can I swap if I'm missing something?"
+                      : "Should I be on a structured meal plan for my goal? What would you put in one for me?"
+                  }
+                />
+              }
+            >
               <Button asChild className="gap-1.5" size="sm" variant="outline">
                 <Link href="/meal-plan">
                   {mealPlanSummary ? "Open plan" : "Build a meal plan"}
@@ -907,8 +820,11 @@ async function TodayContent() {
               </p>
             )}
           </div>
-          <ModuleFooter>
-            <AskChadButton prompt="Look at my weight trend and how it's tracking against my goal weight. Am I moving in the right direction, and should I change anything?" />
+          <ModuleFooter
+            askChad={
+              <AskChadButton prompt="Look at my weight trend and how it's tracking against my goal weight. Am I moving in the right direction, and should I change anything?" />
+            }
+          >
             <Button asChild className="gap-1.5" size="sm" variant="outline">
               <Link href="/progress#log-entry">
                 Log weight

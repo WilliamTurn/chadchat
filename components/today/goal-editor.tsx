@@ -61,8 +61,9 @@ export function GoalEditor({
   exerciseNames = [],
 }: {
   goal?: EditableGoal;
-  /** "icon" = pencil (edit); "cta" = full button (empty state); "add" = small + (has goals). */
-  variant?: "icon" | "cta" | "add";
+  /** "icon" = pencil (edit); "cta" = full button (empty state); "add" = small +
+   *  (has goals); "button" = labeled Edit button (the /goals/[id] doc page). */
+  variant?: "icon" | "cta" | "add" | "button";
   /** Logged exercise names, offered as suggestions for a "lift" goal's target. */
   exerciseNames?: string[];
 }) {
@@ -148,6 +149,11 @@ export function GoalEditor({
           <Button className="gap-1.5" size="sm" variant="outline">
             <Plus className="size-3.5" />
             Add goal
+          </Button>
+        ) : variant === "button" ? (
+          <Button className="gap-1.5" size="sm" variant="outline">
+            <Pencil className="size-3.5" />
+            Edit
           </Button>
         ) : (
           <Button

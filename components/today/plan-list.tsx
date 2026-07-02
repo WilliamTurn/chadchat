@@ -1,6 +1,7 @@
 "use client";
 
 import { Dumbbell, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -10,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ModuleFooter, ModuleHeader } from "./module-card";
 import { type EditablePlan, PlanEditor } from "./plan-editor";
-import { PlanViewer } from "./plan-viewer";
 
 /**
  * Pull the day structure out of a free-text training plan: lines like
@@ -77,7 +77,10 @@ function PlanItem({ plan }: { plan: EditablePlan }) {
       </div>
       {plan.kind === "training" && <SplitSummary detail={plan.detail} />}
       <div className="mt-1 flex items-center gap-1">
-        <PlanViewer plan={plan} />
+        {/* The plan's full-page document (R2-9), not a cramped dialog. */}
+        <Button asChild className="px-0 text-blood" size="sm" variant="link">
+          <Link href={`/plans/${plan.id}`}>View full plan</Link>
+        </Button>
         <PlanEditor plan={plan} variant="icon" />
         <RowDeletePlan id={plan.id} />
       </div>
@@ -198,8 +201,11 @@ export function PlanList({
         </div>
       )}
 
-      <ModuleFooter>
-        <AskChadButton prompt="Look at my training plan. Is it right for my goal, and should anything about it change?" />
+      <ModuleFooter
+        askChad={
+          <AskChadButton prompt="Look at my training plan. Is it right for my goal, and should anything about it change?" />
+        }
+      >
         {plans.length > 0 && <PlanEditor variant="add" />}
       </ModuleFooter>
     </>

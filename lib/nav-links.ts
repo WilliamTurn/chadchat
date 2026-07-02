@@ -11,6 +11,7 @@ import {
   MessageSquare,
   Moon,
   Refrigerator,
+  Target,
   UtensilsCrossed,
 } from "lucide-react";
 
@@ -82,6 +83,12 @@ export const NAV_LINKS: NavLink[] = [
     href: "/progress",
     label: "Progress",
     icon: LineChart,
+    surfaces: ["header", "sidebar"],
+  },
+  {
+    href: "/goals",
+    label: "Goals",
+    icon: Target,
     surfaces: ["header", "sidebar"],
   },
   {

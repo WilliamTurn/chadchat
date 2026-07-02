@@ -40,8 +40,9 @@ export function PlanEditor({
   variant = "icon",
 }: {
   plan?: EditablePlan;
-  /** "icon" = pencil (edit); "cta" = full button (empty state); "add" = small + (has plans). */
-  variant?: "icon" | "cta" | "add";
+  /** "icon" = pencil (edit); "cta" = full button (empty state); "add" = small +
+   *  (has plans); "button" = labeled Edit button (the /plans/[id] doc page). */
+  variant?: "icon" | "cta" | "add" | "button";
 }) {
   const router = useRouter();
   const isEdit = Boolean(plan);
@@ -91,6 +92,11 @@ export function PlanEditor({
           <Button className="gap-1.5" size="sm" variant="outline">
             <Plus className="size-3.5" />
             Add plan
+          </Button>
+        ) : variant === "button" ? (
+          <Button className="gap-1.5" size="sm" variant="outline">
+            <Pencil className="size-3.5" />
+            Edit
           </Button>
         ) : (
           <Button

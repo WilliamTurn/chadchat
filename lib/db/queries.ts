@@ -1177,6 +1177,26 @@ export async function getInactiveGoalsByUserId(
   }
 }
 
+/** One goal by id, scoped to its owner (the /goals/[id] document page). */
+export async function getGoalById({
+  id,
+  userId,
+}: {
+  id: string;
+  userId: string;
+}): Promise<Goal | undefined> {
+  try {
+    const [row] = await db
+      .select()
+      .from(goal)
+      .where(and(eq(goal.id, id), eq(goal.userId, userId)))
+      .limit(1);
+    return row;
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get goal");
+  }
+}
+
 /** Edit one goal, scoped to its owner. */
 export async function updateGoal(entry: {
   id: string;
@@ -1257,6 +1277,26 @@ export async function getActivePlansByUserId(userId: string): Promise<Plan[]> {
       .orderBy(desc(plan.createdAt));
   } catch (_error) {
     throw new ChatbotError("bad_request:database", "Failed to get plans");
+  }
+}
+
+/** One plan by id, scoped to its owner (the /plans/[id] document page). */
+export async function getPlanById({
+  id,
+  userId,
+}: {
+  id: string;
+  userId: string;
+}): Promise<Plan | undefined> {
+  try {
+    const [row] = await db
+      .select()
+      .from(plan)
+      .where(and(eq(plan.id, id), eq(plan.userId, userId)))
+      .limit(1);
+    return row;
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get plan");
   }
 }
 
