@@ -9,8 +9,13 @@ import {
   Undo2,
 } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
-import { useRouter } from "next/navigation";
-import { type FormEvent, useId, useState, useTransition } from "react";
+import {
+  type FormEvent,
+  useId,
+  useOptimistic,
+  useState,
+  useTransition,
+} from "react";
 import { toast } from "sonner";
 import {
   logWaterAmount,
@@ -48,8 +53,13 @@ const MAX_CUSTOM_OZ = 64;
  * totalMl / goalMl, plus quick-add controls (+8 oz / +16 oz / custom) and an
  * undo. Volumes speak ONLY US ounces & gallons (DSH-24/DSH-34 — no "glasses"
  * or "bottles") though stored in ml; the daily goal defaults to one gallon and
- * is user-customizable. Reads totalMl from props and re-renders after
- * router.refresh() so the fill always reflects the live server total.
+ * is user-customizable.
+ *
+ * Quick-adds are optimistic (R2-15): the vessel fills the instant a button is
+ * tapped, while the server action commits in the background. The actions
+ * already revalidate /today and /hydration, so their responses carry the
+ * refreshed page and no extra router.refresh() round trip is needed; once the
+ * transition settles, the fill reflects the live server total.
  */
 export function WaterTracker({
   totalMl,
@@ -64,7 +74,6 @@ export function WaterTracker({
   /** The detail page ("View all →" /hydration) — omit when already on it. */
   viewHref?: string;
 }) {
-  const router = useRouter();
   const reduceMotion = useReducedMotion();
   const [pending, startTransition] = useTransition();
   const [customOpen, setCustomOpen] = useState(false);
@@ -72,18 +81,30 @@ export function WaterTracker({
   const [goalOpen, setGoalOpen] = useState(false);
   const clipId = useId();
 
-  const safeGoal = goalMl > 0 ? goalMl : DEFAULT_WATER_GOAL_ML;
-  const ratio = Math.min(totalMl / safeGoal, 1);
-  const percent = Math.round(ratio * 100);
-  const remaining = Math.max(safeGoal - totalMl, 0);
-  const reached = totalMl >= safeGoal;
+  // Optimistic total (R2-15): quick-adds apply their delta instantly and the
+  // value reconciles to the server total when the transition settles (or
+  // reverts on error). Deltas accumulate, so rapid taps all register.
+  const [optimisticMl, addOptimisticMl] = useOptimistic(
+    totalMl,
+    (current, delta: number) => Math.max(current + delta, 0)
+  );
 
-  function run(action: () => Promise<{ ok: boolean; error?: string }>) {
+  const safeGoal = goalMl > 0 ? goalMl : DEFAULT_WATER_GOAL_ML;
+  const ratio = Math.min(optimisticMl / safeGoal, 1);
+  const percent = Math.round(ratio * 100);
+  const remaining = Math.max(safeGoal - optimisticMl, 0);
+  const reached = optimisticMl >= safeGoal;
+
+  function run(
+    action: () => Promise<{ ok: boolean; error?: string }>,
+    optimisticDelta?: number
+  ) {
     startTransition(async () => {
+      if (optimisticDelta) {
+        addOptimisticMl(optimisticDelta);
+      }
       const result = await action();
-      if (result.ok) {
-        router.refresh();
-      } else {
+      if (!result.ok) {
         toast.error(result.error ?? "Couldn't update water.");
       }
     });
@@ -96,7 +117,8 @@ export function WaterTracker({
       toast.error("Enter how much you drank, in ounces.");
       return;
     }
-    run(() => logWaterAmount(ozToMl(oz)));
+    const ml = ozToMl(oz);
+    run(() => logWaterAmount(ml), ml);
     setCustomValue("");
     setCustomOpen(false);
   }
@@ -107,8 +129,8 @@ export function WaterTracker({
   const fillTop = VIEW - ratio * VIEW;
 
   const fillLabel = reached
-    ? `Hydration goal reached: ${formatOz(totalMl)} of ${formatVolume(safeGoal)}.`
-    : `Hydration ${percent}% of goal: ${formatOz(totalMl)} of ${formatVolume(
+    ? `Hydration goal reached: ${formatOz(optimisticMl)} of ${formatVolume(safeGoal)}.`
+    : `Hydration ${percent}% of goal: ${formatOz(optimisticMl)} of ${formatVolume(
         safeGoal
       )}, ${formatOz(remaining)} to go.`;
 
@@ -257,7 +279,7 @@ export function WaterTracker({
         <div className="flex min-w-0 flex-col gap-1">
           <div className="flex items-baseline gap-1.5">
             <span className="font-display font-bold text-2xl text-foreground tabular-nums">
-              {formatOz(totalMl)}
+              {formatOz(optimisticMl)}
             </span>
             <span className="text-muted-foreground text-sm">
               / {formatVolume(safeGoal)}
@@ -282,11 +304,12 @@ export function WaterTracker({
 
       {/* Quick-add controls — plain ounce amounts (DSH-34) */}
       <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {/* Never disabled while pending: each tap applies instantly to the
+            optimistic total, so rapid back-to-back adds all land (R2-15). */}
         <Button
           aria-label="Add 8 ounces of water"
           className="h-11 gap-1.5 font-medium text-sm"
-          disabled={pending}
-          onClick={() => run(() => logWaterAmount(ozToMl(8)))}
+          onClick={() => run(() => logWaterAmount(ozToMl(8)), ozToMl(8))}
           variant="outline"
         >
           <Droplet className="size-4 text-sky-400" />
@@ -296,8 +319,7 @@ export function WaterTracker({
         <Button
           aria-label="Add 16 ounces of water"
           className="h-11 gap-1.5 font-medium text-sm"
-          disabled={pending}
-          onClick={() => run(() => logWaterAmount(ozToMl(16)))}
+          onClick={() => run(() => logWaterAmount(ozToMl(16)), ozToMl(16))}
           variant="outline"
         >
           <Droplet className="size-4 text-sky-400" />
@@ -309,7 +331,6 @@ export function WaterTracker({
             <Button
               aria-label="Add a custom amount of water"
               className="col-span-2 h-11 gap-1.5 font-medium text-sm sm:col-span-1"
-              disabled={pending}
               variant="outline"
             >
               <Plus className="size-4 text-sky-400" />
@@ -394,10 +415,12 @@ export function WaterTracker({
           <AskChadButton prompt="How's my water intake today? Am I drinking enough, and when should I top up?" />
         }
       >
+        {/* Undo stays pending-gated (not optimistic): the client doesn't know
+            the last entry's size, so it waits for the server total. */}
         <Button
           aria-label="Undo last water entry"
           className="gap-1.5 text-muted-foreground text-xs"
-          disabled={pending || totalMl <= 0}
+          disabled={pending || optimisticMl <= 0}
           onClick={() => run(removeWater)}
           size="sm"
           variant="ghost"

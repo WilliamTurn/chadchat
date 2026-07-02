@@ -28,11 +28,13 @@ import {
   ModuleHeader,
 } from "@/components/today/module-card";
 import { PlanList } from "@/components/today/plan-list";
+import { SectionBand } from "@/components/today/section-band";
 import { StatPills } from "@/components/today/stat-pills";
 import { SleepTracker } from "@/components/today/sleep-tracker";
 import { StreakStrip } from "@/components/today/streak-strip";
 import { TargetEditor } from "@/components/today/target-editor";
 import { WaterTracker } from "@/components/today/water-tracker";
+import { WeekStrip } from "@/components/today/week-strip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
@@ -69,6 +71,7 @@ import {
   buildLastNight,
   buildSleepWeek,
   buildWaterWeek,
+  buildWorkoutWeek,
   weekSlotDateLabel,
   weekSlotLabel,
 } from "@/lib/today/week";
@@ -392,6 +395,12 @@ async function TodayContent() {
   const lastNight = buildLastNight(latestSleep, timezone);
   const sleepWeek = buildSleepWeek(sleepDaily, timezone);
   const waterWeek = buildWaterWeek(waterDaily, timezone);
+  // Workout week strip (R2-14): the Workout log card is a LOGGER like the
+  // other daily trackers, so it gets the same shared 7-day treatment.
+  const workoutWeek = buildWorkoutWeek(
+    recentWorkouts.map((w) => w.performedAt),
+    timezone
+  );
 
   // First-run: a brand-new member with no profile and nothing logged yet. We
   // show a "welcome / get started" header instead of "Welcome back" (which is
@@ -411,7 +420,7 @@ async function TodayContent() {
   });
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       {/* Header */}
       <header className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 sm:p-8 lg:pr-64">
         <div
@@ -537,113 +546,208 @@ async function TodayContent() {
         </div>
       </header>
 
-      {/* Calorie Tracker (Pro) — the daily centerpiece, full width. One name
-          everywhere (R2-6): nav label, page title, this card, and Chad's own
-          copy all say "Calorie Tracker". */}
-      {isPro ? (
-        <ModuleCard>
-          <ModuleHeader
-            icon={<Utensils className="size-4" />}
-            title="Calorie Tracker"
-            tone="amber"
-            viewHref="/nutrition#history"
-          />
-          <div className="mt-2">
-            <MacroRings
-              caloriesConsumed={caloriesToday}
-              caloriesTarget={target?.calories ?? null}
-              carbsConsumed={carbsToday}
-              carbsTarget={target?.carbs ?? null}
-              emptyCta={
-                // First-run keeps this quiet (P1-4): the hero owns the one CTA
-                // and Chad sets targets from the intro chat anyway.
-                firstRun ? undefined : (
-                  <TargetEditor
-                    calories={target?.calories ?? null}
-                    carbs={target?.carbs ?? null}
-                    fat={target?.fat ?? null}
-                    prominent
-                    protein={target?.protein ?? null}
-                  />
-                )
+      {/* R2-13 + R2-14: the page's organizing model (STATUS → LOGGERS →
+          PLANS → REVIEW) is visible as labeled section bands, and the cards
+          are regrouped by role. The Workout log joins the daily loggers
+          (reworked from the passive "Last workout" readout into the logging
+          entry point pro apps put on home), the plans band holds exactly the
+          plans (goals, training plan, meal plan), and review is the weight
+          trend finale. The hero above is STATUS and needs no band. */}
+      <SectionBand description="Record these every day." title="Today's log">
+        {/* Calorie Tracker (Pro): the daily centerpiece, full width. One name
+            everywhere (R2-6): nav label, page title, this card, and Chad's own
+            copy all say "Calorie Tracker". */}
+        {isPro ? (
+          <ModuleCard>
+            <ModuleHeader
+              icon={<Utensils className="size-4" />}
+              title="Calorie Tracker"
+              tone="amber"
+              viewHref="/nutrition#history"
+            />
+            <div className="mt-2">
+              <MacroRings
+                caloriesConsumed={caloriesToday}
+                caloriesTarget={target?.calories ?? null}
+                carbsConsumed={carbsToday}
+                carbsTarget={target?.carbs ?? null}
+                emptyCta={
+                  // First-run keeps this quiet (P1-4): the hero owns the one
+                  // CTA and Chad sets targets from the intro chat anyway.
+                  firstRun ? undefined : (
+                    <TargetEditor
+                      calories={target?.calories ?? null}
+                      carbs={target?.carbs ?? null}
+                      fat={target?.fat ?? null}
+                      prominent
+                      protein={target?.protein ?? null}
+                    />
+                  )
+                }
+                fatConsumed={fatToday}
+                fatTarget={target?.fat ?? null}
+                proteinConsumed={proteinToday}
+                proteinTarget={target?.protein ?? null}
+              />
+            </div>
+            <ModuleFooter
+              askChad={
+                <AskChadButton prompt="Look at what I've eaten today and how it stacks up against my calorie and macro targets. Am I on track, and what should I eat for the rest of the day?" />
               }
-              fatConsumed={fatToday}
-              fatTarget={target?.fat ?? null}
-              proteinConsumed={proteinToday}
-              proteinTarget={target?.protein ?? null}
-            />
-          </div>
-          <ModuleFooter
-            askChad={
-              <AskChadButton prompt="Look at what I've eaten today and how it stacks up against my calorie and macro targets. Am I on track, and what should I eat for the rest of the day?" />
-            }
-            status={
-              todaysMeals.length > 0
-                ? `${todaysMeals.length} meal${todaysMeals.length === 1 ? "" : "s"} logged today`
-                : "No meals logged yet today."
-            }
-          >
-            <TargetEditor
-              calories={target?.calories ?? null}
-              carbs={target?.carbs ?? null}
-              fat={target?.fat ?? null}
-              protein={target?.protein ?? null}
-            />
-            <Button asChild className="gap-1.5" size="sm" variant="outline">
-              <Link href="/nutrition#log-meal">
-                Log a meal
-                <ArrowRight className="size-3.5" />
-              </Link>
-            </Button>
-          </ModuleFooter>
-        </ModuleCard>
-      ) : (
-        <LockedCard
-          icon={<Utensils className="size-4" />}
-          text="Snap a meal, fridge, or pantry and Chad grades the macros, then tracks your calories and protein against a daily target. Pro only."
-          title="Calorie Tracker"
-        />
-      )}
-
-      {/* Hydration + Sleep (Pro) — the other daily loggers, right under the
-          calorie tracker so "am I on track today?" is answerable from the top
-          of the page (audit rule 4: STATUS → LOGGERs → PLANs → REVIEW). */}
-      <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
-        {isPro ? (
-          <WaterTracker
-            goalMl={waterGoalMl}
-            totalMl={waterMl}
-            viewHref="/hydration"
-            week={waterWeek}
-          />
+              status={
+                todaysMeals.length > 0
+                  ? `${todaysMeals.length} meal${todaysMeals.length === 1 ? "" : "s"} logged today`
+                  : "No meals logged yet today."
+              }
+            >
+              <TargetEditor
+                calories={target?.calories ?? null}
+                carbs={target?.carbs ?? null}
+                fat={target?.fat ?? null}
+                protein={target?.protein ?? null}
+              />
+              <Button asChild className="gap-1.5" size="sm" variant="outline">
+                <Link href="/nutrition#log-meal">
+                  Log a meal
+                  <ArrowRight className="size-3.5" />
+                </Link>
+              </Button>
+            </ModuleFooter>
+          </ModuleCard>
         ) : (
           <LockedCard
-            icon={<Droplet className="size-4" />}
-            text="Track your daily water against a goal with one-tap logging. Pro only."
-            title="Hydration"
+            icon={<Utensils className="size-4" />}
+            text="Snap a meal, fridge, or pantry and Chad grades the macros, then tracks your calories and protein against a daily target. Pro only."
+            title="Calorie Tracker"
           />
         )}
 
+        {/* Hydration + Sleep (Pro): the other daily trackers, right under the
+            calorie tracker so "am I on track today?" is answerable from the
+            top of the page. */}
+        <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
+          {isPro ? (
+            <WaterTracker
+              goalMl={waterGoalMl}
+              totalMl={waterMl}
+              viewHref="/hydration"
+              week={waterWeek}
+            />
+          ) : (
+            <LockedCard
+              icon={<Droplet className="size-4" />}
+              text="Track your daily water against a goal with one-tap logging. Pro only."
+              title="Hydration"
+            />
+          )}
+
+          {isPro ? (
+            <SleepTracker
+              last={lastNight}
+              quiet={firstRun}
+              viewHref="/sleep"
+              week={sleepWeek}
+            />
+          ) : (
+            <LockedCard
+              icon={<Moon className="size-4" />}
+              text="Log how you sleep each night and Chad factors recovery into your training. Pro only."
+              title="Sleep & recovery"
+            />
+          )}
+        </div>
+
+        {/* Workout log (Pro), per R2-14: it was a passive "Last workout"
+            readout stranded next to the meal plan. Mainstream apps (MFP,
+            Fitbit, Hevy, Strong) all treat workouts as a loggable domain on
+            home, so the card lives with the loggers, leads with the log
+            action, and keeps the last session as context. */}
         {isPro ? (
-          <SleepTracker
-            last={lastNight}
-            quiet={firstRun}
-            viewHref="/sleep"
-            week={sleepWeek}
-          />
+          <ModuleCard>
+            <ModuleHeader
+              icon={<Dumbbell className="size-4" />}
+              title="Workout log"
+              tone="blood"
+              viewHref="/workouts#history"
+            />
+            <div className="flex flex-1 flex-wrap items-center justify-between gap-x-6 gap-y-4">
+              {lastWorkout ? (
+                <div className="min-w-0">
+                  <div className="text-muted-foreground text-xs uppercase tracking-wide">
+                    Last session
+                  </div>
+                  <div className="mt-1 font-display font-semibold text-lg leading-tight">
+                    {lastWorkout.title}
+                  </div>
+                  <div className="mt-0.5 text-muted-foreground text-sm">
+                    {relativeDay(lastWorkout.performedAt, timezone)} ·{" "}
+                    {lastWorkout.exerciseCount} exercise
+                    {lastWorkout.exerciseCount === 1 ? "" : "s"} ·{" "}
+                    {lastWorkout.setCount} set
+                    {lastWorkout.setCount === 1 ? "" : "s"}
+                  </div>
+                </div>
+              ) : (
+                <p className="max-w-md text-muted-foreground text-sm">
+                  No workouts logged yet. Log your first session and Chad
+                  starts tracking your PRs and volume.
+                </p>
+              )}
+              {/* Shared week-strip treatment (R2-1/R2-12), workout tone */}
+              {workoutWeek.some((d) => d.logged) ? (
+                <div className="flex items-center gap-4 rounded-xl border border-border bg-background/40 px-4 py-2.5">
+                  <span className="text-muted-foreground text-xs">
+                    Last 7 days
+                  </span>
+                  <WeekStrip
+                    days={workoutWeek.map((day) => ({
+                      key: day.t,
+                      label: day.label,
+                      dateLabel: day.dateLabel,
+                      isToday: day.isToday,
+                      dotClassName: `size-3 rounded-full ${
+                        day.logged
+                          ? "bg-blood shadow-[0_0_8px_var(--color-blood)]"
+                          : "bg-border"
+                      } ${day.isToday ? "ring-2 ring-blood/40 ring-offset-1 ring-offset-background" : ""}`,
+                      value: day.logged
+                        ? `${day.count} workout${day.count === 1 ? "" : "s"}`
+                        : "No workout",
+                    }))}
+                  />
+                </div>
+              ) : null}
+            </div>
+            <ModuleFooter
+              askChad={
+                <AskChadButton prompt="Look at my recent workouts. What's working, what's lagging, and what should I hit next session?" />
+              }
+            >
+              <Button asChild className="gap-1.5" size="sm" variant="outline">
+                <Link href="/workouts">
+                  Log a workout
+                  <ArrowRight className="size-3.5" />
+                </Link>
+              </Button>
+            </ModuleFooter>
+          </ModuleCard>
         ) : (
           <LockedCard
-            icon={<Moon className="size-4" />}
-            text="Log how you sleep each night and Chad factors recovery into your training. Pro only."
-            title="Sleep & recovery"
+            icon={<Dumbbell className="size-4" />}
+            text="Log your workouts and Chad tracks your PRs, volume, and what to hit next session. Pro only."
+            title="Workout log"
           />
         )}
-      </div>
+      </SectionBand>
 
-      {/* Goal + Training — one consistent card treatment (DSH-30: the goals card
-          no longer floats detailed anatomy art behind the text; the header
-          silhouette is now the page's single body-visualization style). */}
-      <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
+      <SectionBand
+        description="Set once, update occasionally."
+        title="Your plans"
+      >
+        {/* Goals lead the band full width: the richest plan card (progress,
+            lift charts, past goals) gets the room it needs. One consistent
+            card treatment (DSH-30): the header silhouette stays the page's
+            single body-visualization style. */}
         <ModuleCard>
           <GoalList
             calorieConflict={calorieConflict}
@@ -659,187 +763,151 @@ async function TodayContent() {
           />
         </ModuleCard>
 
-        <ModuleCard>
-          <PlanList
-            memoryPlanHint={workoutPlan}
-            plans={planItems}
-            quiet={firstRun}
-          />
-        </ModuleCard>
-      </div>
-
-      {/* Last workout + Meal plan (Pro) — Basic members get the same locked
-          teasers as every other Pro module (P2-7: one gating rule, locked
-          cards sell the upgrade; invisible rows don't). */}
-      {isPro ? (
+        {/* Training plan + meal plan side by side: the two plan documents
+            (R2-14's regroup; the meal plan no longer shares a row with the
+            workout readout). Basic members get the same locked teaser as
+            every other Pro module (P2-7: one gating rule). */}
         <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
           <ModuleCard>
-            <ModuleHeader
-              icon={<Dumbbell className="size-4" />}
-              title="Last workout"
-              tone="blood"
-              viewHref="/workouts#history"
+            <PlanList
+              memoryPlanHint={workoutPlan}
+              plans={planItems}
+              quiet={firstRun}
             />
-            {lastWorkout ? (
-              <div className="flex flex-1 flex-col justify-center">
-                <div className="font-display font-semibold text-lg leading-tight">
-                  {lastWorkout.title}
-                </div>
-                <div className="mt-0.5 text-muted-foreground text-sm">
-                  {relativeDay(lastWorkout.performedAt, timezone)} ·{" "}
-                  {lastWorkout.exerciseCount} exercise
-                  {lastWorkout.exerciseCount === 1 ? "" : "s"} ·{" "}
-                  {lastWorkout.setCount} set
-                  {lastWorkout.setCount === 1 ? "" : "s"}
-                </div>
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                No workouts logged yet. Log your first session and Chad starts
-                tracking your PRs and volume.
-              </p>
-            )}
-            <ModuleFooter
-              askChad={
-                <AskChadButton prompt="Look at my recent workouts. What's working, what's lagging, and what should I hit next session?" />
-              }
-            >
-              <Button asChild className="gap-1.5" size="sm" variant="outline">
-                <Link href="/workouts">
-                  Log a workout
-                  <ArrowRight className="size-3.5" />
-                </Link>
-              </Button>
-            </ModuleFooter>
           </ModuleCard>
 
-          <ModuleCard>
-            <ModuleHeader
+          {isPro ? (
+            <ModuleCard>
+              <ModuleHeader
+                icon={<ChefHat className="size-4" />}
+                title="Meal plan"
+                tone="amber"
+                viewHref={mealPlanSummary ? "/meal-plan" : undefined}
+                viewLabel="View plan"
+              />
+              {mealPlanSummary ? (
+                <div className="flex flex-1 items-center gap-4">
+                  {/* Plain <img> (proxy serves it on this authed route) */}
+                  <img
+                    alt=""
+                    aria-hidden
+                    className="size-16 shrink-0 select-none rounded-xl object-cover ring-1 ring-border"
+                    src="/today/food-salmon-bowl.png"
+                  />
+                  <div className="min-w-0">
+                    <div className="font-display font-semibold text-lg leading-tight">
+                      {mealPlanSummary.title}
+                    </div>
+                    <div className="mt-0.5 text-muted-foreground text-sm">
+                      {mealPlanSummary.dayCount}-day plan
+                      {mealPlanSummary.targetLine
+                        ? ` · ${mealPlanSummary.targetLine}`
+                        : ""}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-sm">
+                  No meal plan yet. Have Chad build a structured plan around
+                  your macro target. Real foods, exact portions.
+                </p>
+              )}
+              <ModuleFooter
+                askChad={
+                  <AskChadButton
+                    prompt={
+                      mealPlanSummary
+                        ? "Walk me through my meal plan. What am I eating today, and what can I swap if I'm missing something?"
+                        : "Should I be on a structured meal plan for my goal? What would you put in one for me?"
+                    }
+                  />
+                }
+              >
+                <Button
+                  asChild
+                  className="gap-1.5"
+                  size="sm"
+                  variant="outline"
+                >
+                  <Link href="/meal-plan">
+                    {mealPlanSummary ? "Open plan" : "Build a meal plan"}
+                    <ArrowRight className="size-3.5" />
+                  </Link>
+                </Button>
+              </ModuleFooter>
+            </ModuleCard>
+          ) : (
+            <LockedCard
               icon={<ChefHat className="size-4" />}
+              text="Chad builds a structured meal plan around your macro target. Real foods, exact portions. Pro only."
               title="Meal plan"
-              tone="amber"
-              viewHref={mealPlanSummary ? "/meal-plan" : undefined}
-              viewLabel="View plan"
             />
-            {mealPlanSummary ? (
-              <div className="flex flex-1 items-center gap-4">
-                {/* Plain <img> (proxy serves it on this authed route) */}
-                <img
-                  alt=""
-                  aria-hidden
-                  className="size-16 shrink-0 select-none rounded-xl object-cover ring-1 ring-border"
-                  src="/today/food-salmon-bowl.png"
-                />
-                <div className="min-w-0">
-                  <div className="font-display font-semibold text-lg leading-tight">
-                    {mealPlanSummary.title}
-                  </div>
-                  <div className="mt-0.5 text-muted-foreground text-sm">
-                    {mealPlanSummary.dayCount}-day plan
-                    {mealPlanSummary.targetLine
-                      ? ` · ${mealPlanSummary.targetLine}`
-                      : ""}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                No meal plan yet. Have Chad build a structured plan around your
-                macro target — real foods, exact portions.
-              </p>
-            )}
-            <ModuleFooter
-              askChad={
-                <AskChadButton
-                  prompt={
-                    mealPlanSummary
-                      ? "Walk me through my meal plan. What am I eating today, and what can I swap if I'm missing something?"
-                      : "Should I be on a structured meal plan for my goal? What would you put in one for me?"
-                  }
-                />
-              }
-            >
-              <Button asChild className="gap-1.5" size="sm" variant="outline">
-                <Link href="/meal-plan">
-                  {mealPlanSummary ? "Open plan" : "Build a meal plan"}
-                  <ArrowRight className="size-3.5" />
-                </Link>
-              </Button>
-            </ModuleFooter>
-          </ModuleCard>
+          )}
         </div>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
-          <LockedCard
-            icon={<Dumbbell className="size-4" />}
-            text="Log your workouts and Chad tracks your PRs, volume, and what to hit next session. Pro only."
-            title="Last workout"
-          />
-          <LockedCard
-            icon={<ChefHat className="size-4" />}
-            text="Chad builds a structured meal plan around your macro target. Real foods, exact portions. Pro only."
-            title="Meal plan"
-          />
-        </div>
-      )}
+      </SectionBand>
 
-      {/* Weight trend (Pro) — the REVIEW finale: the slow metric the product's
-          promise hangs on gets the page's one full-width chart. */}
-      {isPro ? (
-        <ModuleCard>
-          <ModuleHeader
-            icon={<LineChart className="size-4" />}
-            title="Weight trend"
-            tone="violet"
-            viewHref="/progress"
-          />
-          {currentWeight != null && (
-            <div className="flex items-baseline gap-2">
-              <span className="font-display font-semibold text-lg leading-none">
-                {currentWeight} {displayUnit}
-              </span>
-              {weightChange != null && (
-                <span className="text-muted-foreground text-xs">
-                  {weightChange > 0 ? "+" : ""}
-                  {weightChange} {displayUnit} since your first weigh-in
+      <SectionBand
+        description="What your daily logging adds up to over time."
+        title="Results"
+      >
+        {/* Weight trend (Pro): the REVIEW finale; the slow metric the
+            product's promise hangs on gets the page's one full-width chart. */}
+        {isPro ? (
+          <ModuleCard>
+            <ModuleHeader
+              icon={<LineChart className="size-4" />}
+              title="Weight trend"
+              tone="violet"
+              viewHref="/progress"
+            />
+            {currentWeight != null && (
+              <div className="flex items-baseline gap-2">
+                <span className="font-display font-semibold text-lg leading-none">
+                  {currentWeight} {displayUnit}
                 </span>
+                {weightChange != null && (
+                  <span className="text-muted-foreground text-xs">
+                    {weightChange > 0 ? "+" : ""}
+                    {weightChange} {displayUnit} since your first weigh-in
+                  </span>
+                )}
+              </div>
+            )}
+            <div className="mt-2">
+              {points.length > 0 ? (
+                <WeightChartInteractive
+                  goalWeight={goalWeight}
+                  points={points}
+                  unit={displayUnit}
+                  variant="compact"
+                />
+              ) : (
+                <p className="text-muted-foreground text-sm">
+                  No weigh-ins yet. Log your weight to see the trend.
+                </p>
               )}
             </div>
-          )}
-          <div className="mt-2">
-            {points.length > 0 ? (
-              <WeightChartInteractive
-                goalWeight={goalWeight}
-                points={points}
-                unit={displayUnit}
-                variant="compact"
-              />
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                No weigh-ins yet. Log your weight to see the trend.
-              </p>
-            )}
-          </div>
-          <ModuleFooter
-            askChad={
-              <AskChadButton prompt="Look at my weight trend and how it's tracking against my goal weight. Am I moving in the right direction, and should I change anything?" />
-            }
-          >
-            <Button asChild className="gap-1.5" size="sm" variant="outline">
-              <Link href="/progress#log-entry">
-                Log weight
-                <ArrowRight className="size-3.5" />
-              </Link>
-            </Button>
-          </ModuleFooter>
-        </ModuleCard>
-      ) : (
-        <LockedCard
-          icon={<LineChart className="size-4" />}
-          text="Track your weight and progress photos over time. Pro only."
-          title="Weight trend"
-        />
-      )}
+            <ModuleFooter
+              askChad={
+                <AskChadButton prompt="Look at my weight trend and how it's tracking against my goal weight. Am I moving in the right direction, and should I change anything?" />
+              }
+            >
+              <Button asChild className="gap-1.5" size="sm" variant="outline">
+                <Link href="/progress#log-entry">
+                  Log weight
+                  <ArrowRight className="size-3.5" />
+                </Link>
+              </Button>
+            </ModuleFooter>
+          </ModuleCard>
+        ) : (
+          <LockedCard
+            icon={<LineChart className="size-4" />}
+            text="Track your weight and progress photos over time. Pro only."
+            title="Weight trend"
+          />
+        )}
+      </SectionBand>
 
       {/* No quick-actions row (P2-8): it duplicated the top nav incompletely,
           and the mobile sheet nav already covers reach. */}

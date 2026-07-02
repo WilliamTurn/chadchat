@@ -120,6 +120,42 @@ export function buildSleepWeek(
   });
 }
 
+/** One day in the workout log card's rolling 7-day strip (R2-14). */
+export type WorkoutWeekDay = {
+  t: number;
+  label: string;
+  /** "Mon, Jun 29": the real date, for tooltips (R2-12). */
+  dateLabel: string;
+  /** Workouts logged that day. */
+  count: number;
+  logged: boolean;
+  isToday: boolean;
+};
+
+export function buildWorkoutWeek(
+  performedAts: Date[],
+  timezone: string | null
+): WorkoutWeekDay[] {
+  const todayAnchor = todayAnchorInTz(timezone);
+  const counts = new Map<number, number>();
+  for (const at of performedAts) {
+    const t = calendarDayAnchorInTz(at, timezone).getTime();
+    counts.set(t, (counts.get(t) ?? 0) + 1);
+  }
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(todayAnchor.getTime() - (6 - i) * DAY_MS);
+    const count = counts.get(d.getTime()) ?? 0;
+    return {
+      t: d.getTime(),
+      label: weekSlotLabel(d, i === 6),
+      dateLabel: weekSlotDateLabel(d),
+      count,
+      logged: count > 0,
+      isToday: i === 6,
+    };
+  });
+}
+
 export function buildWaterWeek(
   waterDaily: { t: number; ml: number }[],
   timezone: string | null
