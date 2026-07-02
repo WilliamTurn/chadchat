@@ -216,6 +216,119 @@ Steps 1–3 are the audit's heart — they install the missing logic. 4–10 mak
 
 ---
 
+## 4. Round 2: further findings (s112, user walkthrough after steps 1–3)
+
+> The user walked the rebuilt dashboard and reported a second batch. Items below are ONLY the
+> ones the original audit missed. The rest of that walkthrough maps to existing findings:
+> unlabeled hero stats and the "active this week" mystery = P2-9/DSH-35; glasses/bottles
+> wording = P3-4/DSH-34; user-set sleep goal = P2-1 (now MTL DSH-40); goal-vs-target
+> contradictions = P2-4; missing loading feedback + too-dark skeletons = MTL DS-15.
+> Do not implement yet: the user is working the §3 execution order first. Where an item below
+> touches a card that a §3 step already reworks, it is tagged "fold into step N" so the card is
+> only rebuilt once.
+
+**R2-1 · Week strips are ambiguous everywhere.** The 7-day strips (hero streak dots, sleep
+week chart, hydration dot strip) are rolling windows, so the first slot is whatever weekday was
+6 days ago (it read as "why does the week start on Friday?"). Single letters can't disambiguate
+S/S or T/T, and "today" is marked by a red ring on a red dot, which is not obviously "today."
+Recommendation: two-letter labels (Su Mo Tu We Th Fr Sa), a clear Today marker (label the last
+slot "Today" or set it off structurally), and real dates on hover (see R2-12). One shared
+week-strip treatment for all three surfaces. *Fold into step 4 (hero pass) + the two tracker cards.*
+
+**R2-2 · The streak states a number, never a meaning.** "2 days · Current streak" assumes the
+user knows what a streak is and why it matters. Recommendation: motivational plain language
+("You've logged something 2 days in a row. Keep it going."), plus the `?` popover from the
+HLP-1 pattern explaining what counts (any log: meal, water, sleep, workout, weigh-in).
+*Fold into step 4.*
+
+**R2-3 · The macro target editor allows impossible math.** TargetEditor accepts any four
+numbers: 100 calories with 900g protein saves fine, though protein alone is 3,600 kcal. Real
+trackers treat calories and macros as one equation (protein/carbs 4 kcal per g, fat 9): MFP
+edits the split as percentages that must total 100% and derives grams; MacroFactor lets you
+edit grams OR percentages and recalculates calories live. Recommendation: a proper target
+editor with two modes (percent split → grams derived from the calorie target; grams → calories
+computed live) and a visible reconciliation line ("these macros add up to 2,340 cal, 140 over
+your target") that blocks or warns on nonsense. Chad's prompt should make him expert at this
+arithmetic when asked to set or check targets. Needs its own small spec; benchmark the two
+apps above first. *New task-sized item; relates to P2-4.*
+
+**R2-4 · Bare numbers still need their nouns.** The calorie ring's center says "2,200
+remaining" (remaining what?). Say "calories remaining." Sweep every card for numbers whose
+unit or noun lives only in the reader's head. *Fold into step 4's label pass.*
+
+**R2-5 · Card links land at page tops, and there is no way back.** "View history" on the
+Calorie Tracker lands at the top of /nutrition (the log form), not at the history section, so
+the link's promise is broken. And no detail page offers a "Back to dashboard" affordance; the
+user must find the nav or the browser button. Recommendation: section anchors for history
+links (scroll to the history block), and one consistent back affordance on every detail page
+(a small "← Dashboard" breadcrumb above the page title, the standard pattern). *Page-level;
+pairs with P3-1's link-label cleanup.*
+
+**R2-6 · "Log a meal" and "View history" go to the identical place.** Both land on /nutrition
+at the same scroll position, and the page greets you with the title "Calorie Tracker" after
+you clicked "Log a meal." Recommendation: one naming decision for that page (title, nav label,
+card links all agree), then anchors per R2-5 so the two links land on the log form vs the
+history section respectively.
+
+**R2-7 · Ask Chad has no fixed home.** DSH-32 fixed the ORDER (Ask Chad → config → primary)
+but the cluster composition varies per card, so the button visibly sits somewhere different on
+Hydration vs Sleep vs Training. Pick one rule the eye can verify (recommendation: Ask Chad is
+always the leftmost item of the footer cluster, and the cluster is always right-aligned; audit
+each card against it) or anchor Ask Chad alone on the left edge of every footer.
+
+**R2-8 · Goals is the only domain without a full page.** Hydration, sleep, training, weight
+all have deep surfaces now; "Your goals" has none (the capability matrix flagged the gap, no
+recommendation was made). The in-card editor popover is too cramped to write a real goal.
+Recommendation: a /goals page (active + past goals, full-size editor, the lift-goal chart)
+following the /sleep-/hydration pattern; the card keeps the compact list + "View all →".
+
+**R2-9 · Documents open in cramped pop-ups.** "View full plan" (training) and the goal viewer
+open small dialogs. These are the user's core documents; award-tier apps give documents a full
+page (the meal plan already has one). Recommendation: promote the plan and goal viewers to
+full pages (or full-height panels), reusing the meal-plan page pattern. *Pairs with R2-8.*
+
+**R2-10 · The weight line reads as a warning.** The trend line is blood red, which on a
+dashboard codes as "something is wrong," even when the user is losing weight toward a cut
+goal. Recommendation: color the line by goal direction (emerald when trending toward the
+active goal, neutral otherwise), matching the toward-goal coloring the weight KPIs already
+use; keep blood red as the brand accent, not the data verdict. (Design call: the user
+suggested a green glow.)
+
+**R2-11 · Nothing shows the actual date.** "Today" is abstract; the page never says WHICH day
+it is in the member's own timezone. Recommendation: render the real date (e.g. "Thursday,
+July 2") in small text under the hero greeting, and consider it on the logger cards' status
+lines. Uses `user.timezone` like everything else post FEAT-8. *Fold into step 4.*
+
+**R2-12 · Hover states are inconsistent and dateless.** The sleep week chart has a rich
+tooltip but labels the night only "T"; the hydration dot strip's only hover is a native title
+("40 oz"). Recommendation: one shared tooltip for all week strips: real date ("Mon, Jun 29"),
+the value, and goal status. *Same shared component as R2-1.*
+
+**R2-13 · The organizing model is invisible to users.** The page now HAS the
+STATUS → LOGGERs → PLANs → REVIEW logic, but only the code knows. Recommendation: visible
+section bands with a short plain-language line each, e.g. "Today's log: record these every
+day", "Your plans: set once, update occasionally", "Results: the long game" (hero needs no
+band). This also creates the structure R2-14 needs. *(Exact copy TBD; write it per the
+copy-clear-not-punchy rule.)*
+
+**R2-14 · The review row mixes roles, and "Last workout" has no clear job.** Last workout
+(REVIEW) is paired with Meal plan (PLAN), which breaks the section story R2-13 makes visible.
+And as a passive readout, Last workout confuses: users expect a "Workout log" they can log
+INTO (like every other logger) rather than a card that just states the past. Recommendation:
+regroup rows by role (plans together; review = Last workout + Weight trend), and decide
+Last workout's identity deliberately: either retitle/rework it as the Workout log entry point
+in the LOGGERS band (primary action "Log a workout" already exists) or keep it as pure review
+with copy that says what it is for. Benchmark what pro apps put on home for workouts first.
+
+**R2-15 · Water quick-adds feel dead for seconds.** +8oz/+16oz waits on a server action plus a
+full router.refresh with no pending state, so the button seems broken. Two halves: make the
+card update instantly (optimistic update or at minimum a spinner/disabled state on the tapped
+button), and the global affordance work already tracked as DS-15 (route/action feedback,
+brighten the invisible skeletons). The perf half is new: profile whether the lag is the action
+round-trip or the full-page refresh, and cut it.
+
+---
+
 *Audit session notes: dev data added to the Pro test account — one sleep entry ("Night of" Jul 2,
 7h30m, streak now includes it); water was added then undone (net zero). A non-subscribed account
 `dsh38-audit@example.com` / `Dsh38-Audit!2026` now exists in the shared Neon DB (harmless; reusable
