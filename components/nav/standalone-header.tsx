@@ -263,9 +263,13 @@ export function StandaloneHeader({ active }: { active?: string }) {
                 CHAD
               </SheetTitle>
             </div>
+            {/* min-h-0 + flex-1 + overflow-y-auto: the link list is taller than
+                short phone viewports (13 links + pricing + theme + sign-out), so
+                it must scroll inside the sheet or the bottom entries are
+                unreachable (NAV-37). */}
             <motion.div
               animate="show"
-              className="flex flex-col gap-1 p-3"
+              className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-3"
               initial="hidden"
               variants={sheetList}
             >

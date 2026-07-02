@@ -1,19 +1,24 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
+import { canAccessProFeatures } from "@/lib/admin";
 import { parseDateInput } from "@/lib/date";
 import { createWorkout } from "@/lib/db/queries";
+import type { User } from "@/lib/db/schema";
 
 type LogWorkoutProps = {
   session: Session;
+  user: User;
 };
 
 /**
  * Lets Chad log a workout the client tells him about straight into their
  * dashboard, so the executed sets/reps/weight are tracked (and feed PRs/volume)
- * instead of getting buried in chat. Mirrors the save-goal factory.
+ * instead of getting buried in chat. Mirrors the save-goal factory. Pro-gated
+ * like the /workouts logger itself (FEAT-14 aligned every write tool on the
+ * same gate its page uses).
  */
-export const logWorkout = ({ session }: LogWorkoutProps) =>
+export const logWorkout = ({ session, user }: LogWorkoutProps) =>
   tool({
     description:
       "Log a workout the client reports into their dashboard so it's tracked and counts toward their PRs and volume. Use this when the client tells you a session they actually did (e.g. 'I benched 3x8 at 135'). Record each exercise with its working sets. Don't invent sets they didn't report.",
@@ -55,6 +60,13 @@ export const logWorkout = ({ session }: LogWorkoutProps) =>
         .max(50),
     }),
     execute: async ({ title, performedAt, notes, exercises }) => {
+      if (!canAccessProFeatures(user)) {
+        return {
+          error:
+            "This client's plan doesn't include workout tracking; it's part of Chad Pro. Tell them to upgrade to have you track their training.",
+        };
+      }
+
       const performed = parseDateInput(performedAt);
 
       const created = await createWorkout({

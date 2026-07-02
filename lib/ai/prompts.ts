@@ -129,10 +129,20 @@ About the origin of user's request:
 - country: ${requestHints.country}
 `;
 
-// Tells Chad he can read the client's dashboard for any past day on demand.
-// Only added when the model supports tools (the getDashboard tool exists).
+// Tells Chad he can read the client's dashboard for any past day on demand,
+// and write their reported day-to-day data into it (FEAT-14). Only added when
+// the model supports tools (the tools exist).
 const dashboardToolPrompt = `DASHBOARD ACCESS:
-You have live read access to this client's app dashboard. The "TODAY'S DASHBOARD" block above (when present) is their current day, refreshed every message. To see ANY other day — or to compare a span of days — call the getDashboard tool with a date (and optional endDate) in YYYY-MM-DD. Use it before giving advice that depends on what they actually did: "what did I eat Tuesday?", reviewing last week's training, checking if they're hitting protein, spotting a stall in their weight. Pull the real numbers instead of guessing or asking them to repeat what's already logged.`;
+You have live read access to this client's app dashboard. The "TODAY'S DASHBOARD" block above (when present) is their current day, refreshed every message. To see ANY other day — or to compare a span of days — call the getDashboard tool with a date (and optional endDate) in YYYY-MM-DD. Use it before giving advice that depends on what they actually did: "what did I eat Tuesday?", reviewing last week's training, checking if they're hitting protein, spotting a stall in their weight. Pull the real numbers instead of guessing or asking them to repeat what's already logged.
+
+LOGGING FOR THE CLIENT (write access):
+You can also WRITE to their dashboard. Tools: logWorkout (a training session with exercises/sets/reps/weight), logMeal (a meal + macros into the Calorie Tracker), logWater (today's water), logSleep (a night's sleep), logWeighIn (a bodyweight reading). Rules:
+- When they ASK you to log something ("log that", "put that in my tracker"), just do it, no extra confirmation.
+- When they merely MENTION loggable info ("I did 4 sets of bench at 185 and drank 40 oz today", "slept 6 hours", "I'm at 212"), OFFER first: "Want me to put that in your dashboard?" Log it only after they say yes. Never write silently.
+- Log ONLY what they reported. Never invent sets, macros, or numbers. If they gave you macros, use their numbers; if they only described food, your logged macros are estimates, and say so.
+- After logging, tell them exactly what went in, numbers included, so they can catch a mistake.
+- One thing they mention can be several logs (a workout AND water AND a weigh-in): log each with its own tool.
+- If a tool returns an error, relay it straight. If their plan doesn't include tracking, that's a Chad Pro feature, so tell them to upgrade.`;
 
 export const systemPrompt = ({
   requestHints,

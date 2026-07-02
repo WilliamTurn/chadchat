@@ -39,6 +39,10 @@ import { createDocument } from "@/lib/ai/tools/create-document";
 import { editDocument } from "@/lib/ai/tools/edit-document";
 import { generateMealPlanTool } from "@/lib/ai/tools/generate-meal-plan";
 import { getDashboard } from "@/lib/ai/tools/get-dashboard";
+import { logMeal } from "@/lib/ai/tools/log-meal";
+import { logSleep } from "@/lib/ai/tools/log-sleep";
+import { logWater } from "@/lib/ai/tools/log-water";
+import { logWeighIn } from "@/lib/ai/tools/log-weigh-in";
 import { logWorkout } from "@/lib/ai/tools/log-workout";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { saveGoal } from "@/lib/ai/tools/save-goal";
@@ -353,6 +357,10 @@ export async function POST(request: Request) {
                   "savePlan",
                   "generateMealPlan",
                   "logWorkout",
+                  "logMeal",
+                  "logWater",
+                  "logSleep",
+                  "logWeighIn",
                   "getDashboard",
                 ],
           providerOptions: {
@@ -383,7 +391,11 @@ export async function POST(request: Request) {
             saveGoal: saveGoal({ session, chatId: id }),
             savePlan: savePlan({ session, chatId: id }),
             generateMealPlan: generateMealPlanTool({ session, chatId: id }),
-            logWorkout: logWorkout({ session }),
+            logWorkout: logWorkout({ session, user: dbUser }),
+            logMeal: logMeal({ session, user: dbUser }),
+            logWater: logWater({ session, user: dbUser }),
+            logSleep: logSleep({ session, user: dbUser }),
+            logWeighIn: logWeighIn({ session, user: dbUser }),
             getDashboard: getDashboard({
               session,
               timezone: dbUser.timezone,

@@ -29,7 +29,7 @@ const BARE_THOUGHT_DELIM_RE = /\b\d{1,4}>thought\b/gi;
 // The internal tool names Chad can call. These identifiers never legitimately
 // appear in coaching prose — Chad talks about "your plan", never "savePlan".
 const TOOL_NAMES =
-  "createDocument|updateDocument|editDocument|requestSuggestions|saveGoal|savePlan|generateMealPlan|logWorkout|getDashboard";
+  "createDocument|updateDocument|editDocument|requestSuggestions|saveGoal|savePlan|generateMealPlan|logWorkout|logMeal|logWater|logSleep|logWeighIn|getDashboard";
 
 // Fingerprints of a leaked chain-of-thought / tool-selection block. The leak is
 // the model reasoning out loud about which internal tool to call before it
