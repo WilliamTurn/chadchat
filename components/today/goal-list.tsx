@@ -63,7 +63,10 @@ function GoalProgress({
           {reached ? "Goal reached 🎯" : `${pct}% · ${toGo}${unit} to go`}
         </span>
       </div>
-      <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-muted">
+      {/* Track is foreground-tinted, not bg-muted: bg-muted is near-invisible
+          on the card in dark mode, which made a 0% goal look like it had no
+          progress bar at all (P3-3). */}
+      <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-foreground/10">
         <motion.div
           animate={{ width: `${pct}%` }}
           className="h-full rounded-full bg-gradient-to-r from-blood/70 to-blood shadow-[0_0_10px_var(--color-blood)]"
@@ -75,16 +78,30 @@ function GoalProgress({
   );
 }
 
+/** Plain name for the thing two overlapping goals both measure (P2-4). */
+function metricNoun(goal: EditableGoal): string {
+  if (goal.metric === "bodyfat") {
+    return "body fat";
+  }
+  if (goal.metric === "lift") {
+    return goal.metricRef ?? "this lift";
+  }
+  return "your weight";
+}
+
 function GoalItem({
   goal,
   currentWeight,
   lift,
   exerciseNames,
+  overlaps = false,
 }: {
   goal: EditableGoal;
   currentWeight: number | null;
   lift: LiftProgress | undefined;
   exerciseNames: string[];
+  /** Another active goal tracks the same metric (P2-4). */
+  overlaps?: boolean;
 }) {
   const isLift = goal.metric === "lift";
   const current = isLift ? (lift?.current ?? null) : goal.metric === "weight" ? currentWeight : null;
@@ -113,6 +130,13 @@ function GoalItem({
           <Badge variant="secondary">{goal.status}</Badge>
         )}
       </div>
+      {overlaps && (
+        <p className="mt-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1.5 text-amber-600 text-xs dark:text-amber-400">
+          Another active goal also tracks {metricNoun(goal)}. The two progress
+          bars start from different points, so they will disagree. Keep one and
+          archive the other.
+        </p>
+      )}
       <GoalProgress
         current={current}
         firstValue={lift?.first}
@@ -257,6 +281,8 @@ export function GoalList({
   liftProgress = {},
   exerciseNames = [],
   quiet = false,
+  calorieConflict = null,
+  overlapIds = [],
 }: {
   goals: EditableGoal[];
   currentWeight: number | null;
@@ -269,6 +295,15 @@ export function GoalList({
   /** First-run (P1-4): the empty state describes what will appear here instead
    *  of adding another CTA to the chorus — the hero owns the one first action. */
   quiet?: boolean;
+  /** An active goal's text names a calorie figure that disagrees with the
+   *  Calorie Tracker target (P2-4), surfaced as an "align these" nudge. */
+  calorieConflict?: {
+    goalTitle: string;
+    mentioned: number;
+    target: number;
+  } | null;
+  /** Ids of active goals that track the same metric as another active goal. */
+  overlapIds?: string[];
 }) {
   return (
     <>
@@ -277,6 +312,24 @@ export function GoalList({
         title="Your goals"
         tone="blood"
       />
+
+      {calorieConflict && (
+        <div className="mb-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
+          <p className="text-sm">
+            Your goal "{calorieConflict.goalTitle}" mentions{" "}
+            {calorieConflict.mentioned.toLocaleString()} calories a day, but
+            your Calorie Tracker target is{" "}
+            {calorieConflict.target.toLocaleString()}. One of them is out of
+            date.
+          </p>
+          <div className="mt-2">
+            <AskChadButton
+              label="Ask Chad to align these"
+              prompt={`My goal "${calorieConflict.goalTitle}" says ${calorieConflict.mentioned.toLocaleString()} calories a day, but my Calorie Tracker target is ${calorieConflict.target.toLocaleString()}. Which one should I follow? Update the stale one so they match.`}
+            />
+          </div>
+        </div>
+      )}
 
       {goals.length > 0 ? (
         <div className="flex flex-col gap-2">
@@ -287,6 +340,7 @@ export function GoalList({
               goal={g}
               key={g.id}
               lift={liftProgress[g.id]}
+              overlaps={overlapIds.includes(g.id)}
             />
           ))}
         </div>

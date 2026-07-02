@@ -111,7 +111,9 @@ export function TargetEditor({
             protein. Leave a field blank to skip it. Not sure what to aim for?{" "}
             <Link
               className="text-foreground underline underline-offset-4"
-              href="/"
+              href={`/?prompt=${encodeURIComponent(
+                "Help me set my daily calorie and macro targets. Ask me what you need to know, then give me exact numbers for calories, protein, carbs, and fat."
+              )}`}
             >
               Ask Chad
             </Link>

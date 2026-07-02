@@ -1,15 +1,12 @@
 import {
   ArrowRight,
-  Camera,
   ChefHat,
-  CreditCard,
   Droplet,
   Dumbbell,
   LineChart,
   Lock,
   MessageSquare,
   Moon,
-  Refrigerator,
   Utensils,
   Zap,
 } from "lucide-react";
@@ -152,6 +149,20 @@ function relativeDay(d: Date, timezone: string | null): string {
   return formatCalendarDay(d, { month: "short", day: "numeric" });
 }
 
+/** A daily calorie figure named in free text ("1,800 cal", "calories capped at
+ *  1,800"), for the goal-vs-target coherence nudge (P2-4). Bounded to a sane
+ *  daily range so gram counts and dates never match. */
+function mentionedCalories(text: string): number | null {
+  const m =
+    text.match(/(\d[\d,]{2,4})\s*(?:k?cals?\b|calories?\b)/i) ??
+    text.match(/\bcalories?\b[^.\d]{0,40}(\d[\d,]{2,4})/i);
+  if (!m) {
+    return null;
+  }
+  const n = Number(m[1].replace(/,/g, ""));
+  return Number.isFinite(n) && n >= 800 && n <= 10_000 ? n : null;
+}
+
 /** Consecutive days (ending today or yesterday) with at least one logged action.
  *  Days are the user's local calendar days (FEAT-8) — a late-night log counts
  *  toward THEIR today, not the next UTC day. */
@@ -270,9 +281,10 @@ async function TodayContent() {
     ? {
         title: mealPlan.title,
         dayCount: Array.isArray(mealPlan.days) ? mealPlan.days.length : 0,
+        // Plain nouns, not lifter shorthand like "200P / 190C / 65F" (P3-5).
         targetLine:
           mealPlan.targetCalories != null
-            ? `${mealPlan.targetCalories.toLocaleString()} cal · ${mealPlan.targetProtein ?? 0}P / ${mealPlan.targetCarbs ?? 0}C / ${mealPlan.targetFat ?? 0}F`
+            ? `${mealPlan.targetCalories.toLocaleString()} cal · ${mealPlan.targetProtein ?? 0}g protein · ${mealPlan.targetCarbs ?? 0}g carbs · ${mealPlan.targetFat ?? 0}g fat`
             : null,
       }
     : null;
@@ -305,6 +317,50 @@ async function TodayContent() {
   });
   const goalItems = goals.map(toGoalItem);
   const pastGoalItems = pastGoals.map(toGoalItem);
+
+  // Coherence nudges (P2-4): (a) an active goal whose text names a daily
+  // calorie figure that disagrees with the Calorie Tracker target, and (b) two
+  // active goals tracking the same metric, whose progress bars anchor on
+  // different start values and so can contradict each other on one screen.
+  let calorieConflict: {
+    goalTitle: string;
+    mentioned: number;
+    target: number;
+  } | null = null;
+  if (target?.calories) {
+    for (const g of goalItems) {
+      const mentioned = mentionedCalories(`${g.title} ${g.detail ?? ""}`);
+      if (mentioned != null && mentioned !== target.calories) {
+        calorieConflict = {
+          goalTitle: g.title,
+          mentioned,
+          target: target.calories,
+        };
+        break;
+      }
+    }
+  }
+
+  const overlapIds: string[] = [];
+  {
+    // Only metrics where two goals genuinely measure the same thing: weight,
+    // body fat, or the same lift. Two "measurement" goals can be different
+    // body parts, and "custom" goals have no comparable metric.
+    const byMetric = new Map<string, string[]>();
+    for (const g of goalItems) {
+      if (g.metric === "weight" || g.metric === "bodyfat") {
+        byMetric.set(g.metric, [...(byMetric.get(g.metric) ?? []), g.id]);
+      } else if (g.metric === "lift" && g.metricRef) {
+        const key = `lift:${g.metricRef.trim().toLowerCase()}`;
+        byMetric.set(key, [...(byMetric.get(key) ?? []), g.id]);
+      }
+    }
+    for (const ids of byMetric.values()) {
+      if (ids.length > 1) {
+        overlapIds.push(...ids);
+      }
+    }
+  }
 
   // Lift goals (DSH-28): read the est.-1RM trend for each tracked exercise from
   // the logged workouts, so the goal card shows live progress + charts against
@@ -482,7 +538,9 @@ async function TodayContent() {
             <img
               alt=""
               aria-hidden
-              className="absolute right-0 bottom-0 h-[116%] w-auto max-w-none select-none object-contain object-bottom opacity-90 [mask-image:linear-gradient(to_left,black_45%,transparent)]"
+              // h-full, not an over-100% bleed: bleeding the figure above the
+              // container clipped its head off (DSH-37).
+              className="absolute right-0 bottom-0 h-full w-auto max-w-none select-none object-contain object-bottom opacity-90 [mask-image:linear-gradient(to_left,black_45%,transparent)]"
               src={hero.src}
             />
           )}
@@ -585,7 +643,6 @@ async function TodayContent() {
             title="Calorie Tracker"
             tone="amber"
             viewHref="/nutrition"
-            viewLabel="View history"
           />
           <div className="mt-2">
             <MacroRings
@@ -683,11 +740,13 @@ async function TodayContent() {
       <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
         <ModuleCard>
           <GoalList
+            calorieConflict={calorieConflict}
             currentWeight={currentWeight}
             exerciseNames={exerciseNames}
             goals={goalItems}
             liftProgress={liftProgress}
             memoryGoalHint={goal}
+            overlapIds={overlapIds}
             pastGoals={pastGoalItems}
             quiet={firstRun}
           />
@@ -702,8 +761,10 @@ async function TodayContent() {
         </ModuleCard>
       </div>
 
-      {/* Last workout + Meal plan (Pro) */}
-      {isPro && (
+      {/* Last workout + Meal plan (Pro) — Basic members get the same locked
+          teasers as every other Pro module (P2-7: one gating rule, locked
+          cards sell the upgrade; invisible rows don't). */}
+      {isPro ? (
         <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
           <ModuleCard>
             <ModuleHeader
@@ -794,6 +855,19 @@ async function TodayContent() {
             </ModuleFooter>
           </ModuleCard>
         </div>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
+          <LockedCard
+            icon={<Dumbbell className="size-4" />}
+            text="Log your workouts and Chad tracks your PRs, volume, and what to hit next session. Pro only."
+            title="Last workout"
+          />
+          <LockedCard
+            icon={<ChefHat className="size-4" />}
+            text="Chad builds a structured meal plan around your macro target. Real foods, exact portions. Pro only."
+            title="Meal plan"
+          />
+        </div>
       )}
 
       {/* Weight trend (Pro) — the REVIEW finale: the slow metric the product's
@@ -851,44 +925,8 @@ async function TodayContent() {
         />
       )}
 
-      {/* Quick actions */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
-        <QuickAction
-          href="/"
-          icon={<MessageSquare className="size-4" />}
-          label="Talk to Chad"
-        />
-        <QuickAction
-          href="/workouts"
-          icon={<Dumbbell className="size-4" />}
-          label="Workouts"
-        />
-        <QuickAction
-          href="/nutrition"
-          icon={<Camera className="size-4" />}
-          label="Calorie Tracker"
-        />
-        <QuickAction
-          href="/meal-plan"
-          icon={<ChefHat className="size-4" />}
-          label="Meal plan"
-        />
-        <QuickAction
-          href="/kitchen"
-          icon={<Refrigerator className="size-4" />}
-          label="Kitchen"
-        />
-        <QuickAction
-          href="/progress"
-          icon={<LineChart className="size-4" />}
-          label="Progress"
-        />
-        <QuickAction
-          href="/account"
-          icon={<CreditCard className="size-4" />}
-          label="Account"
-        />
-      </div>
+      {/* No quick-actions row (P2-8): it duplicated the top nav incompletely,
+          and the mobile sheet nav already covers reach. */}
     </div>
   );
 }
@@ -921,22 +959,3 @@ function LockedCard({
   );
 }
 
-function QuickAction({
-  href,
-  icon,
-  label,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <Link
-      className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card px-3 py-4 text-center text-sm transition-colors hover:bg-accent/50"
-      href={href}
-    >
-      <span className="text-blood">{icon}</span>
-      <span className="font-medium">{label}</span>
-    </Link>
-  );
-}
