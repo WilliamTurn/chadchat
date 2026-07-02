@@ -5,9 +5,10 @@
  *      never ordinary data. The training charts (volume, est. 1RM) draw in
  *      blood because lifting IS the brand domain, not because red "means"
  *      anything about the numbers.
- *   2. EMERALD means exactly one thing: moving toward / hitting a goal
- *      (the R2-10 weight-line treatment). Anything that isn't a goal verdict
- *      draws in its domain accent below, or stays neutral.
+ *   2. EMERALD means moving toward / hitting a goal, plus the weight trend
+ *      line itself, which is ALWAYS emerald (owner call, s126: the toward/away
+ *      verdict lives in the KPI tones, never in the line color). Anything
+ *      else that isn't a goal verdict draws in its domain accent below.
  *
  * This module is the single source of truth for every chart/data color.
  * The `--chart-1..5` tokens in `app/globals.css` mirror the five core hues —
@@ -18,11 +19,9 @@
 /** Brand blood red — chrome, alerts, and the training domain. */
 export const BLOOD = "#a4161a";
 
-/** Emerald — strictly "toward / at goal": trend lines, goal bars, goal lines. */
+/** Emerald — "toward / at goal" verdicts, goal bars, goal lines, and the
+ *  always-emerald weight trend line (rule 2). */
 export const GOAL_EMERALD = "#10b981";
-
-/** Neutral data line (no goal, flat, or moving away — R2-10). */
-export const NEUTRAL_LINE = "var(--foreground)";
 
 /** One fixed accent per domain. A chart's series color comes from here. */
 export const DOMAIN = {

@@ -2,7 +2,8 @@
 
 /**
  * The Sleep & recovery card (/today + /sleep): last night's hours + quality,
- * a 7-night week chart, and the log control — in the card BODY, like the
+ * this week's Sunday-start night chart (VF-10), and the log control — in the
+ * card BODY, like the
  * hydration quick-adds, so every daily-logger card carries its input where you
  * read its number (audit rule 5). The chart is built on Recharts via the shadcn
  * chart primitive (the same engine as the weight/water trends). Nights that
@@ -153,6 +154,34 @@ export function SleepTracker({
               <XAxis
                 axisLine={false}
                 dataKey="label"
+                // Same structural today-cue as the dot strips (VF-11): bold
+                // foreground label for today, dimmed labels for upcoming days.
+                tick={(props: {
+                  x?: number | string;
+                  y?: number | string;
+                  index?: number;
+                  payload?: { value?: unknown };
+                }) => {
+                  const day =
+                    props.index == null ? undefined : week[props.index];
+                  return (
+                    <text
+                      fill={
+                        day?.isToday
+                          ? "var(--foreground)"
+                          : "var(--muted-foreground)"
+                      }
+                      fillOpacity={day?.isFuture ? 0.5 : 1}
+                      fontSize={12}
+                      fontWeight={day?.isToday ? 600 : 400}
+                      textAnchor="middle"
+                      x={props.x}
+                      y={Number(props.y ?? 0) + 10}
+                    >
+                      {String(props.payload?.value ?? "")}
+                    </text>
+                  );
+                }}
                 tickLine={false}
                 tickMargin={6}
               />
@@ -211,7 +240,7 @@ export function SleepTracker({
         askChad={
           <AskChadButton prompt="Look at my sleep over the last week. Am I getting enough to recover and build muscle, and what should I change?" />
         }
-        status={`${goalHours}+ hrs a night recommended · last 7 nights`}
+        status={`${goalHours}+ hrs a night recommended · this week`}
       />
     </ModuleCard>
   );
@@ -254,7 +283,9 @@ function SleepTooltip({
           </span>
         </div>
       ) : (
-        <div className="text-muted-foreground">Not logged</div>
+        <div className="text-muted-foreground">
+          {row.isFuture ? "Upcoming" : "Not logged"}
+        </div>
       )}
     </div>
   );

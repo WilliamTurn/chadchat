@@ -69,7 +69,7 @@ export function WaterTracker({
 }: {
   totalMl: number;
   goalMl?: number;
-  /** Rolling 7-day strip (goal hit / partial / nothing) — omit to hide. */
+  /** This week's Sunday-start strip (goal hit / partial / nothing); omit to hide. */
   week?: WaterDay[];
   /** The detail page ("View all →" /hydration) — omit when already on it. */
   viewHref?: string;
@@ -381,27 +381,27 @@ export function WaterTracker({
         </Popover>
       </div>
 
-      {/* Rolling 7-day strip — the compact in-card readout (the full history
+      {/* This week's strip — the compact in-card readout (the full history
           chart lives on the detail page, one surface per domain). Full dot =
           goal hit, faded dot = some water logged, hollow = nothing. Shared
-          WeekStrip treatment (R2-1): two-letter labels, Today marker, real
-          dates on hover. */}
+          Sunday-start WeekStrip treatment (VF-10/VF-11): two-letter labels,
+          structural today ring, real dates on hover. */}
       {week?.some((d) => d.logged) ? (
         <div className="mt-4 flex items-center justify-between rounded-xl border border-border bg-background/40 px-4 py-2.5">
-          <span className="text-muted-foreground text-xs">Last 7 days</span>
+          <span className="text-muted-foreground text-xs">This week</span>
           <WeekStrip
             days={week.map((day) => ({
               key: day.t,
               label: day.label,
               dateLabel: day.dateLabel,
               isToday: day.isToday,
-              dotClassName: `size-3 rounded-full ${
+              isFuture: day.isFuture,
+              dotClassName:
                 day.logged && day.ml >= safeGoal
                   ? "bg-sky-400 shadow-[0_0_8px_var(--color-sky-400)]"
                   : day.logged
                     ? "bg-sky-400/40"
-                    : "bg-border"
-              } ${day.isToday ? "ring-2 ring-sky-400/40 ring-offset-1 ring-offset-background" : ""}`,
+                    : "bg-border",
               value: day.logged ? formatOz(day.ml) : "Not logged",
               status:
                 day.logged && day.ml >= safeGoal ? "Goal hit" : undefined,

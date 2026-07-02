@@ -145,7 +145,7 @@ export function StatPills({
         value={weightValue}
       />
       <StatPill
-        help="Days out of the last 7 where you logged anything: a meal, water, sleep, a workout, or a weigh-in. Different from your streak, which counts consecutive days."
+        help="Days this week (Sunday through Saturday) where you logged anything: a meal, water, sleep, a workout, or a weigh-in. Different from your streak, which counts consecutive days."
         icon={<Activity className="size-5" strokeWidth={2.5} />}
         label="Days active this week"
         tone="emerald"

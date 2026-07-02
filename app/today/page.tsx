@@ -72,6 +72,7 @@ import {
   buildSleepWeek,
   buildWaterWeek,
   buildWorkoutWeek,
+  weekAnchors,
   weekSlotDateLabel,
   weekSlotLabel,
 } from "@/lib/today/week";
@@ -186,7 +187,6 @@ async function TodayContent() {
   // for streak/week-strip math (see lib/date.ts).
   const timezone = user.timezone;
   const startOfToday = todayStartInTz(timezone);
-  const todayAnchor = todayAnchorInTz(timezone);
 
   // Window for the streak / week strip — long enough that a real streak isn't
   // capped, cheap because each select pulls a single timestamp column.
@@ -372,22 +372,22 @@ async function TodayContent() {
   const carbsToday = todaysMeals.reduce((sum, m) => sum + (m.carbs ?? 0), 0);
   const fatToday = todaysMeals.reduce((sum, m) => sum + (m.fat ?? 0), 0);
 
-  // Streak + 7-day week strip from every tracked action (meals, workouts,
+  // Streak + this week's strip from every tracked action (meals, workouts,
   // water, weigh-ins), so engagement on any surface keeps the streak alive.
-  // All day math runs on the user's local calendar days (00:00-UTC anchors).
+  // The strip is the user's Sunday-start calendar week (VF-10); all day math
+  // runs on their local calendar days (00:00-UTC anchors).
   const streak = computeStreak(activityDays, timezone);
   const activeDayKeys = new Set(
     activityDays.map((d) => toCalendarDayISO(calendarDayAnchorInTz(d, timezone)))
   );
-  const week = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(todayAnchor.getTime() - (6 - i) * DAY_MS);
-    return {
-      label: weekSlotLabel(d, i === 6),
-      dateLabel: weekSlotDateLabel(d),
-      active: activeDayKeys.has(toCalendarDayISO(d)),
-      isToday: i === 6,
-    };
-  });
+  const { days: weekDays, todayMs } = weekAnchors(timezone);
+  const week = weekDays.map((d) => ({
+    label: weekSlotLabel(d),
+    dateLabel: weekSlotDateLabel(d),
+    active: activeDayKeys.has(toCalendarDayISO(d)),
+    isToday: d.getTime() === todayMs,
+    isFuture: d.getTime() > todayMs,
+  }));
   const activeThisWeek = week.filter((d) => d.active).length;
 
   // Sleep + hydration week strips — the compact in-card readouts (the full
@@ -412,12 +412,49 @@ async function TodayContent() {
   const firstRun = !isReturning;
 
   // "Thursday, July 2" on the member's own wall clock (R2-11) — the page says
-  // "today" everywhere, so it should say WHICH day that is.
+  // "today" everywhere, so it should say WHICH day that is. Rendered as the
+  // greeting's small tracked-out eyebrow (VF-13).
   const todayLabel = formatDayInTz(new Date(), timezone, {
     weekday: "long",
     month: "long",
     day: "numeric",
   });
+
+  // One focal point (VF-13): the greeting itself is the hero line.
+  const heroLine = isReturning
+    ? firstName
+      ? `Welcome back, ${firstName}`
+      : "Welcome back"
+    : "Welcome to Chad";
+
+  // Plan badge, defined once (VF-12): inline with the greeting eyebrow on
+  // mobile, in the top-right column at sm+, never a floating orphan cluster.
+  const planBadge =
+    plan.tier === "elite" ? (
+      <Badge
+        className="gap-1 border-foreground/30 bg-foreground/10 px-2.5 font-semibold uppercase tracking-wide"
+        variant="secondary"
+      >
+        <Zap className="size-3" fill="currentColor" />
+        Elite
+      </Badge>
+    ) : plan.tier === "pro" ? (
+      <Badge
+        className="gap-1 border-blood/40 bg-blood/15 px-2.5 font-semibold text-blood uppercase tracking-wide shadow-[0_0_12px_-2px_var(--color-blood)]"
+        variant="secondary"
+      >
+        <Zap className="size-3" fill="currentColor" />
+        Pro
+      </Badge>
+    ) : plan.status === "trialing" && plan.trialDaysLeft !== null ? (
+      <Badge variant="secondary">
+        {plan.trialDaysLeft <= 0
+          ? "Trial ends today"
+          : `${plan.trialDaysLeft} days left in trial`}
+      </Badge>
+    ) : (
+      <Badge variant="secondary">Basic</Badge>
+    );
 
   return (
     <div className="flex flex-col gap-8">
@@ -456,13 +493,21 @@ async function TodayContent() {
             />
           )}
         </div>
+        {/* Greeting (VF-12 + VF-13): three intentional tiers (date eyebrow,
+            "Welcome back, Name" hero line, coaching subtitle). On mobile the
+            plan badge sits inline with the eyebrow and the CTA is a
+            full-width, greeting-aligned row; at sm+ badge and CTA form the
+            top-right column. Never a centered control island. */}
         <div className="relative flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-muted-foreground text-sm">
-              {isReturning ? "Welcome back" : "Welcome to Chad"} · {todayLabel}
-            </p>
-            <h1 className="mt-1 font-display font-bold text-3xl tracking-tight sm:text-4xl">
-              {firstName ?? (isReturning ? "Let's work" : "Let's get started")}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center justify-between gap-3">
+              <p className="font-medium text-muted-foreground text-xs uppercase tracking-[0.14em]">
+                {todayLabel}
+              </p>
+              <span className="sm:hidden">{planBadge}</span>
+            </div>
+            <h1 className="mt-1.5 font-display font-bold text-3xl tracking-tight sm:text-4xl">
+              {heroLine}
             </h1>
             <p className="mt-2 max-w-md text-muted-foreground text-sm">
               {isReturning
@@ -483,33 +528,18 @@ async function TodayContent() {
                 </Link>
               </Button>
             )}
-          </div>
-          <div className="flex flex-col items-end gap-2">
-            {plan.tier === "elite" ? (
-              <Badge
-                className="gap-1 border-foreground/30 bg-foreground/10 px-2.5 font-semibold uppercase tracking-wide"
-                variant="secondary"
-              >
-                <Zap className="size-3" fill="currentColor" />
-                Elite
-              </Badge>
-            ) : plan.tier === "pro" ? (
-              <Badge
-                className="gap-1 border-blood/40 bg-blood/15 px-2.5 font-semibold text-blood uppercase tracking-wide shadow-[0_0_12px_-2px_var(--color-blood)]"
-                variant="secondary"
-              >
-                <Zap className="size-3" fill="currentColor" />
-                Pro
-              </Badge>
-            ) : plan.status === "trialing" && plan.trialDaysLeft !== null ? (
-              <Badge variant="secondary">
-                {plan.trialDaysLeft <= 0
-                  ? "Trial ends today"
-                  : `${plan.trialDaysLeft} days left in trial`}
-              </Badge>
-            ) : (
-              <Badge variant="secondary">Basic</Badge>
+            {/* Mobile CTA: full-width under the greeting stack (VF-12). */}
+            {!firstRun && (
+              <Button asChild className="mt-4 w-full gap-1.5 sm:hidden" size="sm">
+                <Link href="/">
+                  <MessageSquare className="size-3.5" />
+                  Talk to Chad
+                </Link>
+              </Button>
             )}
+          </div>
+          <div className="hidden flex-col items-end gap-2 sm:flex">
+            {planBadge}
             {/* Hidden on first-run: the hero's big CTA is the one action. */}
             {!firstRun && (
               <Button asChild className="gap-1.5" size="sm">
@@ -693,11 +723,12 @@ async function TodayContent() {
                   starts tracking your PRs and volume.
                 </p>
               )}
-              {/* Shared week-strip treatment (R2-1/R2-12), workout tone */}
+              {/* Shared Sunday-start week-strip treatment (VF-10/VF-11),
+                  workout tone */}
               {workoutWeek.some((d) => d.logged) ? (
                 <div className="flex items-center gap-4 rounded-xl border border-border bg-background/40 px-4 py-2.5">
                   <span className="text-muted-foreground text-xs">
-                    Last 7 days
+                    This week
                   </span>
                   <WeekStrip
                     days={workoutWeek.map((day) => ({
@@ -705,11 +736,10 @@ async function TodayContent() {
                       label: day.label,
                       dateLabel: day.dateLabel,
                       isToday: day.isToday,
-                      dotClassName: `size-3 rounded-full ${
-                        day.logged
-                          ? "bg-blood shadow-[0_0_8px_var(--color-blood)]"
-                          : "bg-border"
-                      } ${day.isToday ? "ring-2 ring-blood/40 ring-offset-1 ring-offset-background" : ""}`,
+                      isFuture: day.isFuture,
+                      dotClassName: day.logged
+                        ? "bg-blood shadow-[0_0_8px_var(--color-blood)]"
+                        : "bg-border",
                       value: day.logged
                         ? `${day.count} workout${day.count === 1 ? "" : "s"}`
                         : "No workout",

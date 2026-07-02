@@ -2,9 +2,10 @@
 
 /**
  * The /today streak strip: a flickering flame + count-up day total, plus the
- * shared 7-day dot strip (the Duolingo / Apple-Fitness pattern) showing which
- * of the last seven days had a logged action. The flame only flickers while a
- * streak is live; everything respects reduced motion.
+ * shared week dot strip (the Duolingo / Apple-Fitness pattern) showing which
+ * days of the current Sunday-start week had a logged action (VF-10). The
+ * flame only flickers while a streak is live; everything respects reduced
+ * motion.
  *
  * The copy states what a streak means in plain language (R2-2), and a "?"
  * popover spells out exactly what counts. Dots render through the shared
@@ -19,14 +20,16 @@ import { KpiHelp } from "@/components/dashboard/kpi";
 import { WeekStrip } from "@/components/today/week-strip";
 
 export type WeekDay = {
-  /** Strip label: two-letter weekday, or "Today" for the last slot. */
+  /** Strip label: the two-letter weekday (the today-cue is the ring, VF-11). */
   label: string;
   /** "Mon, Jun 29" — the real date, for the tooltip. */
   dateLabel: string;
   /** The user logged something on this day. */
   active: boolean;
-  /** This is today (bold label + ring). */
+  /** This is today (bold label + high-contrast ring). */
   isToday: boolean;
+  /** Later this week (Sunday-start week, VF-10): quiet upcoming slot. */
+  isFuture: boolean;
 };
 
 export function StreakStrip({
@@ -86,18 +89,17 @@ export function StreakStrip({
         </div>
       </div>
 
-      {/* 7-day week strip (shared treatment) */}
+      {/* This week's strip (shared Sunday-start treatment, VF-10/VF-11) */}
       <WeekStrip
         days={week.map((day) => ({
           key: day.dateLabel,
           label: day.label,
           dateLabel: day.dateLabel,
           isToday: day.isToday,
-          dotClassName: `size-3 rounded-full ${
-            day.active
-              ? "bg-blood shadow-[0_0_8px_var(--color-blood)]"
-              : "bg-border"
-          } ${day.isToday ? "ring-2 ring-blood/40 ring-offset-1 ring-offset-background" : ""}`,
+          isFuture: day.isFuture,
+          dotClassName: day.active
+            ? "bg-blood shadow-[0_0_8px_var(--color-blood)]"
+            : "bg-border",
           value: day.active ? "Logged activity" : "Nothing logged",
         }))}
       />

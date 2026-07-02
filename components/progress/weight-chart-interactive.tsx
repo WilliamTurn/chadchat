@@ -54,18 +54,19 @@ import {
   round1,
   type TrendRow,
 } from "@/lib/chart/trend";
-import { GOAL_EMERALD, NEUTRAL_LINE } from "@/lib/chart/palette";
+import { GOAL_EMERALD } from "@/lib/chart/palette";
 import { computeGoalProgress } from "@/lib/goals/progress";
 
 const GOAL_COLOR = GOAL_EMERALD;
 
-// R2-10 (now the app-wide VF-7 color law, see lib/chart/palette.ts): the
-// trend line's color is a data verdict, not the brand accent. The old
-// always-blood-red line read as "something is wrong" even mid-successful
-// cut. Emerald = the trend is moving toward the active goal (same emerald and
-// same direction test the KPI tones use); neutral = no goal, flat, or away.
-const TOWARD_COLOR = GOAL_COLOR;
-const NEUTRAL_COLOR = NEUTRAL_LINE;
+// Owner call (s126): the weight trend line is ALWAYS the glowing emerald.
+// The R2-10 experiment (emerald only when trending toward goal, neutral
+// otherwise) made the line flip to a flat foreground white, which read as
+// broken. The toward/away verdict still lives in the Change and Rate KPI
+// tones (green/red); the line itself stays the signature green.
+const TREND_COLOR = GOAL_COLOR;
+// A soft emerald halo on the trend stroke so the line reads as glowing.
+const TREND_GLOW = "[filter:drop-shadow(0_0_6px_rgba(16,185,129,0.45))]";
 
 // Data thresholds for honest sparse states (see spec §4.6).
 const MIN_FOR_RATE = 5; // below this, a per-week rate is too noisy to show
@@ -355,19 +356,8 @@ function WeightChartBody({
   const reveal = useMountReveal();
   const gradientId = useId();
 
-  // Same direction test as the KPI "Change" tone, over the drawn rows: is the
-  // trend moving the way the active goal points? (R2-10)
-  const trendingToward = useMemo(() => {
-    if (goalWeight == null || rows.length < 2) {
-      return false;
-    }
-    const change = rows[rows.length - 1].trend - rows[0].trend;
-    if (change === 0) {
-      return false;
-    }
-    return (change < 0) === (goalWeight < rows[0].trend);
-  }, [rows, goalWeight]);
-  const lineColor = trendingToward ? TOWARD_COLOR : NEUTRAL_COLOR;
+  // Always the glowing emerald (owner call, s126; see TREND_COLOR above).
+  const lineColor = TREND_COLOR;
 
   const chartConfig = {
     trend: { label: "Trend", color: lineColor },
@@ -499,11 +489,12 @@ function WeightChartBody({
           type="monotone"
         />
 
-        {/* The headline EMA trend, on top. */}
+        {/* The headline EMA trend, on top, with its emerald glow. */}
         <Area
           activeDot={{ r: 4, fill: lineColor, strokeWidth: 0 }}
           animationDuration={750}
           animationEasing="ease-out"
+          className={TREND_GLOW}
           dataKey="trend"
           dot={false}
           fill={`url(#${gradientId})`}
