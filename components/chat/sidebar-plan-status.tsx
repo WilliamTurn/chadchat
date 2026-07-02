@@ -2,7 +2,7 @@
 
 import { Camera, LineChart, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { upgradeToPro } from "@/app/account/actions";
+import { startPlanChange } from "@/app/account/actions";
 import { Button } from "@/components/ui/button";
 import type { PlanStatusSummary } from "@/lib/subscription";
 
@@ -68,7 +68,7 @@ export function SidebarPlanStatus({ plan }: { plan: PlanStatusSummary }) {
       {canUpgrade && (
         // A form with the server action keeps the Stripe redirect working
         // cleanly (same pattern as "Manage billing" on the account page).
-        <form action={upgradeToPro}>
+        <form action={startPlanChange}>
           <Button className="h-8 w-full gap-1.5 text-[13px]" size="sm" type="submit">
             <Sparkles className="size-3.5" />
             Upgrade to Pro

@@ -87,10 +87,11 @@ async function AdminContent() {
       </div>
 
       {/* Membership mix */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard label="On trial" value={usage.trialing} />
         <StatCard label="Basic" value={usage.basic} />
         <StatCard label="Pro" value={usage.pro} />
+        <StatCard label="Elite" value={usage.elite} />
       </div>
 
       {/* Members directory + abuse review */}

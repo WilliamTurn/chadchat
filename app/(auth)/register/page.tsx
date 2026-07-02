@@ -2,9 +2,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useActionState, useEffect, useState } from "react";
+import { Suspense, useActionState, useEffect, useState } from "react";
 import { type Resolver, useForm } from "react-hook-form";
 
 import { AuthForm, type AuthFormValues } from "@/components/chat/auth-form";
@@ -15,7 +15,18 @@ import { registerFormSchema } from "@/lib/validation/auth";
 import { type RegisterActionState, register } from "../actions";
 
 export default function Page() {
+  // useSearchParams (here and inside GoogleSignIn) needs a Suspense boundary
+  // to prerender — same structure as the login page.
+  return (
+    <Suspense fallback={null}>
+      <RegisterForm />
+    </Suspense>
+  );
+}
+
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isSuccessful, setIsSuccessful] = useState(false);
 
   const form = useForm<AuthFormValues>({
@@ -59,6 +70,13 @@ export default function Page() {
     formAction(formData);
   };
 
+  // Keep the paywall's original destination (e.g. /pricing?plan=pro from the
+  // landing funnel, ACC-20) alive when the user hops to the sign-in page.
+  const redirectUrl = searchParams.get("redirectUrl");
+  const loginHref = redirectUrl
+    ? `/login?redirectUrl=${encodeURIComponent(redirectUrl)}`
+    : "/login";
+
   return (
     <>
       <h1 className="text-2xl font-semibold tracking-tight">Create account</h1>
@@ -77,7 +95,7 @@ export default function Page() {
           {"Have an account? "}
           <Link
             className="text-foreground underline-offset-4 hover:underline"
-            href="/login"
+            href={loginHref}
           >
             Sign in
           </Link>

@@ -45,8 +45,10 @@ export async function openBillingPortal() {
  * existing subscription (pre-selected to the update screen). Stripe shows the
  * exact proration and handles the charge, so there's no second subscription and
  * no custom billing UI to maintain. The result syncs back via the webhook.
+ * Serves both upgrade cards (Basic→Pro and Pro→Elite): the portal's update
+ * screen lists every price the portal configuration allows.
  */
-export async function upgradeToPro() {
+export async function startPlanChange() {
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login");

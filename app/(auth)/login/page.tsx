@@ -84,6 +84,13 @@ function LoginForm() {
     formAction(formData);
   };
 
+  // Keep the paywall's original destination (e.g. /pricing?plan=pro from the
+  // landing funnel, ACC-20) alive when the user hops to the register page.
+  const redirectUrl = searchParams.get("redirectUrl");
+  const registerHref = redirectUrl
+    ? `/register?redirectUrl=${encodeURIComponent(redirectUrl)}`
+    : "/register";
+
   return (
     <>
       <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
@@ -107,7 +114,7 @@ function LoginForm() {
           {"No account? "}
           <Link
             className="text-foreground underline-offset-4 hover:underline"
-            href="/register"
+            href={registerHref}
           >
             Sign up
           </Link>

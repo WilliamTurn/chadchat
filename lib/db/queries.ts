@@ -882,6 +882,7 @@ export async function getUsageStats(): Promise<{
   trialing: number;
   basic: number;
   pro: number;
+  elite: number;
 }> {
   try {
     const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -912,12 +913,13 @@ export async function getUsageStats(): Promise<{
     let trialing = 0;
     let basic = 0;
     let pro = 0;
+    let elite = 0;
     for (const row of tierRows) {
       if (row.status === "trialing") {
         trialing += row.value;
-      } else if (row.tier === "pro" || row.tier === "elite") {
-        // Elite folds into the "pro" bucket until the admin overview grows a
-        // dedicated Elite stat (part of ACC-17).
+      } else if (row.tier === "elite") {
+        elite += row.value;
+      } else if (row.tier === "pro") {
         pro += row.value;
       } else {
         basic += row.value;
@@ -930,6 +932,7 @@ export async function getUsageStats(): Promise<{
       trialing,
       basic,
       pro,
+      elite,
     };
   } catch (_error) {
     throw new ChatbotError("bad_request:database", "Failed to get usage stats");

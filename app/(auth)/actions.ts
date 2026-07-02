@@ -50,9 +50,22 @@ async function issueVerificationEmail(userId: string, email: string) {
  * Kick off the Google OAuth flow. This redirects to Google and back, so it
  * never returns normally — it throws the framework's redirect. Used by the
  * "Continue with Google" button on the login and register screens.
+ *
+ * `redirectUrl` carries the paywall's original destination (e.g. the landing
+ * page's `/pricing?plan=pro` funnel param, ACC-20) through the OAuth
+ * round-trip. Same-origin absolute paths only — anything else falls back to
+ * /today, closing the open-redirect hole.
  */
-export const signInWithGoogle = async (): Promise<void> => {
-  await signIn("google", { redirectTo: "/today" });
+export const signInWithGoogle = async (
+  redirectUrl?: string | null
+): Promise<void> => {
+  const safe =
+    typeof redirectUrl === "string" &&
+    redirectUrl.startsWith("/") &&
+    !(redirectUrl.startsWith("//") || redirectUrl.startsWith("/\\"))
+      ? redirectUrl
+      : "/today";
+  await signIn("google", { redirectTo: safe });
 };
 
 export type LoginActionState = {

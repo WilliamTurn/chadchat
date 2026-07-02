@@ -1,4 +1,12 @@
-import { Camera, type LucideIcon, Sparkles, Zap } from "lucide-react";
+import {
+  BellRing,
+  Camera,
+  FileText,
+  type LucideIcon,
+  Rocket,
+  Sparkles,
+  Zap,
+} from "lucide-react";
 import type { PlanTier } from "./subscription";
 
 export type PlanFeature = {
@@ -20,10 +28,29 @@ export const PRO_PERKS: ProPerk[] = [
   { icon: Camera, label: "Progress photo analysis — Chad reviews your form" },
   {
     icon: Sparkles,
-    label: "Custom workout & nutrition plans built for you",
-    soon: true,
+    label: "Custom workout & meal plans built for you",
   },
   { icon: Zap, label: "Highest-priority access to Chad" },
+];
+
+/**
+ * The Elite-only perks — what a Pro member gains by moving up (ACC-17). Elite
+ * is strictly additive on top of Pro: E1 proactive check-ins (FEAT-11), E2 the
+ * weekly report (FEAT-12), and permanent early access. Same single-source rule
+ * as PRO_PERKS: the pricing cards and the /account upgrade card both read this.
+ */
+export const ELITE_PERKS: ProPerk[] = [
+  {
+    icon: BellRing,
+    label:
+      "Chad checks in first — morning brief, missed-workout callouts, weigh-in nudges",
+  },
+  {
+    icon: FileText,
+    label:
+      "Your weekly report — a full written review of your week + next week's adjustments",
+  },
+  { icon: Rocket, label: "Every new feature ships to Elite first" },
 ];
 
 export const BASIC_FEATURES: PlanFeature[] = [
@@ -63,5 +90,12 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     tagline: "The complete Chad experience.",
     highlighted: true,
     features: [{ label: "Everything in Basic" }, ...PRO_PERKS],
+  },
+  {
+    tier: "elite",
+    name: "Chad Elite",
+    price: "$59",
+    tagline: "Maximum accountability. Chad comes to you.",
+    features: [{ label: "Everything in Pro" }, ...ELITE_PERKS],
   },
 ];

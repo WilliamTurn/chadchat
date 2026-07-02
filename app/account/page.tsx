@@ -1,4 +1,11 @@
-import { Dumbbell, Salad, Scale, Sparkles, TriangleAlert } from "lucide-react";
+import {
+  Crown,
+  Dumbbell,
+  Salad,
+  Scale,
+  Sparkles,
+  TriangleAlert,
+} from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -15,11 +22,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { canAccessEliteFeatures } from "@/lib/admin";
 import { getUserById } from "@/lib/db/queries";
-import { PRO_PERKS } from "@/lib/plans";
+import { ELITE_PERKS, PRO_PERKS } from "@/lib/plans";
 import { PLANS } from "@/lib/stripe";
 import { hasActiveAccess, type PlanTier } from "@/lib/subscription";
 import { cn } from "@/lib/utils";
-import { openBillingPortal, upgradeToPro } from "./actions";
+import { openBillingPortal, startPlanChange } from "./actions";
 
 /** The top-accent color for the membership card, by status/tier (ACC-7). */
 function accentForCard({
@@ -253,9 +260,11 @@ async function MembershipCard() {
   const priceLabel = tier ? PLANS[tier].monthlyPriceLabel : null;
   const status = user.subscriptionStatus;
 
-  // A Basic member with live access who can move up to Pro. The upgrade itself
-  // goes through Stripe's hosted plan-change flow (no second subscription).
-  const canUpgrade = hasAccess && tier === "basic";
+  // Members with live access who can move up a tier. Each upgrade goes through
+  // Stripe's hosted plan-change flow (no second subscription). Basic sees the
+  // Pro card (the primary path); Pro sees the Elite card (ACC-17).
+  const canUpgradeToPro = hasAccess && tier === "basic";
+  const canUpgradeToElite = hasAccess && tier === "pro";
 
   // Revenue at risk: a past-due card is a failed payment one update away from a
   // churned member, so the card itself goes destructive-tinted (not just a faint
@@ -323,7 +332,11 @@ async function MembershipCard() {
               <Button
                 type="submit"
                 variant={
-                  isPastDue ? "destructive" : canUpgrade ? "outline" : "default"
+                  isPastDue
+                    ? "destructive"
+                    : canUpgradeToPro || canUpgradeToElite
+                      ? "outline"
+                      : "default"
                 }
               >
                 {isPastDue ? "Update payment" : "Manage billing"}
@@ -347,7 +360,12 @@ async function MembershipCard() {
         </div>
       </div>
 
-      {canUpgrade && <UpgradeToProCard price={PLANS.pro.monthlyPriceLabel} />}
+      {canUpgradeToPro && (
+        <UpgradeToProCard price={PLANS.pro.monthlyPriceLabel} />
+      )}
+      {canUpgradeToElite && (
+        <UpgradeToEliteCard price={PLANS.elite.monthlyPriceLabel} />
+      )}
     </div>
   );
 }
@@ -356,7 +374,7 @@ async function MembershipCard() {
  * The in-app upgrade path for Basic members. Without this, a Basic user who
  * comes to "manage their account" hits a dead end — the page only offered
  * "Manage billing" and "Open Chad", and nothing actually moved them to Pro.
- * The button posts to the `upgradeToPro` server action, which opens Stripe's
+ * The button posts to the `startPlanChange` server action, which opens Stripe's
  * hosted plan-change flow (real proration, no duplicate subscription).
  */
 function UpgradeToProCard({ price }: { price: string }) {
@@ -394,7 +412,7 @@ function UpgradeToProCard({ price }: { price: string }) {
           ))}
         </ul>
 
-        <form action={upgradeToPro}>
+        <form action={startPlanChange}>
           <Button
             className="mt-5 w-full gap-1.5 sm:w-auto"
             size="lg"
@@ -402,6 +420,59 @@ function UpgradeToProCard({ price }: { price: string }) {
           >
             <Sparkles className="size-4" />
             Upgrade to Pro — {price}/month
+          </Button>
+        </form>
+        <p className="mt-2.5 text-muted-foreground text-xs">
+          You'll see the exact prorated amount before you confirm. Billed
+          securely by Stripe · cancel anytime.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The Pro→Elite upgrade path (ACC-17). Same hosted plan-change flow as the
+ * Basic→Pro card. Deliberately NOT red — red stays Pro's "pick me" color; the
+ * Elite card reads premium via the neutral bone/white accent instead.
+ */
+function UpgradeToEliteCard({ price }: { price: string }) {
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-foreground/25 bg-card p-6 ring-1 ring-foreground/10">
+      <div
+        aria-hidden
+        className="-right-12 -top-12 pointer-events-none absolute size-40 rounded-full bg-foreground/10 blur-3xl"
+      />
+      <div className="relative">
+        <div className="flex items-center gap-2">
+          <Crown className="size-4" />
+          <h2 className="font-display font-bold text-lg tracking-tight">
+            Upgrade to Chad Elite
+          </h2>
+        </div>
+        <p className="mt-1.5 text-muted-foreground text-sm">
+          Maximum accountability — Chad doesn't wait for you to show up. He
+          comes to you.
+        </p>
+
+        <ul className="mt-4 flex flex-col gap-2.5">
+          {ELITE_PERKS.map(({ icon: Icon, label }) => (
+            <li className="flex items-start gap-2.5 text-sm" key={label}>
+              <Icon className="mt-0.5 size-4 shrink-0" />
+              <span>{label}</span>
+            </li>
+          ))}
+        </ul>
+
+        <form action={startPlanChange}>
+          <Button
+            className="mt-5 w-full gap-1.5 sm:w-auto"
+            size="lg"
+            type="submit"
+            variant="outline"
+          >
+            <Crown className="size-4" />
+            Upgrade to Elite — {price}/month
           </Button>
         </form>
         <p className="mt-2.5 text-muted-foreground text-xs">

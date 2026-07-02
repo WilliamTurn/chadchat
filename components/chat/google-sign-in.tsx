@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useFormStatus } from "react-dom";
 
 import { signInWithGoogle } from "@/app/(auth)/actions";
@@ -49,9 +50,14 @@ function GoogleButton() {
 
 /** "Continue with Google" button plus an "or" divider, shared by login/register. */
 export function GoogleSignIn() {
+  // Carry the paywall's original destination (e.g. /pricing?plan=pro from the
+  // landing funnel, ACC-20) through the OAuth round-trip; the action validates.
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get("redirectUrl");
+
   return (
     <div className="flex flex-col gap-4">
-      <form action={signInWithGoogle}>
+      <form action={signInWithGoogle.bind(null, redirectUrl)}>
         <GoogleButton />
       </form>
       <div className="flex items-center gap-3">

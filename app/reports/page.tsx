@@ -9,6 +9,7 @@ import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { ReportActions } from "@/components/reports/report-actions";
 import { ReportView } from "@/components/reports/report-view";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessEliteFeatures } from "@/lib/admin";
 import { formatCalendarDay } from "@/lib/date";
 import { getUserById, getWeeklyReportsByUserId } from "@/lib/db/queries";
@@ -18,9 +19,9 @@ import { formatReportHour, reportDayLabel } from "@/lib/reports/schedule";
 /**
  * Weekly reports (FEAT-12, Elite): every coach's report Chad has written for
  * this member, newest first — the latest in full, older weeks collapsed. Each
- * downloads as a PDF and deep-links into chat. Reached from the report email's
- * CTA and the /account schedule card (deliberately not in the shared nav until
- * Elite is publicly purchasable — no-vaporware).
+ * downloads as a PDF and deep-links into chat. In the shared nav since Elite
+ * went publicly purchasable (ACC-17); non-Elite members see an upgrade prompt,
+ * same pattern as the Pro-gated pages.
  */
 
 export default function ReportsPage() {
@@ -78,10 +79,10 @@ async function ReportsContent() {
   if (!canAccessChad(user)) {
     redirect("/pricing");
   }
-  // Elite-only. No teaser page for other tiers until Elite is purchasable
-  // (no-vaporware) — non-Elite members simply land back on the dashboard.
+  // Elite-only: everyone else gets the upgrade teaser (Elite is purchasable
+  // now, so this is a real path — same pattern as the Pro-gated pages).
   if (!canAccessEliteFeatures(user)) {
-    redirect("/today");
+    return <UpgradePrompt />;
   }
 
   const reports = await getWeeklyReportsByUserId(user.id);
@@ -101,6 +102,39 @@ async function ReportsContent() {
         r.content != null
     );
 
+  return <ReportsList rendered={rendered} user={user} />;
+}
+
+function UpgradePrompt() {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-8 text-center">
+      <h2 className="font-medium text-lg">
+        Weekly reports are a Chad Elite feature
+      </h2>
+      <p className="mx-auto mt-2 max-w-md text-muted-foreground text-sm">
+        Upgrade to Elite and Chad writes you a full coach's review every week —
+        what you trained, how you ate, where your weight is heading, and
+        exactly what changes next week — delivered to your inbox.
+      </p>
+      <Button asChild className="mt-5">
+        <Link href="/account">Upgrade to Elite</Link>
+      </Button>
+    </div>
+  );
+}
+
+function ReportsList({
+  rendered,
+  user,
+}: {
+  rendered: {
+    id: string;
+    sentAt: Date;
+    dateLabel: string;
+    content: NonNullable<ReturnType<typeof parseWeeklyReportContent>>;
+  }[];
+  user: { weeklyReportDay: number; weeklyReportHour: number };
+}) {
   if (rendered.length === 0) {
     return (
       <div className="rounded-2xl border border-border bg-card p-8 text-center">

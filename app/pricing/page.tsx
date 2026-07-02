@@ -8,9 +8,22 @@ import { LogoutButton } from "@/components/billing/logout-button";
 import { PricingPlans } from "@/components/billing/pricing-plans";
 import { Button } from "@/components/ui/button";
 import { getUserById } from "@/lib/db/queries";
-import { hasActiveAccess, hasUsedTrial } from "@/lib/subscription";
+import {
+  hasActiveAccess,
+  hasUsedTrial,
+  type PlanTier,
+} from "@/lib/subscription";
 
-export default function PricingPage() {
+/** Validate the landing funnel's `?plan=` param (ACC-20). */
+function parsePlanParam(raw: string | undefined): PlanTier | null {
+  return raw === "basic" || raw === "pro" || raw === "elite" ? raw : null;
+}
+
+export default function PricingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ plan?: string }>;
+}) {
   return (
     <main className="flex min-h-dvh flex-col items-center px-4 py-16">
       {/* Without this, sonner toasts (e.g. a checkout error) never render
@@ -59,18 +72,19 @@ export default function PricingPage() {
 
       <Suspense
         fallback={
-          <div className="grid w-full max-w-3xl gap-5 sm:grid-cols-2">
+          <div className="grid w-full max-w-5xl gap-5 md:grid-cols-3">
+            <div className="h-80 animate-pulse rounded-2xl border border-border bg-card" />
             <div className="h-80 animate-pulse rounded-2xl border border-border bg-card" />
             <div className="h-80 animate-pulse rounded-2xl border border-border bg-card" />
           </div>
         }
       >
-        <PricingContent />
+        <PricingContent searchParams={searchParams} />
       </Suspense>
 
       <p className="mt-8 max-w-md text-balance text-center text-muted-foreground text-xs">
-        3 days free, then $29 or $39 per month. Cancel in a couple of clicks
-        whenever you like.
+        3 days free, then $29, $39, or $59 per month depending on your plan.
+        Cancel in a couple of clicks whenever you like.
       </p>
     </main>
   );
@@ -125,7 +139,11 @@ async function AccountControls() {
   );
 }
 
-async function PricingContent() {
+async function PricingContent({
+  searchParams,
+}: {
+  searchParams: Promise<{ plan?: string }>;
+}) {
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login");
@@ -139,6 +157,12 @@ async function PricingContent() {
   const alreadyTrialed = user
     ? hasUsedTrial({ stripeSubscriptionId: user.stripeSubscriptionId })
     : false;
+
+  // The plan chosen on the landing page (ACC-20): send a member-to-be straight
+  // into that plan's checkout instead of making them re-decide here. Only for
+  // users without live access — an existing member changes plans via billing.
+  const { plan } = await searchParams;
+  const autostartTier = hasAccess ? null : parsePlanParam(plan);
 
   return (
     <>
@@ -165,6 +189,7 @@ async function PricingContent() {
       )}
       <PricingPlans
         alreadyTrialed={alreadyTrialed}
+        autostartTier={autostartTier}
         currentTier={user?.subscriptionTier ?? null}
       />
     </>

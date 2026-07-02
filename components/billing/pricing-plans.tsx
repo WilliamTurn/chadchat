@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckIcon, Star } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { createCheckoutSession } from "@/app/pricing/actions";
 import { toast } from "@/components/chat/toast";
 import { Badge } from "@/components/ui/badge";
@@ -13,9 +13,16 @@ import { cn } from "@/lib/utils";
 export function PricingPlans({
   currentTier,
   alreadyTrialed = false,
+  autostartTier = null,
 }: {
   currentTier?: PlanTier | null;
   alreadyTrialed?: boolean;
+  /**
+   * Plan pre-chosen on the landing page (ACC-20, `?plan=`): its checkout
+   * starts automatically on mount so the member never re-decides. A failed
+   * start falls back to the normal cards with the error toast.
+   */
+  autostartTier?: PlanTier | null;
 }) {
   const [isPending, startTransition] = useTransition();
   const [loadingTier, setLoadingTier] = useState<PlanTier | null>(null);
@@ -37,11 +44,23 @@ export function PricingPlans({
     });
   }
 
+  const autostarted = useRef(false);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: run once on mount
+  useEffect(() => {
+    if (autostartTier && autostartTier !== currentTier && !autostarted.current) {
+      autostarted.current = true;
+      startCheckout(autostartTier);
+    }
+  }, []);
+
   return (
-    <div className="grid w-full max-w-3xl gap-5 sm:grid-cols-2">
+    <div className="grid w-full max-w-5xl gap-5 md:grid-cols-3">
       {MARKETING_PLANS.map((plan) => {
         const isCurrent = currentTier === plan.tier;
         const isLoading = isPending && loadingTier === plan.tier;
+        // Elite's accent is deliberately NOT red — red stays Pro's "pick me"
+        // color, so the anchor tier reads premium without competing.
+        const isElite = plan.tier === "elite";
 
         // One clear action per card. New customers start the free trial;
         // returning/cancelled customers (trial already spent) subscribe and are
@@ -68,7 +87,9 @@ export function PricingPlans({
               "relative flex flex-col overflow-hidden rounded-2xl border bg-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-[var(--shadow-float)]",
               plan.highlighted
                 ? "border-blood/60 ring-1 ring-blood/30"
-                : "border-border"
+                : isElite
+                  ? "border-foreground/25 ring-1 ring-foreground/10"
+                  : "border-border"
             )}
             key={plan.tier}
           >
@@ -84,6 +105,12 @@ export function PricingPlans({
             {plan.highlighted && (
               <Badge className="absolute top-0 right-6 rounded-t-none border-transparent bg-blood text-white">
                 Most popular
+              </Badge>
+            )}
+
+            {isElite && (
+              <Badge className="absolute top-0 right-6 rounded-t-none border-transparent bg-foreground text-background">
+                Maximum accountability
               </Badge>
             )}
 

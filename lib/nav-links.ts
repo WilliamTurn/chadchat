@@ -2,6 +2,7 @@ import {
   Camera,
   CreditCard,
   Dumbbell,
+  FileText,
   HelpCircle,
   LayoutDashboard,
   LineChart,
@@ -86,6 +87,12 @@ export const NAV_LINKS: NavLink[] = [
     href: "/sleep",
     label: "Sleep",
     icon: Moon,
+    surfaces: ["header", "sidebar"],
+  },
+  {
+    href: "/reports",
+    label: "Weekly Report",
+    icon: FileText,
     surfaces: ["header", "sidebar"],
   },
   {
