@@ -24,6 +24,7 @@ import {
   YAxis,
 } from "recharts";
 import { ChartCard } from "@/components/dashboard/chart-card";
+import { ChartTip } from "@/components/dashboard/chart-tip";
 import { Kpi } from "@/components/dashboard/kpi";
 import {
   formatSleepDuration,
@@ -36,11 +37,12 @@ import {
 } from "@/components/ui/chart";
 import { useChartRange } from "@/hooks/use-chart-range";
 import { useMountReveal } from "@/hooks/use-mount-reveal";
-import { formatTick } from "@/lib/chart/format";
+import { formatTick, niceScale } from "@/lib/chart/format";
+import { DOMAIN } from "@/lib/chart/palette";
 import { fillDailyGaps } from "@/lib/chart/trend";
 import { SLEEP_GOAL_MINUTES } from "@/lib/validation/sleep";
 
-const INDIGO = "#818cf8";
+const INDIGO = DOMAIN.sleep;
 
 const ASK_CHAD_PROMPT =
   "Look at my sleep over the last couple of weeks. Am I getting enough sleep to recover and make progress, and what would help me sleep more consistently?";
@@ -87,12 +89,16 @@ export function SleepTrendChart({ days }: { days: Point[] }) {
     return { avg, hit, total: rows.length };
   }, [rows]);
 
-  const yMax = useMemo(() => {
-    if (rows.length === 0) {
-      return SLEEP_GOAL_MINUTES * 1.3;
-    }
-    return Math.max(...rows.map((r) => r.minutes), SLEEP_GOAL_MINUTES) * 1.15;
-  }, [rows]);
+  // Even whole-hour ticks (VF-8): 0h/2h/4h…, never the irregular 0h/3h/7h/9h
+  // a raw-max domain produced. Data is minutes; steps are display hours.
+  const { max: yMax, ticks: yTicks } = useMemo(
+    () =>
+      niceScale(
+        Math.max(...rows.map((r) => r.minutes), SLEEP_GOAL_MINUTES),
+        { steps: [1, 2, 3, 4, 6, 12], unit: 60 }
+      ),
+    [rows]
+  );
 
   if (days.length < 2) {
     return null;
@@ -143,10 +149,10 @@ export function SleepTrendChart({ days }: { days: Point[] }) {
           <YAxis
             axisLine={false}
             domain={[0, yMax]}
-            tickCount={4}
             tickFormatter={fmtAxis}
             tickLine={false}
             tickMargin={4}
+            ticks={yTicks}
             width={36}
           />
           <ChartTooltip
@@ -200,36 +206,32 @@ function SleepTooltip({
   }
   const hit = row.minutes >= SLEEP_GOAL_MINUTES;
   return (
-    <div className="min-w-[11rem] rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
-      <div className="mb-1.5 font-medium">{formatTick(row.t)}</div>
+    <ChartTip
+      rows={
+        row.logged
+          ? [
+              {
+                color: INDIGO,
+                label: "Sleep",
+                value: formatSleepDuration(row.minutes),
+              },
+            ]
+          : []
+      }
+      t={row.t}
+    >
       {row.logged ? (
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1.5">
-              <span
-                className="size-2 shrink-0 rounded-[2px]"
-                style={{ backgroundColor: INDIGO }}
-              />
-              <span className="text-muted-foreground">Sleep</span>
-            </div>
-            <span className="ml-auto font-medium text-foreground tabular-nums">
-              {formatSleepDuration(row.minutes)}
-            </span>
-          </div>
-          <div className="flex items-center justify-between gap-4 text-muted-foreground">
-            <span>
-              {row.quality == null ? "—" : QUALITY_LABELS[row.quality]}
-            </span>
-            <span className={hit ? "font-medium text-emerald-500" : ""}>
-              {hit
-                ? "7h+ reached"
-                : `${formatSleepDuration(SLEEP_GOAL_MINUTES - row.minutes)} short of 7h`}
-            </span>
-          </div>
+        <div className="mt-1 flex items-center justify-between gap-4 text-muted-foreground">
+          <span>{row.quality == null ? "—" : QUALITY_LABELS[row.quality]}</span>
+          <span className={hit ? "font-medium text-emerald-500" : ""}>
+            {hit
+              ? "7h+ reached"
+              : `${formatSleepDuration(SLEEP_GOAL_MINUTES - row.minutes)} short of 7h`}
+          </span>
         </div>
       ) : (
         <div className="text-muted-foreground">Not logged</div>
       )}
-    </div>
+    </ChartTip>
   );
 }

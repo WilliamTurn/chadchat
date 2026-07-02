@@ -11,8 +11,10 @@
  * "readiness" or "calories burned" metrics we don't track. Labels are plain
  * language (DSH-35): every number says what it is, and the two stats whose
  * windows confuse people (weight change, active days) carry a "?" popover
- * (HLP-1 pattern). On mobile the three pills compress to one compact row so
- * the hero stops eating the first viewport (P3-7).
+ * (HLP-1 pattern). On mobile each pill is a full-width row — icon left, label
+ * middle, number right — because three side-by-side pills at 390px forced
+ * three-line labels that broke "weigh-in" mid-word (VF-9; supersedes P3-7's
+ * one-compact-row treatment).
  */
 
 import { Activity, Flame, TrendingDown, TrendingUp } from "lucide-react";
@@ -58,7 +60,7 @@ function StatPill({
 }) {
   const t = TONE[tone];
   return (
-    <div className="relative flex-1 overflow-hidden rounded-xl border border-border bg-background/40 p-2.5 sm:p-4">
+    <div className="relative flex-1 overflow-hidden rounded-xl border border-border bg-background/40 p-3 sm:p-4">
       <div
         aria-hidden
         className={cn(
@@ -67,21 +69,17 @@ function StatPill({
         )}
       />
       <div className="relative flex items-center gap-3">
-        {/* Icon chip is desktop-only: on mobile the three pills share one
-            compact row (P3-7) and the chips don't fit. */}
         <span
           className={cn(
-            "hidden size-9 shrink-0 items-center justify-center rounded-lg sm:flex",
+            "flex size-8 shrink-0 items-center justify-center rounded-lg sm:size-9",
             t.chip
           )}
         >
           {icon}
         </span>
-        <div className="min-w-0">
-          <div className="font-display font-bold text-base leading-none tabular-nums sm:text-xl">
-            <CountUp value={value} />
-          </div>
-          <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground sm:text-xs">
+        {/* Mobile: one row, label left / number right. sm+: number over label. */}
+        <div className="flex min-w-0 flex-1 items-center justify-between gap-3 sm:flex-col sm:items-start sm:justify-start sm:gap-0">
+          <div className="flex min-w-0 items-center gap-1 text-muted-foreground text-xs sm:order-2 sm:mt-1">
             <span>
               {label}
               {sub && (
@@ -89,6 +87,9 @@ function StatPill({
               )}
             </span>
             {help && <KpiHelp label={label}>{help}</KpiHelp>}
+          </div>
+          <div className="shrink-0 whitespace-nowrap font-bold font-display text-base leading-none tabular-nums sm:order-1 sm:text-xl">
+            <CountUp value={value} />
           </div>
         </div>
       </div>
@@ -122,7 +123,7 @@ export function StatPills({
           : "Change since first weigh-in";
 
   return (
-    <div className="mt-4 grid grid-cols-3 gap-2 sm:mt-6 sm:flex sm:gap-3">
+    <div className="mt-4 grid gap-2 sm:mt-6 sm:flex sm:gap-3">
       <StatPill
         icon={<Flame className="size-5" strokeWidth={2.5} />}
         label="Calories eaten today"

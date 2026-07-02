@@ -24,6 +24,7 @@ import {
   YAxis,
 } from "recharts";
 import { ChartCard } from "@/components/dashboard/chart-card";
+import { ChartTip } from "@/components/dashboard/chart-tip";
 import { Kpi } from "@/components/dashboard/kpi";
 import {
   type ChartConfig,
@@ -32,21 +33,35 @@ import {
 } from "@/components/ui/chart";
 import { useChartRange } from "@/hooks/use-chart-range";
 import { useMountReveal } from "@/hooks/use-mount-reveal";
-import { formatTick } from "@/lib/chart/format";
+import { formatTick, niceScale } from "@/lib/chart/format";
+import { GOAL_EMERALD, MACRO } from "@/lib/chart/palette";
 import { ema } from "@/lib/chart/trend";
 import type { DailyMacros } from "@/lib/nutrition/daily-macros";
 import { cn } from "@/lib/utils";
 
 type MetricKey = "calories" | "protein" | "carbs" | "fat";
 
+// Series colors come from the governed palette (VF-7): calories draw in the
+// amber nutrition accent, not blood — a red calorie bar read as "over/danger"
+// on a perfectly on-target day.
 const METRICS: Record<
   MetricKey,
   { label: string; short: string; unit: string; color: string }
 > = {
-  calories: { label: "Calories", short: "Cal", unit: "cal", color: "#a4161a" },
-  protein: { label: "Protein", short: "Protein", unit: "g", color: "#38bdf8" },
-  carbs: { label: "Carbs", short: "Carbs", unit: "g", color: "#fbbf24" },
-  fat: { label: "Fat", short: "Fat", unit: "g", color: "#a78bfa" },
+  calories: {
+    label: "Calories",
+    short: "Cal",
+    unit: "cal",
+    color: MACRO.calories,
+  },
+  protein: {
+    label: "Protein",
+    short: "Protein",
+    unit: "g",
+    color: MACRO.protein,
+  },
+  carbs: { label: "Carbs", short: "Carbs", unit: "g", color: MACRO.carbs },
+  fat: { label: "Fat", short: "Fat", unit: "g", color: MACRO.fat },
 };
 
 const METRIC_ORDER: MetricKey[] = ["calories", "protein", "carbs", "fat"];
@@ -55,7 +70,7 @@ const ASK_CHAD_PROMPT =
   "Review my nutrition trend over the last few weeks — calories and protein day to day against my targets. What's the pattern, and what should I change?";
 
 const chartConfig = {
-  value: { label: "Daily", color: "#a4161a" },
+  value: { label: "Daily", color: MACRO.calories },
 } satisfies ChartConfig;
 
 export type MacroTarget = {
@@ -97,26 +112,13 @@ export function MacroTrendChart({
     return Math.round(sum / rows.length);
   }, [rows, metric]);
 
-  // Round ascending y-ticks (VF-1): a 1/2/2.5/5 x 10^n step sized for ~5
-  // intervals over the peak (or the target, so it always sits inside the
-  // domain), the max rounded UP to a whole step, never a raw data max.
-  const { yMax, yTicks } = useMemo(() => {
-    const peak = Math.max(
-      1,
-      ...data.map((r) => r[metric]),
-      targetValue ?? 0
-    );
-    const rawStep = (peak * 1.1) / 5;
-    const pow = 10 ** Math.floor(Math.log10(rawStep));
-    const step =
-      ([1, 2, 2.5, 5, 10].find((m) => m * pow >= rawStep) ?? 10) * pow;
-    const max = Math.ceil((peak * 1.1) / step) * step;
-    const ticks: number[] = [];
-    for (let v = 0; v <= max; v += step) {
-      ticks.push(v);
-    }
-    return { yMax: max, yTicks: ticks };
-  }, [data, metric, targetValue]);
+  // Round ascending y-ticks (VF-1, now the shared VF-8 helper): peak includes
+  // the target so its line always sits inside the domain.
+  const { max: yMax, ticks: yTicks } = useMemo(
+    () =>
+      niceScale(Math.max(1, ...data.map((r) => r[metric]), targetValue ?? 0)),
+    [data, metric, targetValue]
+  );
 
   if (days.length < 2) {
     return null; // page shows nothing until there's a trend to draw
@@ -226,7 +228,7 @@ export function MacroTrendChart({
                 fill: "var(--muted-foreground)",
                 fontSize: 11,
               }}
-              stroke="#10b981"
+              stroke={GOAL_EMERALD}
               strokeDasharray="5 4"
               strokeWidth={1.5}
               y={targetValue}
@@ -284,34 +286,14 @@ function MacroTooltip({
     return null;
   }
   return (
-    <div className="min-w-[12rem] rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
-      <div className="mb-1.5 font-medium">{formatTick(row.t)}</div>
-      <div className="flex flex-col gap-1">
-        {METRIC_ORDER.map((key) => {
-          const m = METRICS[key];
-          return (
-            <div className="flex items-center gap-4" key={key}>
-              <div className="flex items-center gap-1.5">
-                <span
-                  className="size-2 shrink-0 rounded-[2px]"
-                  style={{ backgroundColor: m.color }}
-                />
-                <span
-                  className={cn(
-                    "text-muted-foreground",
-                    key === activeMetric && "font-medium text-foreground"
-                  )}
-                >
-                  {m.label}
-                </span>
-              </div>
-              <span className="ml-auto font-medium text-foreground tabular-nums">
-                {row[key].toLocaleString()} {m.unit}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+    <ChartTip
+      rows={METRIC_ORDER.map((key) => ({
+        color: METRICS[key].color,
+        em: key === activeMetric,
+        label: METRICS[key].label,
+        value: `${row[key].toLocaleString()} ${METRICS[key].unit}`,
+      }))}
+      t={row.t}
+    />
   );
 }

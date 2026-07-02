@@ -40,3 +40,46 @@ export function formatSignedDelta(n: number, unit: string): string {
 export function formatRate(perWeek: number, unit: string): string {
   return `${formatSignedDelta(perWeek, unit)}/wk`;
 }
+
+/**
+ * Round ascending y-axis ticks for a zero-based chart (VF-8): pick a clean
+ * step, round the max UP to a whole step — never a raw data max like "4.4k" —
+ * and return the explicit tick values. Include any target/goal in `peak` so
+ * its line always sits inside the domain.
+ *
+ * `unit` makes the ticks round in the DISPLAY unit when data is stored in
+ * another one (water: ml stored, oz shown → pass ML_PER_OZ; sleep: minutes
+ * stored, hours shown → pass 60). `steps` overrides the 1/2/2.5/5 × 10ⁿ step
+ * candidates (e.g. whole hours for sleep).
+ */
+export function niceScale(
+  peak: number,
+  opts: { maxIntervals?: number; unit?: number; steps?: number[] } = {}
+): { max: number; ticks: number[] } {
+  const unit = opts.unit ?? 1;
+  const maxIntervals = opts.maxIntervals ?? 5;
+  // 5% headroom so the tallest bar never touches the frame.
+  const p = Math.max(peak / unit, 1e-9) * 1.05;
+
+  const candidates =
+    opts.steps ??
+    (() => {
+      const pow = 10 ** Math.floor(Math.log10(p / maxIntervals));
+      return [1, 2, 2.5, 5, 10].map((m) => m * pow);
+    })();
+
+  let step = candidates[candidates.length - 1];
+  for (const s of candidates) {
+    if (Math.ceil(p / s) <= maxIntervals) {
+      step = s;
+      break;
+    }
+  }
+
+  const intervals = Math.ceil(p / step);
+  const ticks: number[] = [];
+  for (let i = 0; i <= intervals; i++) {
+    ticks.push(i * step * unit);
+  }
+  return { max: intervals * step * unit, ticks };
+}

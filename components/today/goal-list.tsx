@@ -71,11 +71,14 @@ export function GoalProgress({
       </div>
       {/* Track is foreground-tinted, not bg-muted: bg-muted is near-invisible
           on the card in dark mode, which made a 0% goal look like it had no
-          progress bar at all (P3-3). */}
+          progress bar at all (P3-3). Fill is emerald, not blood: progress
+          toward a goal is exactly what emerald means (VF-7 color law), and a
+          red bar at 26% read as danger on an on-track goal. Matches the
+          /progress "Progress to goal" bar. */}
       <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-foreground/10">
         <motion.div
           animate={{ width: `${pct}%` }}
-          className="h-full rounded-full bg-gradient-to-r from-blood/70 to-blood shadow-[0_0_10px_var(--color-blood)]"
+          className="h-full rounded-full bg-gradient-to-r from-emerald-500/70 to-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.35)]"
           initial={{ width: reduced ? `${pct}%` : 0 }}
           transition={{ duration: reduced ? 0 : 0.9, ease: EASE }}
         />

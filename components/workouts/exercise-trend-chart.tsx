@@ -24,6 +24,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { ChartTip } from "@/components/dashboard/chart-tip";
 import {
   type ChartConfig,
   ChartContainer,
@@ -31,8 +32,9 @@ import {
 } from "@/components/ui/chart";
 import { useMountReveal } from "@/hooks/use-mount-reveal";
 import { formatTick } from "@/lib/chart/format";
+import { DOMAIN } from "@/lib/chart/palette";
 
-const ACCENT = "#a4161a"; // brand blood red
+const ACCENT = DOMAIN.training; // brand blood red (VF-7: the brand domain)
 
 const chartConfig = {
   value: { label: "Est. 1RM", color: ACCENT },
@@ -184,20 +186,11 @@ function OneRmTooltip({
     return null;
   }
   return (
-    <div className="min-w-[10rem] rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
-      <div className="mb-1.5 font-medium">{formatTick(row.t)}</div>
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-1.5">
-          <span
-            className="size-2 shrink-0 rounded-[2px]"
-            style={{ backgroundColor: ACCENT }}
-          />
-          <span className="text-muted-foreground">Est. 1RM</span>
-        </div>
-        <span className="ml-auto font-medium text-foreground tabular-nums">
-          {row.value} {unit}
-        </span>
-      </div>
-    </div>
+    <ChartTip
+      rows={[
+        { color: ACCENT, label: "Est. 1RM", value: `${row.value} ${unit}` },
+      ]}
+      t={row.t}
+    />
   );
 }

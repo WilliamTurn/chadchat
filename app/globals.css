@@ -75,11 +75,14 @@
   --border: oklch(0.9 0 0);
   --input: oklch(0.9 0 0);
   --ring: #a4161a;
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  /* Domain accents — mirror lib/chart/palette.ts (the VF-7 color law):
+     1 hydration sky · 2 goal emerald · 3 nutrition amber · 4 sleep indigo ·
+     5 brand blood (training). */
+  --chart-1: #0ea5e9;
+  --chart-2: #10b981;
+  --chart-3: #f59e0b;
+  --chart-4: #818cf8;
+  --chart-5: #a4161a;
   --sidebar: oklch(0.97 0 0);
   --sidebar-foreground: oklch(0.38 0 0);
   --sidebar-primary: oklch(0.12 0 0);
@@ -125,11 +128,12 @@
   --border: rgba(216, 231, 242, 0.08);
   --input: rgba(216, 231, 242, 0.1);
   --ring: #a4161a;
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
+  /* Same domain accents as light — see lib/chart/palette.ts (VF-7). */
+  --chart-1: #0ea5e9;
+  --chart-2: #10b981;
+  --chart-3: #f59e0b;
+  --chart-4: #818cf8;
+  --chart-5: #a4161a;
   --sidebar: #070b12;
   --sidebar-foreground: oklch(0.78 0 0);
   --sidebar-primary: oklch(0.94 0 0);

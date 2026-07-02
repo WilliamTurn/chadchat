@@ -4,8 +4,11 @@
  * Today's fuel — a single hero calorie dial plus three clearly-labeled macro
  * bars (protein / carbs / fat), styled the way pro nutrition apps do it.
  *
- * - The calorie ring is the hero: its center shows calories REMAINING (or the
- *   overage in blood red, or just the running total when no target is set).
+ * - The calorie ring is the hero: amber (the nutrition accent, VF-7) while
+ *   filling toward the target, flipping to blood red ONLY when over — so red
+ *   stays a genuine alert instead of the ring's everyday color. Its center
+ *   shows calories REMAINING (or the overage in blood red, or just the
+ *   running total when no target is set).
  * - Each macro is its own labeled row with a horizontal progress bar, its own
  *   accent color, and an "Xg left" / "Xg over" hint.
  * - Tapping the ring or any macro reveals an inline detail (consumed vs target
@@ -143,11 +146,12 @@ function CalorieDial({
             strokeLinecap={hasTarget ? undefined : "round"}
             strokeWidth={hasTarget ? STROKE : STROKE - 6}
           />
-          {/* Fill — only when a target exists; overage is signaled by color. */}
+          {/* Fill — only when a target exists; overage is signaled by color:
+              amber while on track, blood ONLY when over (VF-7). */}
           {hasTarget && (
             <motion.circle
               animate={{ strokeDashoffset: dashOffset }}
-              className="text-blood"
+              className={over ? "text-blood" : "text-amber-500"}
               cx={CENTER}
               cy={CENTER}
               fill="none"

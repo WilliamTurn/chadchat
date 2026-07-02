@@ -19,6 +19,7 @@ import {
   YAxis,
 } from "recharts";
 import { ChartCard } from "@/components/dashboard/chart-card";
+import { ChartTip } from "@/components/dashboard/chart-tip";
 import { Kpi } from "@/components/dashboard/kpi";
 import {
   type ChartConfig,
@@ -27,9 +28,10 @@ import {
 } from "@/components/ui/chart";
 import { useChartRange } from "@/hooks/use-chart-range";
 import { useMountReveal } from "@/hooks/use-mount-reveal";
-import { formatTick } from "@/lib/chart/format";
+import { formatTick, niceScale } from "@/lib/chart/format";
+import { DOMAIN } from "@/lib/chart/palette";
 
-const ACCENT = "#a4161a"; // brand blood red
+const ACCENT = DOMAIN.training; // brand blood red (VF-7: the brand domain)
 
 const ASK_CHAD_PROMPT =
   "Look at my training volume trend over time. Am I progressively overloading, stalling, or backing off — and what should I do about it?";
@@ -103,11 +105,12 @@ export function VolumeChart({ points }: { points: Point[] }) {
     return { latest, top, avg };
   }, [rows]);
 
-  const yMax = useMemo(() => {
+  // Round ascending ticks (VF-8): never a raw data max like "4.4k".
+  const { max: yMax, ticks: yTicks } = useMemo(() => {
     if (rows.length === 0) {
-      return 1;
+      return { max: 1, ticks: [0, 1] };
     }
-    return Math.max(...rows.map((r) => r.volume)) * 1.15;
+    return niceScale(Math.max(...rows.map((r) => r.volume)));
   }, [rows]);
 
   if (points.length === 0) {
@@ -154,10 +157,10 @@ export function VolumeChart({ points }: { points: Point[] }) {
           <YAxis
             axisLine={false}
             domain={[0, yMax]}
-            tickCount={4}
             tickFormatter={fmtK}
             tickLine={false}
             tickMargin={4}
+            ticks={yTicks}
             width={40}
           />
           <ChartTooltip
@@ -206,20 +209,15 @@ function VolumeTooltip({
     return null;
   }
   return (
-    <div className="min-w-[10rem] rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
-      <div className="mb-1.5 font-medium">{formatTick(row.t)}</div>
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-1.5">
-          <span
-            className="size-2 shrink-0 rounded-[2px]"
-            style={{ backgroundColor: ACCENT }}
-          />
-          <span className="text-muted-foreground">Volume</span>
-        </div>
-        <span className="ml-auto font-medium text-foreground tabular-nums">
-          {row.volume.toLocaleString()} lb
-        </span>
-      </div>
-    </div>
+    <ChartTip
+      rows={[
+        {
+          color: ACCENT,
+          label: "Volume",
+          value: `${row.volume.toLocaleString()} lb`,
+        },
+      ]}
+      t={row.t}
+    />
   );
 }

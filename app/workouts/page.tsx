@@ -9,7 +9,7 @@ import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
 import { ScrollToHash } from "@/components/nav/scroll-to-hash";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
-import { Kpi } from "@/components/dashboard/kpi";
+import { CountUp } from "@/components/dashboard/count-up";
 import { WorkoutsSkeleton } from "@/components/dashboard/page-skeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -162,7 +162,8 @@ async function Dashboard({ userId }: { userId: string }) {
   return (
     <div className="flex flex-col gap-8">
       <ScrollToHash />
-      {/* Action + summary */}
+      {/* Action + summary. On mobile the primary CTA comes first and spans the
+          full width instead of wrapping alone onto a second line (VF-9). */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-end gap-2">
           {workouts.length > 0 && (
@@ -185,7 +186,7 @@ async function Dashboard({ userId }: { userId: string }) {
             customExercises={customExercises}
             mode="create"
             trigger={
-              <Button className="gap-1.5">
+              <Button className="order-first w-full gap-1.5 sm:order-none sm:w-auto">
                 <Plus className="size-4" />
                 Log a workout
               </Button>
@@ -200,7 +201,7 @@ async function Dashboard({ userId }: { userId: string }) {
           // on the live figures remounts the StatCards whenever they change, so
           // the numbers can't go stale (and re-count to the new total as feedback).
           <div
-            className="grid grid-cols-3 gap-3"
+            className="grid gap-2 sm:grid-cols-3 sm:gap-3"
             key={`${workouts.length}-${weekWorkouts.length}-${weekVolume}`}
           >
             <StatCard label="Workouts" value={String(workouts.length)} />
@@ -253,14 +254,20 @@ async function Dashboard({ userId }: { userId: string }) {
 }
 
 /**
- * One summary stat, given the shared dashboard `Kpi` treatment (count-up value +
- * caption) inside a card so the top-of-page numbers match the chart KPIs rather
- * than reading as three bare figures.
+ * One summary stat inside a card so the top-of-page numbers match the chart
+ * KPIs rather than reading as three bare figures. On mobile it's a full-width
+ * row (label left, number right) — three side-by-side tiles at 390px wrapped
+ * "6,880 lb" mid-value (VF-9); on sm+ it keeps the Kpi column treatment.
  */
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-border bg-card px-4 py-3.5">
-      <Kpi label={label} size="lg" value={value} />
+    <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 sm:flex-col sm:items-start sm:justify-start sm:gap-0 sm:py-3.5">
+      <div className="order-2 whitespace-nowrap font-semibold text-lg tracking-tight tabular-nums sm:order-1 sm:text-2xl">
+        <CountUp value={value} />
+      </div>
+      <div className="order-1 text-muted-foreground text-xs sm:order-2 sm:mt-0.5">
+        {label}
+      </div>
     </div>
   );
 }

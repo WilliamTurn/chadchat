@@ -32,6 +32,7 @@ import {
   YAxis,
 } from "recharts";
 import { ChartCard } from "@/components/dashboard/chart-card";
+import { ChartTip } from "@/components/dashboard/chart-tip";
 import { Kpi, type KpiTone } from "@/components/dashboard/kpi";
 import {
   type ChartConfig,
@@ -53,16 +54,18 @@ import {
   round1,
   type TrendRow,
 } from "@/lib/chart/trend";
+import { GOAL_EMERALD, NEUTRAL_LINE } from "@/lib/chart/palette";
 import { computeGoalProgress } from "@/lib/goals/progress";
 
-const GOAL_COLOR = "#10b981"; // emerald
+const GOAL_COLOR = GOAL_EMERALD;
 
-// R2-10: the trend line's color is a data verdict, not the brand accent. The
-// old always-blood-red line read as "something is wrong" even mid-successful
+// R2-10 (now the app-wide VF-7 color law, see lib/chart/palette.ts): the
+// trend line's color is a data verdict, not the brand accent. The old
+// always-blood-red line read as "something is wrong" even mid-successful
 // cut. Emerald = the trend is moving toward the active goal (same emerald and
 // same direction test the KPI tones use); neutral = no goal, flat, or away.
 const TOWARD_COLOR = GOAL_COLOR;
-const NEUTRAL_COLOR = "var(--foreground)";
+const NEUTRAL_COLOR = NEUTRAL_LINE;
 
 // Data thresholds for honest sparse states (see spec §4.6).
 const MIN_FOR_RATE = 5; // below this, a per-week rate is too noisy to show
@@ -385,6 +388,21 @@ function WeightChartBody({
     return [Math.floor(min - pad), Math.ceil(max + pad)];
   }, [rows, goalWeight]);
 
+  // Compact (/today) y-ticks: just the three numbers that matter — where the
+  // trend started, where it is, and the goal (VF-8; the mini chart had no
+  // y-labels at all, so the line floated unanchored).
+  const compactTicks = useMemo<number[] | undefined>(() => {
+    if (!compact || rows.length === 0) {
+      return undefined;
+    }
+    const vals = [
+      Math.round(rows[0].trend),
+      Math.round(rows[rows.length - 1].trend),
+      goalWeight == null ? null : Math.round(goalWeight),
+    ].filter((v): v is number => v != null);
+    return [...new Set(vals)].sort((a, b) => a - b);
+  }, [compact, rows, goalWeight]);
+
   return (
     <ChartContainer
       className={compact ? "h-[170px] w-full" : "h-[260px] w-full"}
@@ -394,7 +412,7 @@ function WeightChartBody({
         data={rows}
         margin={
           compact
-            ? { top: 8, right: 8, bottom: 0, left: 8 }
+            ? { top: 8, right: 8, bottom: 0, left: -8 }
             : { top: 8, right: 12, bottom: 0, left: -8 }
         }
       >
@@ -428,7 +446,16 @@ function WeightChartBody({
             width={40}
           />
         )}
-        {compact && <YAxis domain={yDomain} hide />}
+        {compact && (
+          <YAxis
+            axisLine={false}
+            domain={yDomain}
+            tickLine={false}
+            tickMargin={4}
+            ticks={compactTicks}
+            width={40}
+          />
+        )}
 
         <ChartTooltip
           content={<WeightTooltip trendColor={lineColor} unit={unit} />}
@@ -513,45 +540,16 @@ function WeightTooltip({
     return null;
   }
   return (
-    <div className="min-w-[11rem] rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
-      <div className="mb-1.5 font-medium">{formatTick(row.t)}</div>
-      <div className="flex flex-col gap-1">
-        <TooltipRow
-          color="var(--muted-foreground)"
-          label="Weighed in"
-          value={`${row.weight} ${unit}`}
-        />
-        <TooltipRow
-          color={trendColor}
-          label="Trend"
-          value={`${row.trend} ${unit}`}
-        />
-      </div>
-    </div>
-  );
-}
-
-function TooltipRow({
-  color,
-  label,
-  value,
-}: {
-  color: string;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex items-center gap-4">
-      <div className="flex items-center gap-1.5">
-        <span
-          className="size-2 shrink-0 rounded-[2px]"
-          style={{ backgroundColor: color }}
-        />
-        <span className="text-muted-foreground">{label}</span>
-      </div>
-      <span className="ml-auto font-medium text-foreground tabular-nums">
-        {value}
-      </span>
-    </div>
+    <ChartTip
+      rows={[
+        {
+          color: "var(--muted-foreground)",
+          label: "Weighed in",
+          value: `${row.weight} ${unit}`,
+        },
+        { color: trendColor, label: "Trend", value: `${row.trend} ${unit}` },
+      ]}
+      t={row.t}
+    />
   );
 }

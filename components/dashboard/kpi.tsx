@@ -37,9 +37,11 @@ export function Kpi({
 }) {
   return (
     <div className="min-w-0">
+      {/* nowrap: a value+unit pair ("6,880 lb") must never break mid-value
+          in a tight grid cell (VF-9). */}
       <div
         className={cn(
-          "font-semibold tracking-tight tabular-nums",
+          "whitespace-nowrap font-semibold tracking-tight tabular-nums",
           size === "lg" ? "text-2xl" : "text-xl",
           tone === "good" && "text-emerald-500",
           tone === "bad" && "text-blood"
