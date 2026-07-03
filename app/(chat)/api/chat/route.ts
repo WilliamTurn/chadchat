@@ -13,6 +13,10 @@ import { createResumableStreamContext } from "resumable-stream";
 import { auth } from "@/app/(auth)/auth";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import { formatTodaySnapshot, summarizeWeight } from "@/lib/ai/dashboard";
+import {
+  hasPersistableParts,
+  sanitizeHistoryForModel,
+} from "@/lib/ai/sanitize-history";
 import { stripModelInternals } from "@/lib/ai/sanitize-output";
 import { getEntitlements, getUsageWarning } from "@/lib/ai/entitlements";
 import {
@@ -38,6 +42,7 @@ import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
 import { editDocument } from "@/lib/ai/tools/edit-document";
 import { generateMealPlanTool } from "@/lib/ai/tools/generate-meal-plan";
+import { getAppGuide } from "@/lib/ai/tools/get-app-guide";
 import { getDashboard } from "@/lib/ai/tools/get-dashboard";
 import { logMeal } from "@/lib/ai/tools/log-meal";
 import { logSleep } from "@/lib/ai/tools/log-sleep";
@@ -224,8 +229,13 @@ export async function POST(request: Request) {
         }),
       })) as ChatMessage[];
     } else {
+      // A retried turn resends a user message that's usually already in the
+      // DB history (the save below ran before the stream failed). Dedupe by
+      // id so the model never sees the message twice (CHT-10).
       uiMessages = [
-        ...convertToUIMessages(messagesFromDb),
+        ...convertToUIMessages(messagesFromDb).filter(
+          (m) => m.id !== message?.id
+        ),
         message as ChatMessage,
       ];
     }
@@ -306,7 +316,13 @@ export async function POST(request: Request) {
       }
     }
 
-    if (message?.role === "user") {
+    // Skip the save when the id is already in the DB (a retried turn): the
+    // insert has no upsert, so re-saving would throw "Failed to save
+    // messages" and kill the retry before it reached the model (CHT-10).
+    if (
+      message?.role === "user" &&
+      !messagesFromDb.some((m) => m.id === message.id)
+    ) {
       await saveMessages({
         messages: [
           {
@@ -327,7 +343,12 @@ export async function POST(request: Request) {
     const isReasoningModel = capabilities?.reasoning === true;
     const supportsTools = capabilities?.tools === true;
 
-    const modelMessages = await convertToModelMessages(uiMessages);
+    // CHT-10: repair the resend history (drop errored-stream husks, strip
+    // stale reasoning/thought signatures from previous turns) so one bad turn
+    // can't 400 every turn after it. Persistence keeps the original messages.
+    const modelMessages = await convertToModelMessages(
+      sanitizeHistoryForModel(uiMessages)
+    );
 
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
@@ -364,6 +385,7 @@ export async function POST(request: Request) {
                   "logWeighIn",
                   "updateProfile",
                   "getDashboard",
+                  "getAppGuide",
                 ],
           providerOptions: {
             ...(modelConfig?.gatewayOrder && {
@@ -403,6 +425,7 @@ export async function POST(request: Request) {
               session,
               timezone: dbUser.timezone,
             }),
+            getAppGuide,
           },
           experimental_telemetry: {
             isEnabled: isProductionEnvironment,
@@ -434,8 +457,12 @@ export async function POST(request: Request) {
       },
       generateId: generateUUID,
       onFinish: async ({ messages: finishedMessages }) => {
+        // Never persist an errored-stream husk (e.g. a lone step-start with
+        // no visible content): it renders as an empty bubble and used to
+        // poison every later resend of the chat (CHT-10).
+        const persistable = finishedMessages.filter(hasPersistableParts);
         if (isToolApprovalFlow) {
-          for (const finishedMsg of finishedMessages) {
+          for (const finishedMsg of persistable) {
             const existingMsg = uiMessages.find((m) => m.id === finishedMsg.id);
             if (existingMsg) {
               await updateMessage({
@@ -457,9 +484,9 @@ export async function POST(request: Request) {
               });
             }
           }
-        } else if (finishedMessages.length > 0) {
+        } else if (persistable.length > 0) {
           await saveMessages({
-            messages: finishedMessages.map((currentMessage) => ({
+            messages: persistable.map((currentMessage) => ({
               id: currentMessage.id,
               role: currentMessage.role,
               parts: sanitizeParts(currentMessage.parts),

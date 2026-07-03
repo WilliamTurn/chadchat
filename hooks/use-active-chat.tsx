@@ -19,6 +19,7 @@ import {
 import useSWR, { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
 import { useDataStream } from "@/components/chat/data-stream-provider";
+import { submitRegenerateMessage } from "@/components/chat/message-editor";
 import { getChatHistoryPaginationKey } from "@/components/chat/sidebar-history";
 import { toast } from "@/components/chat/toast";
 import { usageWarningMessage } from "@/components/chat/usage-warning";
@@ -195,12 +196,24 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
     }
   }, [status]);
 
-  // Retry re-runs the last turn (regenerate reuses the last user message) and
-  // optimistically clears the banner.
+  // Retry re-runs the turn FROM THE LAST USER MESSAGE (CHT-10): the failed
+  // turn is deleted from the DB first (it may have persisted a broken partial
+  // answer) and the client state truncated, exactly like the regenerate
+  // button. A bare regenerate() resent the poisoned turn and failed the same
+  // way, which is what made the old Retry look dead.
   const retry = useCallback(() => {
     setChatError(null);
-    regenerate();
-  }, [regenerate]);
+    void (async () => {
+      try {
+        await submitRegenerateMessage({ messages, setMessages, regenerate });
+      } catch {
+        // Nothing to delete (e.g. the failed turn was never saved because the
+        // request died before persistence) — just re-run. The route now
+        // dedupes a resent user message, so this is safe.
+        regenerate();
+      }
+    })();
+  }, [messages, setMessages, regenerate]);
 
   const dismissError = useCallback(() => setChatError(null), []);
 

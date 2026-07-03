@@ -58,6 +58,31 @@ export const editMealSchema = logMealSchema.extend({
 
 export type EditMealInput = z.infer<typeof editMealSchema>;
 
+/** The wire shape of a just-deleted diary row, round-tripped to the client so
+ * the delete toast's Undo can re-insert it. Produced server-side by
+ * `removeMealAnalysis`, but validated again on restore because it passes
+ * through the browser. Dates travel as ISO strings. */
+export const restoreMealSchema = z.object({
+  id: z.string().uuid(),
+  kind: z.enum(["meal", "fridge", "pantry"]),
+  source: z.enum(["photo", "manual"]),
+  meal: z.enum(MEAL_CATEGORIES).nullable(),
+  recordedAt: z.string().datetime().nullable(),
+  photoUrl: z.string().url().nullable(),
+  title: z.string().trim().min(1).max(300),
+  calories: z.number().finite().min(0).max(50_000).nullable(),
+  protein: z.number().finite().min(0).max(5000).nullable(),
+  carbs: z.number().finite().min(0).max(5000).nullable(),
+  fat: z.number().finite().min(0).max(5000).nullable(),
+  healthScore: z.number().int().min(1).max(10).nullable(),
+  verdict: z.string().max(5000).nullable(),
+  items: z.unknown(),
+  tips: z.unknown(),
+  createdAt: z.string().datetime(),
+});
+
+export type RestoreMealInput = z.input<typeof restoreMealSchema>;
+
 /** Daily intake targets set on the dashboard. Any can be cleared (null). */
 export const nutritionTargetSchema = z.object({
   calories: z.number().int().positive().max(20_000).nullable(),

@@ -1807,15 +1807,51 @@ export async function deleteMealAnalysis({
 }: {
   id: string;
   userId: string;
-}): Promise<void> {
+}): Promise<MealAnalysis | undefined> {
   try {
-    await db
+    const [deleted] = await db
       .delete(mealAnalysis)
-      .where(and(eq(mealAnalysis.id, id), eq(mealAnalysis.userId, userId)));
+      .where(and(eq(mealAnalysis.id, id), eq(mealAnalysis.userId, userId)))
+      .returning();
+    return deleted;
   } catch (_error) {
     throw new ChatbotError(
       "bad_request:database",
       "Failed to delete meal analysis"
+    );
+  }
+}
+
+/**
+ * Re-insert a row the user just deleted (the Undo on the delete toast).
+ * Keeps the original id, so a double-tapped Undo conflicts on the primary
+ * key and becomes a no-op instead of duplicating the meal.
+ */
+export async function restoreMealAnalysis(entry: {
+  id: string;
+  userId: string;
+  kind: "meal" | "fridge" | "pantry";
+  source: "photo" | "manual";
+  meal: MealCategoryValue | null;
+  recordedAt: Date | null;
+  photoUrl: string | null;
+  title: string;
+  calories: number | null;
+  protein: number | null;
+  carbs: number | null;
+  fat: number | null;
+  healthScore: number | null;
+  verdict: string | null;
+  items: unknown;
+  tips: unknown;
+  createdAt: Date;
+}): Promise<void> {
+  try {
+    await db.insert(mealAnalysis).values(entry).onConflictDoNothing();
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to restore meal analysis"
     );
   }
 }

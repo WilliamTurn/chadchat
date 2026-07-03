@@ -15,6 +15,7 @@ import {
   deleteMealAnalysis,
   deleteWaterLogById,
   getUserById,
+  restoreMealAnalysis,
   updateMealAnalysis,
   updateUserWaterGoal,
   upsertNutritionTarget,
@@ -34,6 +35,8 @@ import {
   logMealSchema,
   type NutritionTargetInput,
   nutritionTargetSchema,
+  type RestoreMealInput,
+  restoreMealSchema,
 } from "@/lib/validation/nutrition";
 
 export type NutritionActionState = { ok: boolean; error?: string };
@@ -273,13 +276,71 @@ export async function editMeal(
 
 export async function removeMealAnalysis(
   id: string
+): Promise<NutritionActionState & { deleted?: RestoreMealInput }> {
+  const user = await requirePro();
+  if (!user) {
+    return { ok: false, error: "Not authorized." };
+  }
+
+  const deleted = await deleteMealAnalysis({ id, userId: user.id });
+  revalidatePath("/nutrition");
+  revalidatePath("/kitchen");
+  revalidatePath("/today");
+  return {
+    ok: true,
+    // Hand the deleted row back (dates as ISO strings) so the delete toast's
+    // Undo can restore it via undoRemoveMealAnalysis.
+    deleted: deleted
+      ? {
+          id: deleted.id,
+          kind: deleted.kind,
+          source: deleted.source,
+          meal: deleted.meal,
+          recordedAt: deleted.recordedAt?.toISOString() ?? null,
+          photoUrl: deleted.photoUrl,
+          title: deleted.title,
+          calories: deleted.calories,
+          protein: deleted.protein,
+          carbs: deleted.carbs,
+          fat: deleted.fat,
+          healthScore: deleted.healthScore,
+          verdict: deleted.verdict,
+          items: deleted.items,
+          tips: deleted.tips,
+          createdAt: deleted.createdAt.toISOString(),
+        }
+      : undefined,
+  };
+}
+
+/**
+ * Undo for the meal-delete toast (FN-10): re-insert the row the delete just
+ * removed. The payload round-trips through the browser, so it's validated
+ * here and the userId is forced back to the session user — a member can only
+ * ever restore a row into their own diary (the same trust level as the edit
+ * dialog, which already lets them write any macros they want).
+ */
+export async function undoRemoveMealAnalysis(
+  input: RestoreMealInput
 ): Promise<NutritionActionState> {
   const user = await requirePro();
   if (!user) {
     return { ok: false, error: "Not authorized." };
   }
 
-  await deleteMealAnalysis({ id, userId: user.id });
+  const parsed = restoreMealSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Couldn't restore that entry." };
+  }
+
+  await restoreMealAnalysis({
+    ...parsed.data,
+    recordedAt: parsed.data.recordedAt ? new Date(parsed.data.recordedAt) : null,
+    createdAt: new Date(parsed.data.createdAt),
+    items: parsed.data.items ?? [],
+    tips: parsed.data.tips ?? [],
+    userId: user.id,
+  });
   revalidatePath("/nutrition");
   revalidatePath("/kitchen");
   revalidatePath("/today");
