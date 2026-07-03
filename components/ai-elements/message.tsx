@@ -55,7 +55,9 @@ export const MessageContent = ({
 }: MessageContentProps) => (
   <div
     className={cn(
-      "flex min-w-0 max-w-full flex-col gap-2 overflow-hidden text-sm text-foreground",
+      // text-base below sm: chat bubbles read at real messaging-app size on
+      // phones (with the mobile root bump this is ~17px, the iOS body size).
+      "flex min-w-0 max-w-full flex-col gap-2 overflow-hidden text-base text-foreground sm:text-sm",
       className
     )}
     {...props}

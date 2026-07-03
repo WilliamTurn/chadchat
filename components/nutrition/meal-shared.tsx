@@ -44,12 +44,14 @@ export function MealCategoryPicker({
   onChange: (v: MealCategory) => void;
 }) {
   return (
-    <div className="grid grid-cols-4 gap-2">
+    // 2x2 on narrow phones: four-across squeezes "Breakfast" into a mid-word
+    // wrap below ~420px.
+    <div className="grid grid-cols-2 gap-2 min-[420px]:grid-cols-4">
       {MEAL_CATEGORIES.map((m) => {
         const active = value === m;
         return (
           <button
-            className={`rounded-lg border px-2 py-1.5 text-center font-medium text-xs transition-colors ${
+            className={`min-w-0 whitespace-normal break-words rounded-lg border px-2 py-1.5 text-center font-medium text-xs transition-colors ${
               active
                 ? "border-blood bg-blood/10 text-foreground"
                 : "border-border bg-background/40 text-muted-foreground hover:bg-accent/50"

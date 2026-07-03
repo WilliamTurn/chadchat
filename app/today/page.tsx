@@ -553,32 +553,30 @@ async function TodayContent() {
             />
           )}
         </div>
-        {/* Below lg (VF-17): the header stacks over the full column, so the
-            figure becomes a quiet cropped shoulder/torso hugging the top-right
-            edge instead: over-height and top-anchored so only the upper body
-            shows (top-anchored, so the DSH-37 head-clip can't recur), hard
-            left fade, and a bottom fade into the card so it never muddies the
-            stat pills below. */}
+        {/* Below lg: the figure is the WHOLE silhouette, never a cropped
+            half-body (user report: "the hero image is cut off in half").
+            It rides the header's right edge bottom-anchored and fits inside
+            its column by width, with a left fade so the stacked content stays
+            readable over it. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute top-0 right-0 h-60 w-36 overflow-hidden sm:w-44 lg:hidden"
+          className="pointer-events-none absolute inset-y-0 right-0 w-32 overflow-hidden sm:w-44 lg:hidden"
         >
           {hero.kind === "custom" ? (
             <img
               alt=""
               aria-hidden
-              className="h-full w-full select-none object-cover opacity-25 [mask-image:linear-gradient(to_left,black_30%,transparent)]"
+              className="h-full w-full select-none object-cover opacity-30 [mask-image:linear-gradient(to_left,black_35%,transparent)]"
               src={hero.src}
             />
           ) : (
             <img
               alt=""
               aria-hidden
-              className="absolute top-2 right-0 h-[185%] w-auto max-w-none select-none object-contain object-top opacity-45 [mask-image:linear-gradient(to_left,black_30%,transparent)]"
+              className="absolute right-0 bottom-0 w-full select-none object-contain object-bottom opacity-60 [mask-image:linear-gradient(to_left,black_35%,transparent)]"
               src={hero.src}
             />
           )}
-          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-card" />
         </div>
         {/* Greeting (VF-12 + VF-13): three intentional tiers (date eyebrow,
             "Welcome back, Name" hero line, coaching subtitle). On mobile the
@@ -657,8 +655,10 @@ async function TodayContent() {
           <StreakStrip streak={streak} week={week} />
         </div>
 
-        {/* Personalize the header figure (lg+ only, where it's visible) */}
-        <div className="absolute right-4 bottom-4 z-10">
+        {/* Personalize the header figure. In-flow below the streak strip on
+            phones (mobile members could never reach it while it was lg-only),
+            floated bottom-right at lg+ where the full-strength figure lives. */}
+        <div className="relative mt-4 flex justify-end lg:absolute lg:right-4 lg:bottom-4 lg:z-10 lg:mt-0 lg:block">
           <HeroCustomizer hero={hero} />
         </div>
       </header>

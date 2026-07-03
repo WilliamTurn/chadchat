@@ -197,6 +197,17 @@
     overflow-x: clip;
   }
 
+  /* Mobile readability: scale the whole rem-based type ramp up on phones so
+     text-sm/text-xs body copy lands at real phone-app sizes (repeated user
+     report: "font is too tiny everywhere on mobile", multiple devices).
+     Tailwind's breakpoints resolve against the initial 16px, so layout
+     breakpoints are unaffected - only rem-sized type and spacing grow. */
+  @media (max-width: 40rem) {
+    html {
+      font-size: 17px;
+    }
+  }
+
   h1,
   h2,
   h3,

@@ -33,7 +33,7 @@ export function SegmentedPicker<T extends string>({
           <button
             aria-pressed={active}
             className={cn(
-              "rounded-lg border px-2 py-2 text-center font-medium text-xs transition-colors",
+              "min-w-0 whitespace-normal break-words rounded-lg border px-2 py-2 text-center font-medium text-xs transition-colors",
               active
                 ? "border-blood bg-blood/10 text-foreground"
                 : "border-border bg-background/40 text-muted-foreground hover:bg-accent/50"

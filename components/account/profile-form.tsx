@@ -21,9 +21,12 @@ import {
 } from "@/lib/profile";
 import { cn } from "@/lib/utils";
 
+// min-w-0 + wrapping: a label must NEVER spill past its button's border on a
+// narrow phone (user report: "Intermediate" overflowing its box). Long labels
+// wrap to a second line inside the button instead.
 const segmentedButtonClass = (selected: boolean) =>
   cn(
-    "rounded-lg border px-3 py-2.5 font-medium text-sm transition-colors",
+    "min-w-0 whitespace-normal break-words rounded-lg border px-2 py-2.5 text-center font-medium text-sm transition-colors",
     selected
       ? "border-blood/60 bg-blood/10 text-blood"
       : "border-border bg-background/40 text-muted-foreground hover:border-border hover:text-foreground"
@@ -194,7 +197,7 @@ export function ProfileForm({
         <div className="flex flex-col gap-2">
           <Label>Training experience</Label>
           <LabeledSegmented
-            columns="grid-cols-3"
+            columns="grid-cols-1 min-[420px]:grid-cols-3"
             options={EXPERIENCE_OPTIONS}
             onChange={setExperience}
             value={experience}

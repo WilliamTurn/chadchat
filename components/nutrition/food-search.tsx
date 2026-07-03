@@ -362,36 +362,31 @@ function ResultRow({
           : "border-border bg-background/40 hover:bg-accent/40"
       )}
     >
+      {/* Nothing in this row truncates: the name and macro line wrap instead,
+          so the full food data is always readable on a phone (user report:
+          picking a food you couldn't see the numbers for). */}
       <button
         aria-expanded={open}
-        className="flex w-full items-center gap-3 px-3 py-2.5 text-left"
+        className="flex w-full items-start gap-3 px-3 py-2.5 text-left"
         onClick={onSelect}
         type="button"
       >
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <span className="truncate font-medium text-sm">{hit.name}</span>
-            {hit.brand && (
-              <span className="shrink-0 truncate text-muted-foreground text-xs">
-                {hit.brand}
-              </span>
-            )}
+          <div className="font-medium text-sm leading-snug">{hit.name}</div>
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-muted-foreground text-xs">
+            {hit.brand && <span>{hit.brand}</span>}
+            {sub && <span className="tabular-nums">{sub}</span>}
+            <span className="flex items-center gap-1">
+              {hit.source !== "off" && (
+                <BadgeCheck className="size-3.5 text-emerald-500" />
+              )}
+              {sourceBadge(hit)}
+            </span>
           </div>
-          {sub && (
-            <div className="mt-0.5 truncate text-muted-foreground text-xs">
-              {sub}
-            </div>
-          )}
         </div>
-        <span className="flex shrink-0 items-center gap-1 text-[10px] text-muted-foreground">
-          {hit.source !== "off" && (
-            <BadgeCheck className="size-3.5 text-emerald-500" />
-          )}
-          {sourceBadge(hit)}
-        </span>
         <Plus
           className={cn(
-            "size-4 shrink-0 text-muted-foreground transition-transform",
+            "mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform",
             open && "rotate-45"
           )}
         />

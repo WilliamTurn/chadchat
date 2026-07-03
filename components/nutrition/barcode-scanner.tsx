@@ -36,6 +36,50 @@ type DetectorLike = {
 const FOOD_BARCODE_FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e"] as const;
 
 const SCAN_INTERVAL_MS = 220;
+// Consecutive detect() failures before we stop pretending and show the typed
+// fallback (a broken engine used to fail silently forever - the camera kept
+// rolling and members reasonably concluded there was no scanner at all).
+const MAX_CONSECUTIVE_FAILURES = 20;
+// After this long with no hit, show the hold-steady coaching line. Phone
+// cameras usually need distance + a full frame; nobody knows that untold.
+const HINT_AFTER_MS = 5000;
+
+/**
+ * Phone-camera tuning after the stream starts. Stock getUserMedia streams are
+ * the reason web barcode scanners "don't work" on phones: many Androids hand
+ * back a lens without close focus, and iPhones won't macro-focus a barcode
+ * held close. Continuous autofocus plus a modest zoom (the same trick the
+ * mainstream scanner libraries use) makes close-up barcodes sharp enough to
+ * decode. Every constraint is best-effort - unsupported ones are ignored.
+ */
+async function tuneTrackForScanning(track: MediaStreamTrack): Promise<void> {
+  type Extra = {
+    focusMode?: string[];
+    zoom?: { min?: number; max?: number };
+  };
+  let caps: Extra = {};
+  try {
+    caps = (track.getCapabilities?.() ?? {}) as Extra;
+  } catch {
+    return;
+  }
+  const advanced: Record<string, unknown>[] = [];
+  if (Array.isArray(caps.focusMode) && caps.focusMode.includes("continuous")) {
+    advanced.push({ focusMode: "continuous" });
+  }
+  if (caps.zoom && typeof caps.zoom.max === "number" && caps.zoom.max >= 2) {
+    // 2x keeps the barcode inside the lens's focus range without the member
+    // having to shove the package against the camera.
+    advanced.push({ zoom: Math.min(2, caps.zoom.max) });
+  }
+  if (advanced.length > 0) {
+    await track
+      .applyConstraints({ advanced } as MediaTrackConstraints)
+      .catch(() => {
+        /* best-effort */
+      });
+  }
+}
 
 async function createDetector(): Promise<DetectorLike> {
   const { BarcodeDetector, prepareZXingModule } = await import(
@@ -66,6 +110,7 @@ export function BarcodeScannerDialog({
   const [starting, setStarting] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [manual, setManual] = useState("");
+  const [showHint, setShowHint] = useState(false);
 
   const fire = useCallback(
     (code: string) => {
@@ -86,10 +131,12 @@ export function BarcodeScannerDialog({
     firedRef.current = false;
     setCameraError(null);
     setManual("");
+    setShowHint(false);
     setStarting(true);
 
     let cancelled = false;
     let interval: ReturnType<typeof setInterval> | null = null;
+    let hintTimer: ReturnType<typeof setTimeout> | null = null;
 
     (async () => {
       let detector: DetectorLike;
@@ -111,8 +158,10 @@ export function BarcodeScannerDialog({
           audio: false,
           video: {
             facingMode: { ideal: "environment" },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
+            // 1080p ideal: 1D decoding lives and dies by horizontal pixels
+            // across the bars; browsers that can't deliver it degrade fine.
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
           },
         });
       } catch (err) {
@@ -133,6 +182,10 @@ export function BarcodeScannerDialog({
         return;
       }
       streamRef.current = stream;
+      const track = stream.getVideoTracks()[0];
+      if (track) {
+        await tuneTrackForScanning(track);
+      }
       const video = videoRef.current;
       if (video) {
         video.srcObject = stream;
@@ -141,7 +194,13 @@ export function BarcodeScannerDialog({
         });
       }
       setStarting(false);
+      hintTimer = setTimeout(() => {
+        if (!(cancelled || firedRef.current)) {
+          setShowHint(true);
+        }
+      }, HINT_AFTER_MS);
 
+      let failures = 0;
       interval = setInterval(async () => {
         const v = videoRef.current;
         if (!v || v.readyState < 2 || firedRef.current) {
@@ -149,12 +208,31 @@ export function BarcodeScannerDialog({
         }
         try {
           const codes = await detector.detect(v);
+          failures = 0;
           const digits = codes[0]?.rawValue?.replace(/\D/g, "");
           if (digits && digits.length >= 8) {
             fire(digits);
           }
         } catch {
-          /* skip this frame */
+          // A frame can fail transiently, but detect() failing continuously
+          // means the engine is down on this device - say so instead of
+          // showing a camera that will never scan.
+          failures += 1;
+          if (failures >= MAX_CONSECUTIVE_FAILURES && !cancelled) {
+            if (interval) {
+              clearInterval(interval);
+              interval = null;
+            }
+            if (streamRef.current) {
+              for (const t of streamRef.current.getTracks()) {
+                t.stop();
+              }
+              streamRef.current = null;
+            }
+            setCameraError(
+              "Scanning isn't working on this device. Type the barcode number below instead."
+            );
+          }
         }
       }, SCAN_INTERVAL_MS);
     })();
@@ -163,6 +241,9 @@ export function BarcodeScannerDialog({
       cancelled = true;
       if (interval) {
         clearInterval(interval);
+      }
+      if (hintTimer) {
+        clearTimeout(hintTimer);
       }
       if (streamRef.current) {
         for (const track of streamRef.current.getTracks()) {
@@ -218,7 +299,26 @@ export function BarcodeScannerDialog({
               aria-hidden
               className="pointer-events-none absolute inset-x-10 top-1/2 h-24 -translate-y-1/2 rounded-lg border-2 border-white/70"
             />
+            {/* Live "scanning" pulse so it reads as an active scanner, not a
+                plain camera view. */}
+            {!starting && (
+              <div className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center">
+                <span className="flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-[11px] text-white/90">
+                  <span className="relative flex size-2">
+                    <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex size-2 rounded-full bg-emerald-400" />
+                  </span>
+                  Scanning for a barcode…
+                </span>
+              </div>
+            )}
           </div>
+        )}
+        {!cameraError && showHint && (
+          <p className="text-muted-foreground text-xs">
+            Not catching? Hold the package steady about 6 inches (15 cm) away
+            and let the barcode fill the white frame.
+          </p>
         )}
 
         <div className="flex flex-col gap-2">

@@ -2,9 +2,9 @@
 
 // DSH-21 — lets a member personalize the decorative /today header figure:
 // switch between the built-in male / female silhouettes, or upload their own
-// background image. Lives in the header's bottom-right corner (lg+ only, where
-// the figure is visible). The actual figure is rendered server-side by the
-// page; this only writes the choice and refreshes.
+// background image. Reachable on every viewport (the figure shows on every
+// viewport too). The actual figure is rendered server-side by the page; this
+// only writes the choice and refreshes.
 
 import { ImagePlus, Loader2, RotateCcw, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -96,7 +96,7 @@ export function HeroCustomizer({ hero }: { hero: ResolvedHero }) {
       <PopoverTrigger asChild>
         <button
           aria-label="Personalize header image"
-          className="hidden items-center gap-1.5 rounded-full border border-border/60 bg-background/70 px-3 py-1.5 text-muted-foreground text-xs backdrop-blur-sm transition-colors hover:bg-accent hover:text-foreground lg:inline-flex"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/70 px-3 py-1.5 text-muted-foreground text-xs backdrop-blur-sm transition-colors hover:bg-accent hover:text-foreground"
           type="button"
         >
           <ImagePlus className="size-3.5" />

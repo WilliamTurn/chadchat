@@ -141,7 +141,9 @@ function CoherenceNotice({
     return null;
   }
   return (
-    <div className="mb-3 flex flex-wrap items-start justify-between gap-x-3 gap-y-2 rounded-xl border border-border bg-background/40 px-3 py-2.5">
+    // Stacked on phones: side-by-side squeezed the warning copy into a skinny
+    // half-width column at 390px. The button rides the row only at sm+.
+    <div className="mb-3 flex flex-col gap-2 rounded-xl border border-border bg-background/40 px-3 py-2.5 sm:flex-row sm:items-start sm:justify-between sm:gap-x-3">
       <div className="flex min-w-0 flex-1 items-start gap-2">
         <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-amber-500" />
         <div className="flex min-w-0 flex-col gap-1 text-muted-foreground text-xs leading-relaxed">
@@ -151,7 +153,7 @@ function CoherenceNotice({
         </div>
       </div>
       <AskChadButton
-        className="h-7 shrink-0 text-xs"
+        className="h-7 shrink-0 self-start text-xs sm:self-auto"
         prompt={promptParts.join(" ")}
       />
     </div>
