@@ -51,7 +51,8 @@ export default function HydrationPage() {
         <BackToDashboard />
         <div className="flex items-center gap-3">
           <h1 className="font-semibold text-2xl tracking-tight">Hydration</h1>
-          <Badge variant="secondary">Pro</Badge>
+          {/* "Pro feature", not bare "Pro" (LC-13). */}
+          <Badge variant="secondary">Pro feature</Badge>
         </div>
         <p className="mt-1 text-muted-foreground text-sm">
           Log your water with one tap and track it against a daily goal. Chad

@@ -61,7 +61,8 @@ export default function NutritionPage() {
           <h1 className="font-semibold text-2xl tracking-tight">
             Calorie Tracker
           </h1>
-          <Badge variant="secondary">Pro</Badge>
+          {/* "Pro feature", not bare "Pro" (LC-13). */}
+          <Badge variant="secondary">Pro feature</Badge>
         </div>
         <p className="mt-1 text-muted-foreground text-sm">
           Log every meal — by photo or by hand. Chad grades it and keeps your

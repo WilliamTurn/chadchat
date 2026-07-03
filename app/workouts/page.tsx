@@ -80,7 +80,9 @@ export default function WorkoutsPage() {
         <BackToDashboard />
         <div className="flex items-center gap-3">
           <h1 className="font-semibold text-2xl tracking-tight">Workouts</h1>
-          <Badge variant="secondary">Pro</Badge>
+          {/* "Pro feature", not bare "Pro": the badge labels the FEATURE's
+              tier; a bare tier name reads as the member's own plan (LC-13). */}
+          <Badge variant="secondary">Pro feature</Badge>
         </div>
         <p className="mt-1 text-muted-foreground text-sm">
           Log every set, rep, and pound. Chad tracks your PRs and volume — and

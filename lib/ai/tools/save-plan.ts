@@ -17,7 +17,7 @@ type SavePlanProps = {
 export const savePlan = ({ session, chatId }: SavePlanProps) =>
   tool({
     description:
-      "Save a full training or diet plan to the client's dashboard. Use this right after you write them a real plan so they keep it (not just buried in chat). Put the COMPLETE plan in `detail` — the whole weekly structure, every day, exercises/sets/reps or meals/macros — exactly as you wrote it.",
+      "Save a full training or diet plan to the client's dashboard. Use this right after you write them a real plan so they keep it (not just buried in chat). Put the COMPLETE plan in `detail` — the whole weekly structure, every day, exercises/sets/reps or meals/macros — exactly as you wrote it. Ground every prescribed weight in the client's logged lifts and PRs you can see; never prescribe starting weights far below or above their demonstrated strength without saying why in the plan. Saving becomes their CURRENT plan: any other active plan of the same kind is archived automatically.",
     inputSchema: z.object({
       title: z
         .string()
@@ -44,7 +44,7 @@ export const savePlan = ({ session, chatId }: SavePlanProps) =>
       return {
         id: created.id,
         title: created.title,
-        message: `${kind === "diet" ? "Diet" : "Training"} plan "${created.title}" saved to the client's dashboard.`,
+        message: `${kind === "diet" ? "Diet" : "Training"} plan "${created.title}" saved to the client's dashboard as their current ${kind} plan. Any previous active ${kind} plan was archived.`,
       };
     },
   });

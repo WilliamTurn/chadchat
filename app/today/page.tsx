@@ -44,6 +44,7 @@ import {
   getActivePlansByUserId,
   getActivityDaysSince,
   getInactiveGoalsByUserId,
+  getInactivePlansByUserId,
   getMealsSince,
   getLatestSleepEntry,
   getNutritionTarget,
@@ -204,6 +205,7 @@ async function TodayContent() {
     goals,
     pastGoals,
     plans,
+    pastPlans,
     recentWorkouts,
     activityDays,
     mealPlan,
@@ -219,6 +221,7 @@ async function TodayContent() {
     getActiveGoalsByUserId(user.id),
     getInactiveGoalsByUserId(user.id),
     getActivePlansByUserId(user.id),
+    getInactivePlansByUserId(user.id),
     canAccessProFeatures(user)
       ? getWorkoutsByUserId(user.id, TODAY_WORKOUT_LIMIT)
       : Promise.resolve([]),
@@ -329,13 +332,15 @@ async function TodayContent() {
       };
     }
   }
-  const planItems = plans.map((p) => ({
+  const toPlanItem = (p: (typeof plans)[number]) => ({
     id: p.id,
     title: p.title,
     detail: p.detail,
     kind: p.kind,
     status: p.status,
-  }));
+  });
+  const planItems = plans.map(toPlanItem);
+  const pastPlanItems = pastPlans.map(toPlanItem);
 
   const profile = memory?.profile ?? null;
   const nameField = clientField(profile, "Name");
@@ -905,6 +910,7 @@ async function TodayContent() {
           <ModuleCard glow="blood">
             <PlanList
               memoryPlanHint={workoutPlan}
+              pastPlans={pastPlanItems}
               plans={planItems}
               quiet={firstRun}
             />

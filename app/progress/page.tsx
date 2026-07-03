@@ -108,7 +108,8 @@ export default function ProgressPage() {
         <BackToDashboard />
         <div className="flex items-center gap-3">
           <h1 className="font-semibold text-2xl tracking-tight">Progress</h1>
-          <Badge variant="secondary">Pro</Badge>
+          {/* "Pro feature", not bare "Pro" (LC-13). */}
+          <Badge variant="secondary">Pro feature</Badge>
         </div>
         <p className="mt-1 text-muted-foreground text-sm">
           Track your weight and progress photos over time.

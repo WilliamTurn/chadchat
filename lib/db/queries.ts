@@ -1247,6 +1247,21 @@ export async function createPlan(entry: {
   sourceChatId: string | null;
 }): Promise<Plan> {
   try {
+    // One current plan per kind (LC-15): saving a new active plan archives
+    // any other active plan of the same kind, so "active" always means "the
+    // plan you're on" and Chad coaches from exactly one program.
+    if (entry.status === "active") {
+      await db
+        .update(plan)
+        .set({ status: "archived", updatedAt: new Date() })
+        .where(
+          and(
+            eq(plan.userId, entry.userId),
+            eq(plan.kind, entry.kind),
+            eq(plan.status, "active")
+          )
+        );
+    }
     const [created] = await db.insert(plan).values(entry).returning();
     return created;
   } catch (_error) {
@@ -1274,6 +1289,25 @@ export async function getActivePlansByUserId(userId: string): Promise<Plan[]> {
       .select()
       .from(plan)
       .where(and(eq(plan.userId, userId), eq(plan.status, "active")))
+      .orderBy(desc(plan.createdAt));
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get plans");
+  }
+}
+
+/**
+ * A user's archived/completed plans, newest first. Backs the "Past plans"
+ * disclosure on /today (LC-15) so the single-current rule's auto-archive
+ * stays recoverable instead of reading as a silent delete.
+ */
+export async function getInactivePlansByUserId(
+  userId: string
+): Promise<Plan[]> {
+  try {
+    return await db
+      .select()
+      .from(plan)
+      .where(and(eq(plan.userId, userId), ne(plan.status, "active")))
       .orderBy(desc(plan.createdAt));
   } catch (_error) {
     throw new ChatbotError("bad_request:database", "Failed to get plans");
@@ -1311,6 +1345,21 @@ export async function updatePlan(entry: {
 }): Promise<void> {
   try {
     const { id, userId, ...fields } = entry;
+    // Same single-current invariant as createPlan (LC-15): re-activating a
+    // plan retires whichever other plan of that kind was current.
+    if (fields.status === "active") {
+      await db
+        .update(plan)
+        .set({ status: "archived", updatedAt: new Date() })
+        .where(
+          and(
+            eq(plan.userId, userId),
+            eq(plan.kind, fields.kind),
+            eq(plan.status, "active"),
+            ne(plan.id, id)
+          )
+        );
+    }
     await db
       .update(plan)
       .set({ ...fields, updatedAt: new Date() })

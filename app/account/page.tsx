@@ -1,6 +1,9 @@
 import {
   Crown,
   Dumbbell,
+  GlassWater,
+  Moon,
+  Ruler,
   Salad,
   Scale,
   Sparkles,
@@ -132,10 +135,15 @@ async function AccountSettings() {
   }
 
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+  // Every log the app collects is here (LC-16) — "your data" that skipped
+  // hydration, sleep, and measurements was only half the promise.
   const exports: { dataset: string; label: string; icon: typeof Scale }[] = [
     { dataset: "weighins", label: "Weigh-ins", icon: Scale },
     { dataset: "meals", label: "Calorie Tracker", icon: Salad },
     { dataset: "workouts", label: "Workouts", icon: Dumbbell },
+    { dataset: "hydration", label: "Hydration", icon: GlassWater },
+    { dataset: "sleep", label: "Sleep", icon: Moon },
+    { dataset: "measurements", label: "Measurements", icon: Ruler },
   ];
 
   return (

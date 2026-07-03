@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { remarkHardBreaks } from "@/lib/markdown/hard-breaks";
 import { downloadPlanPdf } from "@/lib/pdf/goal-pdf";
 import { type EditablePlan, PlanEditor } from "./plan-editor";
+import { PlanStatusBadge } from "./plan-status-badge";
 
 /**
  * The full-page plan document (R2-9): the whole training or diet plan as rich
@@ -52,9 +53,7 @@ export function PlanDoc({ plan }: { plan: EditablePlan }) {
               <Badge variant="secondary">
                 {plan.kind === "diet" ? "Diet" : "Training"}
               </Badge>
-              {plan.status !== "active" && (
-                <Badge variant="secondary">{plan.status}</Badge>
-              )}
+              <PlanStatusBadge status={plan.status} />
             </div>
             <p className="mt-1 text-muted-foreground text-sm">
               Ask Chad in chat to change it, or edit it here.

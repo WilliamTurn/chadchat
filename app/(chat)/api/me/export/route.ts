@@ -1,21 +1,33 @@
 import Papa from "papaparse";
 import { auth } from "@/app/(auth)/auth";
 import {
+  getBodyMeasurementsByUserId,
   getMealsSince,
   getProgressEntriesByUserId,
+  getSleepEntries,
+  getWaterLogsSince,
   getWorkoutsByUserId,
 } from "@/lib/db/queries";
+import { mlToOz } from "@/lib/today/water-units";
 
 /**
  * CSV data export (ACC-13). A member can download their own logged data as a
  * spreadsheet-friendly CSV — the "own your data" table stake a power user
  * expects, and a genuine escape hatch. One dataset per request:
- *   ?dataset=weighins | meals | workouts
+ *   ?dataset=weighins | meals | workouts | hydration | sleep | measurements
+ * (LC-16: every log the app collects is exportable — "your data" without
+ * hydration, sleep, and measurements was only half the promise.)
  * Auth is enforced here and every query is owner-scoped, so a user can only
  * ever export their own rows.
  */
 
-type Dataset = "weighins" | "meals" | "workouts";
+type Dataset =
+  | "weighins"
+  | "meals"
+  | "workouts"
+  | "hydration"
+  | "sleep"
+  | "measurements";
 
 function isoDay(date: Date | null): string {
   if (!date) {
@@ -108,6 +120,36 @@ export async function GET(request: Request) {
         }))
       )
     );
+  } else if (dataset === "hydration") {
+    // Individual increments, oldest first. Full timestamp (not just the day)
+    // because a day usually holds several entries; both units so the CSV is
+    // useful whichever one the reader thinks in (ml is what's stored).
+    fields = ["datetime_utc", "amount_oz", "amount_ml"];
+    const logs = await getWaterLogsSince(userId, new Date(0));
+    rows = logs.reverse().map((l) => ({
+      datetime_utc: l.recordedAt.toISOString(),
+      amount_oz: round(mlToOz(l.amountMl)),
+      amount_ml: l.amountMl,
+    }));
+  } else if (dataset === "sleep") {
+    fields = ["date", "hours", "minutes", "quality_1_to_5"];
+    // The list query caps at 60 for the /sleep page; export wants everything.
+    const entries = await getSleepEntries(userId, 100_000);
+    rows = entries.reverse().map((e) => ({
+      date: isoDay(e.recordedAt),
+      hours: round(e.minutes / 60),
+      minutes: e.minutes,
+      quality_1_to_5: e.quality ?? "",
+    }));
+  } else if (dataset === "measurements") {
+    fields = ["date", "measurement", "value", "unit"];
+    const entries = await getBodyMeasurementsByUserId(userId);
+    rows = entries.map((e) => ({
+      date: isoDay(e.recordedAt),
+      measurement: e.kind,
+      value: round(e.value),
+      unit: e.unit,
+    }));
   } else {
     return new Response("Unknown dataset", { status: 400 });
   }

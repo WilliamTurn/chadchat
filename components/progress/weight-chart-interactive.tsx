@@ -261,12 +261,19 @@ export function WeightChartInteractive({
           <>
             <Kpi
               help={
+                // Honest about the smoothing: the EMA averages weeks of
+                // weigh-ins (tau = 10 days), so it deliberately LAGS the
+                // latest scale readings. The old copy claimed it "sits
+                // between your last couple of weigh-ins", which the number
+                // next to it visibly violated (LC-14).
                 <>
-                  Your <span className="text-foreground">smoothed</span> weight —
-                  not today's number on the scale. It blends your recent weigh-ins
-                  so a salty meal or a dehydrated morning doesn't fool you. That's
-                  why it's a decimal: e.g. {stats.trendWeight} sits between your
-                  last couple of weigh-ins, weighted toward the most recent one.{" "}
+                  Your <span className="text-foreground">smoothed</span> weight,
+                  not today's number on the scale. It averages your last few
+                  weeks of weigh-ins (newer ones count more) so a salty meal or
+                  a dehydrated morning doesn't fool you. It moves slowly on
+                  purpose: after a real change it takes a week or two to catch
+                  up, so it can sit above or below your latest weigh-ins for a
+                  while.{" "}
                   <span className="text-foreground">This is the number to
                   actually watch.</span>
                 </>

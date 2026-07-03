@@ -46,7 +46,8 @@ export default function MealPlanPage() {
         <BackToDashboard />
         <div className="flex items-center gap-3">
           <h1 className="font-semibold text-2xl tracking-tight">Meal Plan</h1>
-          <Badge variant="secondary">Pro</Badge>
+          {/* "Pro feature", not bare "Pro" (LC-13). */}
+          <Badge variant="secondary">Pro feature</Badge>
         </div>
         <p className="mt-1 text-muted-foreground text-sm">
           Chad builds you a structured plan around your macro target — real

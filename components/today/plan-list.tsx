@@ -1,16 +1,17 @@
 "use client";
 
-import { Dumbbell, Trash2 } from "lucide-react";
+import { Dumbbell, RotateCcw, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { removePlan } from "@/app/today/actions";
+import { removePlan, updatePlanRecord } from "@/app/today/actions";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ModuleFooter, ModuleHeader } from "./module-card";
 import { type EditablePlan, PlanEditor } from "./plan-editor";
+import { PlanStatusBadge } from "./plan-status-badge";
 
 /**
  * Pull the day structure out of a free-text training plan: lines like
@@ -71,9 +72,7 @@ function PlanItem({ plan }: { plan: EditablePlan }) {
             {plan.kind === "diet" ? "Diet" : "Training"}
           </Badge>
         </div>
-        {plan.status !== "active" && (
-          <Badge variant="secondary">{plan.status}</Badge>
-        )}
+        <PlanStatusBadge status={plan.status} />
       </div>
       {plan.kind === "training" && <SplitSummary detail={plan.detail} />}
       <div className="mt-1 flex items-center gap-1">
@@ -148,17 +147,68 @@ function RowDeletePlan({ id }: { id: string }) {
 }
 
 /**
+ * One archived/completed plan: status badge, View, and a one-click "Make
+ * current" (mirrors the goals card's PastGoalItem). Keeps the LC-15
+ * auto-archive recoverable: reactivating retires whichever plan of that kind
+ * is current now.
+ */
+function PastPlanItem({ plan }: { plan: EditablePlan }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+
+  function onReactivate() {
+    startTransition(async () => {
+      const result = await updatePlanRecord({ ...plan, status: "active" });
+      if (result.ok) {
+        toast.success("That's your current plan again.");
+        router.refresh();
+      } else {
+        toast.error(result.error ?? "Couldn't reactivate that.");
+      }
+    });
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-background/40 px-3 py-2">
+      <div className="flex min-w-0 items-center gap-2">
+        <p className="truncate text-sm">{plan.title}</p>
+        <PlanStatusBadge status={plan.status} />
+      </div>
+      <div className="flex shrink-0 items-center gap-1">
+        <Button asChild className="px-0 text-blood" size="sm" variant="link">
+          <Link href={`/plans/${plan.id}`}>View</Link>
+        </Button>
+        <Button
+          aria-label="Make this the current plan"
+          className="size-7 text-muted-foreground"
+          disabled={pending}
+          onClick={onReactivate}
+          size="icon"
+          variant="ghost"
+        >
+          <RotateCcw className="size-3.5" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/**
  * The /today "Your training" card body: lists the user's saved training/diet
  * plans (the full documents), with an Add control and an empty state that falls
  * back to the one-line plan Chad has in memory until a real one is saved.
+ * Archived/completed plans collapse into a "Past plans" disclosure so the
+ * single-current rule's auto-archive stays recoverable (LC-15).
  */
 export function PlanList({
   plans,
   memoryPlanHint,
+  pastPlans = [],
   quiet = false,
 }: {
   plans: EditablePlan[];
   memoryPlanHint: string | null;
+  pastPlans?: EditablePlan[];
   /** First-run (P1-4): the empty state describes what will appear here instead
    *  of adding another CTA to the chorus — the hero owns the one first action. */
   quiet?: boolean;
@@ -199,6 +249,20 @@ export function PlanList({
           )}
           {!quiet && <PlanEditor variant="cta" />}
         </div>
+      )}
+
+      {pastPlans.length > 0 && (
+        <details className="group mt-4 border-border border-t pt-3">
+          <summary className="flex cursor-pointer list-none items-center gap-1.5 text-muted-foreground text-sm hover:text-foreground">
+            <span className="transition-transform group-open:rotate-90">›</span>
+            Past plans ({pastPlans.length})
+          </summary>
+          <div className="mt-2 flex flex-col gap-2">
+            {pastPlans.map((p) => (
+              <PastPlanItem key={p.id} plan={p} />
+            ))}
+          </div>
+        </details>
       )}
 
       <ModuleFooter

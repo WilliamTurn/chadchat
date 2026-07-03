@@ -34,7 +34,8 @@ export default function KitchenPage() {
           <h1 className="font-semibold text-2xl tracking-tight">
             Rate My Kitchen
           </h1>
-          <Badge variant="secondary">Pro</Badge>
+          {/* "Pro feature", not bare "Pro" (LC-13). */}
+          <Badge variant="secondary">Pro feature</Badge>
         </div>
         <p className="mt-1 text-muted-foreground text-sm">
           Show Chad your fridge or pantry — he'll tell you what's helping, what's

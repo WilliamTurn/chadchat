@@ -160,6 +160,12 @@ export function PlanEditor({
               </Select>
             </div>
           </div>
+          {/* The single-current rule, stated where the choice is made (LC-15). */}
+          <p className="text-muted-foreground text-xs">
+            Active means the plan you're on right now. Only one training plan
+            and one diet plan can be active at a time, so saving this as
+            Active moves any other active one to Archived.
+          </p>
           <div className="flex flex-col gap-2">
             <Label htmlFor="p-detail">The plan</Label>
             <Textarea

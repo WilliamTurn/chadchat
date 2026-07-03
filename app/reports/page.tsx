@@ -46,7 +46,11 @@ export default function ReportsPage() {
           <h1 className="font-semibold text-2xl tracking-tight">
             Weekly Report
           </h1>
-          <Badge variant="secondary">Elite</Badge>
+          {/* "Elite feature", not bare "Elite": on every other page the H1
+              badge marks the tier the feature belongs to, but a bare tier
+              name reads as the member's OWN plan — and here that misread
+              flips the meaning for non-Elite members (LC-13). */}
+          <Badge variant="secondary">Elite feature</Badge>
         </div>
         {/* No settings pointer here: this header renders for every member,
             but the day/time control on /account is Elite-only (LC-6). The
