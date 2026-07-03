@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { EQUIPMENT, MUSCLE_GROUPS } from "@/lib/workouts/exercise-library";
+import {
+  EQUIPMENT,
+  EXERCISE_KINDS,
+  MUSCLE_GROUPS,
+} from "@/lib/workouts/exercise-library";
 
 export const SET_TYPES = ["warmup", "working", "dropset", "failure"] as const;
 
@@ -15,6 +19,9 @@ const setSchema = z.object({
 const exerciseSchema = z.object({
   name: z.string().trim().min(1, "Pick an exercise.").max(120),
   muscleGroup: z.string().trim().max(40).nullable().optional(),
+  // Logging kind snapshot ("weighted" | "bodyweight" | "timed"); null on
+  // pre-existing logs (treated as weighted).
+  kind: z.enum(EXERCISE_KINDS).nullable().optional(),
   notes: z.string().trim().max(1000).nullable().optional(),
   sets: z.array(setSchema).min(1).max(40),
 });
@@ -39,6 +46,16 @@ export const customExerciseSchema = z.object({
   name: z.string().trim().min(1, "Name the exercise.").max(120),
   muscleGroup: z.enum(MUSCLE_GROUPS).default("other"),
   equipment: z.enum(EQUIPMENT).default("other"),
+  kind: z.enum(EXERCISE_KINDS).default("weighted"),
+  notes: z.string().trim().max(500).nullable().optional(),
 });
 
 export type CustomExerciseInput = z.infer<typeof customExerciseSchema>;
+
+export const updateCustomExerciseSchema = customExerciseSchema.extend({
+  id: z.string().uuid(),
+});
+
+export type UpdateCustomExerciseInput = z.infer<
+  typeof updateCustomExerciseSchema
+>;

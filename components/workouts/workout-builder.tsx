@@ -27,7 +27,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { todayLocalISO } from "@/lib/date";
 import { cn } from "@/lib/utils";
-import type { SetType, WorkoutData } from "@/lib/workouts/stats";
+import type {
+  ExerciseKindData,
+  GhostSet,
+  SetType,
+  WorkoutData,
+} from "@/lib/workouts/stats";
 import { ExercisePicker, type PickedExercise } from "./exercise-picker";
 import { PlateCalculator } from "./plate-calculator";
 import { RestTimer } from "./rest-timer";
@@ -37,6 +42,8 @@ type CustomExerciseRow = {
   name: string;
   muscleGroup: string;
   equipment: string;
+  kind: string;
+  notes: string | null;
 };
 
 type EditorSet = {
@@ -49,13 +56,48 @@ type EditorSet = {
   completed: boolean;
 };
 
+// A prior/prescribed value shown as a placeholder in an empty set input (the
+// Hevy "previous" column). Strings, because a plan target can be a range
+// ("4-6") that can't be adopted as a number — only numeric ghosts auto-fill
+// when the set is checked off.
+type GhostValue = { weight: string; reps: string };
+
 type EditorExercise = {
   uid: string;
   name: string;
   muscleGroup: string | null;
+  kind: ExerciseKindData | null;
+  // One-line plan prescription ("4 x 4-6 @ 185 lb · RPE 8"), plan mode only.
+  target?: string | null;
+  // Per-set-index placeholder values; the last one repeats for extra sets.
+  ghosts?: GhostValue[];
   notes: string;
   sets: EditorSet[];
 };
+
+/** One plan-day exercise, pre-resolved by the caller (PlanRunner). */
+export type PlanPrefillExercise = {
+  name: string;
+  muscleGroup: string | null;
+  kind: ExerciseKindData | null;
+  target: string;
+  sets: number;
+  unit: "lb" | "kg";
+  ghosts: GhostValue[];
+};
+
+export type PlanPrefill = {
+  title: string;
+  exercises: PlanPrefillExercise[];
+};
+
+/** Ghost placeholders from a last-session lookup entry. */
+export function ghostsFromHistory(sets: GhostSet[]): GhostValue[] {
+  return sets.map((s) => ({
+    weight: s.weight == null ? "" : String(s.weight),
+    reps: s.reps == null ? "" : String(s.reps),
+  }));
+}
 
 const SET_TYPE_ORDER: SetType[] = ["working", "warmup", "dropset", "failure"];
 const SET_TYPE_LABEL: Record<SetType, string> = {
@@ -69,6 +111,10 @@ let _uid = 0;
 function uid(): string {
   _uid += 1;
   return `w${_uid}`;
+}
+
+function isNumeric(v: string): boolean {
+  return v.trim() !== "" && !Number.isNaN(Number(v));
 }
 
 const todayISO = todayLocalISO;
@@ -90,6 +136,7 @@ function fromWorkout(w: WorkoutData): EditorExercise[] {
     uid: uid(),
     name: ex.name,
     muscleGroup: ex.muscleGroup,
+    kind: ex.kind ?? null,
     notes: ex.notes ?? "",
     sets:
       ex.sets.length > 0
@@ -106,16 +153,58 @@ function fromWorkout(w: WorkoutData): EditorExercise[] {
   }));
 }
 
+/**
+ * Build the editor state for a plan day: every prescribed exercise with its
+ * set count laid out, values EMPTY, and last session's numbers (or the plan's
+ * prescription) ghosted as placeholders. Sets start unchecked — the member
+ * checks them off as they train, and checking an empty set adopts its ghost.
+ */
+function fromPlan(exercises: PlanPrefillExercise[]): EditorExercise[] {
+  return exercises.map((ex) => ({
+    uid: uid(),
+    name: ex.name,
+    muscleGroup: ex.muscleGroup,
+    kind: ex.kind,
+    target: ex.target,
+    ghosts: ex.ghosts,
+    notes: "",
+    sets: Array.from({ length: ex.sets }, () => ({
+      uid: uid(),
+      weight: "",
+      reps: "",
+      unit: ex.unit,
+      rpe: "",
+      setType: "working" as const,
+      completed: false,
+    })),
+  }));
+}
+
+/** The ghost for set index `i` — the last known ghost repeats for extra sets. */
+function ghostAt(ex: EditorExercise, i: number): GhostValue | null {
+  if (!ex.ghosts || ex.ghosts.length === 0) {
+    return null;
+  }
+  return ex.ghosts[Math.min(i, ex.ghosts.length - 1)];
+}
+
 export function WorkoutBuilder({
   mode,
   initial,
+  plan,
+  lastSets,
   customExercises,
   trigger,
 }: {
   // "repeat" prefills exercises/sets from `initial` but saves a NEW workout
-  // dated today — the "repeat last workout" flow.
-  mode: "create" | "edit" | "repeat";
+  // dated today — the "repeat last workout" flow. "plan" prefills a training
+  // plan's day from `plan` (FN-2: "Start Day 2" opens a ready-to-run logger).
+  mode: "create" | "edit" | "repeat" | "plan";
   initial?: WorkoutData;
+  plan?: PlanPrefill;
+  // Last-session sets per exercise (lowercased name), for ghost placeholders
+  // when an exercise is added from the picker.
+  lastSets?: Record<string, GhostSet[]>;
   customExercises: CustomExerciseRow[];
   trigger: ReactNode;
 }) {
@@ -125,7 +214,17 @@ export function WorkoutBuilder({
   const [pending, startTransition] = useTransition();
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  const [title, setTitle] = useState(initial?.title ?? "");
+  function initialTitle(): string {
+    return mode === "plan" ? (plan?.title ?? "") : (initial?.title ?? "");
+  }
+  function initialExercises(): EditorExercise[] {
+    if (mode === "plan") {
+      return plan ? fromPlan(plan.exercises) : [];
+    }
+    return initial ? fromWorkout(initial) : [];
+  }
+
+  const [title, setTitle] = useState(initialTitle());
   const [date, setDate] = useState(
     initial && !isRepeat ? initial.performedAt.slice(0, 10) : todayISO()
   );
@@ -136,11 +235,11 @@ export function WorkoutBuilder({
   );
   const [notes, setNotes] = useState(isRepeat ? "" : (initial?.notes ?? ""));
   const [exercises, setExercises] = useState<EditorExercise[]>(
-    initial ? fromWorkout(initial) : []
+    initialExercises()
   );
 
   function reset() {
-    setTitle(initial?.title ?? "");
+    setTitle(initialTitle());
     setDate(
       initial && !isRepeat ? initial.performedAt.slice(0, 10) : todayISO()
     );
@@ -150,16 +249,19 @@ export function WorkoutBuilder({
         : ""
     );
     setNotes(isRepeat ? "" : (initial?.notes ?? ""));
-    setExercises(initial ? fromWorkout(initial) : []);
+    setExercises(initialExercises());
   }
 
   function addExercise(picked: PickedExercise) {
+    const history = lastSets?.[picked.name.trim().toLowerCase()];
     setExercises((prev) => [
       ...prev,
       {
         uid: uid(),
         name: picked.name,
         muscleGroup: picked.muscleGroup,
+        kind: picked.kind ?? null,
+        ghosts: history ? ghostsFromHistory(history) : undefined,
         notes: "",
         sets: [blankSet()],
       },
@@ -231,11 +333,33 @@ export function WorkoutBuilder({
       toast.error("Name this workout.");
       return;
     }
-    if (exercises.length === 0) {
+
+    // Plan mode lays out the WHOLE day; whatever the member never touched
+    // (unchecked sets with nothing typed) is dropped on save — Hevy's
+    // "discard empty sets" — so skipping an exercise doesn't log four
+    // phantom empty sets into history.
+    let toSave = exercises;
+    if (mode === "plan") {
+      toSave = exercises
+        .map((ex) => ({
+          ...ex,
+          sets: ex.sets.filter(
+            (s) =>
+              s.completed || s.weight.trim() || s.reps.trim() || s.rpe.trim()
+          ),
+        }))
+        .filter((ex) => ex.sets.length > 0);
+      if (toSave.length === 0) {
+        toast.error("Check off or fill in at least one set first.");
+        return;
+      }
+    }
+
+    if (toSave.length === 0) {
       toast.error("Add at least one exercise.");
       return;
     }
-    for (const ex of exercises) {
+    for (const ex of toSave) {
       if (ex.sets.length === 0) {
         toast.error(`Add a set to ${ex.name}.`);
         return;
@@ -255,9 +379,10 @@ export function WorkoutBuilder({
       performedAt: date,
       durationSeconds,
       notes: notes.trim() || null,
-      exercises: exercises.map((ex) => ({
+      exercises: toSave.map((ex) => ({
         name: ex.name.trim(),
         muscleGroup: ex.muscleGroup,
+        kind: ex.kind,
         notes: ex.notes.trim() || null,
         sets: ex.sets.map((s) => ({
           weight: s.weight.trim() ? Number(s.weight) : null,
@@ -321,8 +446,17 @@ export function WorkoutBuilder({
                 ? "Edit workout"
                 : mode === "repeat"
                   ? "Repeat workout"
-                  : "Log a workout"}
+                  : mode === "plan"
+                    ? "Run plan day"
+                    : "Log a workout"}
             </DialogTitle>
+            {mode === "plan" ? (
+              <p className="text-muted-foreground text-xs">
+                Your plan's exercises are loaded. Faded numbers are last
+                session (or the plan's target) — check a set off to accept
+                them, or type what you actually did.
+              </p>
+            ) : null}
           </DialogHeader>
 
           <div className="flex max-h-[70vh] flex-col gap-5 overflow-y-auto px-5 py-4">
@@ -465,11 +599,19 @@ function ExerciseBlock({
 }) {
   // Running index of working sets, for the set-number badge.
   let workingCount = 0;
+  const kind = exercise.kind ?? "weighted";
 
   return (
     <div className="rounded-xl border border-border bg-background/40 p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="font-medium text-sm">{exercise.name}</span>
+        <div className="min-w-0">
+          <span className="font-medium text-sm">{exercise.name}</span>
+          {exercise.target ? (
+            <div className="text-muted-foreground text-xs">
+              Plan: {exercise.target}
+            </div>
+          ) : null}
+        </div>
         <div className="flex items-center gap-0.5">
           <Button
             aria-label="Move exercise up"
@@ -506,11 +648,12 @@ function ExerciseBlock({
         </div>
       </div>
 
-      {/* Column headers */}
+      {/* Column headers — a timed exercise (plank, cardio) logs seconds, not
+          load × reps; a bodyweight one logs reps with optional added load. */}
       <div className="mb-1 flex items-center gap-2 px-1 text-[11px] text-muted-foreground uppercase tracking-wide">
         <span className="w-8 text-center">Set</span>
-        <span className="flex-1">Weight</span>
-        <span className="flex-1">Reps</span>
+        {kind !== "timed" && <span className="flex-1">Weight</span>}
+        <span className="flex-1">{kind === "timed" ? "Seconds" : "Reps"}</span>
         <span className="flex w-12 items-center justify-center gap-0.5">
           RPE
           <KpiHelp label="RPE">
@@ -524,7 +667,7 @@ function ExerciseBlock({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        {exercise.sets.map((s) => {
+        {exercise.sets.map((s, setIndex) => {
           if (s.setType === "working") {
             workingCount += 1;
           }
@@ -536,6 +679,10 @@ function ExerciseBlock({
                 : s.setType === "dropset"
                   ? "D"
                   : "F";
+          const ghost = ghostAt(exercise, setIndex);
+          const weightGhost =
+            ghost?.weight || (kind === "bodyweight" ? "BW" : "–");
+          const repsGhost = ghost?.reps || "–";
           return (
             <div className="flex items-center gap-2" key={s.uid}>
               <button
@@ -562,42 +709,44 @@ function ExerciseBlock({
                 {badge}
               </button>
 
-              <div className="flex flex-1 items-center gap-1">
-                <Input
-                  aria-label="Weight"
-                  className="h-9"
-                  inputMode="decimal"
-                  onChange={(e) =>
-                    onUpdateSet(s.uid, { weight: e.target.value })
-                  }
-                  placeholder="–"
-                  value={s.weight}
-                />
-                <Select
-                  onValueChange={(v) =>
-                    onUpdateSet(s.uid, { unit: v as "lb" | "kg" })
-                  }
-                  value={s.unit}
-                >
-                  <SelectTrigger
-                    aria-label="Unit"
-                    className="h-9 shrink-0 gap-1 rounded-md px-2 text-muted-foreground text-xs"
+              {kind !== "timed" && (
+                <div className="flex flex-1 items-center gap-1">
+                  <Input
+                    aria-label="Weight"
+                    className="h-9"
+                    inputMode="decimal"
+                    onChange={(e) =>
+                      onUpdateSet(s.uid, { weight: e.target.value })
+                    }
+                    placeholder={weightGhost}
+                    value={s.weight}
+                  />
+                  <Select
+                    onValueChange={(v) =>
+                      onUpdateSet(s.uid, { unit: v as "lb" | "kg" })
+                    }
+                    value={s.unit}
                   >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="lb">lb</SelectItem>
-                    <SelectItem value="kg">kg</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                    <SelectTrigger
+                      aria-label="Unit"
+                      className="h-9 shrink-0 gap-1 rounded-md px-2 text-muted-foreground text-xs"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="lb">lb</SelectItem>
+                      <SelectItem value="kg">kg</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <Input
-                aria-label="Reps"
+                aria-label={kind === "timed" ? "Seconds" : "Reps"}
                 className="h-9 flex-1"
                 inputMode="numeric"
                 onChange={(e) => onUpdateSet(s.uid, { reps: e.target.value })}
-                placeholder="–"
+                placeholder={repsGhost}
                 value={s.reps}
               />
 
@@ -618,7 +767,28 @@ function ExerciseBlock({
                     ? "border-emerald-500/50 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
                     : "border-border text-muted-foreground hover:bg-accent"
                 )}
-                onClick={() => onUpdateSet(s.uid, { completed: !s.completed })}
+                onClick={() => {
+                  // Checking off an empty set adopts its ghost numbers (the
+                  // Hevy flow: did what was planned → one tap logs it). Only
+                  // plain numbers adopt; a range target like "4-6" stays a
+                  // placeholder for the member to type over.
+                  const patch: Partial<EditorSet> = {
+                    completed: !s.completed,
+                  };
+                  if (!s.completed && ghost) {
+                    if (
+                      kind !== "timed" &&
+                      !s.weight.trim() &&
+                      isNumeric(ghost.weight)
+                    ) {
+                      patch.weight = ghost.weight;
+                    }
+                    if (!s.reps.trim() && isNumeric(ghost.reps)) {
+                      patch.reps = ghost.reps;
+                    }
+                  }
+                  onUpdateSet(s.uid, patch);
+                }}
                 type="button"
               >
                 <Check className="size-4" />

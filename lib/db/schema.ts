@@ -424,6 +424,12 @@ export const plan = pgTable("Plan", {
     .notNull()
     .default("user"),
   sourceChatId: uuid("sourceChatId"),
+  // Structured training days (PlanDay[] — see lib/validation/plan-days.ts) so
+  // a training plan is RUNNABLE in the workout logger ("Start Day 2" pre-fills
+  // the exercises), not just a document. Null for diet plans and for older
+  // free-text plans; those are backfilled on demand by an AI extraction pass
+  // over `detail` (app/workouts/actions.ts `syncPlanDays`).
+  days: json("days"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 });
@@ -523,6 +529,12 @@ export const workoutExercise = pgTable("WorkoutExercise", {
     .references(() => user.id),
   exerciseName: text("exerciseName").notNull(),
   muscleGroup: text("muscleGroup"),
+  // How this exercise is logged — snapshot like the name, so history renders
+  // honestly even if the library entry changes later. "weighted" = load × reps,
+  // "bodyweight" = reps (added load optional), "timed" = seconds per set (the
+  // set's `reps` column holds seconds). Null on rows logged before this existed
+  // (treated as weighted).
+  kind: varchar("kind", { enum: ["weighted", "bodyweight", "timed"] }),
   // Order within the workout.
   position: integer("position").notNull().default(0),
   notes: text("notes"),
@@ -600,6 +612,13 @@ export const customExercise = pgTable("CustomExercise", {
   })
     .notNull()
     .default("other"),
+  // How the exercise is logged (the Hevy/Strong "exercise type"): weighted =
+  // load × reps, bodyweight = reps with optional added load, timed = seconds.
+  kind: varchar("kind", { enum: ["weighted", "bodyweight", "timed"] })
+    .notNull()
+    .default("weighted"),
+  // Optional setup/form cues ("seat at 4, slow negative").
+  notes: text("notes"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 });
 

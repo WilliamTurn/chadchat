@@ -35,6 +35,25 @@ export const EQUIPMENT = [
 
 export type Equipment = (typeof EQUIPMENT)[number];
 
+// How an exercise is logged — the Hevy/Strong "exercise type". Drives the
+// logger's set row: weighted = load × reps, bodyweight = reps with optional
+// added load (dips with a belt), timed = seconds per set (planks, cardio).
+export const EXERCISE_KINDS = ["weighted", "bodyweight", "timed"] as const;
+
+export type ExerciseKind = (typeof EXERCISE_KINDS)[number];
+
+export const EXERCISE_KIND_LABELS: Record<ExerciseKind, string> = {
+  weighted: "Weighted",
+  bodyweight: "Bodyweight",
+  timed: "Timed",
+};
+
+export const EXERCISE_KIND_HELP: Record<ExerciseKind, string> = {
+  weighted: "Log weight and reps per set",
+  bodyweight: "Log reps; added weight optional",
+  timed: "Log seconds per set",
+};
+
 export const MUSCLE_GROUP_LABELS: Record<MuscleGroup, string> = {
   chest: "Chest",
   back: "Back",
@@ -63,6 +82,8 @@ export type LibraryExercise = {
   name: string;
   muscleGroup: MuscleGroup;
   equipment: Equipment;
+  // Omitted = "weighted" (the common case); see exerciseKind().
+  kind?: ExerciseKind;
 };
 
 // A solid table-stakes catalog covering the big lifts and common accessories,
@@ -77,15 +98,15 @@ export const BUILT_IN_EXERCISES: LibraryExercise[] = [
   { name: "Cable Crossover", muscleGroup: "chest", equipment: "cable" },
   { name: "Chest Press Machine", muscleGroup: "chest", equipment: "machine" },
   { name: "Pec Deck", muscleGroup: "chest", equipment: "machine" },
-  { name: "Push-Up", muscleGroup: "chest", equipment: "bodyweight" },
-  { name: "Dips", muscleGroup: "chest", equipment: "bodyweight" },
+  { name: "Push-Up", muscleGroup: "chest", equipment: "bodyweight", kind: "bodyweight" },
+  { name: "Dips", muscleGroup: "chest", equipment: "bodyweight", kind: "bodyweight" },
 
   // Back
   { name: "Deadlift", muscleGroup: "back", equipment: "barbell" },
   { name: "Barbell Row", muscleGroup: "back", equipment: "barbell" },
   { name: "Pendlay Row", muscleGroup: "back", equipment: "barbell" },
-  { name: "Pull-Up", muscleGroup: "back", equipment: "bodyweight" },
-  { name: "Chin-Up", muscleGroup: "back", equipment: "bodyweight" },
+  { name: "Pull-Up", muscleGroup: "back", equipment: "bodyweight", kind: "bodyweight" },
+  { name: "Chin-Up", muscleGroup: "back", equipment: "bodyweight", kind: "bodyweight" },
   { name: "Lat Pulldown", muscleGroup: "back", equipment: "cable" },
   { name: "Seated Cable Row", muscleGroup: "back", equipment: "cable" },
   { name: "Dumbbell Row", muscleGroup: "back", equipment: "dumbbell" },
@@ -106,7 +127,7 @@ export const BUILT_IN_EXERCISES: LibraryExercise[] = [
 
   // Glutes
   { name: "Hip Thrust", muscleGroup: "glutes", equipment: "barbell" },
-  { name: "Glute Bridge", muscleGroup: "glutes", equipment: "bodyweight" },
+  { name: "Glute Bridge", muscleGroup: "glutes", equipment: "bodyweight", kind: "bodyweight" },
   { name: "Cable Kickback", muscleGroup: "glutes", equipment: "cable" },
 
   // Shoulders
@@ -131,24 +152,31 @@ export const BUILT_IN_EXERCISES: LibraryExercise[] = [
   { name: "Close-Grip Bench Press", muscleGroup: "arms", equipment: "barbell" },
 
   // Core
-  { name: "Plank", muscleGroup: "core", equipment: "bodyweight" },
-  { name: "Hanging Leg Raise", muscleGroup: "core", equipment: "bodyweight" },
+  { name: "Plank", muscleGroup: "core", equipment: "bodyweight", kind: "timed" },
+  { name: "Hanging Leg Raise", muscleGroup: "core", equipment: "bodyweight", kind: "bodyweight" },
   { name: "Cable Crunch", muscleGroup: "core", equipment: "cable" },
-  { name: "Sit-Up", muscleGroup: "core", equipment: "bodyweight" },
-  { name: "Russian Twist", muscleGroup: "core", equipment: "bodyweight" },
-  { name: "Ab Wheel Rollout", muscleGroup: "core", equipment: "other" },
+  { name: "Sit-Up", muscleGroup: "core", equipment: "bodyweight", kind: "bodyweight" },
+  { name: "Russian Twist", muscleGroup: "core", equipment: "bodyweight", kind: "bodyweight" },
+  { name: "Ab Wheel Rollout", muscleGroup: "core", equipment: "other", kind: "bodyweight" },
 
   // Cardio / conditioning
-  { name: "Treadmill Run", muscleGroup: "cardio", equipment: "machine" },
-  { name: "Rowing Machine", muscleGroup: "cardio", equipment: "machine" },
-  { name: "Stationary Bike", muscleGroup: "cardio", equipment: "machine" },
-  { name: "Stair Climber", muscleGroup: "cardio", equipment: "machine" },
+  { name: "Treadmill Run", muscleGroup: "cardio", equipment: "machine", kind: "timed" },
+  { name: "Rowing Machine", muscleGroup: "cardio", equipment: "machine", kind: "timed" },
+  { name: "Stationary Bike", muscleGroup: "cardio", equipment: "machine", kind: "timed" },
+  { name: "Stair Climber", muscleGroup: "cardio", equipment: "machine", kind: "timed" },
   { name: "Kettlebell Swing", muscleGroup: "fullBody", equipment: "kettlebell" },
-  { name: "Burpee", muscleGroup: "fullBody", equipment: "bodyweight" },
+  { name: "Burpee", muscleGroup: "fullBody", equipment: "bodyweight", kind: "bodyweight" },
 ];
 
 /** Look up a built-in exercise by (case-insensitive) name. */
 export function findBuiltInExercise(name: string): LibraryExercise | undefined {
   const key = name.trim().toLowerCase();
   return BUILT_IN_EXERCISES.find((e) => e.name.toLowerCase() === key);
+}
+
+/** An exercise's logging kind, defaulting the common case to "weighted". */
+export function exerciseKind(e: {
+  kind?: ExerciseKind | string | null;
+}): ExerciseKind {
+  return e.kind === "bodyweight" || e.kind === "timed" ? e.kind : "weighted";
 }

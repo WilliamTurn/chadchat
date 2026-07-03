@@ -21,6 +21,8 @@ type CustomExerciseRow = {
   name: string;
   muscleGroup: string;
   equipment: string;
+  kind: string;
+  notes: string | null;
 };
 
 const SET_TAG: Record<string, string> = {
@@ -120,8 +122,15 @@ export function WorkoutCard({
             <div className="mt-1 flex flex-wrap gap-1.5">
               {ex.sets.map((s, i) => {
                 const tag = SET_TAG[s.setType];
-                const load = s.weight == null ? "BW" : `${s.weight}${s.unit}`;
-                const reps = s.reps == null ? "" : ` × ${s.reps}`;
+                // A timed exercise's sets are durations ("60s"), not load × reps.
+                const timed = ex.kind === "timed";
+                const load = timed
+                  ? ""
+                  : s.weight == null
+                    ? "BW"
+                    : `${s.weight}${s.unit}`;
+                const reps =
+                  s.reps == null ? "" : timed ? `${s.reps}s` : ` × ${s.reps}`;
                 return (
                   <span
                     className={cn(

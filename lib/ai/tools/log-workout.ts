@@ -5,6 +5,7 @@ import { canAccessProFeatures } from "@/lib/admin";
 import { parseDateInput } from "@/lib/date";
 import { createWorkout } from "@/lib/db/queries";
 import type { User } from "@/lib/db/schema";
+import { findBuiltInExercise } from "@/lib/workouts/exercise-library";
 
 type LogWorkoutProps = {
   session: Session;
@@ -78,6 +79,9 @@ export const logWorkout = ({ session, user }: LogWorkoutProps) =>
         exercises: exercises.map((ex) => ({
           name: ex.name.trim(),
           muscleGroup: null,
+          // Logging kind comes from the library when the name matches; a
+          // chat-reported exercise we don't know defaults to weighted.
+          kind: findBuiltInExercise(ex.name)?.kind ?? null,
           notes: null,
           sets: ex.sets.map((s) => ({
             weight: s.weight ?? null,

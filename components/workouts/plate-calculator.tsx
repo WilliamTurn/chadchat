@@ -25,10 +25,22 @@ export function PlateCalculator() {
   const [unit, setUnit] = useState<"lb" | "kg">("lb");
   const [bar, setBar] = useState<number>(BARS.lb[0]);
   const [target, setTarget] = useState("");
+  // "Other" bar weight (DSH-53): home gyms, trap bars, odd specialty bars.
+  const [customBarOpen, setCustomBarOpen] = useState(false);
+  const [customBar, setCustomBar] = useState("");
+
+  const customBarWeight = Number(customBar);
+  const customBarValid =
+    customBar.trim() !== "" &&
+    !Number.isNaN(customBarWeight) &&
+    customBarWeight > 0 &&
+    customBarWeight <= 200;
+  const effectiveBar = customBarOpen && customBarValid ? customBarWeight : bar;
 
   const total = Number(target);
-  const valid = target.trim() !== "" && !Number.isNaN(total) && total >= bar;
-  const perSide = valid ? (total - bar) / 2 : 0;
+  const valid =
+    target.trim() !== "" && !Number.isNaN(total) && total >= effectiveBar;
+  const perSide = valid ? (total - effectiveBar) / 2 : 0;
 
   // Greedily load the largest plates that fit into one side.
   const plates: number[] = [];
@@ -44,6 +56,8 @@ export function PlateCalculator() {
   function switchUnit(next: "lb" | "kg") {
     setUnit(next);
     setBar(BARS[next][0]);
+    setCustomBarOpen(false);
+    setCustomBar("");
   }
 
   return (
@@ -88,17 +102,43 @@ export function PlateCalculator() {
             <button
               className={cn(
                 "rounded-md border px-2 py-1 text-xs transition-colors",
-                bar === b
+                !customBarOpen && bar === b
                   ? "border-blood/40 bg-blood/10 text-blood"
                   : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
               )}
               key={b}
-              onClick={() => setBar(b)}
+              onClick={() => {
+                setBar(b);
+                setCustomBarOpen(false);
+              }}
               type="button"
             >
               {b} bar
             </button>
           ))}
+          <button
+            className={cn(
+              "rounded-md border px-2 py-1 text-xs transition-colors",
+              customBarOpen
+                ? "border-blood/40 bg-blood/10 text-blood"
+                : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+            )}
+            onClick={() => setCustomBarOpen((v) => !v)}
+            type="button"
+          >
+            Other
+          </button>
+          {customBarOpen && (
+            <Input
+              aria-label={`Custom bar weight (${unit})`}
+              autoFocus
+              className="h-7 w-16 px-2 text-xs"
+              inputMode="decimal"
+              onChange={(e) => setCustomBar(e.target.value)}
+              placeholder={`bar ${unit}`}
+              value={customBar}
+            />
+          )}
         </div>
       </div>
 
@@ -124,13 +164,17 @@ export function PlateCalculator() {
           </div>
         ) : (
           <p className="text-muted-foreground text-xs">
-            Just the {bar} {unit} bar — no plates needed.
+            Just the {effectiveBar} {unit} bar — no plates needed.
           </p>
         )
+      ) : customBarOpen && !customBarValid ? (
+        <p className="text-muted-foreground text-xs">
+          Type your bar's weight in {unit}.
+        </p>
       ) : (
         target.trim() !== "" && (
           <p className="text-muted-foreground text-xs">
-            Enter a total at or above the {bar} {unit} bar.
+            Enter a total at or above the {effectiveBar} {unit} bar.
           </p>
         )
       )}

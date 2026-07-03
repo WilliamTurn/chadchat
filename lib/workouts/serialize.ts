@@ -16,6 +16,7 @@ export function toWorkoutData(w: WorkoutWithChildren): WorkoutData {
     exercises: w.exercises.map((ex) => ({
       name: ex.exerciseName,
       muscleGroup: ex.muscleGroup,
+      kind: ex.kind,
       notes: ex.notes,
       sets: ex.sets.map((s) => ({
         weight: s.weight,

@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, MessageSquare, Trash2 } from "lucide-react";
+import { Download, MessageSquare, Play, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -110,6 +110,16 @@ export function PlanDoc({ plan }: { plan: EditablePlan }) {
           </Button>
         )}
         <div className="flex flex-wrap items-center gap-2">
+          {/* An active training plan is runnable on /workouts (FN-2): each day
+              has a Start button that pre-fills the logger. */}
+          {plan.kind === "training" && plan.status === "active" ? (
+            <Button asChild className="gap-1.5" size="sm" variant="outline">
+              <Link href="/workouts#plan">
+                <Play className="size-3.5" />
+                Run it in the logger
+              </Link>
+            </Button>
+          ) : null}
           <Button
             className="gap-1.5"
             onClick={() => {

@@ -19,9 +19,13 @@ export type SetData = {
   completed: boolean;
 };
 
+export type ExerciseKindData = "weighted" | "bodyweight" | "timed";
+
 export type ExerciseData = {
   name: string;
   muscleGroup: string | null;
+  // Logging-kind snapshot; null on rows logged before kinds existed (weighted).
+  kind?: ExerciseKindData | null;
   notes: string | null;
   sets: SetData[];
 };
@@ -256,6 +260,50 @@ export function exercise1RMTrend(
     }
   }
   return points.sort((a, b) => a.t - b.t);
+}
+
+// A prior set's numbers, ghosted into the logger as placeholders (the
+// Hevy/Strong "previous" column) so the member sees what they did last time.
+export type GhostSet = {
+  weight: number | null;
+  reps: number | null;
+  unit: WeightUnit;
+};
+
+/**
+ * The most recent session's sets for every exercise, keyed by lowercased name.
+ * Backs last-session ghosting in the logger: start a plan day (or re-add an
+ * exercise) and each set's placeholder shows what you lifted last time.
+ * Warmups are skipped — the ghost answers "what did I work at?".
+ */
+export function lastSetsByExercise(
+  workouts: WorkoutData[]
+): Record<string, GhostSet[]> {
+  const latest = new Map<string, { t: number; sets: GhostSet[] }>();
+  for (const w of workouts) {
+    const t = new Date(w.performedAt).getTime();
+    for (const ex of w.exercises) {
+      const key = ex.name.trim().toLowerCase();
+      if (!key) {
+        continue;
+      }
+      const prev = latest.get(key);
+      if (prev && prev.t >= t) {
+        continue;
+      }
+      const sets = ex.sets
+        .filter((s) => s.setType !== "warmup" && s.completed)
+        .map((s) => ({ weight: s.weight, reps: s.reps, unit: s.unit }));
+      if (sets.length > 0) {
+        latest.set(key, { t, sets });
+      }
+    }
+  }
+  const out: Record<string, GhostSet[]> = {};
+  for (const [key, v] of latest) {
+    out[key] = v.sets;
+  }
+  return out;
 }
 
 /** "1h 12m" / "45m" / "30s" from a duration in seconds. */

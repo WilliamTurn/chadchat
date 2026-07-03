@@ -1245,6 +1245,8 @@ export async function createPlan(entry: {
   status: Plan["status"];
   source: Plan["source"];
   sourceChatId: string | null;
+  // Structured runnable days (training plans; see lib/validation/plan-days.ts).
+  days?: unknown;
 }): Promise<Plan> {
   try {
     // One current plan per kind (LC-15): saving a new active plan archives
@@ -1334,6 +1336,28 @@ export async function getPlanById({
   }
 }
 
+/**
+ * Persist a plan's structured runnable days (the FN-2 extraction backfill for
+ * plans saved before `days` existed, or whose text was edited). Owner-scoped.
+ */
+export async function updatePlanDays(entry: {
+  id: string;
+  userId: string;
+  days: unknown;
+}): Promise<void> {
+  try {
+    await db
+      .update(plan)
+      .set({ days: entry.days, updatedAt: new Date() })
+      .where(and(eq(plan.id, entry.id), eq(plan.userId, entry.userId)));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to update plan days"
+    );
+  }
+}
+
 /** Edit one plan, scoped to its owner. */
 export async function updatePlan(entry: {
   id: string;
@@ -1345,6 +1369,15 @@ export async function updatePlan(entry: {
 }): Promise<void> {
   try {
     const { id, userId, ...fields } = entry;
+    // If the plan TEXT changed, the structured runnable days extracted from it
+    // are stale — clear them so the next /workouts visit re-extracts. A pure
+    // status flip ("Make current") keeps the existing days.
+    const [existing] = await db
+      .select({ detail: plan.detail })
+      .from(plan)
+      .where(and(eq(plan.id, id), eq(plan.userId, userId)))
+      .limit(1);
+    const detailChanged = existing != null && existing.detail !== fields.detail;
     // Same single-current invariant as createPlan (LC-15): re-activating a
     // plan retires whichever other plan of that kind was current.
     if (fields.status === "active") {
@@ -1362,7 +1395,11 @@ export async function updatePlan(entry: {
     }
     await db
       .update(plan)
-      .set({ ...fields, updatedAt: new Date() })
+      .set({
+        ...fields,
+        ...(detailChanged ? { days: null } : {}),
+        updatedAt: new Date(),
+      })
       .where(and(eq(plan.id, id), eq(plan.userId, userId)));
   } catch (_error) {
     throw new ChatbotError("bad_request:database", "Failed to update plan");
@@ -2807,6 +2844,7 @@ type WorkoutWriteInput = {
   exercises: {
     name: string;
     muscleGroup: string | null;
+    kind: WorkoutExercise["kind"];
     notes: string | null;
     sets: {
       weight: number | null;
@@ -2833,6 +2871,7 @@ async function insertWorkoutChildren(
         userId: input.userId,
         exerciseName: ex.name,
         muscleGroup: ex.muscleGroup,
+        kind: ex.kind,
         position: exIndex,
         notes: ex.notes,
       })
@@ -3079,6 +3118,8 @@ export async function createCustomExercise(entry: {
   name: string;
   muscleGroup: CustomExercise["muscleGroup"];
   equipment: CustomExercise["equipment"];
+  kind: CustomExercise["kind"];
+  notes: string | null;
 }): Promise<CustomExercise> {
   try {
     const [created] = await db.insert(customExercise).values(entry).returning();
@@ -3087,6 +3128,31 @@ export async function createCustomExercise(entry: {
     throw new ChatbotError(
       "bad_request:database",
       "Failed to create custom exercise"
+    );
+  }
+}
+
+/** Edit one custom exercise, scoped to its owner. Logged history keeps its
+ * name/kind snapshots, so edits never rewrite past workouts. */
+export async function updateCustomExercise(entry: {
+  id: string;
+  userId: string;
+  name: string;
+  muscleGroup: CustomExercise["muscleGroup"];
+  equipment: CustomExercise["equipment"];
+  kind: CustomExercise["kind"];
+  notes: string | null;
+}): Promise<void> {
+  try {
+    const { id, userId, ...fields } = entry;
+    await db
+      .update(customExercise)
+      .set(fields)
+      .where(and(eq(customExercise.id, id), eq(customExercise.userId, userId)));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to update custom exercise"
     );
   }
 }

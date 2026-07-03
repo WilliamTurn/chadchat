@@ -4,19 +4,26 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/app/(auth)/auth";
 import { canAccessProFeatures } from "@/lib/admin";
 import { parseCalendarDay } from "@/lib/date";
+import { extractPlanDays } from "@/lib/ai/plan-days";
 import {
   createCustomExercise,
   createWorkout,
   deleteCustomExercise,
   deleteWorkout,
+  getPlanById,
   getUserById,
+  updateCustomExercise,
+  updatePlanDays,
   updateWorkout,
 } from "@/lib/db/queries";
+import { parsePlanDays, type PlanDay } from "@/lib/validation/plan-days";
 import {
   type CustomExerciseInput,
   customExerciseSchema,
   type SaveWorkoutInput,
   saveWorkoutSchema,
+  type UpdateCustomExerciseInput,
+  updateCustomExerciseSchema,
   type UpdateWorkoutInput,
   updateWorkoutSchema,
 } from "@/lib/validation/workouts";
@@ -51,6 +58,7 @@ function toWriteInput(
   exercises: {
     name: string;
     muscleGroup: string | null;
+    kind: "weighted" | "bodyweight" | "timed" | null;
     notes: string | null;
     sets: {
       weight: number | null;
@@ -72,6 +80,7 @@ function toWriteInput(
     exercises: data.exercises.map((ex) => ({
       name: ex.name,
       muscleGroup: ex.muscleGroup?.trim() ? ex.muscleGroup.trim() : null,
+      kind: ex.kind ?? null,
       notes: ex.notes?.trim() ? ex.notes.trim() : null,
       sets: ex.sets.map((s) => ({
         weight: s.weight,
@@ -155,7 +164,37 @@ export async function addCustomExercise(
       error: parsed.error.errors[0]?.message ?? "Couldn't add that exercise.",
     };
   }
-  await createCustomExercise({ userId: user.id, ...parsed.data });
+  const { notes, ...rest } = parsed.data;
+  await createCustomExercise({
+    userId: user.id,
+    ...rest,
+    notes: notes?.trim() ? notes.trim() : null,
+  });
+  revalidatePath("/workouts");
+  return { ok: true };
+}
+
+export async function editCustomExercise(
+  input: UpdateCustomExerciseInput
+): Promise<WorkoutActionState> {
+  const user = await requirePro();
+  if (!user) {
+    return { ok: false, error: PRO_REQUIRED };
+  }
+  const parsed = updateCustomExerciseSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.errors[0]?.message ?? "Couldn't update that exercise.",
+    };
+  }
+  const { id, notes, ...rest } = parsed.data;
+  await updateCustomExercise({
+    id,
+    userId: user.id,
+    ...rest,
+    notes: notes?.trim() ? notes.trim() : null,
+  });
   revalidatePath("/workouts");
   return { ok: true };
 }
@@ -170,4 +209,46 @@ export async function removeCustomExercise(
   await deleteCustomExercise({ id, userId: user.id });
   revalidatePath("/workouts");
   return { ok: true };
+}
+
+export type SyncPlanDaysState =
+  | { ok: true; days: PlanDay[] }
+  | { ok: false; error: string };
+
+/**
+ * Backfill a training plan's structured runnable days from its free text
+ * (FN-2). Plans saved by Chad since s134 carry `days` from birth; older ones
+ * (and user-typed plans) get a one-time AI extraction here, cached on the Plan
+ * row so it never runs twice. The Workouts page auto-invokes this when it sees
+ * an active training plan without days.
+ */
+export async function syncPlanDays(planId: string): Promise<SyncPlanDaysState> {
+  const user = await requirePro();
+  if (!user) {
+    return { ok: false, error: PRO_REQUIRED };
+  }
+
+  const record = await getPlanById({ id: planId, userId: user.id });
+  if (!record || record.kind !== "training") {
+    return { ok: false, error: "That training plan wasn't found." };
+  }
+
+  // Already structured (a concurrent sync or a Chad-saved plan) — reuse it.
+  const existing = parsePlanDays(record.days);
+  if (existing) {
+    return { ok: true, days: existing };
+  }
+
+  const days = await extractPlanDays(record.detail);
+  if (!days) {
+    return {
+      ok: false,
+      error:
+        "Couldn't read a day-by-day program out of this plan. Ask Chad to rewrite it with concrete days, exercises, and sets.",
+    };
+  }
+
+  await updatePlanDays({ id: record.id, userId: user.id, days });
+  revalidatePath("/workouts");
+  return { ok: true, days };
 }

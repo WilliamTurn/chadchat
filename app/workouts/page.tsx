@@ -15,21 +15,26 @@ import { WorkoutsSkeleton } from "@/components/dashboard/page-skeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PersonalRecords } from "@/components/workouts/personal-records";
+import { PlanRunner } from "@/components/workouts/plan-runner";
 import { VolumeChart } from "@/components/workouts/volume-chart";
 import { WorkoutBuilder } from "@/components/workouts/workout-builder";
 import { WorkoutCard } from "@/components/workouts/workout-card";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import { calendarDayAnchorInTz } from "@/lib/date";
 import {
+  getActivePlansByUserId,
   getCustomExercisesByUserId,
   getUserById,
   getWorkoutsByUserId,
   type WorkoutWithChildren,
 } from "@/lib/db/queries";
 import { weekAnchors } from "@/lib/today/week";
+import { parsePlanDays } from "@/lib/validation/plan-days";
 import {
   computePersonalRecords,
   exercise1RMTrend,
+  type GhostSet,
+  lastSetsByExercise,
   type WorkoutData,
   workoutVolumeLb,
   volumeTrend,
@@ -50,6 +55,7 @@ function toWorkoutData(w: WorkoutWithChildren): WorkoutData {
     exercises: w.exercises.map((ex) => ({
       name: ex.exerciseName,
       muscleGroup: ex.muscleGroup,
+      kind: ex.kind,
       notes: ex.notes,
       sets: ex.sets.map((s) => ({
         weight: s.weight,
@@ -141,9 +147,10 @@ async function Dashboard({
   userId: string;
   timezone: string | null;
 }) {
-  const [rawWorkouts, customExercisesRaw] = await Promise.all([
+  const [rawWorkouts, customExercisesRaw, activePlans] = await Promise.all([
     getWorkoutsByUserId(userId, MAX_WORKOUTS),
     getCustomExercisesByUserId(userId),
+    getActivePlansByUserId(userId),
   ]);
 
   const workouts = rawWorkouts.map(toWorkoutData);
@@ -152,7 +159,18 @@ async function Dashboard({
     name: e.name,
     muscleGroup: e.muscleGroup,
     equipment: e.equipment,
+    kind: e.kind,
+    notes: e.notes,
   }));
+
+  // The current training plan, runnable from this page (FN-2). `days` is the
+  // structured program; null means an older free-text plan — PlanRunner
+  // backfills it via a one-time AI extraction.
+  const trainingPlan = activePlans.find((p) => p.kind === "training") ?? null;
+  const planDays = trainingPlan ? parsePlanDays(trainingPlan.days) : null;
+
+  // Last session's numbers per exercise, ghosted into the logger.
+  const lastSets = lastSetsByExercise(workouts);
 
   const records = computePersonalRecords(workouts)
     .slice(0, 6)
@@ -200,6 +218,7 @@ async function Dashboard({
           )}
           <WorkoutBuilder
             customExercises={customExercises}
+            lastSets={lastSets}
             mode="create"
             trigger={
               <Button className="order-first w-full gap-1.5 sm:order-none sm:w-auto">
@@ -235,8 +254,21 @@ async function Dashboard({
         )}
       </div>
 
+      {/* The active training plan, runnable (FN-2). Rendered even before the
+          first workout — "plan generated, nothing logged yet" is exactly when
+          Start-a-day matters most. */}
+      {trainingPlan && (
+        <PlanRunner
+          customExercises={customExercises}
+          days={planDays}
+          lastSets={lastSets}
+          planId={trainingPlan.id}
+          planTitle={trainingPlan.title}
+        />
+      )}
+
       {workouts.length === 0 ? (
-        <EmptyState customExercises={customExercises} />
+        <EmptyState customExercises={customExercises} lastSets={lastSets} />
       ) : (
         <>
           {/* Volume trend */}
@@ -312,13 +344,17 @@ function StatCard({
 
 function EmptyState({
   customExercises,
+  lastSets,
 }: {
   customExercises: {
     id: string;
     name: string;
     muscleGroup: string;
     equipment: string;
+    kind: string;
+    notes: string | null;
   }[];
+  lastSets: Record<string, GhostSet[]>;
 }) {
   return (
     <div className="flex flex-col items-center gap-4 rounded-2xl border border-border border-dashed bg-card px-6 py-14 text-center">
@@ -334,6 +370,7 @@ function EmptyState({
       </div>
       <WorkoutBuilder
         customExercises={customExercises}
+        lastSets={lastSets}
         mode="create"
         trigger={
           <Button className="gap-1.5">
