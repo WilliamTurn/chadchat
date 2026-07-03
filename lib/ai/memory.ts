@@ -81,6 +81,7 @@ RULES:
 - Fill EVERY "Client file" field. Use exactly "Unknown" when the client has not provided it. Never guess or invent a value to fill a field.
 - Only record what the client actually STATED or what Chad established in the conversation. Do NOT infer or assume facts that were not stated (e.g. do not assume the client has children, a job, etc.).
 - Record Chad's orders and advice FAITHFULLY and precisely — never strengthen, escalate, or paraphrase them into something stronger than what he said. Example: if Chad criticized the client for wasting money on supplements, record "Chad criticized the client for spending on supplements" — do NOT write "Chad told the client to throw out / trash the supplements" unless Chad literally gave that order.
+- If the conversation shows the client COMPLETED a standing order (or Chad acknowledged it as done), record it as done or remove the order. Never leave an order recorded as outstanding after the conversation shows it was carried out.
 - UPDATE facts that changed (e.g. new weight) rather than keeping both. Remove anything proven wrong.
 - Keep it concise: short values, short bullets. No conversation transcript, no chit-chat, no momentary feelings.
 - If the conversation adds nothing new, return the existing profile unchanged.
@@ -184,7 +185,7 @@ export function formatMemoryForPrompt(
 
 ${trimmed}
 
-Use what you know: skip re-asking for information you already have and pick up where you left off. If a detail looks stale or you have reason to doubt it, confirm it rather than assuming.`;
+Use what you know: skip re-asking for information you already have and pick up where you left off. If a detail looks stale or you have reason to doubt it, confirm it rather than assuming. Same for any standing order you remember issuing: unless your notes say it was ignored, ask whether they did it instead of accusing them of blowing it off.`;
 }
 
 function truncateDetail(detail: string): string {

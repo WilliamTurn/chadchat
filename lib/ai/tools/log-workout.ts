@@ -64,7 +64,7 @@ export const logWorkout = ({ session, user }: LogWorkoutProps) =>
       if (!canAccessProFeatures(user)) {
         return {
           error:
-            "This client's plan doesn't include workout tracking; it's part of Chad Pro. Tell them to upgrade to have you track their training.",
+            "This client's plan doesn't include workout tracking; it's part of Chad Pro. Tell them to upgrade to have you track their training. Give them the upgrade link: [Upgrade to Pro](/pricing).",
         };
       }
 

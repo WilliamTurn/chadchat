@@ -50,7 +50,7 @@ export const logSleep = ({ session, user }: LogSleepProps) =>
       if (!canAccessProFeatures(user)) {
         return {
           error:
-            "This client's plan doesn't include sleep tracking; it's part of Chad Pro. Tell them to upgrade to have you track their sleep.",
+            "This client's plan doesn't include sleep tracking; it's part of Chad Pro. Tell them to upgrade to have you track their sleep. Give them the upgrade link: [Upgrade to Pro](/pricing).",
         };
       }
 

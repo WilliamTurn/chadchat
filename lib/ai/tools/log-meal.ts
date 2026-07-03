@@ -48,7 +48,7 @@ export const logMeal = ({ session, user }: LogMealProps) =>
       if (!canAccessProFeatures(user)) {
         return {
           error:
-            "This client's plan doesn't include the Calorie Tracker; it's part of Chad Pro. Tell them to upgrade to have you track their food.",
+            "This client's plan doesn't include the Calorie Tracker; it's part of Chad Pro. Tell them to upgrade to have you track their food. Give them the upgrade link: [Upgrade to Pro](/pricing).",
         };
       }
 

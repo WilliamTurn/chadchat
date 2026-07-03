@@ -49,7 +49,7 @@ export const logWeighIn = ({ session, user }: LogWeighInProps) =>
       if (!canAccessProFeatures(user)) {
         return {
           error:
-            "This client's plan doesn't include the progress tracker; it's part of Chad Pro. Tell them to upgrade to have you track their weight.",
+            "This client's plan doesn't include the progress tracker; it's part of Chad Pro. Tell them to upgrade to have you track their weight. Give them the upgrade link: [Upgrade to Pro](/pricing).",
         };
       }
 

@@ -345,8 +345,16 @@ const FAQS: Faq[] = [
           Account page
         </Link>
         , open "Manage billing". You can move between Basic, Pro, and Elite
-        anytime, update your card, or cancel. If you cancel, you keep full
-        access through the end of the period you already paid for.
+        anytime, update your card, or cancel. Upgrades also work straight from
+        the{" "}
+        <Link
+          className="text-foreground underline underline-offset-4"
+          href="/pricing"
+        >
+          Pricing page
+        </Link>
+        . If you cancel, you keep full access through the end of the period
+        you already paid for.
       </>
     ),
   },
@@ -445,7 +453,14 @@ const TROUBLESHOOTING: TroubleshootingRow[] = [
       <>
         Retry once (mobile connections drop mid-upload), and if it keeps
         failing try a smaller photo or a screenshot of it. Photo features need
-        a Pro or Elite plan.
+        a Pro or Elite plan; you can upgrade on the{" "}
+        <Link
+          className="text-foreground underline underline-offset-4"
+          href="/pricing"
+        >
+          Pricing page
+        </Link>
+        .
       </>
     ),
   },
@@ -591,7 +606,15 @@ export default function HelpPage() {
         <SectionHeading icon={LayoutDashboard} id="features" title="Features" />
         <p className="mb-4 max-w-2xl text-muted-foreground text-sm">
           Every section of the app, by the same name the navigation uses.
-          Features marked Pro or Elite are included in that plan and above.
+          Features marked Pro or Elite are included in that plan and above; you
+          can upgrade anytime on the{" "}
+          <Link
+            className="text-foreground underline underline-offset-4"
+            href="/pricing"
+          >
+            Pricing page
+          </Link>
+          .
         </p>
         <div className="flex flex-col gap-4">
           {FEATURES.map((feature) => {
@@ -653,9 +676,17 @@ export default function HelpPage() {
                 Account page
               </Link>
               : see your current plan and renewal date, update your card, move
-              between Basic, Pro, and Elite, or cancel. Payments are handled
-              securely by Stripe; Chad never sees your card. If you cancel, you
-              keep access through the end of the period you've paid for.
+              between Basic, Pro, and Elite, or cancel. To compare plans and
+              upgrade, use the{" "}
+              <Link
+                className="text-foreground underline underline-offset-4"
+                href="/pricing"
+              >
+                Pricing page
+              </Link>
+              . Payments are handled securely by Stripe; Chad never sees your
+              card. If you cancel, you keep access through the end of the
+              period you've paid for.
             </p>
           </div>
         </div>

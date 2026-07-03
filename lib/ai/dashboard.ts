@@ -10,6 +10,7 @@ import type {
   NutritionTarget,
   ProgressEntry,
 } from "@/lib/db/schema";
+import { formatOz, mlToOz } from "@/lib/today/water-units";
 import { toLb } from "@/lib/workouts/stats";
 
 // Keep day-log payloads bounded so a "review my last 30 days" call can't bloat
@@ -170,8 +171,10 @@ export function formatTodaySnapshot({
     );
   }
 
+  // The hydration tracker's UI speaks fluid ounces (FN-7), so Chad gets the
+  // same unit the client logs in, never a ml number he'd echo back.
   if (waterMl > 0) {
-    lines.push(`- Water today: ${round(waterMl).toLocaleString()} ml.`);
+    lines.push(`- Water today: ${formatOz(waterMl)}.`);
   }
 
   // Sleep is logged per night; only surface it if it's recent (within ~2 days)
@@ -232,6 +235,9 @@ export type DayLog = {
   }[];
   workouts: { date: string; title: string; summary: string }[];
   waterMl: number;
+  // Same volume in the app's display unit (fluid ounces) so the model speaks
+  // the unit the client logs in (FN-7).
+  waterOz: number;
   measurements: { date: string; kind: string; value: number; unit: string }[];
   // Fridge/pantry shots Chad graded (not eaten food) — "Rate My Kitchen".
   kitchen: {
@@ -349,7 +355,7 @@ export function buildDayLog({
   }
 
   if (waterMl > 0) {
-    sections.push(`Water: ${round(waterMl).toLocaleString()} ml.`);
+    sections.push(`Water: ${formatOz(waterMl)}.`);
   }
 
   if (cappedMeasurements.length > 0) {
@@ -395,6 +401,7 @@ export function buildDayLog({
       summary: formatWorkoutLine(w),
     })),
     waterMl: round(waterMl),
+    waterOz: round(mlToOz(waterMl)),
     measurements: cappedMeasurements.map((b) => ({
       date: toISO(b.recordedAt),
       kind: b.kind,

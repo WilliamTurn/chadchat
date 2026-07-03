@@ -45,7 +45,7 @@ export const logWater = ({ session, user }: LogWaterProps) =>
       if (!canAccessProFeatures(user)) {
         return {
           error:
-            "This client's plan doesn't include hydration tracking; it's part of Chad Pro. Tell them to upgrade to have you track their water.",
+            "This client's plan doesn't include hydration tracking; it's part of Chad Pro. Tell them to upgrade to have you track their water. Give them the upgrade link: [Upgrade to Pro](/pricing).",
         };
       }
 

@@ -44,6 +44,7 @@ import { logSleep } from "@/lib/ai/tools/log-sleep";
 import { logWater } from "@/lib/ai/tools/log-water";
 import { logWeighIn } from "@/lib/ai/tools/log-weigh-in";
 import { logWorkout } from "@/lib/ai/tools/log-workout";
+import { updateProfile } from "@/lib/ai/tools/update-profile";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { saveGoal } from "@/lib/ai/tools/save-goal";
 import { savePlan } from "@/lib/ai/tools/save-plan";
@@ -361,6 +362,7 @@ export async function POST(request: Request) {
                   "logWater",
                   "logSleep",
                   "logWeighIn",
+                  "updateProfile",
                   "getDashboard",
                 ],
           providerOptions: {
@@ -396,6 +398,7 @@ export async function POST(request: Request) {
             logWater: logWater({ session, user: dbUser }),
             logSleep: logSleep({ session, user: dbUser }),
             logWeighIn: logWeighIn({ session, user: dbUser }),
+            updateProfile: updateProfile({ session }),
             getDashboard: getDashboard({
               session,
               timezone: dbUser.timezone,
