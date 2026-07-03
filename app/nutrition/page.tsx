@@ -65,8 +65,9 @@ export default function NutritionPage() {
           <Badge variant="secondary">Pro feature</Badge>
         </div>
         <p className="mt-1 text-muted-foreground text-sm">
-          Log every meal — by photo or by hand. Chad grades it and keeps your
-          day's totals honest. Want a plan to follow?{" "}
+          Log every meal: search the food database, scan a barcode, snap a
+          photo, or type it in. Chad grades it and keeps your day's totals
+          honest. Want a plan to follow?{" "}
           <Link
             className="text-foreground underline underline-offset-4"
             href="/meal-plan"
@@ -120,9 +121,10 @@ function UpgradePrompt() {
         The Calorie Tracker is a Chad Pro feature
       </h2>
       <p className="mx-auto mt-2 max-w-md text-muted-foreground text-sm">
-        Upgrade to Pro to log meals by photo or by hand. Chad estimates the
-        macros, grades each plate out of 10, and keeps a running diary of your
-        day — the stuff a real coach keeps on you about.
+        Upgrade to Pro to log meals with food-database search, barcode
+        scanning, photo analysis, or by hand. Chad grades each plate out of 10
+        and keeps a running diary of your day, the stuff a real coach keeps
+        on you about.
       </p>
       <Button asChild className="mt-5">
         <Link href="/account">Upgrade to Pro</Link>

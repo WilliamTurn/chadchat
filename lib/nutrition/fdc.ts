@@ -56,6 +56,13 @@ type FdcFood = {
   description: string;
   dataType?: string;
   foodNutrients?: FdcNutrient[];
+  // Branded-food fields (present only when dataType === "Branded").
+  brandName?: string;
+  brandOwner?: string;
+  gtinUpc?: string;
+  servingSize?: number;
+  servingSizeUnit?: string;
+  householdServingFullText?: string;
 };
 
 // Description words that signal a processed/wrong variant of a plain whole food.
@@ -322,6 +329,231 @@ async function fetchSearch(url: URL): Promise<{ foods?: FdcFood[] } | null> {
     }
     // A real "no/invalid" response — not worth retrying.
     return null;
+  }
+  return null;
+}
+
+/* ------------------------------------------------------------------ */
+/* Interactive food search (FN-1): a ranked LIST of candidates         */
+/* ------------------------------------------------------------------ */
+
+/** One row of an interactive food-database search: generic or branded. */
+export type FdcListItem = {
+  fdcId: number;
+  description: string;
+  dataType: string | null;
+  /** Brand name for Branded entries ("Fairlife"), null for generic foods. */
+  brand: string | null;
+  /** Macros per 100 g (FDC search normalizes Branded label data to 100 g). */
+  per100g: Macros;
+  /** The product's labeled serving, when the entry carries one. */
+  serving: { label: string; grams: number | null } | null;
+};
+
+/** Serving units FDC uses that mean "grams" (ml treated as g, label basis). */
+const GRAM_UNITS = new Set(["g", "grm", "gram", "grams", "ml", "mlt"]);
+
+function extractServing(
+  food: FdcFood
+): { label: string; grams: number | null } | null {
+  const size = food.servingSize;
+  const unit = (food.servingSizeUnit ?? "").trim().toLowerCase();
+  const household = food.householdServingFullText?.trim();
+  const grams =
+    typeof size === "number" && size > 0 && GRAM_UNITS.has(unit)
+      ? size
+      : null;
+  if (household) {
+    const label =
+      grams != null && !household.toLowerCase().includes("g")
+        ? `${household} (${Math.round(grams)} g)`
+        : household;
+    return { label, grams };
+  }
+  if (grams != null) {
+    return { label: `${Math.round(grams)} g serving`, grams };
+  }
+  return null;
+}
+
+/**
+ * Score a candidate for LIST search. Like `scoreCandidate` but brand-aware
+ * (query words may land in the brand name) and gentler on extra head words:
+ * a list can show near-misses; the single-match path can't.
+ */
+function scoreListCandidate(
+  query: string,
+  food: FdcFood,
+  index: number
+): number {
+  const desc = food.description.toLowerCase();
+  const brand = (food.brandName || food.brandOwner || "").toLowerCase();
+  const headTokens = tokenize(desc.split(",")[0] ?? desc);
+  const brandTokens = tokenize(brand);
+  const allTokens = [...tokenize(desc), ...brandTokens];
+  const qTokens = tokenize(query);
+  let score = 0;
+
+  for (const t of qTokens) {
+    if (STOPWORDS.has(t)) {
+      continue;
+    }
+    if (
+      headTokens.some((h) => tokenMatch(h, t)) ||
+      brandTokens.some((h) => tokenMatch(h, t))
+    ) {
+      score += 4;
+    } else if (allTokens.some((h) => tokenMatch(h, t))) {
+      score += 1.5;
+    } else {
+      score -= 3;
+    }
+  }
+
+  for (const h of headTokens) {
+    if (!STOPWORDS.has(h) && !qTokens.some((t) => tokenMatch(h, t))) {
+      score -= 1.5;
+    }
+  }
+
+  for (const noise of NOISE_TERMS) {
+    if (desc.includes(noise) && !query.toLowerCase().includes(noise)) {
+      score -= 2;
+    }
+  }
+
+  score -= desc.length * 0.01;
+
+  if (food.dataType === "Foundation") {
+    score += 2;
+  } else if (food.dataType === "SR Legacy") {
+    score += 1.5;
+  } else if (food.dataType?.startsWith("Survey")) {
+    score += 1;
+  }
+
+  score -= index * 0.05;
+  return score;
+}
+
+// Interactive searches repeat constantly (every keystroke burst); cache the
+// ranked lists the same way single-match lookups are cached.
+const listCache = new Map<string, FdcListItem[]>();
+
+/**
+ * Interactive food-database search: one FDC call over generic AND branded
+ * data types, scored and ranked, returning up to `limit` usable candidates.
+ * Never throws: a network/API failure resolves to an empty list (the curated
+ * table results still render, so search degrades instead of breaking).
+ */
+export async function searchFoodList(
+  query: string,
+  limit = 10
+): Promise<FdcListItem[]> {
+  const key = `list:${query.trim().toLowerCase()}`;
+  if (!key.slice(5)) {
+    return [];
+  }
+  const cached = listCache.get(key);
+  if (cached) {
+    return cached.slice(0, limit);
+  }
+
+  const url = new URL(`${FDC_BASE}/foods/search`);
+  url.searchParams.set("query", query);
+  url.searchParams.set("pageSize", "30");
+  url.searchParams.set("dataType", `${PREFERRED_DATA_TYPES},Branded`);
+  url.searchParams.set("api_key", apiKey());
+
+  let json: { foods?: FdcFood[] } | null = null;
+  try {
+    json = await fetchSearch(url);
+  } catch {
+    return [];
+  }
+  if (!json) {
+    return [];
+  }
+
+  const scored: { item: FdcListItem; score: number }[] = [];
+  const seen = new Set<string>();
+  for (const [index, food] of (json.foods ?? []).entries()) {
+    const per100g = extractPer100g(food);
+    if (!per100g) {
+      continue;
+    }
+    const brand = (food.brandName || food.brandOwner || "").trim() || null;
+    // Collapse near-duplicate rows (same food + brand under several fdcIds).
+    const dedupeKey = `${food.description.toLowerCase().trim()}|${(brand ?? "").toLowerCase()}`;
+    if (seen.has(dedupeKey)) {
+      continue;
+    }
+    seen.add(dedupeKey);
+    const score = scoreListCandidate(query, food, index);
+    if (score <= 0) {
+      continue;
+    }
+    scored.push({
+      score,
+      item: {
+        fdcId: food.fdcId,
+        description: food.description,
+        dataType: food.dataType ?? null,
+        brand,
+        per100g,
+        serving: food.dataType === "Branded" ? extractServing(food) : null,
+      },
+    });
+  }
+  scored.sort((a, b) => b.score - a.score);
+  const items = scored.map((s) => s.item);
+  listCache.set(key, items);
+  return items.slice(0, limit);
+}
+
+/**
+ * Look up a Branded food by its barcode (UPC-A / EAN-13). FDC indexes
+ * `gtinUpc`, so searching the digits finds the product; we then require the
+ * candidate's own gtinUpc to actually match (leading zeros ignored) so a
+ * loose text match can't impersonate a scan. Null when nothing matches.
+ */
+export async function lookupFdcBarcode(
+  code: string
+): Promise<FdcListItem | null> {
+  const digits = code.replace(/\D/g, "");
+  if (digits.length < 8 || digits.length > 14) {
+    return null;
+  }
+  const url = new URL(`${FDC_BASE}/foods/search`);
+  url.searchParams.set("query", digits);
+  url.searchParams.set("pageSize", "5");
+  url.searchParams.set("dataType", "Branded");
+  url.searchParams.set("api_key", apiKey());
+
+  let json: { foods?: FdcFood[] } | null = null;
+  try {
+    json = await fetchSearch(url);
+  } catch {
+    return null;
+  }
+  const stripped = digits.replace(/^0+/, "");
+  for (const food of json?.foods ?? []) {
+    const gtin = (food.gtinUpc ?? "").replace(/\D/g, "").replace(/^0+/, "");
+    if (!gtin || gtin !== stripped) {
+      continue;
+    }
+    const per100g = extractPer100g(food);
+    if (!per100g) {
+      continue;
+    }
+    return {
+      fdcId: food.fdcId,
+      description: food.description,
+      dataType: food.dataType ?? null,
+      brand: (food.brandName || food.brandOwner || "").trim() || null,
+      per100g,
+      serving: extractServing(food),
+    };
   }
   return null;
 }

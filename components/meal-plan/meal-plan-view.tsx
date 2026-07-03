@@ -465,6 +465,7 @@ export function MealPlanView({ plan }: { plan: MealPlanViewData }) {
               noTargetSub="cal / day"
               proteinConsumed={dayTotals.protein}
               proteinTarget={plan.target?.protein ?? null}
+              variant="plan"
             />
           </div>
 

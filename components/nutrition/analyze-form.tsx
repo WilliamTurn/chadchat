@@ -7,11 +7,13 @@ import {
   PencilLine,
   Plus,
   ScanLine,
+  Search,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { analyzeMeal, logMealManually } from "@/app/nutrition/actions";
+import { FoodSearch } from "@/components/nutrition/food-search";
 import {
   defaultMealForNow,
   MealCategoryPicker,
@@ -69,13 +71,15 @@ function MacroField({
   );
 }
 
-type Mode = "photo" | "label" | "manual" | "recent";
+type Mode = "search" | "photo" | "label" | "manual" | "recent";
 
 export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
-  const [mode, setMode] = useState<Mode>("photo");
+  // Search-first: database search + barcode scan is the default logging path
+  // (the pro-app standard, FN-1); Chad's photo analysis stays one tap away.
+  const [mode, setMode] = useState<Mode>("search");
   const [loggingFood, setLoggingFood] = useState<string | null>(null);
   const [meal, setMeal] = useState<MealCategory>(defaultMealForNow());
   const [date, setDate] = useState(todayLocalISO);
@@ -247,6 +251,7 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
+    // "search" and "recent" log per-row with their own buttons.
     if (mode === "photo") {
       submitPhoto("meal");
     } else if (mode === "label") {
@@ -277,63 +282,38 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
       <div>
         <h2 className="font-medium text-lg">Log a meal</h2>
         <p className="mt-1 text-muted-foreground text-sm">
-          Snap your plate and Chad reads the photo, or scan a packaged-food
-          label for the exact numbers — calories, macros, and a straight verdict
-          on what it's doing to your goal. Or type the numbers yourself, or
-          re-log something you've eaten before in one tap.
+          Search the food database or scan a barcode for verified numbers.
+          Snap your plate or a packaged-food label and Chad reads it, with a
+          straight verdict on what it's doing to your goal. Or type the
+          numbers yourself, or re-log something in one tap.
         </p>
       </div>
 
       {/* Mode toggle */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <button
-          className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 font-medium text-sm transition-colors ${
-            mode === "photo"
-              ? "border-blood bg-blood/10"
-              : "border-border bg-background/40 text-muted-foreground hover:bg-accent/50"
-          }`}
-          onClick={() => setMode("photo")}
-          type="button"
-        >
-          <Camera className="size-4" />
-          Photo
-        </button>
-        <button
-          className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 font-medium text-sm transition-colors ${
-            mode === "label"
-              ? "border-blood bg-blood/10"
-              : "border-border bg-background/40 text-muted-foreground hover:bg-accent/50"
-          }`}
-          onClick={() => setMode("label")}
-          type="button"
-        >
-          <ScanLine className="size-4" />
-          Label
-        </button>
-        <button
-          className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 font-medium text-sm transition-colors ${
-            mode === "manual"
-              ? "border-blood bg-blood/10"
-              : "border-border bg-background/40 text-muted-foreground hover:bg-accent/50"
-          }`}
-          onClick={() => setMode("manual")}
-          type="button"
-        >
-          <PencilLine className="size-4" />
-          Manual
-        </button>
-        <button
-          className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 font-medium text-sm transition-colors ${
-            mode === "recent"
-              ? "border-blood bg-blood/10"
-              : "border-border bg-background/40 text-muted-foreground hover:bg-accent/50"
-          }`}
-          onClick={() => setMode("recent")}
-          type="button"
-        >
-          <History className="size-4" />
-          Recent
-        </button>
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+        {(
+          [
+            { value: "search", label: "Search", Icon: Search },
+            { value: "photo", label: "Photo", Icon: Camera },
+            { value: "label", label: "Label", Icon: ScanLine },
+            { value: "manual", label: "Manual", Icon: PencilLine },
+            { value: "recent", label: "Recent", Icon: History },
+          ] as const
+        ).map(({ value, label, Icon }) => (
+          <button
+            className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 font-medium text-sm transition-colors ${
+              mode === value
+                ? "border-blood bg-blood/10"
+                : "border-border bg-background/40 text-muted-foreground hover:bg-accent/50"
+            }`}
+            key={value}
+            onClick={() => setMode(value)}
+            type="button"
+          >
+            <Icon className="size-4" />
+            {label}
+          </button>
+        ))}
       </div>
 
       {/* Meal category + date (back-date a meal you forgot) */}
@@ -354,7 +334,9 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
         />
       </div>
 
-      {mode === "photo" || mode === "label" ? (
+      {mode === "search" ? (
+        <FoodSearch date={date} meal={meal} />
+      ) : mode === "photo" || mode === "label" ? (
         <>
           {mode === "label" && (
             <p className="rounded-xl border border-border border-dashed bg-background/40 px-3 py-2.5 text-muted-foreground text-xs">
@@ -513,6 +495,7 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
       )}
 
       {mode !== "recent" &&
+        mode !== "search" &&
         (() => {
           // At rest with no photo, don't render a dead flat-grey slab (which made
           // the whole form look inert on first load). Keep the button live and

@@ -19,6 +19,11 @@ import {
   updateUserWaterGoal,
   upsertNutritionTarget,
 } from "@/lib/db/queries";
+import {
+  type FoodHit,
+  lookupBarcode,
+  searchFoodDatabase,
+} from "@/lib/nutrition/food-search";
 import { reconcileTarget } from "@/lib/nutrition/target-math";
 import {
   type AnalyzeMealInput,
@@ -147,6 +152,43 @@ export async function analyzeMeal(
   revalidatePath("/kitchen");
   revalidatePath("/today");
   return { ok: true };
+}
+
+/**
+ * Food-database search for the Calorie Tracker's Search tab (FN-1): curated
+ * table + USDA generic/branded, verified numbers only. Read-only, Pro-gated
+ * like every other tracker action.
+ */
+export async function searchFoods(
+  query: string
+): Promise<{ ok: boolean; results?: FoodHit[]; error?: string }> {
+  const user = await requirePro();
+  if (!user) {
+    return { ok: false, error: "The Calorie Tracker is a Chad Pro feature." };
+  }
+  const q = typeof query === "string" ? query.trim() : "";
+  if (q.length < 2) {
+    return { ok: true, results: [] };
+  }
+  const results = await searchFoodDatabase(q.slice(0, 80));
+  return { ok: true, results };
+}
+
+/** Barcode → product lookup (USDA Branded + Open Food Facts). `result: null`
+ *  means the scan worked but no database knows the product. */
+export async function lookupFoodBarcode(
+  code: string
+): Promise<{ ok: boolean; result?: FoodHit | null; error?: string }> {
+  const user = await requirePro();
+  if (!user) {
+    return { ok: false, error: "The Calorie Tracker is a Chad Pro feature." };
+  }
+  const digits = typeof code === "string" ? code.replace(/\D/g, "") : "";
+  if (digits.length < 8 || digits.length > 14) {
+    return { ok: false, error: "That doesn't look like a product barcode." };
+  }
+  const result = await lookupBarcode(digits);
+  return { ok: true, result };
 }
 
 /** Log a meal by typing the macros yourself — no photo, no grade. */

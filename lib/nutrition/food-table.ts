@@ -198,5 +198,83 @@ export async function resolveFoodMacros(
   return null;
 }
 
+/* ------------------------------------------------------------------ */
+/* Interactive table search (FN-1)                                     */
+/* ------------------------------------------------------------------ */
+
+/** One curated-table row surfaced by the interactive food search. */
+export type TableSearchHit = {
+  name: string;
+  description: string;
+  fdcId: number | null;
+  per100g: Macros;
+};
+
+/**
+ * Prefix-tolerant token match for as-you-type search: exact/plural like
+ * `tokenMatch`, or the query token is a 2+ char prefix of the entry token,
+ * so "chicken brea" already surfaces "chicken breast".
+ */
+function typeaheadMatch(queryToken: string, entryToken: string): boolean {
+  if (tokenMatch(queryToken, entryToken)) {
+    return true;
+  }
+  return queryToken.length >= 2 && entryToken.startsWith(queryToken);
+}
+
+/**
+ * Rank curated-table foods against a free-text query for the Calorie
+ * Tracker's search tab. AND semantics: every query content token must land in
+ * the entry's name or an alias. Exact (order-insensitive) matches rank first,
+ * then tighter labels (fewer words beyond what was asked). Pure in-memory:
+ * instant, no API, hand-verified macros.
+ */
+export function searchFoodTable(query: string, limit = 6): TableSearchHit[] {
+  const qt = contentTokens(query);
+  if (!qt.length) {
+    return [];
+  }
+  const qKey = normKey(query);
+
+  const best = new Map<string, { entry: TableEntry; score: number }>();
+  for (const entry of Object.values(TABLE)) {
+    let entryScore = Number.NEGATIVE_INFINITY;
+    for (const label of [entry.name, ...entry.aliases]) {
+      const lt = contentTokens(label);
+      if (!lt.length) {
+        continue;
+      }
+      if (!qt.every((q) => lt.some((t) => typeaheadMatch(q, t)))) {
+        continue;
+      }
+      let score = 100;
+      if (normKey(label) === qKey) {
+        score += 50;
+      }
+      // Prefer labels that add the fewest words beyond what was asked
+      // ("chicken breast" over "chicken breast tenders" for "chicken brea").
+      score -= (lt.length - qt.length) * 8;
+      score -= label.length * 0.1;
+      entryScore = Math.max(entryScore, score);
+    }
+    if (entryScore > Number.NEGATIVE_INFINITY) {
+      const prev = best.get(entry.name);
+      if (!prev || entryScore > prev.score) {
+        best.set(entry.name, { entry, score: entryScore });
+      }
+    }
+  }
+
+  return [...best.values()]
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(({ entry }) => ({
+      name: entry.name,
+      description: entry.desc,
+      fdcId: entry.fdcId,
+      per100g: entry.per100g,
+    }));
+}
+
 /** Count of foods in the curated table (for diagnostics/tests). */
 export const FOOD_TABLE_SIZE = Object.keys(TABLE).length;

@@ -16,11 +16,21 @@
  *
  * Renders inside a parent card that already supplies chrome + a "Today's fuel"
  * title, so the root is a plain <div> with no card/title of its own.
+ *
+ * Two variants (LC-17): the default "diary" reads as today's live eating
+ * status ("calories remaining", "Xg left"). The meal plan passes
+ * variant="plan", which speaks plan-vs-target ("164 cal under target",
+ * "28g under target") and colors the ring by how well the planned day hits
+ * its target (same ±8% band as the day-switcher cards: emerald on target,
+ * amber under, blood over), so a planned day can never be mistaken for
+ * today's eating status.
  */
 
 import { motion, useReducedMotion } from "motion/react";
 import { useId, useState } from "react";
 import { CountUp } from "@/components/dashboard/count-up";
+
+type RingVariant = "diary" | "plan";
 
 type RingProps = {
   caloriesConsumed: number;
@@ -31,6 +41,11 @@ type RingProps = {
   carbsTarget: number | null;
   fatConsumed: number;
   fatTarget: number | null;
+  /**
+   * "diary" (default) = today's live eating status ("calories remaining").
+   * "plan" = a planned day judged against its target ("164 cal under target").
+   */
+  variant?: RingVariant;
   /**
    * Copy overrides for non-diary contexts. The defaults read for "today's
    * diary" (what you've eaten); a meal plan, for example, passes "Planned" /
@@ -64,6 +79,40 @@ function pct(consumed: number, target: number | null): number | null {
   return Math.round((consumed / target) * 100);
 }
 
+/**
+ * Plan mode: how well a planned amount hits its target. The ±8% band matches
+ * the meal plan's day-switcher cards so the whole page judges a day the same
+ * way: emerald within the band, amber meaningfully under, blood over.
+ */
+type PlanBand = "under" | "on" | "over";
+
+function planBand(planned: number, target: number): PlanBand {
+  const ratio = planned / target;
+  if (ratio > 1.08) {
+    return "over";
+  }
+  if (ratio < 0.92) {
+    return "under";
+  }
+  return "on";
+}
+
+const PLAN_BAND_TEXT: Record<PlanBand, string> = {
+  under: "text-amber-500",
+  on: "text-emerald-500",
+  over: "text-blood",
+};
+
+/** Exact plan-vs-target wording: "164 cal under target" / "on target". */
+function planDeltaCopy(planned: number, target: number, unit: string): string {
+  const delta = round(planned) - round(target);
+  if (delta === 0) {
+    return "on target";
+  }
+  const dir = delta < 0 ? "under" : "over";
+  return `${Math.abs(delta).toLocaleString()}${unit} ${dir} target`;
+}
+
 /* ------------------------------------------------------------------ */
 /* Hero calorie dial                                                  */
 /* ------------------------------------------------------------------ */
@@ -74,31 +123,40 @@ function CalorieDial({
   reduced,
   consumedLabel,
   noTargetSub,
+  variant,
 }: {
   consumed: number;
   target: number | null;
   reduced: boolean;
   consumedLabel: string;
   noTargetSub: string;
+  variant: RingVariant;
 }) {
   const [open, setOpen] = useState(false);
   const titleId = useId();
 
+  const isPlan = variant === "plan";
   const hasTarget = target != null && target > 0;
   const fraction = hasTarget ? consumed / (target as number) : 0;
   const over = hasTarget && consumed > (target as number);
   const remaining = hasTarget ? (target as number) - consumed : 0;
   const percent = pct(consumed, target);
+  const band: PlanBand | null =
+    isPlan && hasTarget ? planBand(consumed, target as number) : null;
 
   // Visible sweep is clamped to a full ring; overage is signaled by color.
   const sweep = Math.max(0, Math.min(1, fraction));
   const dashOffset = CIRC * (1 - sweep);
 
   const ariaLabel = hasTarget
-    ? over
-      ? `Calories: ${round(consumed)} of ${round(target as number)} cal, ${round(consumed - (target as number))} over target. Tap for details.`
-      : `Calories: ${round(consumed)} of ${round(target as number)} cal, ${round(remaining)} remaining. Tap for details.`
-    : `Calories: ${round(consumed)} cal logged today. Tap for details.`;
+    ? isPlan
+      ? `Planned: ${round(consumed)} of ${round(target as number)} cal, ${planDeltaCopy(consumed, target as number, " cal")}. Tap for details.`
+      : over
+        ? `Calories: ${round(consumed)} of ${round(target as number)} cal, ${round(consumed - (target as number))} over target. Tap for details.`
+        : `Calories: ${round(consumed)} of ${round(target as number)} cal, ${round(remaining)} remaining. Tap for details.`
+    : isPlan
+      ? `Planned: ${round(consumed)} cal. Tap for details.`
+      : `Calories: ${round(consumed)} cal logged today. Tap for details.`;
 
   // Center copy.
   let big: string;
@@ -107,6 +165,11 @@ function CalorieDial({
   if (!hasTarget) {
     big = consumed > 0 ? round(consumed).toLocaleString() : "—";
     sub = consumed > 0 ? noTargetSub : "no target yet";
+  } else if (isPlan) {
+    // Plan mode: the big number is what the day plans, never a "remaining"
+    // countdown; the delta pill below the dial carries the target verdict.
+    big = round(consumed).toLocaleString();
+    sub = "calories planned";
   } else if (over) {
     big = round(consumed - (target as number)).toLocaleString();
     sub = "calories over";
@@ -115,6 +178,27 @@ function CalorieDial({
     big = round(remaining).toLocaleString();
     sub = "calories remaining";
   }
+
+  // Ring fill: diary fills amber and flips blood only when over; plan is
+  // judged by the band so the two rings never read as the same instrument.
+  const fillClass = isPlan
+    ? band === "over"
+      ? "text-blood"
+      : band === "under"
+        ? "text-amber-500"
+        : "text-emerald-500"
+    : over
+      ? "text-blood"
+      : "text-amber-500";
+  const glowClass = isPlan
+    ? band === "over"
+      ? "bg-blood/12"
+      : band === "under"
+        ? "bg-amber-400/12"
+        : "bg-emerald-400/12"
+    : hasTarget && consumed > 0
+      ? "bg-amber-400/15"
+      : "bg-amber-400/8";
 
   return (
     <div className="flex flex-col items-center">
@@ -129,9 +213,7 @@ function CalorieDial({
             once there's real fill to light up. */}
         <div
           aria-hidden
-          className={`pointer-events-none absolute inset-3 rounded-full blur-2xl ${
-            hasTarget && consumed > 0 ? "bg-amber-400/15" : "bg-amber-400/8"
-          }`}
+          className={`pointer-events-none absolute inset-3 rounded-full blur-2xl ${glowClass}`}
         />
         <svg
           aria-labelledby={titleId}
@@ -159,7 +241,7 @@ function CalorieDial({
           {hasTarget && (
             <motion.circle
               animate={{ strokeDashoffset: dashOffset }}
-              className={over ? "text-blood" : "text-amber-500"}
+              className={fillClass}
               cx={CENTER}
               cy={CENTER}
               fill="none"
@@ -202,6 +284,16 @@ function CalorieDial({
         />
       </button>
 
+      {/* Plan mode: the target verdict in words ("164 cal under target"),
+          never the diary's "remaining" (LC-17). */}
+      {isPlan && hasTarget && band && (
+        <span
+          className={`mt-2 rounded-full border border-border bg-background/60 px-3 py-1 font-medium text-xs ${PLAN_BAND_TEXT[band]}`}
+        >
+          {planDeltaCopy(consumed, target as number, " cal")}
+        </span>
+      )}
+
       {/* Inline detail — calories */}
       <motion.div
         animate={{ height: open ? "auto" : 0, opacity: open ? 1 : 0 }}
@@ -223,14 +315,37 @@ function CalorieDial({
               />
               <Divider />
               <Detail
-                accent={over ? "text-blood" : "text-emerald-500"}
-                label={over ? "Over" : "Left"}
-                value={`${round(Math.abs(remaining)).toLocaleString()}`}
+                accent={
+                  band
+                    ? PLAN_BAND_TEXT[band]
+                    : over
+                      ? "text-blood"
+                      : "text-emerald-500"
+                }
+                label={
+                  isPlan
+                    ? round(remaining) === 0
+                      ? "on target"
+                      : over
+                        ? "Over"
+                        : "Under"
+                    : over
+                      ? "Over"
+                      : "Left"
+                }
+                value={
+                  isPlan && round(remaining) === 0
+                    ? "±0"
+                    : `${round(Math.abs(remaining)).toLocaleString()}`
+                }
               />
               {percent != null && (
                 <>
                   <Divider />
-                  <Detail label="of goal" value={`${percent}%`} />
+                  <Detail
+                    label={isPlan ? "of target" : "of goal"}
+                    value={`${percent}%`}
+                  />
                 </>
               )}
             </>
@@ -276,6 +391,7 @@ function MacroBar({
   barColor,
   reduced,
   consumedLabel,
+  variant,
 }: {
   label: string;
   consumed: number;
@@ -284,23 +400,36 @@ function MacroBar({
   barColor: string;
   reduced: boolean;
   consumedLabel: string;
+  variant: RingVariant;
 }) {
   const [open, setOpen] = useState(false);
 
+  const isPlan = variant === "plan";
   const hasTarget = target != null && target > 0;
   const fraction = hasTarget ? consumed / (target as number) : 0;
   const over = hasTarget && consumed > (target as number);
   const remaining = hasTarget ? (target as number) - consumed : 0;
   const percent = pct(consumed, target);
+  const band: PlanBand | null =
+    isPlan && hasTarget ? planBand(consumed, target as number) : null;
   // With no target there's nothing to fill toward, so the bar stays a ghost
   // track (a full bar would falsely read as "100% / maxed out").
   const width = hasTarget ? Math.max(0, Math.min(1, fraction)) * 100 : 0;
 
   const hint = hasTarget
-    ? over
-      ? `${round(consumed - (target as number))}g over`
-      : `${round(remaining)}g left`
+    ? isPlan
+      ? planDeltaCopy(consumed, target as number, "g")
+      : over
+        ? `${round(consumed - (target as number))}g over`
+        : `${round(remaining)}g left`
     : "no goal set";
+  const hintClass = hasTarget
+    ? band
+      ? PLAN_BAND_TEXT[band]
+      : over
+        ? "text-blood"
+        : "text-emerald-500"
+    : "text-muted-foreground";
 
   const ariaLabel = hasTarget
     ? `${label}: ${round(consumed)} of ${round(target as number)} grams, ${hint}. Tap for details.`
@@ -335,27 +464,21 @@ function MacroBar({
       >
         <motion.div
           animate={{ width: `${width}%` }}
-          className={`h-full rounded-full ${over ? "bg-blood" : barColor}`}
+          className={`h-full rounded-full ${
+            (isPlan ? band === "over" : over) ? "bg-blood" : barColor
+          }`}
           initial={{ width: reduced ? `${width}%` : 0 }}
           transition={{ duration: reduced ? 0 : 0.9, ease: EASE }}
         />
       </div>
 
       <div className="mt-1.5 flex items-center justify-between">
-        <span
-          className={`text-xs ${
-            over
-              ? "text-blood"
-              : hasTarget
-                ? "text-emerald-500"
-                : "text-muted-foreground"
-          }`}
-        >
-          {hint}
-        </span>
+        <span className={`text-xs ${hintClass}`}>{hint}</span>
         {percent != null && (
           <span
-            className={`text-xs tabular-nums ${over ? "text-blood" : textColor}`}
+            className={`text-xs tabular-nums ${
+              (isPlan ? band === "over" : over) ? "text-blood" : textColor
+            }`}
           >
             {percent}%
           </span>
@@ -377,9 +500,29 @@ function MacroBar({
               <Detail label="Target" value={`${round(target as number)}g`} />
               <Divider />
               <Detail
-                accent={over ? "text-blood" : "text-emerald-500"}
-                label={over ? "Over" : "Left"}
-                value={`${round(Math.abs(remaining))}g`}
+                accent={
+                  band
+                    ? PLAN_BAND_TEXT[band]
+                    : over
+                      ? "text-blood"
+                      : "text-emerald-500"
+                }
+                label={
+                  isPlan
+                    ? round(remaining) === 0
+                      ? "on target"
+                      : over
+                        ? "Over"
+                        : "Under"
+                    : over
+                      ? "Over"
+                      : "Left"
+                }
+                value={
+                  isPlan && round(remaining) === 0
+                    ? "±0"
+                    : `${round(Math.abs(remaining))}g`
+                }
               />
             </>
           )}
@@ -402,6 +545,7 @@ export function MacroRings({
   carbsTarget,
   fatConsumed,
   fatTarget,
+  variant = "diary",
   consumedLabel = "Eaten",
   noTargetSub = "calories today",
   emptyCta,
@@ -419,6 +563,7 @@ export function MacroRings({
             noTargetSub={noTargetSub}
             reduced={reduced}
             target={caloriesTarget}
+            variant={variant}
           />
         </div>
 
@@ -431,6 +576,7 @@ export function MacroRings({
             reduced={reduced}
             target={proteinTarget}
             textColor="text-sky-400"
+            variant={variant}
           />
           <MacroBar
             barColor="bg-amber-400"
@@ -440,6 +586,7 @@ export function MacroRings({
             reduced={reduced}
             target={carbsTarget}
             textColor="text-amber-400"
+            variant={variant}
           />
           <MacroBar
             barColor="bg-violet-400"
@@ -449,6 +596,7 @@ export function MacroRings({
             reduced={reduced}
             target={fatTarget}
             textColor="text-violet-400"
+            variant={variant}
           />
         </div>
       </div>

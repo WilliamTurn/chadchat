@@ -119,16 +119,19 @@ const FEATURES: Feature[] = [
     body: (
       <>
         <p>
-          Log what you eat four ways: photograph the meal and Chad identifies
-          it and estimates the macros, photograph a nutrition label and he
-          reads the printed numbers off it, enter it manually, or re-log a
-          recent meal in one tap. Every meal gets graded against your targets
-          with a verdict from Chad.
+          Log what you eat six ways: search the verified food database by
+          name and set the portion in grams, ounces, or servings; scan a
+          packaged food's barcode with your camera; photograph the meal and
+          Chad identifies it and estimates the macros; photograph a nutrition
+          label and he reads the printed numbers off it; enter it manually;
+          or re-log a recent meal in one tap. Meals Chad analyzes get graded
+          against your targets with a verdict.
         </p>
         <p>
           The page tracks calories, protein, carbs, and fat against your daily
           targets, with daily history and trend charts. Macro numbers come
-          from a verified food database, not from guesswork.
+          from verified food databases (USDA and Open Food Facts), not from
+          guesswork.
         </p>
       </>
     ),
