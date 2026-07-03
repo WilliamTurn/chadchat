@@ -310,7 +310,10 @@ async function fetchSearch(url: URL): Promise<{ foods?: FdcFood[] } | null> {
       return (await res.json()) as { foods?: FdcFood[] };
     }
     // 429 (rate limit) and 5xx are transient — back off (with jitter) and retry.
-    if (res.status === 429 || res.status >= 500) {
+    // 400 too (NUT-16): USDA's nginx intermittently 400s a request it accepts
+    // seconds later; verified the identical URL flipping 400 -> 200. Treating
+    // it as a permanent "not found" is what put a zero-macro food in a plan.
+    if (res.status === 400 || res.status === 429 || res.status >= 500) {
       if (attempt < MAX_ATTEMPTS - 1) {
         await sleep(500 * (attempt + 1) + Math.floor(Math.random() * 250));
         continue;
