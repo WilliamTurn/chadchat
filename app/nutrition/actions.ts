@@ -74,8 +74,10 @@ export async function analyzeMeal(
     };
   }
 
-  const { photoUrl, mediaType, kind, meal, recordedAt, servings, note } =
+  const { photoUrl, mediaType, kind, meal, mealLabel, recordedAt, servings, note } =
     parsed.data;
+  // A custom slot name only makes sense on the "other" bucket.
+  const slotLabel = meal === "other" ? (mealLabel ?? null) || null : null;
 
   // A nutrition-label scan is logged as a meal, but the macros are read off the
   // label per serving and multiplied here — exact arithmetic, not the model's.
@@ -98,6 +100,7 @@ export async function analyzeMeal(
         kind: "meal",
         source: "photo",
         meal: meal ?? null,
+        mealLabel: slotLabel,
         recordedAt: parseCalendarDay(recordedAt),
         photoUrl,
         title: label.title,
@@ -131,7 +134,8 @@ export async function analyzeMeal(
       kind,
       source: "photo",
       meal: kind === "meal" ? (meal ?? null) : null,
-      // Only meals carry a diary date; fridge/pantry shots are point-in-time.
+      mealLabel: kind === "meal" ? slotLabel : null,
+      // Only meals carry a diary date; kitchen shots are point-in-time.
       recordedAt: kind === "meal" ? parseCalendarDay(recordedAt) : null,
       photoUrl,
       title: result.title,
@@ -211,7 +215,7 @@ export async function logMealManually(
     };
   }
 
-  const { title, meal, recordedAt, calories, protein, carbs, fat } =
+  const { title, meal, mealLabel, recordedAt, calories, protein, carbs, fat } =
     parsed.data;
 
   await createMealAnalysis({
@@ -219,6 +223,7 @@ export async function logMealManually(
     kind: "meal",
     source: "manual",
     meal: meal ?? null,
+    mealLabel: meal === "other" ? (mealLabel ?? null) || null : null,
     recordedAt: parseCalendarDay(recordedAt),
     photoUrl: null,
     title,
@@ -254,7 +259,7 @@ export async function editMeal(
     };
   }
 
-  const { id, title, meal, recordedAt, calories, protein, carbs, fat } =
+  const { id, title, meal, mealLabel, recordedAt, calories, protein, carbs, fat } =
     parsed.data;
 
   await updateMealAnalysis({
@@ -262,6 +267,7 @@ export async function editMeal(
     userId: user.id,
     title,
     meal: meal ?? null,
+    mealLabel: meal === "other" ? (mealLabel ?? null) || null : null,
     recordedAt: parseCalendarDay(recordedAt),
     calories,
     protein,
@@ -296,6 +302,7 @@ export async function removeMealAnalysis(
           kind: deleted.kind,
           source: deleted.source,
           meal: deleted.meal,
+          mealLabel: deleted.mealLabel,
           recordedAt: deleted.recordedAt?.toISOString() ?? null,
           photoUrl: deleted.photoUrl,
           title: deleted.title,

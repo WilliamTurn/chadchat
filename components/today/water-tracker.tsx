@@ -20,6 +20,7 @@ import {
   useTransition,
 } from "react";
 import { toast } from "sonner";
+import { useReward } from "@/components/dashboard/reward";
 import {
   logWaterAmount,
   removeWater,
@@ -100,6 +101,7 @@ export function WaterTracker({
   viewHref?: string;
 }) {
   const reduceMotion = useReducedMotion();
+  const reward = useReward();
   const [pending, startTransition] = useTransition();
   const [customOpen, setCustomOpen] = useState(false);
   const [customValue, setCustomValue] = useState("");
@@ -124,6 +126,14 @@ export function WaterTracker({
     action: () => Promise<{ ok: boolean; error?: string }>,
     optimisticDelta?: number
   ) {
+    // Sensory feedback (DSH-54): a barely-there tick per quick-add, and the
+    // full success moment the tap that crosses the goal line (the vessel's
+    // pulsing ring is already the visual).
+    if (optimisticDelta && optimisticDelta > 0) {
+      const crossesGoal =
+        optimisticMl < safeGoal && optimisticMl + optimisticDelta >= safeGoal;
+      reward.effects(crossesGoal ? "success" : "tick");
+    }
     startTransition(async () => {
       if (optimisticDelta) {
         addOptimisticMl(optimisticDelta);

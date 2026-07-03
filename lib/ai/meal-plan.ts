@@ -35,9 +35,11 @@ HARD RULES:
 - Do NOT output macro numbers for foods. You choose the food and the grams; a nutrition database computes the real macros. Your job is smart food selection and correct portioning.
 - For every food, give a clean \`query\`: a plain whole-food name a food database will match — no brand, no portion, no cooking adjective fluff. Good: "chicken breast cooked", "rolled oats dry", "white rice cooked", "banana raw", "olive oil", "almonds". Bad: "grandma's grilled chicken", "1 cup oats", "a handful of nuts".
 - Prefer whole, single-ingredient foods (they match the database cleanly and are what serious eaters use). Combine them into real meals.
-- Respect the diet style, allergies, and dislikes ABSOLUTELY. An allergy is a hard exclusion — never include it or anything containing it.
+- Respect the diet style, allergies, and dislikes ABSOLUTELY. An allergy is a hard exclusion — never include it or anything containing it. When the diet style is the client's own description, follow their words as strictly as a named style.
 - Vary the meals across days so the client doesn't eat the identical thing every day — but repeating a reliable staple (oats, chicken, rice) is fine and realistic.
 - Hit the requested number of meals per day and the requested number of days exactly.
+- If the client describes an eating schedule (fasting window, no breakfast, irregular days), honor it: place the meals inside their window, use the "other" slot with a fitting title for meals that fall outside breakfast/lunch/dinner/snack, and still hit the day's macro target.
+- The client's extra notes are real constraints, not suggestions. Read them and build to them.
 - Portions are the cooked/edible weight in grams.
 
 VOICE:
@@ -75,8 +77,14 @@ function describeTarget(target: MacroTarget | null): string {
 }
 
 function describePreferences(prefs: MealPlanPreferences): string {
+  // "Other" style = the client's own words; hand the model their description
+  // verbatim so it's followed like a named style.
+  const style =
+    prefs.dietStyle === "other" && prefs.dietStyleOther.trim()
+      ? `The client's own description (follow it strictly): "${prefs.dietStyleOther.trim()}"`
+      : DIET_STYLE_LABEL[prefs.dietStyle];
   const lines = [
-    `- Diet style: ${DIET_STYLE_LABEL[prefs.dietStyle]}`,
+    `- Diet style: ${style}`,
     `- Days to plan: ${prefs.days}`,
     `- Meals per day: ${prefs.mealsPerDay}`,
     `- Budget: ${BUDGET_LABEL[prefs.budget]}`,
@@ -84,6 +92,11 @@ function describePreferences(prefs: MealPlanPreferences): string {
     `- Allergies (HARD exclusions): ${prefs.allergies.length ? prefs.allergies.join(", ") : "none"}`,
     `- Dislikes (avoid): ${prefs.dislikes.length ? prefs.dislikes.join(", ") : "none"}`,
   ];
+  if (prefs.mealPattern.trim()) {
+    lines.push(
+      `- Eating schedule (honor it): ${prefs.mealPattern.trim()}`
+    );
+  }
   if (prefs.notes.trim()) {
     lines.push(`- Extra notes from the client: ${prefs.notes.trim()}`);
   }

@@ -14,6 +14,7 @@ import { KpiHelp } from "@/components/dashboard/kpi";
 import { WorkoutsSkeleton } from "@/components/dashboard/page-skeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { RewardProvider } from "@/components/dashboard/reward";
 import { PersonalRecords } from "@/components/workouts/personal-records";
 import { PlanRunner } from "@/components/workouts/plan-runner";
 import { VolumeChart } from "@/components/workouts/volume-chart";
@@ -121,7 +122,11 @@ async function WorkoutsContent() {
     return <UpgradePrompt />;
   }
 
-  return <Dashboard timezone={user.timezone} userId={user.id} />;
+  return (
+    <RewardProvider haptics={user.hapticsEnabled} sound={user.soundEnabled}>
+      <Dashboard timezone={user.timezone} userId={user.id} />
+    </RewardProvider>
+  );
 }
 
 function UpgradePrompt() {

@@ -12,6 +12,7 @@ const KIND_LABEL: Record<string, string> = {
   meal: "Meal",
   fridge: "Fridge",
   pantry: "Pantry",
+  other: "Food photo",
 };
 
 const MEAL_LABEL: Record<string, string> = {
@@ -19,6 +20,7 @@ const MEAL_LABEL: Record<string, string> = {
   lunch: "Lunch",
   dinner: "Dinner",
   snack: "Snack",
+  other: "Other",
 };
 
 function scoreColor(score: number | null): string {
@@ -106,7 +108,13 @@ export function AnalysisCard({ entry }: { entry: MealAnalysis }) {
   const items = (Array.isArray(entry.items) ? entry.items : []) as Item[];
   const tips = (Array.isArray(entry.tips) ? entry.tips : []) as string[];
   const isMeal = entry.kind === "meal";
-  const mealLabel = entry.meal ? MEAL_LABEL[entry.meal] : null;
+  // A custom slot ("Post-workout shake") shows the member's own name verbatim.
+  const mealLabel =
+    entry.meal === "other" && entry.mealLabel?.trim()
+      ? entry.mealLabel.trim()
+      : entry.meal
+        ? MEAL_LABEL[entry.meal]
+        : null;
   const hasMacros =
     entry.calories != null ||
     entry.protein != null ||

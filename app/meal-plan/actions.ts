@@ -18,6 +18,7 @@ import {
   getUserMemory,
   updateMealPlan as updateMealPlanQuery,
 } from "@/lib/db/queries";
+import { checkMealPlanAllowance } from "@/lib/nutrition/plan-limit";
 import { reconcilePlanTarget } from "@/lib/nutrition/target-sync";
 import {
   type MealPlanPreferences,
@@ -117,6 +118,13 @@ export async function generatePlan(
     };
   }
 
+  // Fair-use cap (NUT-19): generous, checked server-side before the expensive
+  // Opus pass, surfaced with friendly copy only at the moment it triggers.
+  const allowance = await checkMealPlanAllowance(user.id);
+  if (!allowance.allowed) {
+    return { ok: false, error: allowance.message };
+  }
+
   try {
     // Only one active plan at a time: archive the current one (if any) once the
     // new build succeeds, so a failed generation never loses the old plan.
@@ -162,6 +170,12 @@ export async function regeneratePlan(
   const prefs = mealPlanPreferencesSchema.safeParse(existing.preferences);
   if (!prefs.success) {
     return { ok: false, error: "This plan's settings can't be reused." };
+  }
+
+  // Same fair-use cap as generatePlan: a regenerate is the same Opus spend.
+  const allowance = await checkMealPlanAllowance(user.id);
+  if (!allowance.allowed) {
+    return { ok: false, error: allowance.message };
   }
 
   try {

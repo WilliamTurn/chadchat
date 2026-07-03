@@ -4,6 +4,7 @@ import { Camera } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useReward } from "@/components/dashboard/reward";
 import { addProgressEntry } from "@/app/progress/actions";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -23,6 +24,7 @@ const todayISO = todayLocalISO;
 
 export function LogEntryForm({ defaultUnit }: { defaultUnit: "lb" | "kg" }) {
   const router = useRouter();
+  const reward = useReward();
   const [pending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
   const [date, setDate] = useState(todayISO);
@@ -95,7 +97,7 @@ export function LogEntryForm({ defaultUnit }: { defaultUnit: "lb" | "kg" }) {
         photoUrl,
       });
       if (result.ok) {
-        toast.success("Logged.");
+        reward.celebrate("Logged.");
         setWeight("");
         setNote("");
         pick(null);

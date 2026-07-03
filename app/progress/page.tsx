@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { DeleteEntryButton } from "@/components/progress/delete-entry-button";
 import { EditEntryButton } from "@/components/progress/edit-entry-button";
+import { RewardProvider } from "@/components/dashboard/reward";
 import { LogEntryForm } from "@/components/progress/log-entry-form";
 import { MeasurementsSection } from "@/components/progress/measurements-section";
 import { PhotoCompare } from "@/components/progress/photo-compare";
@@ -140,7 +141,9 @@ async function ProgressContent() {
   const isPro = canAccessProFeatures(user);
 
   return isPro ? (
-    <Dashboard preferredUnit={user.weightUnit} userId={user.id} />
+    <RewardProvider haptics={user.hapticsEnabled} sound={user.soundEnabled}>
+      <Dashboard preferredUnit={user.weightUnit} userId={user.id} />
+    </RewardProvider>
   ) : (
     <UpgradePrompt />
   );

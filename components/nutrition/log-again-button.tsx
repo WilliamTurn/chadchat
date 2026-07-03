@@ -4,6 +4,7 @@ import { RotateCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
+import { useReward } from "@/components/dashboard/reward";
 import { logMealManually } from "@/app/nutrition/actions";
 import { defaultMealForNow } from "@/components/nutrition/meal-shared";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import type { MealCategory } from "@/lib/validation/nutrition";
  */
 export function LogAgainButton({ entry }: { entry: MealAnalysis }) {
   const router = useRouter();
+  const reward = useReward();
   const [pending, startTransition] = useTransition();
 
   return (
@@ -34,7 +36,7 @@ export function LogAgainButton({ entry }: { entry: MealAnalysis }) {
             note: null,
           });
           if (result.ok) {
-            toast.success("Logged again for today.");
+            reward.celebrate("Logged again for today.");
             router.refresh();
           } else {
             toast.error(result.error ?? "Couldn't log that again.");

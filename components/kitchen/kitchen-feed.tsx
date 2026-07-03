@@ -39,7 +39,8 @@ export function KitchenFeed({
             <Refrigerator className="size-7 text-blood" />
           </div>
           <p className="max-w-xs text-muted-foreground text-sm">
-            No kitchen checks yet. Show Chad your fridge and brace yourself.
+            No kitchen checks yet. Show Chad your fridge, your grocery cart,
+            any food in your life, and brace yourself.
           </p>
         </div>
       )}

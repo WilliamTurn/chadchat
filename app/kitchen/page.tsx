@@ -6,6 +6,7 @@ import { auth } from "@/app/(auth)/auth";
 import { KitchenSkeleton } from "@/components/dashboard/page-skeletons";
 import { KitchenFeed } from "@/components/kitchen/kitchen-feed";
 import { AnalysisCard } from "@/components/nutrition/analysis-card";
+import { RewardProvider } from "@/components/dashboard/reward";
 import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
@@ -38,8 +39,10 @@ export default function KitchenPage() {
           <Badge variant="secondary">Pro feature</Badge>
         </div>
         <p className="mt-1 text-muted-foreground text-sm">
-          Show Chad your fridge or pantry — he'll tell you what's helping, what's
-          sabotaging you, and what to buy next. Logging a meal instead?{" "}
+          Show Chad your fridge, your pantry, or any food around you (a grocery
+          cart, a market haul, a hotel room): he rates whatever he sees and
+          tells you what's helping, what's sabotaging you, and what to pick
+          instead. Logging a meal instead?{" "}
           <Link
             className="text-foreground underline underline-offset-4"
             href="/nutrition"
@@ -79,7 +82,13 @@ async function KitchenContent() {
   }
 
   const isPro = canAccessProFeatures(user);
-  return isPro ? <Feed userId={user.id} /> : <UpgradePrompt />;
+  return isPro ? (
+    <RewardProvider haptics={user.hapticsEnabled} sound={user.soundEnabled}>
+      <Feed userId={user.id} />
+    </RewardProvider>
+  ) : (
+    <UpgradePrompt />
+  );
 }
 
 function UpgradePrompt() {
@@ -89,8 +98,9 @@ function UpgradePrompt() {
         Rate My Kitchen is a Chad Pro feature
       </h2>
       <p className="mx-auto mt-2 max-w-md text-muted-foreground text-sm">
-        Upgrade to Pro and send Chad a photo of your fridge or pantry. He'll
-        inventory it, call out the junk, and tell you exactly what to stock.
+        Upgrade to Pro and send Chad a photo of your fridge, pantry, grocery
+        cart, or any food around you. He'll inventory it, call out the junk,
+        and tell you exactly what to stock or pick instead.
       </p>
       <Button asChild className="mt-5">
         <Link href="/account">Upgrade to Pro</Link>

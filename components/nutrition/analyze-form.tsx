@@ -12,6 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 import { type FormEvent, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useReward } from "@/components/dashboard/reward";
 import { analyzeMeal, logMealManually } from "@/app/nutrition/actions";
 import { FoodSearch } from "@/components/nutrition/food-search";
 import {
@@ -75,6 +76,7 @@ type Mode = "search" | "photo" | "label" | "manual" | "recent";
 
 export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
   const router = useRouter();
+  const reward = useReward();
   const [pending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
   // Search-first: database search + barcode scan is the default logging path
@@ -82,6 +84,8 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
   const [mode, setMode] = useState<Mode>("search");
   const [loggingFood, setLoggingFood] = useState<string | null>(null);
   const [meal, setMeal] = useState<MealCategory>(defaultMealForNow());
+  // The member's own name for the "Other" slot ("Post-workout shake").
+  const [mealLabel, setMealLabel] = useState("");
   const [date, setDate] = useState(todayLocalISO);
   const [note, setNote] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -111,6 +115,7 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
   function resetCommon() {
     setNote("");
     setMeal(defaultMealForNow());
+    setMealLabel("");
     setDate(todayLocalISO());
   }
 
@@ -161,12 +166,13 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
         mediaType: mediaType as "image/jpeg" | "image/png",
         kind,
         meal,
+        mealLabel: mealLabel.trim() || null,
         recordedAt: date,
         servings: servingsNum,
         note: note.trim() || null,
       });
       if (result.ok) {
-        toast.success(
+        reward.celebrate(
           kind === "label" ? "Label logged." : "Chad's verdict is in."
         );
         resetCommon();
@@ -204,6 +210,7 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
       const result = await logMealManually({
         title: title.trim(),
         meal,
+        mealLabel: mealLabel.trim() || null,
         recordedAt: date,
         calories: calNum,
         protein: proNum,
@@ -212,7 +219,7 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
         note: note.trim() || null,
       });
       if (result.ok) {
-        toast.success("Logged.");
+        reward.celebrate("Logged.");
         resetCommon();
         setTitle("");
         setCal("");
@@ -232,6 +239,7 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
       const result = await logMealManually({
         title: food.title,
         meal,
+        mealLabel: mealLabel.trim() || null,
         recordedAt: date,
         calories: food.calories,
         protein: food.protein,
@@ -241,7 +249,7 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
       });
       setLoggingFood(null);
       if (result.ok) {
-        toast.success(`Logged ${food.title}.`);
+        reward.celebrate(`Logged ${food.title}.`);
         router.refresh();
       } else {
         toast.error(result.error ?? "Couldn't log that.");
@@ -319,7 +327,12 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
       {/* Meal category + date (back-date a meal you forgot) */}
       <div className="flex flex-col gap-2">
         <Label className="text-muted-foreground text-xs">Meal</Label>
-        <MealCategoryPicker onChange={setMeal} value={meal} />
+        <MealCategoryPicker
+          customLabel={mealLabel}
+          onChange={setMeal}
+          onCustomLabelChange={setMealLabel}
+          value={meal}
+        />
       </div>
       <div className="flex flex-col gap-2">
         <Label className="text-muted-foreground text-xs" htmlFor="m-date">
@@ -335,7 +348,7 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
       </div>
 
       {mode === "search" ? (
-        <FoodSearch date={date} meal={meal} />
+        <FoodSearch date={date} meal={meal} mealLabel={mealLabel.trim() || null} />
       ) : mode === "photo" || mode === "label" ? (
         <>
           {mode === "label" && (

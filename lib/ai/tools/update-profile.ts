@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
 import { z } from "zod";
-import { updateUserProfile } from "@/lib/db/queries";
+import { setSensoryPrefs, updateUserProfile } from "@/lib/db/queries";
 import {
   experienceLabel,
   formatHeightBoth,
@@ -25,7 +25,7 @@ type UpdateProfileProps = {
 export const updateProfile = ({ session }: UpdateProfileProps) =>
   tool({
     description:
-      "Update the client's confirmed profile stats (the 'Your stats' section on their Account page, which the app treats as the truth about them): primary goal, age, height, sex, training experience, or training days per week. Use it when the client states or agrees to a change in one of these - especially when you two settle on a different primary goal than the profile shows. Pass ONLY the fields that changed, with exactly what the client confirmed. Never guess or update a field they didn't address.",
+      "Update the client's confirmed profile stats (the 'Your stats' section on their Account page, which the app treats as the truth about them): primary goal, age, height, sex, training experience, or training days per week. Also flips their logging-feedback preferences (success sounds, vibration) when they ask. Use it when the client states or agrees to a change in one of these - especially when you two settle on a different primary goal than the profile shows. Pass ONLY the fields that changed, with exactly what the client confirmed. Never guess or update a field they didn't address.",
     inputSchema: z.object({
       primaryGoal: z
         .enum(["muscle", "fat_loss", "strength", "health"])
@@ -46,9 +46,25 @@ export const updateProfile = ({ session }: UpdateProfileProps) =>
         .enum(["beginner", "intermediate", "advanced"])
         .optional(),
       trainingDaysPerWeek: z.number().int().min(1).max(7).optional(),
+      soundEnabled: z
+        .boolean()
+        .optional()
+        .describe(
+          "Whether the app plays the success chime when they log something. Set only when the client asks to turn logging sounds on or off."
+        ),
+      hapticsEnabled: z
+        .boolean()
+        .optional()
+        .describe(
+          "Whether the app vibrates on logs and timers (phones only). Set only when the client asks to turn vibration on or off."
+        ),
     }),
     execute: async (input) => {
-      const parsed = profileSchema.safeParse(input);
+      // Sound/vibration are preferences, not profile stats; split them off
+      // before the profile validation and write them through the same setter
+      // the /account switches use (DSH-54).
+      const { soundEnabled, hapticsEnabled, ...profileInput } = input;
+      const parsed = profileSchema.safeParse(profileInput);
       if (!parsed.success) {
         return {
           error:
@@ -61,11 +77,23 @@ export const updateProfile = ({ session }: UpdateProfileProps) =>
       const fields = Object.fromEntries(
         Object.entries(parsed.data).filter(([, v]) => v !== undefined)
       );
-      if (Object.keys(fields).length === 0) {
+      const sensory: { soundEnabled?: boolean; hapticsEnabled?: boolean } = {};
+      if (typeof soundEnabled === "boolean") {
+        sensory.soundEnabled = soundEnabled;
+      }
+      if (typeof hapticsEnabled === "boolean") {
+        sensory.hapticsEnabled = hapticsEnabled;
+      }
+      if (Object.keys(fields).length === 0 && Object.keys(sensory).length === 0) {
         return { error: "No profile fields to update were given." };
       }
 
-      await updateUserProfile(session.user.id, fields);
+      if (Object.keys(fields).length > 0) {
+        await updateUserProfile(session.user.id, fields);
+      }
+      if (Object.keys(sensory).length > 0) {
+        await setSensoryPrefs(session.user.id, sensory);
+      }
 
       const changed: string[] = [];
       if (parsed.data.primaryGoal) {
@@ -89,6 +117,12 @@ export const updateProfile = ({ session }: UpdateProfileProps) =>
         changed.push(
           `training days/week: ${parsed.data.trainingDaysPerWeek}`
         );
+      }
+      if (sensory.soundEnabled != null) {
+        changed.push(`logging sounds: ${sensory.soundEnabled ? "on" : "off"}`);
+      }
+      if (sensory.hapticsEnabled != null) {
+        changed.push(`vibration: ${sensory.hapticsEnabled ? "on" : "off"}`);
       }
 
       return {

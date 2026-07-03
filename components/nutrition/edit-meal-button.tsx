@@ -34,6 +34,7 @@ export function EditMealButton({ entry }: { entry: MealAnalysis }) {
   const [meal, setMeal] = useState<MealCategory>(
     (entry.meal as MealCategory | null) ?? defaultMealForNow()
   );
+  const [mealLabel, setMealLabel] = useState(entry.mealLabel ?? "");
   const [date, setDate] = useState(
     toCalendarDayISO(entry.recordedAt ?? entry.createdAt)
   );
@@ -66,6 +67,7 @@ export function EditMealButton({ entry }: { entry: MealAnalysis }) {
         id: entry.id,
         title: title.trim(),
         meal,
+        mealLabel: mealLabel.trim() || null,
         recordedAt: date,
         calories: calNum,
         protein: proNum,
@@ -110,7 +112,12 @@ export function EditMealButton({ entry }: { entry: MealAnalysis }) {
           </div>
           <div className="flex flex-col gap-2">
             <Label className="text-muted-foreground text-xs">Meal</Label>
-            <MealCategoryPicker onChange={setMeal} value={meal} />
+            <MealCategoryPicker
+              customLabel={mealLabel}
+              onChange={setMeal}
+              onCustomLabelChange={setMealLabel}
+              value={meal}
+            />
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="e-date">Date</Label>

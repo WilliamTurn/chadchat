@@ -454,6 +454,25 @@ export async function setMemoryEnabled(userId: string, enabled: boolean) {
   }
 }
 
+/** Flip the sound / vibration logging-feedback preferences (DSH-54). Only the
+ * keys passed are written, so each switch updates independently. */
+export async function setSensoryPrefs(
+  userId: string,
+  prefs: { soundEnabled?: boolean; hapticsEnabled?: boolean }
+) {
+  try {
+    return await db
+      .update(user)
+      .set({ ...prefs, updatedAt: new Date() })
+      .where(eq(user.id, userId));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to update sound and vibration settings"
+    );
+  }
+}
+
 /** Set the user's preferred body-weight unit (lb/kg) for display + new logs. */
 export async function setWeightUnit(userId: string, unit: "lb" | "kg") {
   try {
@@ -1462,6 +1481,24 @@ export async function createMealPlan(entry: {
   }
 }
 
+/** How many meal plans this user generated since `since`; backs the NUT-19
+ * fair-use cap on the (expensive) generation endpoints. Counts every row
+ * regardless of status: archiving a plan must not reset the meter. */
+export async function countMealPlansCreatedSince(
+  userId: string,
+  since: Date
+): Promise<number> {
+  try {
+    const [row] = await db
+      .select({ value: count() })
+      .from(mealPlan)
+      .where(and(eq(mealPlan.userId, userId), gte(mealPlan.createdAt, since)));
+    return row?.value ?? 0;
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to count meal plans");
+  }
+}
+
 /** A user's meal plans, newest first. */
 export async function getMealPlansByUserId(
   userId: string
@@ -1550,13 +1587,14 @@ export async function deleteMealPlan({
 
 // --- Nutrition: meal / fridge / pantry analyses (Pro) ---
 
-type MealCategoryValue = "breakfast" | "lunch" | "dinner" | "snack";
+type MealCategoryValue = "breakfast" | "lunch" | "dinner" | "snack" | "other";
 
 export async function createMealAnalysis(entry: {
   userId: string;
-  kind: "meal" | "fridge" | "pantry";
+  kind: "meal" | "fridge" | "pantry" | "other";
   source?: "photo" | "manual";
   meal?: MealCategoryValue | null;
+  mealLabel?: string | null;
   recordedAt?: Date | null;
   photoUrl: string | null;
   title: string;
@@ -1577,6 +1615,7 @@ export async function createMealAnalysis(entry: {
         kind: entry.kind,
         source: entry.source ?? "photo",
         meal: entry.meal ?? null,
+        mealLabel: entry.mealLabel ?? null,
         recordedAt: entry.recordedAt ?? new Date(),
         photoUrl: entry.photoUrl,
         title: entry.title,
@@ -1605,6 +1644,7 @@ export async function updateMealAnalysis(entry: {
   userId: string;
   title: string;
   meal: MealCategoryValue | null;
+  mealLabel?: string | null;
   recordedAt?: Date | null;
   calories: number | null;
   protein: number | null;
@@ -1617,6 +1657,7 @@ export async function updateMealAnalysis(entry: {
       .set({
         title: entry.title,
         meal: entry.meal,
+        mealLabel: entry.mealLabel ?? null,
         ...(entry.recordedAt ? { recordedAt: entry.recordedAt } : {}),
         calories: entry.calories,
         protein: entry.protein,
@@ -1774,7 +1815,7 @@ export async function getKitchenAnalysesByUserId(
       .where(
         and(
           eq(mealAnalysis.userId, userId),
-          inArray(mealAnalysis.kind, ["fridge", "pantry"])
+          inArray(mealAnalysis.kind, ["fridge", "pantry", "other"])
         )
       )
       .orderBy(desc(mealAnalysis.createdAt))
@@ -1804,7 +1845,7 @@ export async function getKitchenAnalysesBetween(
       .where(
         and(
           eq(mealAnalysis.userId, userId),
-          inArray(mealAnalysis.kind, ["fridge", "pantry"]),
+          inArray(mealAnalysis.kind, ["fridge", "pantry", "other"]),
           gte(mealAnalysis.createdAt, start),
           lt(mealAnalysis.createdAt, end)
         )
@@ -1848,9 +1889,10 @@ export async function deleteMealAnalysis({
 export async function restoreMealAnalysis(entry: {
   id: string;
   userId: string;
-  kind: "meal" | "fridge" | "pantry";
+  kind: "meal" | "fridge" | "pantry" | "other";
   source: "photo" | "manual";
   meal: MealCategoryValue | null;
+  mealLabel: string | null;
   recordedAt: Date | null;
   photoUrl: string | null;
   title: string;

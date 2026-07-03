@@ -46,6 +46,7 @@ const SLOT_LABEL: Record<MealCategory, string> = {
   lunch: "Lunch",
   dinner: "Dinner",
   snack: "Snack",
+  other: "Extra meal",
 };
 
 export type MealPlanViewData = {

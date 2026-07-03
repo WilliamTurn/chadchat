@@ -10,6 +10,7 @@ import {
   getNutritionTarget,
   getUserMemory,
 } from "@/lib/db/queries";
+import { checkMealPlanAllowance } from "@/lib/nutrition/plan-limit";
 import { reconcilePlanTarget } from "@/lib/nutrition/target-sync";
 import {
   BUDGETS,
@@ -43,7 +44,16 @@ export const generateMealPlanTool = ({
       dietStyle: z
         .enum(DIET_STYLES)
         .default("balanced")
-        .describe("The client's eating style."),
+        .describe(
+          "The client's eating style. Use 'other' when their way of eating fits none of the named styles, and describe it in dietStyleOther."
+        ),
+      dietStyleOther: z
+        .string()
+        .max(120)
+        .default("")
+        .describe(
+          "The client's own description of their eating style when dietStyle is 'other', e.g. 'carnivore-leaning, mostly red meat and fruit'. Followed as strictly as a named style."
+        ),
       allergies: z
         .array(z.string().max(40))
         .max(20)
@@ -57,10 +67,17 @@ export const generateMealPlanTool = ({
       mealsPerDay: z
         .number()
         .int()
-        .min(2)
-        .max(6)
+        .min(1)
+        .max(8)
         .default(4)
-        .describe("How many meals per day."),
+        .describe("How many meals per day (1 for OMAD, up to 8)."),
+      mealPattern: z
+        .string()
+        .max(300)
+        .default("")
+        .describe(
+          "The client's eating schedule when it isn't a plain N-meals day: fasting windows, skipped meals, irregular days, e.g. '16:8, no breakfast' or 'OMAD on Fridays'. The plan is built around it."
+        ),
       days: z
         .number()
         .int()
@@ -81,6 +98,15 @@ export const generateMealPlanTool = ({
     }),
     execute: async (input) => {
       const userId = session.user.id;
+
+      // Same fair-use cap as the dashboard form (NUT-19): the chat path is the
+      // same Opus spend, so it can't be the loophole.
+      const allowance = await checkMealPlanAllowance(userId);
+      if (!allowance.allowed) {
+        return {
+          error: `Plan-building is capped for now. Relay this to the client in your own voice: ${allowance.message}`,
+        };
+      }
 
       // Snapshot the preferences (fills defaults/validates).
       const preferences = mealPlanPreferencesSchema.parse(input);

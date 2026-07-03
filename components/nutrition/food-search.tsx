@@ -21,6 +21,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useReward } from "@/components/dashboard/reward";
 import {
   logMealManually,
   lookupFoodBarcode,
@@ -64,12 +65,16 @@ function defaultPortion(hit: FoodHit): { amount: string; unit: PortionUnit } {
 
 export function FoodSearch({
   meal,
+  mealLabel,
   date,
 }: {
   meal: MealCategory;
+  /** Custom slot name when meal = "other" (already trimmed, or null). */
+  mealLabel: string | null;
   date: string;
 }) {
   const router = useRouter();
+  const reward = useReward();
   const [pending, startTransition] = useTransition();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<FoodHit[]>([]);
@@ -166,6 +171,7 @@ export function FoodSearch({
       const result = await logMealManually({
         title,
         meal,
+        mealLabel,
         recordedAt: date,
         calories: macros.calories,
         protein: macros.protein,
@@ -174,7 +180,7 @@ export function FoodSearch({
         note: null,
       });
       if (result.ok) {
-        toast.success(`Logged ${baseName}.`);
+        reward.celebrate(`Logged ${baseName}.`);
         setSelectedId(null);
         router.refresh();
       } else {

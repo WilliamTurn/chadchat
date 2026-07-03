@@ -120,6 +120,11 @@ export const user = pgTable("User", {
   // fall back to US Eastern. FEAT-8 will grow this into the app-wide per-user
   // timezone (captured at login) that day-bucketing + check-in crons also use.
   timezone: text("timezone"),
+  // --- Sound + haptics (DSH-54) ---
+  // Whether logging plays the success chime / fires a vibration on devices that
+  // support it. Default ON (the reward is the point); one-click off on /account.
+  soundEnabled: boolean("soundEnabled").notNull().default(true),
+  hapticsEnabled: boolean("hapticsEnabled").notNull().default(true),
 });
 
 export type User = InferSelectModel<typeof user>;
@@ -175,7 +180,7 @@ export const mealAnalysis = pgTable("MealAnalysis", {
   userId: uuid("userId")
     .notNull()
     .references(() => user.id),
-  kind: varchar("kind", { enum: ["meal", "fridge", "pantry"] })
+  kind: varchar("kind", { enum: ["meal", "fridge", "pantry", "other"] })
     .notNull()
     .default("meal"),
   // How this row was created: a photo Chad analyzed, or a manual macro entry.
@@ -183,8 +188,14 @@ export const mealAnalysis = pgTable("MealAnalysis", {
     .notNull()
     .default("photo"),
   // Which meal of the day this is, for the diary buckets. Null for fridge/pantry
-  // shots and for older rows logged before meal categories existed.
-  meal: varchar("meal", { enum: ["breakfast", "lunch", "dinner", "snack"] }),
+  // shots and for older rows logged before meal categories existed. "other" is
+  // a custom slot; its display name lives in mealLabel.
+  meal: varchar("meal", {
+    enum: ["breakfast", "lunch", "dinner", "snack", "other"],
+  }),
+  // Custom slot name for meal = "other" ("Post-workout shake"); shown verbatim
+  // in the diary and to Chad. Null for the four standard slots.
+  mealLabel: text("mealLabel"),
   // The day this meal is logged *for* (user-chosen; defaults to today). Lets a
   // user back-date a meal they forgot, and keeps the diary day-buckets honest
   // regardless of the UTC insert instant. Nullable for rows logged before this

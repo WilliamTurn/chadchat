@@ -30,7 +30,7 @@ type GetDashboardProps = {
 export const getDashboard = ({ session, timezone }: GetDashboardProps) =>
   tool({
     description:
-      "Read this client's logged dashboard data for a specific day or date range, including past dates. Use it whenever you need to know what they actually did — e.g. 'what did I eat last Tuesday?', 'how was my training last week?', 'am I hitting my protein?', or to review progress before giving advice. Returns logged meals with macros, workouts, progress check-ins (weigh-ins + whether a progress photo was logged), water, body measurements, and any fridge/pantry 'Rate My Kitchen' shots. The always-on snapshot in your context already covers TODAY; use this for any other day or to compare a span. Dates are calendar days in YYYY-MM-DD.",
+      "Read this client's logged dashboard data for a specific day or date range, including past dates. Use it whenever you need to know what they actually did — e.g. 'what did I eat last Tuesday?', 'how was my training last week?', 'am I hitting my protein?', or to review progress before giving advice. Returns logged meals with macros, workouts, progress check-ins (weigh-ins + whether a progress photo was logged), water, body measurements, and any 'Rate My Kitchen' shots (fridge, pantry, or other food scenes like a grocery cart). The always-on snapshot in your context already covers TODAY; use this for any other day or to compare a span. Dates are calendar days in YYYY-MM-DD.",
     inputSchema: z.object({
       date: z
         .string()

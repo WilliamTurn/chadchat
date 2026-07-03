@@ -33,6 +33,7 @@ import { StatPills } from "@/components/today/stat-pills";
 import { SleepTracker } from "@/components/today/sleep-tracker";
 import { StreakStrip } from "@/components/today/streak-strip";
 import { TargetEditor } from "@/components/today/target-editor";
+import { RewardProvider } from "@/components/dashboard/reward";
 import { WaterTracker } from "@/components/today/water-tracker";
 import { WeekStrip } from "@/components/today/week-strip";
 import { Badge } from "@/components/ui/badge";
@@ -506,6 +507,7 @@ async function TodayContent() {
     );
 
   return (
+    <RewardProvider haptics={user.hapticsEnabled} sound={user.soundEnabled}>
     <div className="flex flex-col gap-8">
       {/* Header */}
       {/* Same VF-18 elevation as ModuleCard: top-lit wash, 1px inner top
@@ -1073,6 +1075,7 @@ async function TodayContent() {
       {/* No quick-actions row (P2-8): it duplicated the top nav incompletely,
           and the mobile sheet nav already covers reach. */}
     </div>
+    </RewardProvider>
   );
 }
 

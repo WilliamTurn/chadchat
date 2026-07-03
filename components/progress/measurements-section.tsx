@@ -4,6 +4,7 @@ import { ArrowDownRight, ArrowUpRight, Ruler, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useReward } from "@/components/dashboard/reward";
 import {
   addBodyMeasurement,
   removeBodyMeasurement,
@@ -102,6 +103,7 @@ export function MeasurementsSection({
   measurements: Measurement[];
 }) {
   const router = useRouter();
+  const reward = useReward();
   const [pending, startTransition] = useTransition();
   const [date, setDate] = useState(todayISO);
   const [kind, setKind] =
@@ -132,7 +134,7 @@ export function MeasurementsSection({
         unit,
       });
       if (result.ok) {
-        toast.success("Logged.");
+        reward.celebrate("Logged.");
         setValue("");
         router.refresh();
       } else {

@@ -17,6 +17,7 @@ import { Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useReward } from "@/components/dashboard/reward";
 import { logSleep, removeSleep } from "@/app/today/actions";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -81,6 +82,7 @@ export function SleepLogForm({
   onDone?: () => void;
 }) {
   const router = useRouter();
+  const reward = useReward();
   const [pending, startTransition] = useTransition();
   const [date, setDate] = useState(defaultDate ?? todayLocalISO());
   const [hours, setHours] = useState(
@@ -112,6 +114,9 @@ export function SleepLogForm({
         quality,
       });
       if (result.ok) {
+        // Sonner's action-button toast keeps the Undo; the chime + buzz come
+        // from the shared reward (DSH-54).
+        reward.effects("success");
         if (mode === "edit" || !result.id) {
           toast.success(mode === "edit" ? "Sleep updated." : "Sleep logged.");
         } else {

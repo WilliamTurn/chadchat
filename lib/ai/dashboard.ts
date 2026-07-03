@@ -317,7 +317,10 @@ export function buildDayLog({
       const when = singleDay
         ? ""
         : `${formatCalendarDay(dayAnchor(mealDay(m)))} `;
-      const slot = m.meal ? `[${m.meal}] ` : "";
+      // Custom slots show the member's own name ("post-workout shake").
+      const slotName =
+        m.meal === "other" && m.mealLabel?.trim() ? m.mealLabel.trim() : m.meal;
+      const slot = slotName ? `[${slotName}] ` : "";
       return `  - ${when}${slot}${m.title}${macros ? ` (${macros})` : ""}`;
     });
     sections.push(
@@ -375,7 +378,7 @@ export function buildDayLog({
       return `  - ${when}${k.kind}: ${k.title}${score}`;
     });
     sections.push(
-      `Kitchen shots (fridge/pantry Chad graded, not eaten):\n${lines.join("\n")}`
+      `Kitchen shots (fridge/pantry/food scenes Chad graded, not eaten):\n${lines.join("\n")}`
     );
   }
 

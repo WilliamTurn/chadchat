@@ -20,8 +20,11 @@ import {
   getActiveMealPlanByUserId,
   getNutritionTarget,
   getUserById,
+  getUserMemory,
 } from "@/lib/db/queries";
+import type { User } from "@/lib/db/schema";
 import type { Macros } from "@/lib/nutrition/macros";
+import { planReadinessHints } from "@/lib/nutrition/plan-readiness";
 import { planDaysSchema } from "@/lib/validation/meal-plan";
 
 // A 7-day plan is one Opus design pass + ~40 USDA lookups, which can exceed the
@@ -95,7 +98,7 @@ async function MealPlanContent() {
     return <UpgradePrompt />;
   }
 
-  return <PlanArea userId={user.id} />;
+  return <PlanArea user={user} />;
 }
 
 function UpgradePrompt() {
@@ -114,18 +117,27 @@ function UpgradePrompt() {
   );
 }
 
-async function PlanArea({ userId }: { userId: string }) {
-  const [plan, daily] = await Promise.all([
-    getActiveMealPlanByUserId(userId),
-    getNutritionTarget(userId),
+async function PlanArea({ user }: { user: User }) {
+  const [plan, daily, memory] = await Promise.all([
+    getActiveMealPlanByUserId(user.id),
+    getNutritionTarget(user.id),
+    getUserMemory(user.id),
   ]);
+
+  // What Chad still doesn't know (NUT-19): fuels the generate form's
+  // "this plan could be off" confirm. Never locks generation.
+  const readinessHints = planReadinessHints({
+    user,
+    hasTarget: daily?.calories != null,
+    hasMemory: Boolean(memory?.profile?.trim()),
+  });
 
   // No active plan → the preferences form + a short pitch.
   if (!plan) {
     return (
       <div className="flex flex-col gap-6">
         <div className="rounded-2xl border border-border bg-card p-6">
-          <GenerateForm />
+          <GenerateForm readinessHints={readinessHints} />
         </div>
       </div>
     );
@@ -141,7 +153,7 @@ async function PlanArea({ userId }: { userId: string }) {
           <p className="mb-4 text-muted-foreground text-sm">
             This plan couldn't be read. Build a fresh one below.
           </p>
-          <GenerateForm />
+          <GenerateForm readinessHints={readinessHints} />
         </div>
       </div>
     );
@@ -194,7 +206,7 @@ async function PlanArea({ userId }: { userId: string }) {
           Generating a new plan replaces the one above. Your current plan is
           archived, not deleted.
         </p>
-        <GenerateForm compact />
+        <GenerateForm compact readinessHints={readinessHints} />
       </details>
     </div>
   );

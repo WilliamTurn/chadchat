@@ -15,6 +15,7 @@ import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { CheckInSettings } from "@/components/account/check-in-settings";
+import { SensorySettings } from "@/components/account/sensory-settings";
 import { WeeklyReportSettings } from "@/components/account/weekly-report-settings";
 import { ProfileForm } from "@/components/account/profile-form";
 import { TimezonePreference } from "@/components/account/timezone-preference";
@@ -196,6 +197,14 @@ async function AccountSettings() {
                 </p>
               </div>
               <TimezonePreference initialTimezone={user.timezone} />
+            </div>
+
+            {/* Logging feedback (DSH-54): the success chime + phone vibration. */}
+            <div className="mt-6 border-border border-t pt-6">
+              <SensorySettings
+                initialHaptics={user.hapticsEnabled}
+                initialSound={user.soundEnabled}
+              />
             </div>
 
             {/* Proactive check-ins (FEAT-11) + the weekly report (FEAT-12) —

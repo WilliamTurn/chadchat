@@ -31,7 +31,17 @@ export const logMeal = ({ session, user }: LogMealProps) =>
         .enum(MEAL_CATEGORIES)
         .nullable()
         .optional()
-        .describe("Which meal of the day: breakfast, lunch, dinner or snack."),
+        .describe(
+          "Which meal of the day: breakfast, lunch, dinner, snack, or 'other' for anything that fits none of those (a post-workout shake, a fasting-window meal). With 'other', also set mealLabel."
+        ),
+      mealLabel: z
+        .string()
+        .max(40)
+        .nullable()
+        .optional()
+        .describe(
+          "Short custom name for the 'other' slot, shown verbatim in the diary, e.g. 'Post-workout shake'. Only used when meal is 'other'."
+        ),
       recordedAt: z
         .string()
         .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD.")
@@ -60,13 +70,14 @@ export const logMeal = ({ session, user }: LogMealProps) =>
         };
       }
 
-      const { title, meal, recordedAt, calories, protein, carbs, fat } =
+      const { title, meal, mealLabel, recordedAt, calories, protein, carbs, fat } =
         parsed.data;
       const created = await createMealAnalysis({
         userId: session.user.id,
         kind: "meal",
         source: "manual",
         meal: meal ?? null,
+        mealLabel: meal === "other" ? (mealLabel ?? null) || null : null,
         recordedAt: parseCalendarDay(recordedAt),
         photoUrl: null,
         title,

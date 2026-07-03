@@ -15,7 +15,10 @@ export function SegmentedPicker<T extends string>({
   className,
   ariaLabel,
 }: {
-  options: { value: T; label: string }[];
+  // `description` (optional) renders a one-line plain-English explainer under
+  // the label (NUT-18), turning the pill into a left-aligned option card, the
+  // same shape as the kitchen form's kind selector.
+  options: { value: T; label: string; description?: string }[];
   value: T;
   onChange: (v: T) => void;
   className?: string;
@@ -33,7 +36,8 @@ export function SegmentedPicker<T extends string>({
           <button
             aria-pressed={active}
             className={cn(
-              "min-w-0 whitespace-normal break-words rounded-lg border px-2 py-2 text-center font-medium text-xs transition-colors",
+              "min-w-0 whitespace-normal break-words rounded-lg border px-2 py-2 font-medium text-xs transition-colors",
+              o.description ? "px-3 py-2.5 text-left" : "text-center",
               active
                 ? "border-blood bg-blood/10 text-foreground"
                 : "border-border bg-background/40 text-muted-foreground hover:bg-accent/50"
@@ -42,7 +46,16 @@ export function SegmentedPicker<T extends string>({
             onClick={() => onChange(o.value)}
             type="button"
           >
-            {o.label}
+            {o.description ? (
+              <>
+                <div className="font-medium text-xs">{o.label}</div>
+                <div className="mt-0.5 font-normal text-[11px] text-muted-foreground leading-tight">
+                  {o.description}
+                </div>
+              </>
+            ) : (
+              o.label
+            )}
           </button>
         );
       })}

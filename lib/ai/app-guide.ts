@@ -54,7 +54,7 @@ export const APP_GUIDE_SECTIONS: AppGuideSection[] = [
   {
     id: "rate-my-kitchen",
     title: "Rate My Kitchen (Pro feature)",
-    content: `Photograph a fridge or pantry and Chad rates it: what supports the goal, what sabotages it, and what to buy instead. Good before a grocery run. Past kitchen shots are kept on the page.`,
+    content: `Photograph a fridge, a pantry, or ANY food-related scene (there's an "Other" option: grocery cart, market haul, hotel minibar, buffet, cooler) and Chad rates whatever he is shown: what supports the goal, what sabotages it, and what to pick instead. Good before a grocery run or when deciding what to eat away from home. An optional note field adds context Chad reads. Past kitchen shots are kept on the page.`,
   },
   {
     id: "progress",
@@ -94,7 +94,7 @@ export const APP_GUIDE_SECTIONS: AppGuideSection[] = [
   {
     id: "account",
     title: "Account page",
-    content: `The Account page holds: the member's profile stats (primary goal, age, height, sex, training experience, training days per week; these feed Chad's coaching and can be edited anytime), Preferences including the time zone (detected from the browser, correctable there; the time zone decides when "today" rolls over for streaks and logs), email settings (Elite: Weekly Report day/time and Check-in frequency), billing ("Manage billing"), and CSV export of weigh-ins, meals, and workouts. Memory settings (turn Chad's memory off, or wipe it) are in Settings, in the menu under the member's name in the chat sidebar.`,
+    content: `The Account page holds: the member's profile stats (primary goal, age, height, sex, training experience, training days per week; these feed Chad's coaching and can be edited anytime), Preferences including the time zone (detected from the browser, correctable there; the time zone decides when "today" rolls over for streaks and logs), sound effects and vibration switches for logging feedback (the success chime and phone buzz; Chad can flip these too when asked), email settings (Elite: Weekly Report day/time and Check-in frequency), billing ("Manage billing"), and CSV export of weigh-ins, meals, and workouts. Memory settings (turn Chad's memory off, or wipe it) are in Settings, in the menu under the member's name in the chat sidebar.`,
   },
   {
     id: "data-privacy",

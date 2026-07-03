@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Toaster } from "sonner";
+import { RewardProvider } from "@/components/dashboard/reward";
 import { auth } from "@/app/(auth)/auth";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { BackToDashboard } from "@/components/nav/back-to-dashboard";
@@ -122,18 +123,20 @@ async function SleepContent() {
   const goalMinutes = user.sleepGoalMinutes ?? SLEEP_GOAL_MINUTES;
 
   return (
-    <div className="flex flex-col gap-6">
-      <SleepTracker
-        goalMinutes={goalMinutes}
-        last={lastNight}
-        week={sleepWeek}
-        weekChart={!showTrend}
-      />
-      {showTrend && (
-        <SleepTrendChart days={sleepDaily} goalMinutes={goalMinutes} />
-      )}
-      <SleepHistory entries={history} goalMinutes={goalMinutes} />
-    </div>
+    <RewardProvider haptics={user.hapticsEnabled} sound={user.soundEnabled}>
+      <div className="flex flex-col gap-6">
+        <SleepTracker
+          goalMinutes={goalMinutes}
+          last={lastNight}
+          week={sleepWeek}
+          weekChart={!showTrend}
+        />
+        {showTrend && (
+          <SleepTrendChart days={sleepDaily} goalMinutes={goalMinutes} />
+        )}
+        <SleepHistory entries={history} goalMinutes={goalMinutes} />
+      </div>
+    </RewardProvider>
   );
 }
 

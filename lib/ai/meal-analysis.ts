@@ -5,7 +5,7 @@ import { z } from "zod";
 import { DEFAULT_CHAT_MODEL } from "./models";
 import { getLanguageModel } from "./providers";
 
-export type MealKind = "meal" | "fridge" | "pantry";
+export type MealKind = "meal" | "fridge" | "pantry" | "other";
 
 // The structured analysis Chad returns for a photo. Macros are nullable because
 // a fridge/pantry inventory doesn't have a single "serving" to total — only a
@@ -128,6 +128,9 @@ function instructionFor(kind: MealKind): string {
   }
   if (kind === "pantry") {
     return `This is the client's PANTRY / cupboard. Inventory what you see and judge it like a coach: which staples support the goal, which processed junk is sabotaging it, and what's missing. Set calories/protein/carbs/fat to null (a pantry isn't a serving). Tips = what to toss and what staples to stock.`;
+  }
+  if (kind === "other") {
+    return `This is a food-related scene from the client's life: it could be a grocery cart, a market haul, a hotel minibar, a restaurant buffet, a cooler, a road-trip gas-station spread, anything. First say what you're looking at, then inventory the food you can see and judge it like a coach: what supports the goal, what sabotages it, and what the better pick would be in this exact situation. Set calories/protein/carbs/fat to null (this is a scene, not a serving). Tips = the concrete choices to make right here: what to grab, what to put back, what to order instead.`;
   }
   return "This is a MEAL the client is about to eat or just ate. Identify everything on the plate, estimate the total calories and macros (protein/carbs/fat in grams) as best you can, and grade it. Be realistic about portions. Your verdict should tell them straight whether this moves them toward their goal or away from it.";
 }

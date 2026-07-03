@@ -31,6 +31,27 @@ const SET_TAG: Record<string, string> = {
   failure: "failure",
 };
 
+// Per-workout accent (DSH-54): history entries used to be identical cards
+// that blurred together. Each workout title hashes to one of the five
+// dashboard chart tokens, so "Push day" is always sky, "Leg day" always
+// emerald, and a scan of the list reads as distinct sessions (the Hevy-style
+// colored-icon pattern). Static class strings so Tailwind keeps them.
+const ACCENTS = [
+  { bar: "bg-chart-1", chip: "bg-chart-1/15 text-chart-1" },
+  { bar: "bg-chart-2", chip: "bg-chart-2/15 text-chart-2" },
+  { bar: "bg-chart-3", chip: "bg-chart-3/15 text-chart-3" },
+  { bar: "bg-chart-4", chip: "bg-chart-4/15 text-chart-4" },
+  { bar: "bg-chart-5", chip: "bg-chart-5/15 text-chart-5" },
+] as const;
+
+function accentFor(title: string) {
+  let h = 0;
+  for (let i = 0; i < title.length; i++) {
+    h = (h * 31 + title.charCodeAt(i)) >>> 0;
+  }
+  return ACCENTS[h % ACCENTS.length];
+}
+
 function fmtDate(iso: string): string {
   return formatCalendarDay(new Date(iso), {
     weekday: "short",
@@ -49,11 +70,25 @@ export function WorkoutCard({
   const volume = workoutVolumeLb(workout);
   const sets = workoutSetCount(workout);
   const duration = formatDuration(workout.durationSeconds);
+  const accent = accentFor(workout.title);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-5">
+    <section className="relative overflow-hidden rounded-2xl border border-border bg-card p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-float)]">
+      <div
+        aria-hidden
+        className={cn("absolute inset-y-0 left-0 w-1", accent.bar)}
+      />
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="flex min-w-0 items-start gap-3">
+          <span
+            className={cn(
+              "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl",
+              accent.chip
+            )}
+          >
+            <Dumbbell className="size-4" />
+          </span>
+          <div className="min-w-0">
           <h3 className="font-display font-semibold text-lg leading-tight">
             {workout.title}
           </h3>
@@ -77,6 +112,7 @@ export function WorkoutCard({
                 {volume.toLocaleString()} lb volume
               </span>
             ) : null}
+          </div>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">

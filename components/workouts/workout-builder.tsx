@@ -4,6 +4,7 @@ import { Check, ChevronDown, ChevronUp, Plus, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useReward } from "@/components/dashboard/reward";
 import { editWorkout, saveWorkout } from "@/app/workouts/actions";
 import { KpiHelp } from "@/components/dashboard/kpi";
 import { Button } from "@/components/ui/button";
@@ -209,6 +210,7 @@ export function WorkoutBuilder({
   trigger: ReactNode;
 }) {
   const router = useRouter();
+  const reward = useReward();
   const isRepeat = mode === "repeat";
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -415,7 +417,9 @@ export function WorkoutBuilder({
           ? await editWorkout({ id: initial.id, ...payload })
           : await saveWorkout(payload);
       if (result.ok) {
-        toast.success(mode === "edit" ? "Workout updated." : "Workout logged.");
+        reward.celebrate(
+          mode === "edit" ? "Workout updated." : "Workout logged."
+        );
         setOpen(false);
         if (mode !== "edit") {
           reset();

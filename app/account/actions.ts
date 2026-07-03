@@ -8,6 +8,7 @@ import {
   getUserById,
   setCheckInSettings,
   setMemoryEnabled,
+  setSensoryPrefs,
   setUserTimezone,
   setWeeklyReportSettings,
   setWeightUnit,
@@ -210,6 +211,31 @@ export async function saveWeeklyReportSettings(input: {
   });
   revalidatePath("/account");
   revalidatePath("/reports");
+}
+
+/** Flip the logging sound / vibration feedback preferences (DSH-54). */
+export async function saveSensorySettings(prefs: {
+  soundEnabled?: boolean;
+  hapticsEnabled?: boolean;
+}) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  const fields: { soundEnabled?: boolean; hapticsEnabled?: boolean } = {};
+  if (typeof prefs.soundEnabled === "boolean") {
+    fields.soundEnabled = prefs.soundEnabled;
+  }
+  if (typeof prefs.hapticsEnabled === "boolean") {
+    fields.hapticsEnabled = prefs.hapticsEnabled;
+  }
+  if (Object.keys(fields).length === 0) {
+    return;
+  }
+
+  await setSensoryPrefs(session.user.id, fields);
+  revalidatePath("/account");
 }
 
 /** Turn Chad's cross-chat memory on or off for the current user. */

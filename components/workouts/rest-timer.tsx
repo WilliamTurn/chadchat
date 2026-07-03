@@ -1,5 +1,6 @@
 "use client";
 
+import { useReward } from "@/components/dashboard/reward";
 import { Pause, Play, RotateCcw, Timer } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -51,10 +52,11 @@ export function parseRestDuration(raw: string): number | null {
 
 /**
  * A lightweight rest timer for between sets, the Hevy/Strong staple. Pick a
- * preset or type your own duration; it counts down and vibrates (where
- * supported) at zero. Purely client-side, no audio assets.
+ * preset or type your own duration; it counts down and, honoring the member's
+ * sound/vibration preferences (DSH-54), chimes and buzzes at zero.
  */
 export function RestTimer() {
+  const reward = useReward();
   const [remaining, setRemaining] = useState(0);
   const [running, setRunning] = useState(false);
   const [custom, setCustom] = useState("");
@@ -68,9 +70,7 @@ export function RestTimer() {
       setRemaining((r) => {
         if (r <= 1) {
           setRunning(false);
-          if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-            navigator.vibrate?.(400);
-          }
+          reward.effects("timer");
           return 0;
         }
         return r - 1;
@@ -81,7 +81,7 @@ export function RestTimer() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [running]);
+  }, [running, reward]);
 
   function start(seconds: number) {
     setRemaining(seconds);

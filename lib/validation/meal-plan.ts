@@ -23,6 +23,7 @@ export const DIET_STYLES = [
   "vegan",
   "pescatarian",
   "paleo",
+  "other",
 ] as const;
 export type DietStyle = (typeof DIET_STYLES)[number];
 
@@ -36,6 +37,26 @@ export const DIET_STYLE_LABEL: Record<DietStyle, string> = {
   vegan: "Vegan",
   pescatarian: "Pescatarian",
   paleo: "Paleo",
+  other: "Other",
+};
+
+/** One plain-English line per style: what picking it actually means (NUT-18).
+ * Shown under each option in the generate form and reused anywhere a style
+ * needs explaining. */
+export const DIET_STYLE_DESCRIPTION: Record<DietStyle, string> = {
+  balanced: "Nothing cut out; a sensible mix of protein, carbs, and fat.",
+  high_protein:
+    "Protein front and center in every meal; best for building or keeping muscle.",
+  low_carb: "Carbs kept low (roughly under 100g a day); more protein and fat.",
+  keto: "Very low carb (under about 30g a day), high fat, so the body runs on fat.",
+  mediterranean:
+    "Fish, olive oil, vegetables, beans, whole grains; red meat is rare.",
+  vegetarian: "No meat or fish; eggs and dairy stay in.",
+  vegan: "No animal products at all: no meat, fish, eggs, or dairy.",
+  pescatarian: "Fish and seafood yes, other meat no; eggs and dairy stay in.",
+  paleo:
+    "Whole foods only: meat, fish, eggs, vegetables, fruit, nuts; no grains, dairy, or processed food.",
+  other: "Describe your own way of eating and Chad builds the plan around it.",
 };
 
 export const BUDGETS = ["budget", "moderate", "premium"] as const;
@@ -56,9 +77,16 @@ export const COOK_TIME_LABEL: Record<CookTime, string> = {
 
 export const mealPlanPreferencesSchema = z.object({
   dietStyle: z.enum(DIET_STYLES).default("balanced"),
+  // The member's own words when dietStyle = "other" ("carnivore-leaning,
+  // mostly red meat and fruit"). The generator follows this like a named style.
+  dietStyleOther: z.string().trim().max(120).default(""),
   allergies: z.array(z.string().trim().min(1).max(40)).max(20).default([]),
   dislikes: z.array(z.string().trim().min(1).max(40)).max(20).default([]),
-  mealsPerDay: z.number().int().min(2).max(6).default(4),
+  // 1 (OMAD) through 8; the fixed pills offer 2-6 and "Other" takes any number.
+  mealsPerDay: z.number().int().min(1).max(8).default(4),
+  // Free-text eating schedule the generator honors: fasting windows, irregular
+  // days, shift work ("16:8, no breakfast", "OMAD on Fridays").
+  mealPattern: z.string().trim().max(300).default(""),
   days: z.number().int().min(1).max(7).default(7),
   budget: z.enum(BUDGETS).default("moderate"),
   cookTime: z.enum(COOK_TIMES).default("moderate"),

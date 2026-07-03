@@ -4,16 +4,22 @@ import { Camera, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useReward } from "@/components/dashboard/reward";
 import { analyzeMeal } from "@/app/nutrition/actions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
-type Kind = "fridge" | "pantry";
+type Kind = "fridge" | "pantry" | "other";
 
 const KINDS: { value: Kind; label: string; hint: string }[] = [
   { value: "fridge", label: "Fridge", hint: "What's in your fridge" },
   { value: "pantry", label: "Pantry", hint: "Your cupboard / staples" },
+  {
+    value: "other",
+    label: "Other",
+    hint: "Grocery cart, market haul, hotel room, anywhere",
+  },
 ];
 
 export function KitchenForm({
@@ -22,6 +28,7 @@ export function KitchenForm({
   onAnalyzingChange?: (analyzing: boolean) => void;
 }) {
   const router = useRouter();
+  const reward = useReward();
   const [pending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
   const [kind, setKind] = useState<Kind>("fridge");
@@ -87,7 +94,7 @@ export function KitchenForm({
         note: note.trim() || null,
       });
       if (result.ok) {
-        toast.success("Chad's verdict is in.");
+        reward.celebrate("Chad's verdict is in.");
         setNote("");
         pick(null);
         if (inputRef.current) {
@@ -106,13 +113,14 @@ export function KitchenForm({
       <div>
         <h2 className="font-medium text-lg">Rate My Kitchen</h2>
         <p className="mt-1 text-muted-foreground text-sm">
-          Photograph the inside of your fridge or pantry. Chad does a kitchen
-          raid — what to keep, what to toss, what to buy next shop.
+          Photograph your fridge, your pantry, or any food around you: a
+          grocery cart, a market haul, a hotel minibar. Chad rates whatever
+          you show him: what to keep, what to toss, what to pick instead.
         </p>
       </div>
 
       {/* Kind selector */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 gap-2 min-[480px]:grid-cols-3">
         {KINDS.map((k) => {
           const active = kind === k.value;
           return (
@@ -169,7 +177,7 @@ export function KitchenForm({
       <Textarea
         maxLength={500}
         onChange={(e) => setNote(e.target.value)}
-        placeholder="Anything Chad should know? (optional) — e.g. 'shared house', 'on a cut'"
+        placeholder="Anything Chad should know? (optional), e.g. 'shared house', 'on a cut', 'shopping for the week'"
         rows={2}
         value={note}
       />

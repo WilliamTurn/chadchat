@@ -10,6 +10,7 @@ import { PageShell } from "@/components/nav/page-shell";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { WaterHistory } from "@/components/today/water-history";
 import { WaterTodayLog } from "@/components/today/water-today-log";
+import { RewardProvider } from "@/components/dashboard/reward";
 import { WaterTracker } from "@/components/today/water-tracker";
 import { WaterTrendChart } from "@/components/today/water-trend-chart";
 import { Badge } from "@/components/ui/badge";
@@ -108,6 +109,7 @@ async function HydrationContent() {
   const stats = computeWaterStats(waterDaily, waterGoalMl, timezone);
 
   return (
+    <RewardProvider haptics={user.hapticsEnabled} sound={user.soundEnabled}>
     <div className="flex flex-col gap-6">
       {waterDaily.length > 0 && (
         <div className="grid grid-cols-3 gap-3">
@@ -153,6 +155,7 @@ async function HydrationContent() {
       {showTrend && <WaterTrendChart days={waterDaily} goalMl={waterGoalMl} />}
       <WaterHistory days={waterDaily} goalMl={waterGoalMl} />
     </div>
+    </RewardProvider>
   );
 }
 

@@ -32,6 +32,7 @@ import {
 import type { MealAnalysis, NutritionTarget } from "@/lib/db/schema";
 import { dailyMacroTrend } from "@/lib/nutrition/daily-macros";
 import { deriveRecentFoods } from "@/lib/nutrition/recent-foods";
+import { RewardProvider } from "@/components/dashboard/reward";
 import { MEAL_CATEGORIES, type MealCategory } from "@/lib/validation/nutrition";
 
 const MEAL_LABEL: Record<MealCategory, string> = {
@@ -39,6 +40,7 @@ const MEAL_LABEL: Record<MealCategory, string> = {
   lunch: "Lunch",
   dinner: "Dinner",
   snack: "Snack",
+  other: "Other",
 };
 
 export default function NutritionPage() {
@@ -74,7 +76,7 @@ export default function NutritionPage() {
           >
             Meal Plan
           </Link>{" "}
-          · Rating your fridge or pantry?{" "}
+          · Rating your kitchen or grocery haul?{" "}
           <Link
             className="text-foreground underline underline-offset-4"
             href="/kitchen"
@@ -108,7 +110,9 @@ async function NutritionContent() {
 
   const isPro = canAccessProFeatures(user);
   return isPro ? (
-    <Feed timezone={user.timezone} userId={user.id} />
+    <RewardProvider haptics={user.hapticsEnabled} sound={user.soundEnabled}>
+      <Feed timezone={user.timezone} userId={user.id} />
+    </RewardProvider>
   ) : (
     <UpgradePrompt />
   );
@@ -214,14 +218,29 @@ function TodaySection({
 }) {
   const grouped: { label: string; items: MealAnalysis[] }[] = [];
   for (const cat of MEAL_CATEGORIES) {
+    if (cat === "other") {
+      continue;
+    }
     const items = meals.filter((m) => m.meal === cat);
     if (items.length > 0) {
       grouped.push({ label: MEAL_LABEL[cat], items });
     }
   }
-  const uncategorized = meals.filter((m) => !m.meal);
-  if (uncategorized.length > 0) {
-    grouped.push({ label: "Other", items: uncategorized });
+  // Custom slots ("other") group under the member's own name, so a
+  // "Post-workout shake" reads as its own section like the standard meals.
+  // Unnamed customs and pre-category rows share a plain "Other" bucket.
+  const custom = new Map<string, MealAnalysis[]>();
+  for (const m of meals) {
+    if (m.meal === "other" || !m.meal) {
+      const label =
+        (m.meal === "other" && m.mealLabel?.trim()) || MEAL_LABEL.other;
+      const bucket = custom.get(label) ?? [];
+      bucket.push(m);
+      custom.set(label, bucket);
+    }
+  }
+  for (const [label, items] of custom) {
+    grouped.push({ label, items });
   }
 
   return (

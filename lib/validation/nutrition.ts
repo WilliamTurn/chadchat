@@ -1,13 +1,18 @@
 import { z } from "zod";
 
-/** The meal-of-day buckets the diary groups by. */
+/** The meal-of-day buckets the diary groups by. "other" is a custom slot;
+ * the member names it themselves (mealLabel, e.g. "Post-workout shake"). */
 export const MEAL_CATEGORIES = [
   "breakfast",
   "lunch",
   "dinner",
   "snack",
+  "other",
 ] as const;
 export type MealCategory = (typeof MEAL_CATEGORIES)[number];
+
+/** Custom slot name for meal = "other". Trimmed, short, shown verbatim. */
+const mealLabelField = z.string().trim().max(40).nullable().optional();
 
 /** Input for analyzing a meal/fridge/pantry photo. The photo is uploaded first
  * (to Vercel Blob) and only its URL is sent to the server action. */
@@ -21,9 +26,12 @@ export const analyzeMealSchema = z.object({
   mediaType: z.enum(["image/jpeg", "image/png"]).default("image/jpeg"),
   // "label" = a packaged-food nutrition label; logged as a meal, but the macros
   // are read off the label (per serving) rather than estimated from a plate.
-  kind: z.enum(["meal", "fridge", "pantry", "label"]).default("meal"),
-  // Which meal of the day a plated meal is. Ignored for fridge/pantry.
+  // Kitchen "other" = any food-related scene (grocery cart, market haul,
+  // hotel room); Chad rates whatever he is shown.
+  kind: z.enum(["meal", "fridge", "pantry", "other", "label"]).default("meal"),
+  // Which meal of the day a plated meal is. Ignored for kitchen kinds.
   meal: z.enum(MEAL_CATEGORIES).nullable().optional(),
+  mealLabel: mealLabelField,
   // The day this meal is logged for. Omit/null = today. Ignored for fridge/pantry.
   recordedAt: calendarDay.nullable().optional(),
   // How many label servings were eaten (label kind only). The label lists
@@ -40,6 +48,7 @@ export type AnalyzeMealInput = z.input<typeof analyzeMealSchema>;
 export const logMealSchema = z.object({
   title: z.string().trim().min(1, "Name this meal.").max(120),
   meal: z.enum(MEAL_CATEGORIES).nullable().optional(),
+  mealLabel: mealLabelField,
   // The day this meal is logged for. Omit/null = today.
   recordedAt: calendarDay.nullable().optional(),
   calories: z.number().int().min(0).max(20_000).nullable(),
@@ -64,9 +73,10 @@ export type EditMealInput = z.infer<typeof editMealSchema>;
  * through the browser. Dates travel as ISO strings. */
 export const restoreMealSchema = z.object({
   id: z.string().uuid(),
-  kind: z.enum(["meal", "fridge", "pantry"]),
+  kind: z.enum(["meal", "fridge", "pantry", "other"]),
   source: z.enum(["photo", "manual"]),
   meal: z.enum(MEAL_CATEGORIES).nullable(),
+  mealLabel: z.string().trim().max(40).nullable(),
   recordedAt: z.string().datetime().nullable(),
   photoUrl: z.string().url().nullable(),
   title: z.string().trim().min(1).max(300),
