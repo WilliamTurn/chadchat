@@ -416,7 +416,9 @@ export function WaterTracker({
         }
       >
         {/* Undo stays pending-gated (not optimistic): the client doesn't know
-            the last entry's size, so it waits for the server total. */}
+            the last entry's size, so it waits for the server total. This is
+            the quick mis-tap eraser; the itemized per-entry delete lives in
+            /hydration's "Today's log" (LC-11). */}
         <Button
           aria-label="Undo last water entry"
           className="gap-1.5 text-muted-foreground text-xs"
@@ -426,7 +428,7 @@ export function WaterTracker({
           variant="ghost"
         >
           <Undo2 className="size-3.5" />
-          Undo last
+          Undo last add
         </Button>
         <WaterGoalEditor
           goalMl={safeGoal}

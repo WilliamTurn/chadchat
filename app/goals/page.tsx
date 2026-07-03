@@ -55,7 +55,7 @@ export default function GoalsPage() {
 
       <div className="mb-8">
         <BackToDashboard />
-        <h1 className="font-semibold text-2xl tracking-tight">Your goals</h1>
+        <h1 className="font-semibold text-2xl tracking-tight">Goals</h1>
         <p className="mt-1 text-muted-foreground text-sm">
           Everything you're chasing, in one place: live progress on the active
           goals, your past goals, and the full write-ups. Chad sees these in

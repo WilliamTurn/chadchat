@@ -107,9 +107,7 @@ export default function ProgressPage() {
       <div className="mb-8">
         <BackToDashboard />
         <div className="flex items-center gap-3">
-          <h1 className="font-semibold text-2xl tracking-tight">
-            Your progress
-          </h1>
+          <h1 className="font-semibold text-2xl tracking-tight">Progress</h1>
           <Badge variant="secondary">Pro</Badge>
         </div>
         <p className="mt-1 text-muted-foreground text-sm">

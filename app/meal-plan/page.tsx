@@ -45,7 +45,7 @@ export default function MealPlanPage() {
       <div className="mb-8">
         <BackToDashboard />
         <div className="flex items-center gap-3">
-          <h1 className="font-semibold text-2xl tracking-tight">Meal plan</h1>
+          <h1 className="font-semibold text-2xl tracking-tight">Meal Plan</h1>
           <Badge variant="secondary">Pro</Badge>
         </div>
         <p className="mt-1 text-muted-foreground text-sm">

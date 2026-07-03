@@ -103,7 +103,7 @@ export function SleepTracker({
     <ModuleCard glow="indigo">
       <ModuleHeader
         icon={<Moon className="size-4" />}
-        title="Sleep & recovery"
+        title="Sleep"
         tone="indigo"
         viewHref={viewHref}
       />

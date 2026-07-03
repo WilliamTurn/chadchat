@@ -74,8 +74,12 @@ export const NAV_LINKS: NavLink[] = [
     surfaces: ["header", "sidebar"],
   },
   {
+    // "Rate My Kitchen" is the feature's one canonical name (LC-12): the page
+    // H1 and every cross-link already used it, and plain "Kitchen" reads like
+    // recipes or inventory rather than what the feature IS (Chad rating your
+    // fridge/pantry photo).
     href: "/kitchen",
-    label: "Kitchen",
+    label: "Rate My Kitchen",
     icon: Refrigerator,
     surfaces: ["header", "sidebar"],
   },

@@ -44,7 +44,7 @@ export default function ReportsPage() {
       <div className="mb-8">
         <div className="flex items-center gap-3">
           <h1 className="font-semibold text-2xl tracking-tight">
-            Weekly reports
+            Weekly Report
           </h1>
           <Badge variant="secondary">Elite</Badge>
         </div>

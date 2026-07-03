@@ -9,6 +9,7 @@ import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { WaterHistory } from "@/components/today/water-history";
+import { WaterTodayLog } from "@/components/today/water-today-log";
 import { WaterTracker } from "@/components/today/water-tracker";
 import { WaterTrendChart } from "@/components/today/water-trend-chart";
 import { Badge } from "@/components/ui/badge";
@@ -17,11 +18,11 @@ import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import {
   getUserById,
   getWaterDailyTotals,
-  getWaterMlSince,
+  getWaterLogsSince,
 } from "@/lib/db/queries";
-import { todayStartInTz } from "@/lib/date";
+import { resolveTimezone, todayStartInTz } from "@/lib/date";
 import { computeWaterStats } from "@/lib/today/water-stats";
-import { DEFAULT_WATER_GOAL_ML } from "@/lib/today/water-units";
+import { DEFAULT_WATER_GOAL_ML, formatOz } from "@/lib/today/water-units";
 import { buildWaterWeek } from "@/lib/today/week";
 
 /**
@@ -84,10 +85,22 @@ async function HydrationContent() {
   }
 
   const timezone = user.timezone;
-  const [waterMl, waterDaily] = await Promise.all([
-    getWaterMlSince(user.id, todayStartInTz(timezone)),
+  // Today's individual increments back BOTH the counter (summed) and the
+  // itemized "Today's log" below (LC-11) — one query, one source of truth.
+  const [todayEntries, waterDaily] = await Promise.all([
+    getWaterLogsSince(user.id, todayStartInTz(timezone)),
     getWaterDailyTotals(user.id, timezone),
   ]);
+  const waterMl = todayEntries.reduce((sum, e) => sum + e.amountMl, 0);
+  const todayLog = todayEntries.map((e) => ({
+    id: e.id,
+    timeLabel: e.recordedAt.toLocaleTimeString("en-US", {
+      timeZone: resolveTimezone(timezone),
+      hour: "numeric",
+      minute: "2-digit",
+    }),
+    amountLabel: formatOz(e.amountMl),
+  }));
 
   const waterGoalMl = user.waterGoalMl ?? DEFAULT_WATER_GOAL_ML;
   const showTrend = waterDaily.length >= 2;
@@ -126,6 +139,7 @@ async function HydrationContent() {
         totalMl={waterMl}
         week={showTrend ? undefined : buildWaterWeek(waterDaily, timezone)}
       />
+      <WaterTodayLog entries={todayLog} />
       {showTrend && <WaterTrendChart days={waterDaily} goalMl={waterGoalMl} />}
       <WaterHistory days={waterDaily} goalMl={waterGoalMl} />
     </div>

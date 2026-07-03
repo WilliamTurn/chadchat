@@ -152,7 +152,7 @@ const FEATURES: Feature[] = [
   },
   {
     icon: Refrigerator,
-    title: "Kitchen",
+    title: "Rate My Kitchen",
     href: "/kitchen",
     tier: "Pro",
     body: (
@@ -314,7 +314,7 @@ const PLAN_ROWS: PlanRow[] = [
     name: "Chad Pro",
     price: "$39/month",
     summary:
-      "Everything in Basic, plus the full dashboard: the Workouts log, Calorie Tracker with photo and label analysis, Meal Plans, Kitchen ratings, Progress tracking with trend weight and photos, Hydration, and Sleep.",
+      "Everything in Basic, plus the full dashboard: the Workouts log, Calorie Tracker with photo and label analysis, Meal Plans, Rate My Kitchen, Progress tracking with trend weight and photos, Hydration, and Sleep.",
   },
   {
     name: "Chad Elite",
@@ -386,9 +386,9 @@ const FAQS: Faq[] = [
     q: 'What does "this week" mean on my stats?',
     a: (
       <>
-        The 7-day stats and strips cover the last 7 days, today included, in
-        your own time zone, rather than a calendar week that resets on a fixed
-        day.
+        Your current calendar week, Sunday through Saturday, in your own time
+        zone. Every weekly stat and 7-day strip in the app uses that same
+        week, and a fresh week starts every Sunday.
       </>
     ),
   },

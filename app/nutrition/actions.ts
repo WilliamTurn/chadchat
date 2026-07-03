@@ -13,6 +13,7 @@ import {
   createMealAnalysis,
   deleteLatestWaterLog,
   deleteMealAnalysis,
+  deleteWaterLogById,
   getUserById,
   updateMealAnalysis,
   updateUserWaterGoal,
@@ -253,6 +254,20 @@ export async function removeWater(): Promise<NutritionActionState> {
     userId: user.id,
     since: todayStartInTz(user.timezone),
   });
+  revalidatePath("/today");
+  revalidatePath("/hydration");
+  return { ok: true };
+}
+
+/** Remove one specific water entry — the itemized "Today's log" delete (LC-11). */
+export async function removeWaterEntry(
+  id: string
+): Promise<NutritionActionState> {
+  const user = await requirePro();
+  if (!user) {
+    return { ok: false, error: "Not authorized." };
+  }
+  await deleteWaterLogById({ id, userId: user.id });
   revalidatePath("/today");
   revalidatePath("/hydration");
   return { ok: true };

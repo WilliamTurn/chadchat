@@ -49,9 +49,7 @@ export default function SleepPage() {
       <div className="mb-8">
         <BackToDashboard />
         <div className="flex items-center gap-3">
-          <h1 className="font-semibold text-2xl tracking-tight">
-            Sleep &amp; recovery
-          </h1>
+          <h1 className="font-semibold text-2xl tracking-tight">Sleep</h1>
           <Badge variant="secondary">Pro</Badge>
         </div>
         <p className="mt-1 text-muted-foreground text-sm">

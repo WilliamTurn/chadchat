@@ -19,12 +19,14 @@ import { VolumeChart } from "@/components/workouts/volume-chart";
 import { WorkoutBuilder } from "@/components/workouts/workout-builder";
 import { WorkoutCard } from "@/components/workouts/workout-card";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
+import { calendarDayAnchorInTz } from "@/lib/date";
 import {
   getCustomExercisesByUserId,
   getUserById,
   getWorkoutsByUserId,
   type WorkoutWithChildren,
 } from "@/lib/db/queries";
+import { weekAnchors } from "@/lib/today/week";
 import {
   computePersonalRecords,
   exercise1RMTrend,
@@ -32,8 +34,6 @@ import {
   workoutVolumeLb,
   volumeTrend,
 } from "@/lib/workouts/stats";
-
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 // Cap the history we hydrate per page load. Generous (years of training at a
 // session a day) but bounds an otherwise unbounded query + payload as a user's
@@ -113,7 +113,7 @@ async function WorkoutsContent() {
     return <UpgradePrompt />;
   }
 
-  return <Dashboard userId={user.id} />;
+  return <Dashboard timezone={user.timezone} userId={user.id} />;
 }
 
 function UpgradePrompt() {
@@ -132,7 +132,13 @@ function UpgradePrompt() {
   );
 }
 
-async function Dashboard({ userId }: { userId: string }) {
+async function Dashboard({
+  userId,
+  timezone,
+}: {
+  userId: string;
+  timezone: string | null;
+}) {
   const [rawWorkouts, customExercisesRaw] = await Promise.all([
     getWorkoutsByUserId(userId, MAX_WORKOUTS),
     getCustomExercisesByUserId(userId),
@@ -154,9 +160,16 @@ async function Dashboard({ userId }: { userId: string }) {
     }));
   const trend = volumeTrend(workouts);
 
-  const now = Date.now();
+  // "This week" = the member's current Sunday-start calendar week (LC-10) —
+  // the same week the dashboard strips and the /today "Days active this week"
+  // stat show, so every "week" number in the app answers the same question.
+  // (These stats used to be a rolling last-7-days window, which the label
+  // contradicted.)
+  const weekStartMs = weekAnchors(timezone).days[0].getTime();
   const weekWorkouts = workouts.filter(
-    (w) => now - new Date(w.performedAt).getTime() <= WEEK_MS
+    (w) =>
+      calendarDayAnchorInTz(new Date(w.performedAt), timezone).getTime() >=
+      weekStartMs
   );
   const weekVolume = weekWorkouts.reduce((sum, w) => sum + workoutVolumeLb(w), 0);
 
@@ -207,13 +220,13 @@ async function Dashboard({ userId }: { userId: string }) {
           >
             <StatCard label="Workouts" value={String(workouts.length)} />
             <StatCard
-              help="Sessions you logged in the last 7 days, today included."
+              help="Sessions you logged this calendar week, Sunday through Saturday, in your time zone. Resets every Sunday."
               label="This week"
               value={String(weekWorkouts.length)}
             />
             <StatCard
-              help="Volume is the total weight you moved: weight times reps, added up across every set. This is your last 7 days."
-              label="Volume / 7d"
+              help="Volume is the total weight you moved: weight times reps, added up across every set. This is your total for this calendar week, Sunday through Saturday."
+              label="Volume this week"
               value={weekVolume > 0 ? `${weekVolume.toLocaleString()} lb` : "—"}
             />
           </div>

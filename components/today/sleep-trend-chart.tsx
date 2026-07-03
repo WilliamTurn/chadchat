@@ -9,8 +9,14 @@
  * indigo; short nights are faded.
  *
  * Honest axis (audit P2-5): unlogged nights render as empty slots instead of
- * silently vanishing — the series is gap-filled per calendar day, so "3 of 7
- * nights" means 3 of the 7 real nights in the window, misses included.
+ * silently vanishing — the series is gap-filled per calendar day.
+ *
+ * One window, one denominator (LC-9): BOTH stats count only the nights the
+ * user actually logged in the selected range. The average was always
+ * per-logged-night; the "Nights with 7h+" denominator used to be every night
+ * in the window (so honest logging gaps read as failed nights, and the two
+ * stats silently used different denominators on one card). A night with no
+ * log is unknown, not a miss — the chart's empty slots already show the gaps.
  */
 
 import { useMemo } from "react";
@@ -84,9 +90,10 @@ export function SleepTrendChart({ days }: { days: Point[] }) {
     const hit = loggedRows.filter(
       (r) => r.minutes >= SLEEP_GOAL_MINUTES
     ).length;
-    // Denominator = every night in the window, unlogged included — a missed
-    // log is a night that didn't hit 7h, not a night that didn't happen.
-    return { avg, hit, total: rows.length };
+    // Denominator = logged nights only (LC-9): same basis as the average, so
+    // the two stats can't disagree about what a "night" is. Unlogged nights
+    // are unknowns, shown as gaps in the chart, not counted as misses.
+    return { avg, hit, logged: loggedRows.length };
   }, [rows]);
 
   // Even whole-hour ticks (VF-8): 0h/2h/4h…, never the irregular 0h/3h/7h/9h
@@ -120,14 +127,17 @@ export function SleepTrendChart({ days }: { days: Point[] }) {
         stats && (
           <>
             <Kpi
+              help="Your average across the nights you logged in this range. Nights you didn't log aren't counted."
               label="Avg / night"
               size="lg"
               value={formatSleepDuration(stats.avg)}
             />
             <Kpi
+              help="How many of the nights you logged in this range hit the recommended 7 hours. Nights you didn't log show as gaps in the chart and don't count against you."
               label="Nights with 7h+"
+              sub="of logged nights"
               tone={stats.hit > 0 ? "good" : "neutral"}
-              value={`${stats.hit} / ${stats.total}`}
+              value={`${stats.hit} / ${stats.logged}`}
             />
           </>
         )

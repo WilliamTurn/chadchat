@@ -388,7 +388,7 @@ export function GoalList({
     <>
       <ModuleHeader
         icon={<Target className="size-4" />}
-        title="Your goals"
+        title="Goals"
         tone="blood"
         viewHref={viewHref}
       />

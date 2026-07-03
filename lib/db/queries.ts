@@ -1966,6 +1966,50 @@ export async function addWaterLog(entry: {
   }
 }
 
+/**
+ * Today's individual water increments, newest first — backs the itemized
+ * "Today's log" on /hydration (LC-11) so a mis-tap from hours ago can be
+ * removed without undoing everything logged since.
+ */
+export async function getWaterLogsSince(
+  userId: string,
+  since: Date
+): Promise<{ id: string; recordedAt: Date; amountMl: number }[]> {
+  try {
+    return await db
+      .select({
+        id: waterLog.id,
+        recordedAt: waterLog.recordedAt,
+        amountMl: waterLog.amountMl,
+      })
+      .from(waterLog)
+      .where(and(eq(waterLog.userId, userId), gte(waterLog.recordedAt, since)))
+      .orderBy(desc(waterLog.recordedAt));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get water entries"
+    );
+  }
+}
+
+/** Remove one water increment by id (the itemized delete on /hydration). */
+export async function deleteWaterLogById({
+  id,
+  userId,
+}: {
+  id: string;
+  userId: string;
+}): Promise<void> {
+  try {
+    await db
+      .delete(waterLog)
+      .where(and(eq(waterLog.id, id), eq(waterLog.userId, userId)));
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to update water");
+  }
+}
+
 /** Remove the most recent water increment logged today (the undo for "−"). */
 export async function deleteLatestWaterLog({
   userId,

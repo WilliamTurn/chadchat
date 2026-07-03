@@ -69,7 +69,7 @@ export default function GoalDocPage({
       </Suspense>
 
       <div className="mb-8">
-        <BackToDashboard href="/goals" label="Your goals" />
+        <BackToDashboard href="/goals" label="Goals" />
         <h1 className="font-semibold text-2xl tracking-tight">Goal</h1>
         <p className="mt-1 text-muted-foreground text-sm">
           The full write-up, your live progress, and everything you can do with

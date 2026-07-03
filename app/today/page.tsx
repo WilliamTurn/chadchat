@@ -764,7 +764,7 @@ async function TodayContent() {
             <LockedCard
               icon={<Moon className="size-4" />}
               text="Log how you sleep each night and Chad factors recovery into your training. Pro only."
-              title="Sleep & recovery"
+              title="Sleep"
             />
           )}
         </div>
@@ -914,7 +914,7 @@ async function TodayContent() {
             <ModuleCard glow="amber">
               <ModuleHeader
                 icon={<ChefHat className="size-4" />}
-                title="Meal plan"
+                title="Meal Plan"
                 tone="amber"
                 viewHref={mealPlanSummary ? "/meal-plan" : undefined}
                 viewLabel="View plan"
@@ -992,7 +992,7 @@ async function TodayContent() {
             <LockedCard
               icon={<ChefHat className="size-4" />}
               text="Chad builds a structured meal plan around your macro target. Real foods, exact portions. Pro only."
-              title="Meal plan"
+              title="Meal Plan"
             />
           )}
         </div>

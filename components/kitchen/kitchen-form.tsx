@@ -104,7 +104,7 @@ export function KitchenForm({
   return (
     <form className="flex flex-col gap-4" onSubmit={onSubmit}>
       <div>
-        <h2 className="font-medium text-lg">Rate my kitchen</h2>
+        <h2 className="font-medium text-lg">Rate My Kitchen</h2>
         <p className="mt-1 text-muted-foreground text-sm">
           Photograph the inside of your fridge or pantry. Chad does a kitchen
           raid — what to keep, what to toss, what to buy next shop.

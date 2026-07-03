@@ -50,7 +50,7 @@ export default function KitchenPage() {
             className="text-foreground underline underline-offset-4"
             href="/meal-plan"
           >
-            Meal plan
+            Meal Plan
           </Link>
           .
         </p>

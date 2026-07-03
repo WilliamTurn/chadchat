@@ -182,14 +182,19 @@ export function AppSidebar({
                   );
                 })}
                 {user && (
-                  <SidebarMenuItem>
+                  // Named for its exact scope + visually detached from the nav
+                  // links above (LC-11): a bare "Delete all" inside a nav list
+                  // read as "delete all <anything>".
+                  <SidebarMenuItem className="mt-2 border-sidebar-border border-t pt-2">
                     <SidebarMenuButton
                       className="h-10 rounded-lg text-sidebar-foreground/40 transition-colors duration-150 hover:bg-destructive/10 hover:text-destructive md:h-8"
                       onClick={() => setShowDeleteAllDialog(true)}
-                      tooltip="Delete All Chats"
+                      tooltip="Delete all chats"
                     >
                       <TrashIcon className="size-4" />
-                      <span className="text-[15px] md:text-[13px]">Delete all</span>
+                      <span className="text-[15px] md:text-[13px]">
+                        Delete all chats
+                      </span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )}

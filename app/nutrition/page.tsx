@@ -70,7 +70,7 @@ export default function NutritionPage() {
             className="text-foreground underline underline-offset-4"
             href="/meal-plan"
           >
-            Meal plan
+            Meal Plan
           </Link>{" "}
           · Rating your fridge or pantry?{" "}
           <Link
