@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { type ReactNode, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { editWorkout, saveWorkout } from "@/app/workouts/actions";
+import { KpiHelp } from "@/components/dashboard/kpi";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -510,7 +511,14 @@ function ExerciseBlock({
         <span className="w-8 text-center">Set</span>
         <span className="flex-1">Weight</span>
         <span className="flex-1">Reps</span>
-        <span className="w-12 text-center">RPE</span>
+        <span className="flex w-12 items-center justify-center gap-0.5">
+          RPE
+          <KpiHelp label="RPE">
+            Rate of Perceived Exertion: how hard the set felt, 1 to 10. A 10
+            means you had nothing left; an 8 means you could have done about
+            two more reps. Optional: leave it blank if you don't track it.
+          </KpiHelp>
+        </span>
         <span className="w-8 text-center">Done</span>
         <span className="w-7" />
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { RotateCcw, Target, Trash2, TriangleAlert } from "lucide-react";
+import { KpiHelp } from "@/components/dashboard/kpi";
 import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -181,8 +182,13 @@ function GoalItem({
         <div className="min-w-0">
           <p className="font-medium leading-snug">{goal.title}</p>
           {isLift && goal.metricRef && (
-            <p className="text-muted-foreground text-xs">
+            <p className="flex items-center gap-1 text-muted-foreground text-xs">
               Tracking {goal.metricRef} · est. 1RM
+              <KpiHelp label="est. 1RM">
+                Your estimated one-rep max: the heaviest single rep you could
+                likely manage on this lift, calculated from the weight and
+                reps of your logged sets. It updates as you log workouts.
+              </KpiHelp>
             </p>
           )}
           {(goal.targetDate || goal.createdAtLabel) && (

@@ -15,7 +15,7 @@ export const weeklyReportContentSchema = z.object({
   intro: z
     .string()
     .describe(
-      "Chad's opening read on the week: 2-4 sentences, plain text, grounded in the client's real numbers"
+      "Chad's opening read on the week: one full paragraph (4-8 complete sentences), plain text, grounded in the client's real numbers. Sets the verdict for the week up front: what went right, what went wrong, in his voice."
     ),
   sections: z
     .array(
@@ -23,19 +23,19 @@ export const weeklyReportContentSchema = z.object({
         title: z
           .string()
           .describe(
-            "section heading (e.g. 'Training', 'Nutrition', 'Bodyweight', 'Photos')"
+            "section heading (e.g. 'Training', 'Nutrition', 'Bodyweight', 'Sleep', 'Photos', 'Goal check')"
           ),
         body: z
           .string()
           .describe(
-            "2-6 sentences of plain text. Concrete numbers from the data only — never invented. Blank lines allowed between paragraphs."
+            "a substantial, fully-written review of this area: one to three real paragraphs (separate paragraphs with a blank line). Complete sentences only, never fragments or bullet-style half-lines. Every claim tied to a concrete number or entry from the data, never invented."
           ),
       })
     )
     .min(1)
-    .max(6)
+    .max(8)
     .describe(
-      "the review itself, one section per area there is data for. Always include a Training section and a Nutrition section (even if the section says nothing was logged — say that bluntly)."
+      "the review itself, one full section per area there is data for. Always include a Training section and a Nutrition section (even if the section says nothing was logged: say that bluntly). Add Bodyweight, Sleep, Water, Measurements, Photos, and a Goal check whenever the week's data gives them substance."
     ),
   adjustments: z
     .array(
@@ -43,24 +43,24 @@ export const weeklyReportContentSchema = z.object({
         change: z
           .string()
           .describe(
-            "one specific adjustment for next week (e.g. 'Add a third back-off set to squats')"
+            "one specific adjustment for next week, written as a complete instruction (e.g. 'Add a third back-off set to squats at 80% of your top set')"
           ),
         reason: z
           .string()
           .describe(
-            "why, tied to this week's data (e.g. 'your top single stalled at 275 two sessions in a row')"
+            "why, as a complete sentence tied to this week's data (e.g. 'Your top single stalled at 275 two sessions in a row, and more volume at a manageable weight is how it gets moving again.')"
           ),
       })
     )
     .min(1)
     .max(5)
     .describe(
-      "next week's plan adjustments WITH reasons — the payoff of the report. If the data is thin, the adjustment is about logging/consistency itself."
+      "next week's plan adjustments WITH reasons (the payoff of the report). Each one earned by a specific number from this week. If the data is thin, the adjustment is about logging/consistency itself."
     ),
   bottomLine: z
     .string()
     .describe(
-      "1-2 closing sentences: the single most important order for next week, in Chad's voice"
+      "2-4 closing sentences: the single most important order for next week, in Chad's voice, plus credit or a warning, whichever the week earned"
     ),
 });
 

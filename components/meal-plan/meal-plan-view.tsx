@@ -23,6 +23,7 @@ import {
   regeneratePlan,
   updateMealPlan,
 } from "@/app/meal-plan/actions";
+import { KpiHelp } from "@/components/dashboard/kpi";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -301,16 +302,24 @@ export function MealPlanView({ plan }: { plan: MealPlanViewData }) {
             <h2 className="font-semibold text-xl tracking-tight">{title}</h2>
           )}
           {plan.target && !editing && (
-            <p className="mt-1 text-muted-foreground text-sm">
-              Target {plan.target.calories.toLocaleString()} cal ·{" "}
-              {plan.target.protein}P / {plan.target.carbs}C / {plan.target.fat}F
-              per day
-              {plan.targetIsDaily && (
-                <span className="text-muted-foreground/70">
-                  {" "}
-                  — your daily Calorie Tracker targets, too
-                </span>
-              )}
+            <p className="mt-1 flex flex-wrap items-center gap-1 text-muted-foreground text-sm">
+              <span>
+                Target {plan.target.calories.toLocaleString()} cal ·{" "}
+                {plan.target.protein}g protein / {plan.target.carbs}g carbs /{" "}
+                {plan.target.fat}g fat per day
+                {plan.targetIsDaily && (
+                  <span className="text-muted-foreground/70">
+                    {" "}
+                    (your daily Calorie Tracker targets, too)
+                  </span>
+                )}
+              </span>
+              <KpiHelp label="Macro targets">
+                Macros are where your calories come from: protein, carbs, and
+                fat, measured in grams. In the meal rows below they're
+                shortened to P, C, and F: "33P 35C 26F" means 33g protein,
+                35g carbs, 26g fat.
+              </KpiHelp>
             </p>
           )}
         </div>

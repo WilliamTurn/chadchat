@@ -132,7 +132,11 @@ export function WorkoutCard({
                       s.setType === "warmup" && "opacity-70"
                     )}
                     key={i}
-                    title={tag ? `${tag} set` : "working set"}
+                    title={cn(
+                      tag ? `${tag} set` : "working set",
+                      s.rpe != null &&
+                        `· RPE ${s.rpe} (how hard it felt, 1-10)`
+                    )}
                   >
                     {load}
                     {reps}

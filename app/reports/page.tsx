@@ -48,17 +48,12 @@ export default function ReportsPage() {
           </h1>
           <Badge variant="secondary">Elite</Badge>
         </div>
+        {/* No settings pointer here: this header renders for every member,
+            but the day/time control on /account is Elite-only (LC-6). The
+            pointer lives inside the Elite-only list below instead. */}
         <p className="mt-1 text-muted-foreground text-sm">
           Chad's written review of your week — what you trained, how you ate,
           where your weight is heading, and exactly what changes next week.
-          Pick the day and time it lands on{" "}
-          <Link
-            className="text-foreground underline underline-offset-4"
-            href="/account"
-          >
-            your account page
-          </Link>
-          .
         </p>
       </div>
 
@@ -194,7 +189,15 @@ function ReportsList({
         <p className="mx-auto mt-2 max-w-md text-muted-foreground text-sm">
           Chad writes it every {reportDayLabel(user.weeklyReportDay)} around{" "}
           {formatReportHour(user.weeklyReportHour)} your time and emails it to
-          you — the more you log this week, the more he has to work with.
+          you. The more you log this week, the more he has to work with. Pick
+          a different day and time on{" "}
+          <Link
+            className="text-foreground underline underline-offset-4"
+            href="/account"
+          >
+            your account page
+          </Link>
+          .
         </p>
       </div>
     );
@@ -204,6 +207,18 @@ function ReportsList({
 
   return (
     <div className="flex flex-col gap-6">
+      <p className="text-muted-foreground text-sm">
+        Lands every {reportDayLabel(user.weeklyReportDay)} around{" "}
+        {formatReportHour(user.weeklyReportHour)} your time. Change the day and
+        time on{" "}
+        <Link
+          className="text-foreground underline underline-offset-4"
+          href="/account"
+        >
+          your account page
+        </Link>
+        .
+      </p>
       <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
         <ReportView content={latest.content} dateLabel={latest.dateLabel} />
         <div className="mt-6 border-border border-t pt-5">

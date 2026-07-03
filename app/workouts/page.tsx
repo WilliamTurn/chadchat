@@ -10,6 +10,7 @@ import { PageShell } from "@/components/nav/page-shell";
 import { ScrollToHash } from "@/components/nav/scroll-to-hash";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { CountUp } from "@/components/dashboard/count-up";
+import { KpiHelp } from "@/components/dashboard/kpi";
 import { WorkoutsSkeleton } from "@/components/dashboard/page-skeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -205,8 +206,13 @@ async function Dashboard({ userId }: { userId: string }) {
             key={`${workouts.length}-${weekWorkouts.length}-${weekVolume}`}
           >
             <StatCard label="Workouts" value={String(workouts.length)} />
-            <StatCard label="This week" value={String(weekWorkouts.length)} />
             <StatCard
+              help="Sessions you logged in the last 7 days, today included."
+              label="This week"
+              value={String(weekWorkouts.length)}
+            />
+            <StatCard
+              help="Volume is the total weight you moved: weight times reps, added up across every set. This is your last 7 days."
               label="Volume / 7d"
               value={weekVolume > 0 ? `${weekVolume.toLocaleString()} lb` : "—"}
             />
@@ -227,6 +233,13 @@ async function Dashboard({ userId }: { userId: string }) {
               <h2 className="mb-3 flex items-center gap-2 font-medium text-muted-foreground text-sm uppercase tracking-wide">
                 <Trophy className="size-4 text-amber-500" />
                 Personal records
+                <KpiHelp label="Personal records">
+                  Your best performance on each lift. "est. 1RM" is your
+                  estimated one-rep max: the heaviest single rep you could
+                  likely manage, calculated from a set's weight and reps. It
+                  lets a 225 x 5 day and a 245 x 2 day be compared on one
+                  scale. Tap a lift to see its strength trend over time.
+                </KpiHelp>
               </h2>
               <PersonalRecords records={records} />
             </section>
@@ -258,15 +271,25 @@ async function Dashboard({ userId }: { userId: string }) {
  * KPIs rather than reading as three bare figures. On mobile it's a full-width
  * row (label left, number right) — three side-by-side tiles at 390px wrapped
  * "6,880 lb" mid-value (VF-9); on sm+ it keeps the Kpi column treatment.
+ * `help` attaches the shared "?" popover next to the label (HLP-1).
  */
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({
+  label,
+  value,
+  help,
+}: {
+  label: string;
+  value: string;
+  help?: string;
+}) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 sm:flex-col sm:items-start sm:justify-start sm:gap-0 sm:py-3.5">
       <div className="order-2 whitespace-nowrap font-semibold text-lg tracking-tight tabular-nums sm:order-1 sm:text-2xl">
         <CountUp value={value} />
       </div>
-      <div className="order-1 text-muted-foreground text-xs sm:order-2 sm:mt-0.5">
+      <div className="order-1 flex items-center gap-1 text-muted-foreground text-xs sm:order-2 sm:mt-0.5">
         {label}
+        {help && <KpiHelp label={label}>{help}</KpiHelp>}
       </div>
     </div>
   );

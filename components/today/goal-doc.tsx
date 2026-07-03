@@ -1,6 +1,7 @@
 "use client";
 
 import { Download, MessageSquare, Trash2, TriangleAlert } from "lucide-react";
+import { KpiHelp } from "@/components/dashboard/kpi";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -94,8 +95,14 @@ export function GoalDoc({
               <Badge variant="secondary">{goal.status}</Badge>
             </div>
             {isLift && goal.metricRef && (
-              <p className="mt-1 text-muted-foreground text-sm">
+              <p className="mt-1 flex items-center gap-1 text-muted-foreground text-sm">
                 Tracking {goal.metricRef} · est. 1RM
+                <KpiHelp label="est. 1RM">
+                  Your estimated one-rep max: the heaviest single rep you
+                  could likely manage on this lift, calculated from the weight
+                  and reps of your logged sets. It updates as you log
+                  workouts.
+                </KpiHelp>
               </p>
             )}
             {(goal.targetDate || goal.createdAtLabel) && (
