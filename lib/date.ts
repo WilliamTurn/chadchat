@@ -343,3 +343,23 @@ export function formatDayInTz(
     ...opts,
   });
 }
+
+/**
+ * Like `formatDayInTz` but appends the year only when it isn't the current one
+ * ("Jun 20" this year, "Jun 20, 2025" otherwise) — for set-on/anchor dates that
+ * must stay unambiguous without carrying a redundant year all year long.
+ */
+export function formatDayInTzSmartYear(
+  date: Date,
+  timezone: string | null | undefined
+): string {
+  const year = formatDayInTz(date, timezone, { year: "numeric" });
+  const thisYear = formatDayInTz(new Date(), timezone, { year: "numeric" });
+  return formatDayInTz(
+    date,
+    timezone,
+    year === thisYear
+      ? { month: "short", day: "numeric" }
+      : { month: "short", day: "numeric", year: "numeric" }
+  );
+}

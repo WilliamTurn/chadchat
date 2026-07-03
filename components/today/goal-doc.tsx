@@ -44,7 +44,8 @@ export function GoalDoc({
   coherence = null,
 }: {
   goal: EditableGoal;
-  /** Latest weigh-in in the member's display unit, for weight goals. */
+  /** Smoothed trend weight in the member's display unit, for weight goals —
+   *  the canonical "current weight" every screen shares (LC-4). */
   currentWeight: number | null;
   /** Est.-1RM history for a lift goal's exercise. */
   lift: LiftProgress | null;
@@ -97,9 +98,16 @@ export function GoalDoc({
                 Tracking {goal.metricRef} · est. 1RM
               </p>
             )}
-            {goal.targetDate && (
+            {(goal.targetDate || goal.createdAtLabel) && (
               <p className="mt-1 text-muted-foreground text-sm">
-                Target: {goal.targetDate}
+                {/* The set-on date anchors relative deadlines like "8 weeks",
+                    which are otherwise uncheckable (LC-5). */}
+                {[
+                  goal.createdAtLabel ? `Set ${goal.createdAtLabel}` : null,
+                  goal.targetDate ? `Target: ${goal.targetDate}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
               </p>
             )}
           </div>

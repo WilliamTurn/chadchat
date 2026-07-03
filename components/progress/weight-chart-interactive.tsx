@@ -42,6 +42,7 @@ import {
 import { useChartRange } from "@/hooks/use-chart-range";
 import { useMountReveal } from "@/hooks/use-mount-reveal";
 import {
+  formatFullDate,
   formatRate,
   formatShortDate,
   formatSignedDelta,
@@ -73,6 +74,14 @@ const MIN_FOR_RATE = 5; // below this, a per-week rate is too noisy to show
 
 const ASK_CHAD_PROMPT =
   "Review my progress — weight, body measurements, and photos. How am I doing, and what should I adjust?";
+
+/** Projection date, with the year whenever it isn't this year — a slow pace
+ *  can project years out, and a bare "Jun 19" then reads as a past date. */
+function formatProjection(t: number): string {
+  return new Date(t).getUTCFullYear() === new Date().getUTCFullYear()
+    ? formatShortDate(t)
+    : formatFullDate(t);
+}
 
 export function WeightChartInteractive({
   points,
@@ -130,10 +139,11 @@ export function WeightChartInteractive({
   }, [rows, goalWeight, n]);
 
   // How far along the journey to the goal — the "you're 60% there" bar pro scale
-  // apps lead with. Anchored on the goal's stored start weight and the latest
-  // actual weigh-in via the SHARED calc (`lib/goals/progress`), so this bar
-  // matches the `/today` goal card exactly (DSH-26). Falls back to the first
-  // weigh-in for older goals with no stored start.
+  // apps lead with. Anchored on the goal's stored start weight and the smoothed
+  // TREND weight (the canonical current, LC-4) via the SHARED calc
+  // (`lib/goals/progress`), so this matches the `/today` goal card exactly
+  // (DSH-26). Falls back to the first weigh-in for older goals with no stored
+  // start.
   const goalProgress = useMemo(() => {
     if (points.length < 2) {
       return null;
@@ -141,14 +151,14 @@ export function WeightChartInteractive({
     const p = computeGoalProgress({
       startValue: goalStartWeight,
       targetValue: goalWeight,
-      current: points[points.length - 1].weight,
+      current: allRows[allRows.length - 1].trend,
       firstWeight: points[0].weight,
     });
     if (p == null || p.start === p.target) {
       return null; // started at goal — nothing meaningful to show
     }
     return { pct: p.pct / 100, reached: p.reached };
-  }, [points, goalWeight, goalStartWeight]);
+  }, [points, allRows, goalWeight, goalStartWeight]);
 
   if (n === 0) {
     return null; // page renders the empty-state prompt
@@ -231,11 +241,15 @@ export function WeightChartInteractive({
                 </span>
               </>
             ) : stats?.projection ? (
+              // A pace projection, not a promise: "at this pace" says exactly
+              // what the date is (it shifts with the range window), where the
+              // old "on track for" read as on-track-for-the-goal's-own-deadline
+              // even when that deadline would be missed (LC-5).
               <>
                 {" "}
-                · on track for{" "}
+                · at this pace:{" "}
                 <span className="font-medium text-foreground">
-                  {formatShortDate(stats.projection.dateMs)}
+                  ~{formatProjection(stats.projection.dateMs)}
                 </span>
               </>
             ) : null}
@@ -310,7 +324,7 @@ export function WeightChartInteractive({
                 label="To goal"
                 sub={
                   stats.projection
-                    ? `· ${formatShortDate(stats.projection.dateMs)}`
+                    ? `· ~${formatProjection(stats.projection.dateMs)}`
                     : undefined
                 }
                 tone={reached ? "good" : "neutral"}

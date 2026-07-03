@@ -132,7 +132,7 @@ export function StatPills({
         value={`${calories.toLocaleString()} cal`}
       />
       <StatPill
-        help="Your latest weigh-in compared to your very first one. Log weigh-ins on the Progress page to keep it current."
+        help="Your trend weight (the smoothed number the charts draw) compared to your very first weigh-in — the same all-time change the Progress page shows. Log weigh-ins on the Progress page to keep it current."
         icon={
           (weightChange ?? 0) <= 0 ? (
             <TrendingDown className="size-5" strokeWidth={2.5} />

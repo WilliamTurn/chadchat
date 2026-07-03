@@ -38,6 +38,10 @@ export type EditableGoal = {
   startValue: number | null;
   targetValue: number | null;
   unit: string | null;
+  /** Display-only "set on" date ("Jun 20"), preformatted in the member's
+   *  timezone — anchors relative deadlines like "8 weeks" (LC-5). Not
+   *  editable; the update schema strips it. */
+  createdAtLabel?: string | null;
 };
 
 const NONE = "none";

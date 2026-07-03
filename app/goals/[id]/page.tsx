@@ -25,9 +25,11 @@ import {
   mentionedCalories,
   overlapTitlesFor,
 } from "@/lib/goals/coherence";
+import { formatDayInTzSmartYear } from "@/lib/date";
 import {
   latestWeightInUnit,
   toDisplayWeight,
+  trendWeightInUnit,
   weightPointsInUnit,
 } from "@/lib/goals/latest-weight";
 import {
@@ -117,6 +119,8 @@ async function GoalDocContent({
     startValue: goal.startValue,
     targetValue: goal.targetValue,
     unit: goal.unit,
+    // Anchors relative deadlines like "8 weeks" on the page (LC-5).
+    createdAtLabel: formatDayInTzSmartYear(goal.createdAt, user.timezone),
   };
 
   // Progress anchors, hydrated only when this goal can use them.
@@ -135,7 +139,9 @@ async function GoalDocContent({
   ]);
 
   const latest = latestWeightInUnit(entries, user.weightUnit);
-  const currentWeight = latest?.value ?? null;
+  // "Current" is the smoothed trend weight — the canonical number (LC-4).
+  const currentWeight =
+    trendWeightInUnit(entries, user.weightUnit)?.value ?? null;
 
   // A weight goal gets the full interactive weight trend re-plotted against
   // its own goal line + projected finish date (VF-6), in the display unit.

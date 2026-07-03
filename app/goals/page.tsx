@@ -18,8 +18,9 @@ import {
   getUserMemory,
   getWorkoutsByUserId,
 } from "@/lib/db/queries";
+import { formatDayInTzSmartYear } from "@/lib/date";
 import { findCalorieConflict, findOverlapIds } from "@/lib/goals/coherence";
-import { latestWeightInUnit } from "@/lib/goals/latest-weight";
+import { trendWeightInUnit } from "@/lib/goals/latest-weight";
 import { clientField } from "@/lib/memory/client-field";
 import {
   distinctExerciseNames,
@@ -108,13 +109,16 @@ async function GoalsContent() {
     startValue: g.startValue,
     targetValue: g.targetValue,
     unit: g.unit,
+    // Anchors relative deadlines like "8 weeks" on the card (LC-5).
+    createdAtLabel: formatDayInTzSmartYear(g.createdAt, user.timezone),
   });
   const goalItems = goals.map(toGoalItem);
   const pastGoalItems = pastGoals.map(toGoalItem);
 
   // Same anchors the /today card uses, so the two surfaces never disagree.
+  // "Current" is the smoothed trend weight — the canonical number (LC-4).
   const currentWeight =
-    latestWeightInUnit(entries, user.weightUnit)?.value ?? null;
+    trendWeightInUnit(entries, user.weightUnit)?.value ?? null;
 
   const workoutData = recentWorkouts.map(toWorkoutData);
   const exerciseNames = distinctExerciseNames(workoutData);

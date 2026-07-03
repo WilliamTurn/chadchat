@@ -14,9 +14,11 @@
  * 38% on `/progress`. Falls back to the earliest weigh-in only when a goal has no
  * stored start (older goals created before the field existed).
  *
- * `current` and `firstWeight` are supplied by the caller so each screen can pass
- * whatever value it already treats as "now" (raw weigh-in or smoothed trend) —
- * the START anchor is what has to agree, and that's `startValue`.
+ * `current` and `firstWeight` are supplied by the caller. For weight goals every
+ * screen now passes the **smoothed trend weight** as `current` — the app's one
+ * canonical "current weight" (LC-4) — so a goal's %, "now", and "to go" read the
+ * same on /today, /goals, /goals/[id], and /progress. Raw weigh-ins stay visible
+ * as labeled data points, never as a competing headline number.
  */
 
 /** Round to one decimal place (matches `lib/chart/trend`). */

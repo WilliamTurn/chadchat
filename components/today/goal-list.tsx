@@ -56,13 +56,18 @@ export function GoalProgress({
   }
   const { pct, toGo, reached } = progress;
   const unit = goal.unit ? ` ${goal.unit}` : "";
+  const start = Math.round(progress.start * 10) / 10;
 
   return (
     <div className="mt-2">
-      <div className="mb-1.5 flex items-center justify-between text-xs">
+      {/* All three anchors are printed — start, now, goal — so the percentage
+          is derivable from the numbers next to it. It used to print only
+          "current → target" while the % was anchored on a hidden start weight,
+          so two identical-looking ranges showed wildly different numbers
+          (LC-3). */}
+      <div className="mb-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 text-xs">
         <span className="text-muted-foreground">
-          {current}
-          {unit} → {goal.targetValue}
+          Start {start} → now {current} → goal {goal.targetValue}
           {unit}
         </span>
         <span className="font-medium tabular-nums">
@@ -180,9 +185,16 @@ function GoalItem({
               Tracking {goal.metricRef} · est. 1RM
             </p>
           )}
-          {goal.targetDate && (
+          {(goal.targetDate || goal.createdAtLabel) && (
             <p className="text-muted-foreground text-xs">
-              Target: {goal.targetDate}
+              {/* The set-on date anchors relative deadlines like "8 weeks",
+                  which are otherwise uncheckable (LC-5). */}
+              {[
+                goal.createdAtLabel ? `Set ${goal.createdAtLabel}` : null,
+                goal.targetDate ? `Target: ${goal.targetDate}` : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </p>
           )}
         </div>

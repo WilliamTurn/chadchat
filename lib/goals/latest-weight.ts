@@ -1,9 +1,12 @@
+import { ema } from "@/lib/chart/trend";
 import type { ProgressEntry } from "@/lib/db/schema";
 
 /**
- * The member's most recent weigh-in, converted into their display unit: the
- * "current" anchor the goal surfaces (/goals, /goals/[id]) feed to the shared
- * goal-progress calc so their bars match /today exactly (DSH-26).
+ * Weigh-in → display-unit helpers for the goal surfaces (/goals, /goals/[id]).
+ * The "current" anchor they feed to the shared goal-progress calc is the
+ * smoothed **trend weight** (`trendWeightInUnit`) — the app's one canonical
+ * current weight (LC-4) — so their bars match /today and /progress exactly
+ * (DSH-26). The raw latest weigh-in stays available for labeled display.
  */
 
 const LB_PER_KG = 2.204_62;
@@ -74,4 +77,22 @@ export function latestWeightInUnit(
         : last.weight / LB_PER_KG
   );
   return { value, unit };
+}
+
+/**
+ * The member's smoothed trend weight in their display unit — the same gap-aware
+ * EMA every weight chart draws, evaluated at the latest weigh-in. This is the
+ * canonical "current weight" (LC-4); feed it to `computeGoalProgress`.
+ */
+export function trendWeightInUnit(
+  entries: ProgressEntry[],
+  preferredUnit: "lb" | "kg" | null
+): { value: number; unit: "lb" | "kg" } | null {
+  const latest = latestWeightInUnit(entries, preferredUnit);
+  if (!latest) {
+    return null;
+  }
+  const rows = ema(weightPointsInUnit(entries, latest.unit));
+  const trend = rows.at(-1)?.trend;
+  return trend == null ? latest : { value: trend, unit: latest.unit };
 }

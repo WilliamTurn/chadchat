@@ -59,10 +59,12 @@ import {
   calendarDayAnchorInTz,
   formatCalendarDay,
   formatDayInTz,
+  formatDayInTzSmartYear,
   toCalendarDayISO,
   todayAnchorInTz,
   todayStartInTz,
 } from "@/lib/date";
+import { ema } from "@/lib/chart/trend";
 import type { ProgressEntry } from "@/lib/db/schema";
 import { toPlanStatusSummary } from "@/lib/subscription";
 import { normalizeSex, resolveHero } from "@/lib/today/goal-diagram";
@@ -299,6 +301,8 @@ async function TodayContent() {
     startValue: g.startValue,
     targetValue: g.targetValue,
     unit: g.unit,
+    // Anchors relative deadlines like "8 weeks" on the card (LC-5).
+    createdAtLabel: formatDayInTzSmartYear(g.createdAt, timezone),
   });
   const goalItems = goals.map(toGoalItem);
   const pastGoalItems = pastGoals.map(toGoalItem);
@@ -365,11 +369,18 @@ async function TodayContent() {
           : e.weight / LB_PER_KG
     ),
   }));
-  const currentWeight = points.at(-1)?.weight ?? null;
-  const startWeight = points.at(0)?.weight ?? null;
+  // The canonical "current weight" is the smoothed TREND weight — the same
+  // gap-aware EMA the charts draw — not the latest raw weigh-in (LC-4). Before
+  // this, /today headlined the raw number while /progress headlined the trend,
+  // so current / lost / to-goal silently disagreed between the two screens.
+  // The raw weigh-in stays visible, labeled, next to the trend on the card.
+  const trendRows = ema(points);
+  const trendWeight = trendRows.at(-1)?.trend ?? null;
+  const lastWeighIn = points.at(-1)?.weight ?? null;
+  const startWeight = trendRows.at(0)?.trend ?? null;
   const weightChange =
-    currentWeight != null && startWeight != null
-      ? round1(currentWeight - startWeight)
+    trendWeight != null && startWeight != null
+      ? round1(trendWeight - startWeight)
       : null;
 
   // The target from an active weight goal, converted into the displayed unit,
@@ -874,7 +885,7 @@ async function TodayContent() {
         <ModuleCard glow="blood">
           <GoalList
             calorieConflict={calorieConflict}
-            currentWeight={currentWeight}
+            currentWeight={trendWeight}
             exerciseNames={exerciseNames}
             goals={goalItems}
             liftProgress={liftProgress}
@@ -1001,17 +1012,19 @@ async function TodayContent() {
               tone="violet"
               viewHref="/progress"
             />
-            {currentWeight != null && (
-              <div className="flex items-baseline gap-2">
+            {trendWeight != null && (
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                 <span className="font-display font-semibold text-lg leading-none">
-                  {currentWeight} {displayUnit}
+                  {trendWeight} {displayUnit}
                 </span>
-                {weightChange != null && (
-                  <span className="text-muted-foreground text-xs">
-                    {weightChange > 0 ? "+" : ""}
-                    {weightChange} {displayUnit} since your first weigh-in
-                  </span>
-                )}
+                <span className="text-muted-foreground text-xs">
+                  trend weight
+                  {lastWeighIn != null && lastWeighIn !== trendWeight
+                    ? ` · weighed in ${lastWeighIn} ${displayUnit}`
+                    : ""}
+                  {weightChange != null &&
+                    ` · ${weightChange > 0 ? "+" : ""}${weightChange} ${displayUnit} since your first weigh-in`}
+                </span>
               </div>
             )}
             <div className="mt-2">
