@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { analyzeMeal } from "@/app/nutrition/actions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 type Kind = "fridge" | "pantry";
 
@@ -30,6 +31,7 @@ export function KitchenForm({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const busy = pending || uploading;
+  const needsPhoto = !file;
 
   function pick(f: File | null) {
     setFile(f);
@@ -172,13 +174,28 @@ export function KitchenForm({
         value={note}
       />
 
-      <Button className="gap-2" disabled={busy || !file} size="lg" type="submit">
+      {/* No photo yet = live, brand-tinted "add a photo" affordance instead of a
+          disabled slab that reads as an enabled button (VF-19; same pattern as
+          the nutrition form's NUT-15 treatment). */}
+      <Button
+        className={cn(
+          "gap-2",
+          needsPhoto &&
+            "border border-blood/40 bg-blood/5 text-blood hover:bg-blood/10"
+        )}
+        disabled={busy}
+        size="lg"
+        type="submit"
+      >
         {busy && <Loader2 className="size-4 animate-spin" />}
-        {uploading
-          ? "Uploading…"
-          : pending
-            ? "Chad's analyzing…"
-            : "Analyze with Chad"}
+        {!busy && needsPhoto && <Camera className="size-4" />}
+        {needsPhoto
+          ? "Add a photo to analyze"
+          : uploading
+            ? "Uploading…"
+            : pending
+              ? "Chad's analyzing…"
+              : "Analyze with Chad"}
       </Button>
     </form>
   );

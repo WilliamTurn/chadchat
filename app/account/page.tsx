@@ -62,13 +62,13 @@ function MembershipCardSkeleton() {
     <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-float)]">
       <div className="absolute inset-x-0 top-0 h-1 bg-border" />
       <div className="mb-3 flex items-center gap-3">
-        <div className="h-6 w-32 animate-pulse rounded-md bg-muted" />
-        <div className="h-5 w-16 animate-pulse rounded-full bg-muted" />
+        <div className="h-6 w-32 animate-pulse rounded-md bg-muted-foreground/20" />
+        <div className="h-5 w-16 animate-pulse rounded-full bg-muted-foreground/20" />
       </div>
-      <div className="h-4 w-64 max-w-full animate-pulse rounded bg-muted" />
+      <div className="h-4 w-64 max-w-full animate-pulse rounded bg-muted-foreground/20" />
       <div className="mt-6 flex gap-3">
-        <div className="h-9 w-32 animate-pulse rounded-lg bg-muted" />
-        <div className="h-9 w-28 animate-pulse rounded-lg bg-muted" />
+        <div className="h-9 w-32 animate-pulse rounded-lg bg-muted-foreground/20" />
+        <div className="h-9 w-28 animate-pulse rounded-lg bg-muted-foreground/20" />
       </div>
     </div>
   );

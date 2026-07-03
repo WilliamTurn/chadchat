@@ -231,22 +231,41 @@ async function TodayContent() {
   // Active meal plan summary for the /today card. Targets stay structured so
   // the card can render them as labeled chips (VF-16). Plain nouns, not
   // lifter shorthand like "200P / 190C / 65F" (P3-5).
+  // LC-2: the card measures against the user's LIVE daily Calorie-Tracker
+  // target first, the same resolution rule the /meal-plan page uses (NUT-13),
+  // falling back to the plan's stored snapshot only when no daily target is
+  // set. One plan, one set of numbers, on both screens.
+  const planTargets =
+    target?.calories != null
+      ? {
+          calories: target.calories,
+          protein: target.protein ?? 0,
+          carbs: target.carbs ?? 0,
+          fat: target.fat ?? 0,
+        }
+      : mealPlan?.targetCalories != null
+        ? {
+            calories: mealPlan.targetCalories,
+            protein: mealPlan.targetProtein ?? 0,
+            carbs: mealPlan.targetCarbs ?? 0,
+            fat: mealPlan.targetFat ?? 0,
+          }
+        : null;
   const mealPlanSummary = mealPlan
     ? {
         title: mealPlan.title,
         dayCount: Array.isArray(mealPlan.days) ? mealPlan.days.length : 0,
-        targets:
-          mealPlan.targetCalories != null
-            ? ([
-                {
-                  value: mealPlan.targetCalories.toLocaleString(),
-                  label: "cal / day",
-                },
-                { value: `${mealPlan.targetProtein ?? 0}g`, label: "protein" },
-                { value: `${mealPlan.targetCarbs ?? 0}g`, label: "carbs" },
-                { value: `${mealPlan.targetFat ?? 0}g`, label: "fat" },
-              ] as const)
-            : null,
+        targets: planTargets
+          ? ([
+              {
+                value: planTargets.calories.toLocaleString(),
+                label: "cal / day",
+              },
+              { value: `${planTargets.protein}g`, label: "protein" },
+              { value: `${planTargets.carbs}g`, label: "carbs" },
+              { value: `${planTargets.fat}g`, label: "fat" },
+            ] as const)
+          : null,
       }
     : null;
 

@@ -196,7 +196,7 @@ export function AnalysisCard({ entry }: { entry: MealAnalysis }) {
             <ul className="flex flex-col gap-1.5">
               {tips.map((tip, i) => (
                 <li className="flex gap-2 text-sm" key={i}>
-                  <Check className="mt-0.5 size-3.5 shrink-0 text-blood" />
+                  <Check className="mt-0.5 size-3.5 shrink-0 text-emerald-500" />
                   <span>{tip}</span>
                 </li>
               ))}

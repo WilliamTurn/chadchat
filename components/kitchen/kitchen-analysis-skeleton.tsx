@@ -13,37 +13,37 @@ export function KitchenAnalysisSkeleton() {
     >
       <div className="flex animate-pulse flex-col gap-0 sm:flex-row">
         {/* Photo */}
-        <div className="aspect-square w-full bg-muted sm:size-48 sm:shrink-0" />
+        <div className="aspect-square w-full bg-muted-foreground/20 sm:size-48 sm:shrink-0" />
 
         {/* Body */}
         <div className="flex min-w-0 flex-1 flex-col gap-3 p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1 space-y-2">
-              <div className="h-4 w-2/3 rounded bg-muted" />
-              <div className="h-3 w-1/3 rounded bg-muted/60" />
+              <div className="h-4 w-2/3 rounded bg-muted-foreground/20" />
+              <div className="h-3 w-1/3 rounded bg-muted-foreground/12" />
             </div>
             {/* Grade ring */}
-            <div className="size-16 shrink-0 rounded-full border-4 border-muted" />
+            <div className="size-16 shrink-0 rounded-full border-4 border-muted-foreground/20" />
           </div>
 
           {/* Macro grid */}
           <div className="grid grid-cols-4 gap-2">
             {[0, 1, 2, 3].map((i) => (
-              <div className="h-14 rounded-xl border border-border bg-muted/40" key={i} />
+              <div className="h-14 rounded-xl border border-border bg-muted-foreground/10" key={i} />
             ))}
           </div>
 
           {/* Verdict */}
-          <div className="space-y-2 border-muted border-l-2 pl-3">
-            <div className="h-3 w-full rounded bg-muted/60" />
-            <div className="h-3 w-5/6 rounded bg-muted/60" />
+          <div className="space-y-2 border-muted-foreground/20 border-l-2 pl-3">
+            <div className="h-3 w-full rounded bg-muted-foreground/12" />
+            <div className="h-3 w-5/6 rounded bg-muted-foreground/12" />
           </div>
 
           {/* Item chips */}
           <div className="flex flex-wrap gap-1.5">
             {[14, 20, 16, 12].map((w) => (
               <div
-                className="h-5 rounded-full bg-muted/50"
+                className="h-5 rounded-full bg-muted-foreground/12"
                 key={w}
                 style={{ width: `${w * 4}px` }}
               />
