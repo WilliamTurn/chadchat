@@ -50,7 +50,7 @@ export function parseRestDuration(raw: string): number | null {
 }
 
 /**
- * A lightweight rest timer for between sets — the Hevy/Strong staple. Pick a
+ * A lightweight rest timer for between sets, the Hevy/Strong staple. Pick a
  * preset or type your own duration; it counts down and vibrates (where
  * supported) at zero. Purely client-side, no audio assets.
  */
@@ -102,7 +102,7 @@ export function RestTimer() {
       <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
         <Timer className="size-3.5 shrink-0 text-blood" />
         <span className="font-medium uppercase tracking-wide">Rest timer</span>
-        <span>— time your rests between sets</span>
+        <span>· Time your rests between sets</span>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

@@ -16,12 +16,12 @@ type SavePlanProps = {
  * dashboard, so the FULL plan is saved (not just the one-line memory summary)
  * and can be viewed, edited, and exported. Mirrors the create-document factory.
  * Training plans also carry structured `days` so the plan is RUNNABLE on the
- * Workouts page ("Start Day 2" pre-fills the logger) — FN-2.
+ * Workouts page ("Start Day 2" pre-fills the logger); FN-2.
  */
 export const savePlan = ({ session, chatId }: SavePlanProps) =>
   tool({
     description:
-      "Save a full training or diet plan to the client's dashboard. Use this right after you write them a real plan so they keep it (not just buried in chat). Put the COMPLETE plan in `detail` — the whole weekly structure, every day, exercises/sets/reps or meals/macros — exactly as you wrote it. Ground every prescribed weight in the client's logged lifts and PRs you can see; never prescribe starting weights far below or above their demonstrated strength without saying why in the plan. For a TRAINING plan, ALSO pass `days`: the same program as structured data (every training day with its exercises, sets, reps, and any prescribed loads) — that is what lets the client tap 'Start Day 2' on their Workouts page and log the session with your plan pre-filled. Saving becomes their CURRENT plan: any other active plan of the same kind is archived automatically.",
+      "Save a full training or diet plan to the client's dashboard. Use this right after you write them a real plan so they keep it (not just buried in chat). Put the COMPLETE plan in `detail`: the whole weekly structure, every day, exercises/sets/reps or meals/macros, exactly as you wrote it. Ground every prescribed weight in the client's logged lifts and PRs you can see; never prescribe starting weights far below or above their demonstrated strength without saying why in the plan. For a TRAINING plan, ALSO pass `days`: the same program as structured data (every training day with its exercises, sets, reps, and any prescribed loads); that is what lets the client tap 'Start Day 2' on their Workouts page and log the session with your plan pre-filled. Saving becomes their CURRENT plan: any other active plan of the same kind is archived automatically.",
     inputSchema: z.object({
       title: z
         .string()
@@ -101,7 +101,7 @@ export const savePlan = ({ session, chatId }: SavePlanProps) =>
         sourceChatId: chatId,
         days: normalizedDays,
       });
-      // The Workouts page renders the runnable plan — refresh it (and /today,
+      // The Workouts page renders the runnable plan; refresh it (and /today,
       // which shows the plan card) so the new program appears immediately.
       revalidatePath("/workouts");
       revalidatePath("/today");
@@ -111,7 +111,7 @@ export const savePlan = ({ session, chatId }: SavePlanProps) =>
         message: `${kind === "diet" ? "Diet" : "Training"} plan "${created.title}" saved to the client's dashboard as their current ${kind} plan. Any previous active ${kind} plan was archived.${
           kind === "training"
             ? normalizedDays
-              ? " The plan is runnable on their Workouts page — each day has a Start button that pre-fills the logger."
+              ? " The plan is runnable on their Workouts page; each day has a Start button that pre-fills the logger."
               : " Note: no structured days were attached, so the Workouts page will extract them from the plan text automatically."
             : ""
         }`,

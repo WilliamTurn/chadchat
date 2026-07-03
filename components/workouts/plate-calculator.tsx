@@ -164,7 +164,7 @@ export function PlateCalculator() {
           </div>
         ) : (
           <p className="text-muted-foreground text-xs">
-            Just the {effectiveBar} {unit} bar — no plates needed.
+            Just the {effectiveBar} {unit} bar, no plates needed.
           </p>
         )
       ) : customBarOpen && !customBarValid ? (

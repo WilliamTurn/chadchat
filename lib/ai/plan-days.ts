@@ -3,7 +3,7 @@ import { z } from "zod";
 import { normalizePlanDays, type PlanDay } from "@/lib/validation/plan-days";
 import { getLanguageModel } from "./providers";
 
-// Extraction is a mechanical read of a plan Chad already wrote — a fast model
+// Extraction is a mechanical read of a plan Chad already wrote, so a fast model
 // is plenty (same tier the memory extractor uses), and it runs once per plan,
 // then the result is cached on the Plan row.
 const EXTRACT_MODEL_ID = "google/gemini-3.5-flash";
@@ -49,7 +49,7 @@ const extractionSchema = z.object({
 /**
  * Read a free-text training plan and extract its structured, runnable days
  * (FN-2 backfill for plans saved before savePlan carried structure). Pure
- * extraction — nothing is invented: only days with concrete prescribed
+ * extraction, nothing is invented: only days with concrete prescribed
  * exercises come back. Returns null when the text has no extractable program
  * (or the model/parse fails); callers treat null as "not runnable".
  */

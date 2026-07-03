@@ -2,7 +2,7 @@ import { z } from "zod";
 import { findBuiltInExercise } from "@/lib/workouts/exercise-library";
 
 /**
- * The structured shape of a training plan's days — what makes a plan RUNNABLE
+ * The structured shape of a training plan's days, what makes a plan RUNNABLE
  * in the workout logger instead of a text document (FN-2). One source of truth
  * for: the savePlan chat tool (Chad emits days alongside the plan text), the
  * AI extraction pass that backfills older free-text plans, and the /workouts
@@ -24,7 +24,7 @@ export const planDayExerciseSchema = z.object({
 });
 
 export const planDaySchema = z.object({
-  // "Day 1: Upper", "Day 3: Pull" — the label the member taps to start.
+  // "Day 1: Upper", "Day 3: Pull": the label the member taps to start.
   name: z.string().trim().min(1).max(80),
   exercises: z.array(planDayExerciseSchema).min(1).max(15),
 });
@@ -38,7 +38,7 @@ export type PlanDay = z.infer<typeof planDaySchema>;
  * Validate + tidy structured days before persisting. Snaps exercise names to
  * the built-in library's canonical casing when they match (so plan days join
  * cleanly with logged history for last-session ghosting and PR/1RM grouping).
- * Returns null instead of throwing — callers treat bad structure as "no days".
+ * Returns null instead of throwing; callers treat bad structure as "no days".
  */
 export function normalizePlanDays(input: unknown): PlanDay[] | null {
   const parsed = planDaysSchema.safeParse(input);
@@ -69,7 +69,7 @@ export function parsePlanDays(raw: unknown): PlanDay[] | null {
   return normalizePlanDays(raw);
 }
 
-/** "4 x 4-6 @ 185 lb · RPE 8" — the one-line target shown in the logger. */
+/** "4 x 4-6 @ 185 lb · RPE 8", the one-line target shown in the logger. */
 export function formatPlanTarget(ex: PlanDayExercise): string {
   let s = `${ex.sets} x ${ex.reps}`;
   if (ex.weight != null && ex.weight > 0) {

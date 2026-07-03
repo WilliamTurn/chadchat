@@ -58,7 +58,7 @@ type EditorSet = {
 
 // A prior/prescribed value shown as a placeholder in an empty set input (the
 // Hevy "previous" column). Strings, because a plan target can be a range
-// ("4-6") that can't be adopted as a number — only numeric ghosts auto-fill
+// ("4-6") that can't be adopted as a number; only numeric ghosts auto-fill
 // when the set is checked off.
 type GhostValue = { weight: string; reps: string };
 
@@ -156,7 +156,7 @@ function fromWorkout(w: WorkoutData): EditorExercise[] {
 /**
  * Build the editor state for a plan day: every prescribed exercise with its
  * set count laid out, values EMPTY, and last session's numbers (or the plan's
- * prescription) ghosted as placeholders. Sets start unchecked — the member
+ * prescription) ghosted as placeholders. Sets start unchecked; the member
  * checks them off as they train, and checking an empty set adopts its ghost.
  */
 function fromPlan(exercises: PlanPrefillExercise[]): EditorExercise[] {
@@ -180,7 +180,7 @@ function fromPlan(exercises: PlanPrefillExercise[]): EditorExercise[] {
   }));
 }
 
-/** The ghost for set index `i` — the last known ghost repeats for extra sets. */
+/** The ghost for set index `i`; the last known ghost repeats for extra sets. */
 function ghostAt(ex: EditorExercise, i: number): GhostValue | null {
   if (!ex.ghosts || ex.ghosts.length === 0) {
     return null;
@@ -197,7 +197,7 @@ export function WorkoutBuilder({
   trigger,
 }: {
   // "repeat" prefills exercises/sets from `initial` but saves a NEW workout
-  // dated today — the "repeat last workout" flow. "plan" prefills a training
+  // dated today (the "repeat last workout" flow). "plan" prefills a training
   // plan's day from `plan` (FN-2: "Start Day 2" opens a ready-to-run logger).
   mode: "create" | "edit" | "repeat" | "plan";
   initial?: WorkoutData;
@@ -335,8 +335,8 @@ export function WorkoutBuilder({
     }
 
     // Plan mode lays out the WHOLE day; whatever the member never touched
-    // (unchecked sets with nothing typed) is dropped on save — Hevy's
-    // "discard empty sets" — so skipping an exercise doesn't log four
+    // (unchecked sets with nothing typed) is dropped on save, Hevy's
+    // "discard empty sets", so skipping an exercise doesn't log four
     // phantom empty sets into history.
     let toSave = exercises;
     if (mode === "plan") {
@@ -453,7 +453,7 @@ export function WorkoutBuilder({
             {mode === "plan" ? (
               <p className="text-muted-foreground text-xs">
                 Your plan's exercises are loaded. Faded numbers are last
-                session (or the plan's target) — check a set off to accept
+                session (or the plan's target). Check a set off to accept
                 them, or type what you actually did.
               </p>
             ) : null}
@@ -648,7 +648,7 @@ function ExerciseBlock({
         </div>
       </div>
 
-      {/* Column headers — a timed exercise (plank, cardio) logs seconds, not
+      {/* Column headers. A timed exercise (plank, cardio) logs seconds, not
           load × reps; a bodyweight one logs reps with optional added load. */}
       <div className="mb-1 flex items-center gap-2 px-1 text-[11px] text-muted-foreground uppercase tracking-wide">
         <span className="w-8 text-center">Set</span>

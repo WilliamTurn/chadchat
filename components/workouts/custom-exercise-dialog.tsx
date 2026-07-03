@@ -50,7 +50,7 @@ type CustomExerciseRow = {
 };
 
 /**
- * Create or edit a custom exercise — the full pro-app form (DSH-53): name,
+ * Create or edit a custom exercise, the full pro-app form (DSH-53): name,
  * muscle group, equipment, how it's logged (weighted / bodyweight / timed),
  * and optional setup notes. A saved custom exercise behaves exactly like a
  * built-in: it appears in the picker's search, its logged history groups by

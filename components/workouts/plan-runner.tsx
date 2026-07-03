@@ -34,7 +34,7 @@ type CustomExerciseRow = {
 
 /**
  * The FN-2 fix: the active training plan, runnable from the Workouts page.
- * Each day is a card with a Start button that opens the logger pre-filled —
+ * Each day is a card with a Start button that opens the logger pre-filled:
  * the plan's exercises and set counts laid out, last session's numbers (or
  * the plan's prescription) ghosted per set. The Hevy "routine" experience,
  * driven by the plan Chad wrote.
@@ -91,7 +91,7 @@ export function PlanRunner({
         Your training plan
         <KpiHelp label="Your training plan">
           This is your current plan's week. Tap Start on a day and the logger
-          opens with that day's exercises and sets already laid out — faded
+          opens with that day's exercises and sets already laid out. Faded
           numbers show what you lifted last session (or the plan's target), so
           you just check off sets as you do them.
         </KpiHelp>
