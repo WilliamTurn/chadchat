@@ -380,7 +380,9 @@ function PureMultimodalInput({
           </div>
         )}
         <PromptInputTextarea
-          className="min-h-24 text-[15px] leading-relaxed px-4 pt-3.5 pb-1.5 placeholder:text-muted-foreground/35"
+          // text-base below md: 16px is the pro-app mobile chat size AND the
+          // threshold below which iOS Safari auto-zooms focused inputs.
+          className="min-h-24 text-base md:text-[15px] leading-relaxed px-4 pt-3.5 pb-1.5 placeholder:text-muted-foreground/35"
           data-testid="multimodal-input"
           onChange={handleInput}
           onKeyDown={(e) => {

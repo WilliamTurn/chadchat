@@ -1,7 +1,6 @@
 "use client";
 
-import { Camera, LineChart, Sparkles } from "lucide-react";
-import Link from "next/link";
+import { Sparkles } from "lucide-react";
 import { startPlanChange } from "@/app/account/actions";
 import { Button } from "@/components/ui/button";
 import type { PlanStatusSummary } from "@/lib/subscription";
@@ -25,10 +24,12 @@ function trialLabel(days: number): string {
 export function SidebarPlanStatus({ plan }: { plan: PlanStatusSummary }) {
   const isTrialing = plan.status === "trialing";
   const canUpgrade = plan.tier === "basic";
-  // Elite gets the same quick links — it's a superset of Pro.
-  const isPro = plan.tier === "pro" || plan.tier === "elite";
+  // Pro/Elite used to get "Calorie Tracker" / "Progress" quick links here, from
+  // the lean-sidebar era when the nav didn't carry them. NAV-31 put the full
+  // feature inventory in the nav list above, so the footer copies were exact
+  // duplicates (two identical entries visible at once on the mobile drawer).
 
-  if (!(isTrialing || canUpgrade || isPro)) {
+  if (!(isTrialing || canUpgrade)) {
     return null;
   }
 
@@ -38,32 +39,6 @@ export function SidebarPlanStatus({ plan }: { plan: PlanStatusSummary }) {
         <p className="px-1 text-[12px] text-sidebar-foreground/60">
           {trialLabel(plan.trialDaysLeft)}
         </p>
-      )}
-      {isPro && (
-        <>
-          <Button
-            asChild
-            className="h-8 w-full justify-start gap-1.5 text-[13px]"
-            size="sm"
-            variant="ghost"
-          >
-            <Link href="/nutrition">
-              <Camera className="size-3.5" />
-              Calorie Tracker
-            </Link>
-          </Button>
-          <Button
-            asChild
-            className="h-8 w-full justify-start gap-1.5 text-[13px]"
-            size="sm"
-            variant="ghost"
-          >
-            <Link href="/progress">
-              <LineChart className="size-3.5" />
-              Progress
-            </Link>
-          </Button>
-        </>
       )}
       {canUpgrade && (
         // A form with the server action keeps the Stripe redirect working

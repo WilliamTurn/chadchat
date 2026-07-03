@@ -47,7 +47,7 @@ function PureSuggestedActions({
           }}
         >
           <Suggestion
-            className="h-auto w-full whitespace-nowrap rounded-xl border border-border/50 bg-card/30 px-4 py-3 text-left text-[12px] leading-relaxed text-muted-foreground transition-all duration-200 sm:whitespace-normal sm:p-4 sm:text-[13px] hover:-translate-y-0.5 hover:bg-card/60 hover:text-foreground hover:shadow-[var(--shadow-card)]"
+            className="h-auto w-full whitespace-nowrap rounded-xl border border-border/50 bg-card/30 px-4 py-3 text-left text-[14px] leading-relaxed text-muted-foreground transition-all duration-200 sm:whitespace-normal sm:p-4 sm:text-[13px] hover:-translate-y-0.5 hover:bg-card/60 hover:text-foreground hover:shadow-[var(--shadow-card)]"
             onClick={(suggestion) => {
               window.history.pushState(
                 {},
@@ -68,7 +68,7 @@ function PureSuggestedActions({
       </div>
       {onHide && (
         <button
-          className="self-center text-[11px] text-muted-foreground/40 transition-colors hover:text-muted-foreground"
+          className="self-center text-[12px] sm:text-[11px] text-muted-foreground/40 transition-colors hover:text-muted-foreground"
           onClick={onHide}
           type="button"
         >

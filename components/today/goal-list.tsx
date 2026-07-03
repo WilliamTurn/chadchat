@@ -73,8 +73,9 @@ export function GoalProgress({
           on the card in dark mode, which made a 0% goal look like it had no
           progress bar at all (P3-3). Fill is emerald, not blood: progress
           toward a goal is exactly what emerald means (VF-7 color law), and a
-          red bar at 26% read as danger on an on-track goal. Matches the
-          /progress "Progress to goal" bar. */}
+          red bar at 26% read as danger on an on-track goal. (The /progress
+          twin of this bar was retired in VF-15; the % lives in that chart's
+          footer now; this card is the one place the bar itself renders.) */}
       <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-foreground/10">
         <motion.div
           animate={{ width: `${pct}%` }}

@@ -210,6 +210,18 @@ export function WeightChartInteractive({
             <span className="font-medium text-emerald-500">
               {goalWeight} {unit}
             </span>
+            {/* "% there" moved up from the retired micro-bar (VF-15): the bar
+                under the chart restated the To-goal KPI and this footer, so
+                the one unique fact it carried now lives in this line. */}
+            {!reached && goalProgress && (
+              <>
+                {" "}
+                ·{" "}
+                <span className="font-medium text-foreground tabular-nums">
+                  {Math.round(goalProgress.pct * 100)}% there
+                </span>
+              </>
+            )}
             {reached ? (
               <>
                 {" "}
@@ -314,24 +326,6 @@ export function WeightChartInteractive({
       title="Weight trend"
     >
       <WeightChartBody goalWeight={goalWeight} rows={rows} unit={unit} />
-      {goalProgress && (
-        <div className="mt-5">
-          <div className="mb-1.5 flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Progress to goal</span>
-            <span className="font-medium tabular-nums">
-              {goalProgress.reached
-                ? "Reached 🎯"
-                : `${Math.round(goalProgress.pct * 100)}%`}
-            </span>
-          </div>
-          <div className="h-2 overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-emerald-500 transition-all"
-              style={{ width: `${Math.max(2, goalProgress.pct * 100)}%` }}
-            />
-          </div>
-        </div>
-      )}
     </ChartCard>
   );
 }

@@ -152,7 +152,7 @@ export function ChatShell() {
                   stop={stop}
                 />
               )}
-              <p className="px-2 text-center text-[10px] leading-snug text-muted-foreground/40">
+              <p className="px-2 text-center text-[11px] sm:text-[10px] leading-snug text-muted-foreground/40">
                 Chad is an AI and can make mistakes. This isn&apos;t medical
                 advice — double-check anything important.
               </p>

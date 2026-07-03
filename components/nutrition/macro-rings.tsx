@@ -125,6 +125,14 @@ function CalorieDial({
         onClick={() => setOpen((v) => !v)}
         type="button"
       >
+        {/* Soft domain glow behind the hero dial (VF-18) — a touch stronger
+            once there's real fill to light up. */}
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute inset-3 rounded-full blur-2xl ${
+            hasTarget && consumed > 0 ? "bg-amber-400/15" : "bg-amber-400/8"
+          }`}
+        />
         <svg
           aria-labelledby={titleId}
           height={SIZE}

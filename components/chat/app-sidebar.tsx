@@ -151,7 +151,7 @@ export function AppSidebar({
                       <SidebarMenuItem>
                         <SidebarMenuButton
                           asChild
-                          className="h-8 rounded-lg text-[13px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                          className="h-10 rounded-lg text-[15px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground md:h-8 md:text-[13px]"
                           tooltip={link.label}
                         >
                           <Link
@@ -166,7 +166,7 @@ export function AppSidebar({
                       {index === 0 && (
                         <SidebarMenuItem>
                           <SidebarMenuButton
-                            className="h-8 rounded-lg border border-sidebar-border text-[13px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                            className="h-10 rounded-lg border border-sidebar-border text-[15px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground md:h-8 md:text-[13px]"
                             onClick={() => {
                               setOpenMobile(false);
                               router.push("/");
@@ -184,12 +184,12 @@ export function AppSidebar({
                 {user && (
                   <SidebarMenuItem>
                     <SidebarMenuButton
-                      className="rounded-lg text-sidebar-foreground/40 transition-colors duration-150 hover:bg-destructive/10 hover:text-destructive"
+                      className="h-10 rounded-lg text-sidebar-foreground/40 transition-colors duration-150 hover:bg-destructive/10 hover:text-destructive md:h-8"
                       onClick={() => setShowDeleteAllDialog(true)}
                       tooltip="Delete All Chats"
                     >
                       <TrashIcon className="size-4" />
-                      <span className="text-[13px]">Delete all</span>
+                      <span className="text-[15px] md:text-[13px]">Delete all</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )}

@@ -54,7 +54,7 @@ export function SidebarUserNav({ user }: { user: User }) {
               </SidebarMenuButton>
             ) : (
               <SidebarMenuButton
-                className="h-8 px-2 rounded-lg bg-transparent text-sidebar-foreground/70 transition-colors duration-150 hover:text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                className="h-10 px-2 rounded-lg bg-transparent text-sidebar-foreground/70 transition-colors duration-150 hover:text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground md:h-8"
                 data-testid="user-nav-button"
               >
                 <div
@@ -63,7 +63,10 @@ export function SidebarUserNav({ user }: { user: User }) {
                     background: `linear-gradient(135deg, oklch(0.35 0.08 ${emailToHue(user.email ?? "")}), oklch(0.25 0.05 ${emailToHue(user.email ?? "") + 40}))`,
                   }}
                 />
-                <span className="truncate text-[13px]" data-testid="user-email">
+                <span
+                  className="truncate text-[15px] md:text-[13px]"
+                  data-testid="user-email"
+                >
                   {user?.email}
                 </span>
                 <ChevronUp className="ml-auto size-3.5 text-sidebar-foreground/50" />
@@ -76,7 +79,7 @@ export function SidebarUserNav({ user }: { user: User }) {
             side="top"
           >
             <DropdownMenuItem
-              className="cursor-pointer text-[13px]"
+              className="cursor-pointer text-[15px] md:text-[13px]"
               data-testid="user-nav-item-theme"
               onSelect={() =>
                 setTheme(resolvedTheme === "dark" ? "light" : "dark")
@@ -86,26 +89,26 @@ export function SidebarUserNav({ user }: { user: User }) {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              className="cursor-pointer text-[13px]"
+              className="cursor-pointer text-[15px] md:text-[13px]"
               data-testid="user-nav-item-settings"
               onSelect={() => setSettingsOpen(true)}
             >
               Settings
             </DropdownMenuItem>
             <DropdownMenuItem asChild data-testid="user-nav-item-plans">
-              <Link className="cursor-pointer text-[13px]" href="/pricing">
+              <Link className="cursor-pointer text-[15px] md:text-[13px]" href="/pricing">
                 Plans & pricing
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild data-testid="user-nav-item-billing">
-              <Link className="cursor-pointer text-[13px]" href="/account">
+              <Link className="cursor-pointer text-[15px] md:text-[13px]" href="/account">
                 Account
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild data-testid="user-nav-item-auth">
               <button
-                className="w-full cursor-pointer text-[13px]"
+                className="w-full cursor-pointer text-[15px] md:text-[13px]"
                 onClick={() => {
                   if (status === "loading") {
                     toast({

@@ -84,7 +84,7 @@ import {
   distinctExerciseNames,
   toWorkoutData,
 } from "@/lib/workouts/serialize";
-import { exercise1RMTrend } from "@/lib/workouts/stats";
+import { exercise1RMTrend, workoutVolumeLb } from "@/lib/workouts/stats";
 
 const LB_PER_KG = 2.204_62;
 const DAY_MS = 86_400_000;
@@ -228,20 +228,31 @@ async function TodayContent() {
     isPro ? getSleepDailyTotals(user.id, timezone) : Promise.resolve([]),
   ]);
 
-  // Active meal plan summary for the /today card.
+  // Active meal plan summary for the /today card. Targets stay structured so
+  // the card can render them as labeled chips (VF-16). Plain nouns, not
+  // lifter shorthand like "200P / 190C / 65F" (P3-5).
   const mealPlanSummary = mealPlan
     ? {
         title: mealPlan.title,
         dayCount: Array.isArray(mealPlan.days) ? mealPlan.days.length : 0,
-        // Plain nouns, not lifter shorthand like "200P / 190C / 65F" (P3-5).
-        targetLine:
+        targets:
           mealPlan.targetCalories != null
-            ? `${mealPlan.targetCalories.toLocaleString()} cal · ${mealPlan.targetProtein ?? 0}g protein · ${mealPlan.targetCarbs ?? 0}g carbs · ${mealPlan.targetFat ?? 0}g fat`
+            ? ([
+                {
+                  value: mealPlan.targetCalories.toLocaleString(),
+                  label: "cal / day",
+                },
+                { value: `${mealPlan.targetProtein ?? 0}g`, label: "protein" },
+                { value: `${mealPlan.targetCarbs ?? 0}g`, label: "carbs" },
+                { value: `${mealPlan.targetFat ?? 0}g`, label: "fat" },
+              ] as const)
             : null,
       }
     : null;
 
-  // Most-recent logged workout, summarized for the /today card.
+  // Most-recent logged workout, summarized for the /today card. Volume is the
+  // card's visual anchor (VF-16): the one number that makes "last session"
+  // feel like a result instead of a caption.
   const lastWorkout = recentWorkouts[0]
     ? {
         title: recentWorkouts[0].title,
@@ -250,6 +261,9 @@ async function TodayContent() {
         setCount: recentWorkouts[0].exercises.reduce(
           (sum, ex) => sum + ex.sets.length,
           0
+        ),
+        volumeLb: Math.round(
+          workoutVolumeLb(toWorkoutData(recentWorkouts[0]))
         ),
       }
     : null;
@@ -459,7 +473,9 @@ async function TodayContent() {
   return (
     <div className="flex flex-col gap-8">
       {/* Header */}
-      <header className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 sm:p-8 lg:pr-64">
+      {/* Same VF-18 elevation as ModuleCard: top-lit wash, 1px inner top
+          highlight, shared card shadow. */}
+      <header className="relative overflow-hidden rounded-2xl border border-border bg-card bg-gradient-to-b from-white/[0.04] via-white/[0.01] to-transparent p-6 shadow-[var(--shadow-card),inset_0_1px_0_0_rgba(255,255,255,0.06)] sm:p-8 lg:pr-64">
         <div
           aria-hidden
           className="-right-16 -top-16 pointer-events-none absolute size-56 rounded-full bg-blood/25 blur-3xl"
@@ -469,12 +485,21 @@ async function TodayContent() {
             the stat pills, streak strip, or CTA (the lg:pr-64 gutter above keeps
             the content clear of this column). A built-in silhouette bleeds up
             from the bottom; a user photo fills the column. Plain <img> (not
-            next/image) so the proxy serves it on this authenticated route;
-            hidden below lg where the header stacks. */}
+            next/image) so the proxy serves it on this authenticated route.
+            VF-17: the one brand moment now survives every viewport. Below lg
+            the header content stacks over this column, so the figure runs
+            ghost-quiet (low opacity, harder left fade) as a cropped presence
+            behind the right edge; at lg+ it gets its own gutter and full
+            strength. A soft blood glow hugs the figure so it reads as lit,
+            not pasted on. */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-y-0 right-0 hidden w-60 overflow-hidden lg:block"
         >
+          <div
+            aria-hidden
+            className="absolute right-0 bottom-0 size-44 translate-x-1/4 translate-y-1/4 rounded-full bg-blood/20 blur-3xl"
+          />
           {hero.kind === "custom" ? (
             <img
               alt=""
@@ -492,6 +517,33 @@ async function TodayContent() {
               src={hero.src}
             />
           )}
+        </div>
+        {/* Below lg (VF-17): the header stacks over the full column, so the
+            figure becomes a quiet cropped shoulder/torso hugging the top-right
+            edge instead: over-height and top-anchored so only the upper body
+            shows (top-anchored, so the DSH-37 head-clip can't recur), hard
+            left fade, and a bottom fade into the card so it never muddies the
+            stat pills below. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute top-0 right-0 h-60 w-36 overflow-hidden sm:w-44 lg:hidden"
+        >
+          {hero.kind === "custom" ? (
+            <img
+              alt=""
+              aria-hidden
+              className="h-full w-full select-none object-cover opacity-25 [mask-image:linear-gradient(to_left,black_30%,transparent)]"
+              src={hero.src}
+            />
+          ) : (
+            <img
+              alt=""
+              aria-hidden
+              className="absolute top-2 right-0 h-[185%] w-auto max-w-none select-none object-contain object-top opacity-45 [mask-image:linear-gradient(to_left,black_30%,transparent)]"
+              src={hero.src}
+            />
+          )}
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-card" />
         </div>
         {/* Greeting (VF-12 + VF-13): three intentional tiers (date eyebrow,
             "Welcome back, Name" hero line, coaching subtitle). On mobile the
@@ -588,7 +640,7 @@ async function TodayContent() {
             everywhere (R2-6): nav label, page title, this card, and Chad's own
             copy all say "Calorie Tracker". */}
         {isPro ? (
-          <ModuleCard>
+          <ModuleCard glow="amber">
             <ModuleHeader
               icon={<Utensils className="size-4" />}
               title="Calorie Tracker"
@@ -693,39 +745,37 @@ async function TodayContent() {
             home, so the card lives with the loggers, leads with the log
             action, and keeps the last session as context. */}
         {isPro ? (
-          <ModuleCard>
+          <ModuleCard glow="blood">
             <ModuleHeader
               icon={<Dumbbell className="size-4" />}
               title="Workout log"
               tone="blood"
               viewHref="/workouts#history"
             />
-            <div className="flex flex-1 flex-wrap items-center justify-between gap-x-6 gap-y-4">
-              {lastWorkout ? (
-                <div className="min-w-0">
-                  <div className="text-muted-foreground text-xs uppercase tracking-wide">
-                    Last session
+            <div className="flex flex-1 flex-col gap-4">
+              <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
+                {lastWorkout ? (
+                  <div className="min-w-0">
+                    <div className="text-muted-foreground text-xs uppercase tracking-wide">
+                      Last session
+                    </div>
+                    <div className="mt-1 font-display font-semibold text-lg leading-tight">
+                      {lastWorkout.title}
+                    </div>
+                    <div className="mt-0.5 text-muted-foreground text-sm">
+                      {relativeDay(lastWorkout.performedAt, timezone)}
+                    </div>
                   </div>
-                  <div className="mt-1 font-display font-semibold text-lg leading-tight">
-                    {lastWorkout.title}
-                  </div>
-                  <div className="mt-0.5 text-muted-foreground text-sm">
-                    {relativeDay(lastWorkout.performedAt, timezone)} ·{" "}
-                    {lastWorkout.exerciseCount} exercise
-                    {lastWorkout.exerciseCount === 1 ? "" : "s"} ·{" "}
-                    {lastWorkout.setCount} set
-                    {lastWorkout.setCount === 1 ? "" : "s"}
-                  </div>
-                </div>
-              ) : (
-                <p className="max-w-md text-muted-foreground text-sm">
-                  No workouts logged yet. Log your first session and Chad
-                  starts tracking your PRs and volume.
-                </p>
-              )}
-              {/* Shared Sunday-start week-strip treatment (VF-10/VF-11),
-                  workout tone */}
-              {workoutWeek.some((d) => d.logged) ? (
+                ) : (
+                  <p className="max-w-md text-muted-foreground text-sm">
+                    No workouts logged yet. Log your first session and Chad
+                    starts tracking your PRs and volume.
+                  </p>
+                )}
+                {/* Shared Sunday-start week-strip treatment (VF-10/VF-11),
+                    workout tone. Always rendered (VF-16): an empty week of
+                    hollow slots is the same honest readout the other loggers
+                    show, and it keeps the card from collapsing to one line. */}
                 <div className="flex items-center gap-4 rounded-xl border border-border bg-background/40 px-4 py-2.5">
                   <span className="text-muted-foreground text-xs">
                     This week
@@ -746,7 +796,31 @@ async function TodayContent() {
                     }))}
                   />
                 </div>
-              ) : null}
+              </div>
+              {/* Last-session numbers as a stat row (VF-16): the card's visual
+                  anchor, matching the KPI-tile grammar of the other cards. */}
+              {lastWorkout && (
+                <div className="flex flex-wrap gap-3">
+                  <WorkoutStat
+                    label={lastWorkout.setCount === 1 ? "set" : "sets"}
+                    value={String(lastWorkout.setCount)}
+                  />
+                  <WorkoutStat
+                    label={
+                      lastWorkout.exerciseCount === 1
+                        ? "exercise"
+                        : "exercises"
+                    }
+                    value={String(lastWorkout.exerciseCount)}
+                  />
+                  {lastWorkout.volumeLb > 0 && (
+                    <WorkoutStat
+                      label="lb moved"
+                      value={lastWorkout.volumeLb.toLocaleString()}
+                    />
+                  )}
+                </div>
+              )}
             </div>
             <ModuleFooter
               askChad={
@@ -778,7 +852,7 @@ async function TodayContent() {
             lift charts, past goals) gets the room it needs. One consistent
             card treatment (DSH-30): the header silhouette stays the page's
             single body-visualization style. */}
-        <ModuleCard>
+        <ModuleCard glow="blood">
           <GoalList
             calorieConflict={calorieConflict}
             currentWeight={currentWeight}
@@ -798,7 +872,7 @@ async function TodayContent() {
             workout readout). Basic members get the same locked teaser as
             every other Pro module (P2-7: one gating rule). */}
         <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
-          <ModuleCard>
+          <ModuleCard glow="blood">
             <PlanList
               memoryPlanHint={workoutPlan}
               plans={planItems}
@@ -807,7 +881,7 @@ async function TodayContent() {
           </ModuleCard>
 
           {isPro ? (
-            <ModuleCard>
+            <ModuleCard glow="amber">
               <ModuleHeader
                 icon={<ChefHat className="size-4" />}
                 title="Meal plan"
@@ -816,25 +890,43 @@ async function TodayContent() {
                 viewLabel="View plan"
               />
               {mealPlanSummary ? (
-                <div className="flex flex-1 items-center gap-4">
-                  {/* Plain <img> (proxy serves it on this authed route) */}
-                  <img
-                    alt=""
-                    aria-hidden
-                    className="size-16 shrink-0 select-none rounded-xl object-cover ring-1 ring-border"
-                    src="/today/food-salmon-bowl.png"
-                  />
-                  <div className="min-w-0">
-                    <div className="font-display font-semibold text-lg leading-tight">
-                      {mealPlanSummary.title}
-                    </div>
-                    <div className="mt-0.5 text-muted-foreground text-sm">
-                      {mealPlanSummary.dayCount}-day plan
-                      {mealPlanSummary.targetLine
-                        ? ` · ${mealPlanSummary.targetLine}`
-                        : ""}
+                <div className="flex flex-1 flex-col justify-center gap-4">
+                  <div className="flex items-center gap-4">
+                    {/* Plain <img> (proxy serves it on this authed route) */}
+                    <img
+                      alt=""
+                      aria-hidden
+                      className="size-20 shrink-0 select-none rounded-xl object-cover ring-1 ring-border"
+                      src="/today/food-salmon-bowl.png"
+                    />
+                    <div className="min-w-0">
+                      <div className="font-display font-semibold text-lg leading-tight">
+                        {mealPlanSummary.title}
+                      </div>
+                      <div className="mt-0.5 text-muted-foreground text-sm">
+                        {mealPlanSummary.dayCount}-day plan
+                      </div>
                     </div>
                   </div>
+                  {/* Daily targets as labeled chips (VF-16): fills the card
+                      with the plan's real numbers instead of dead space. */}
+                  {mealPlanSummary.targets && (
+                    <div className="flex flex-wrap gap-2">
+                      {mealPlanSummary.targets.map((t) => (
+                        <div
+                          className="flex items-baseline gap-1.5 rounded-xl border border-border bg-background/40 px-3 py-1.5"
+                          key={t.label}
+                        >
+                          <span className="font-display font-semibold text-sm leading-none">
+                            {t.value}
+                          </span>
+                          <span className="text-muted-foreground text-xs">
+                            {t.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <p className="text-muted-foreground text-sm">
@@ -883,7 +975,7 @@ async function TodayContent() {
         {/* Weight trend (Pro): the REVIEW finale; the slow metric the
             product's promise hangs on gets the page's one full-width chart. */}
         {isPro ? (
-          <ModuleCard>
+          <ModuleCard glow="violet">
             <ModuleHeader
               icon={<LineChart className="size-4" />}
               title="Weight trend"
@@ -941,6 +1033,18 @@ async function TodayContent() {
 
       {/* No quick-actions row (P2-8): it duplicated the top nav incompletely,
           and the mobile sheet nav already covers reach. */}
+    </div>
+  );
+}
+
+/** Compact stat tile for the Workout log card (VF-16). */
+function WorkoutStat({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="flex items-baseline gap-1.5 rounded-xl border border-border bg-background/40 px-3.5 py-2">
+      <span className="font-display font-semibold text-base leading-none">
+        {value}
+      </span>
+      <span className="text-muted-foreground text-xs">{label}</span>
     </div>
   );
 }

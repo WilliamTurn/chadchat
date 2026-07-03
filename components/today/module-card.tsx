@@ -25,22 +25,49 @@ import { cn } from "@/lib/utils";
  *   never push Ask Chad out of position.
  * - ModuleCard is a flex column and the footer is `mt-auto`, so footers line
  *   up across equal-height grid rows.
+ * - Elevation (VF-18): every card is faintly top-lit (a white gradient wash +
+ *   a 1px inner top highlight, both invisible in light mode) over the shared
+ *   `--shadow-card` token, and an optional `glow` tone parks a soft blurred
+ *   domain accent in the top-left corner behind the icon chip. Subtle by
+ *   design: the theme stays near-black; the cards just stop being flat.
  */
+const GLOWS: Record<ChipTone, string> = {
+  blood: "bg-blood/10",
+  amber: "bg-amber-400/10",
+  violet: "bg-violet-400/10",
+  sky: "bg-sky-400/10",
+  indigo: "bg-indigo-400/10",
+  emerald: "bg-emerald-500/10",
+};
+
 export function ModuleCard({
   className,
   children,
+  glow,
 }: {
   className?: string;
   children: ReactNode;
+  /** Domain accent for the card's ambient corner glow (matches its chip tone). */
+  glow?: ChipTone;
 }) {
   return (
     <section
       className={cn(
-        "flex min-w-0 flex-col rounded-2xl border border-border bg-card p-6",
+        "relative flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card bg-gradient-to-b from-white/[0.04] via-white/[0.01] to-transparent p-6 shadow-[var(--shadow-card),inset_0_1px_0_0_rgba(255,255,255,0.06)]",
         className
       )}
     >
-      {children}
+      {glow && (
+        <div
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute -top-14 -left-14 size-44 rounded-full blur-3xl",
+            GLOWS[glow]
+          )}
+        />
+      )}
+      {/* relative so content always paints above the positioned glow */}
+      <div className="relative flex min-w-0 flex-1 flex-col">{children}</div>
     </section>
   );
 }

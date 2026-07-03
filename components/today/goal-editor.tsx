@@ -166,7 +166,12 @@ export function GoalEditor({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-y-auto">
+      {/* Wide two-column surface at md+ (VF-16 follow-on, owner call): the
+          default-width dialog crammed the full goal form into a strip while
+          every other dashboard surface gets room. Left column = the goal in
+          your own words; right column = the structured fields. Stacks to one
+          column (and full width) on mobile. */}
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl md:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit goal" : "New goal"}</DialogTitle>
           <DialogDescription>
@@ -175,54 +180,60 @@ export function GoalEditor({
           </DialogDescription>
         </DialogHeader>
         <form className="flex flex-col gap-4" onSubmit={onSubmit}>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="g-title">Goal</Label>
-            <Input
-              id="g-title"
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Lose 20 lb and see abs"
-              value={title}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="g-detail">Details (optional)</Label>
-            <Textarea
-              className="min-h-28"
-              id="g-detail"
-              onChange={(e) => setDetail(e.target.value)}
-              placeholder="The full picture — your why, the deadline, how you'll measure it."
-              value={detail}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="g-target">Target date (optional)</Label>
-              <Input
-                id="g-target"
-                onChange={(e) => setTargetDate(e.target.value)}
-                placeholder="e.g. By September"
-                value={targetDate}
-              />
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="g-title">Goal</Label>
+                <Input
+                  id="g-title"
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g. Lose 20 lb and see abs"
+                  value={title}
+                />
+              </div>
+              <div className="flex flex-1 flex-col gap-2">
+                <Label htmlFor="g-detail">Details (optional)</Label>
+                <Textarea
+                  className="min-h-28 md:flex-1"
+                  id="g-detail"
+                  onChange={(e) => setDetail(e.target.value)}
+                  placeholder="The full picture — your why, the deadline, how you'll measure it."
+                  value={detail}
+                />
+              </div>
             </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="g-status">Status</Label>
-              <Select
-                onValueChange={(v) => setStatus(v as EditableGoal["status"])}
-                value={status}
-              >
-                <SelectTrigger id="g-status">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="achieved">Achieved</SelectItem>
-                  <SelectItem value="archived">Archived</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="g-target">Target date (optional)</Label>
+                  <Input
+                    id="g-target"
+                    onChange={(e) => setTargetDate(e.target.value)}
+                    placeholder="e.g. By September"
+                    value={targetDate}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="g-status">Status</Label>
+                  <Select
+                    onValueChange={(v) =>
+                      setStatus(v as EditableGoal["status"])
+                    }
+                    value={status}
+                  >
+                    <SelectTrigger id="g-status">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="achieved">Achieved</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
-          <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
+              <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
             <Label htmlFor="g-metric">Measurable target (optional)</Label>
             <p className="text-muted-foreground text-xs">
               Pin a number to track live progress on the dashboard.
@@ -332,6 +343,8 @@ export function GoalEditor({
                 </div>
               </div>
             )}
+              </div>
+            </div>
           </div>
 
           <DialogFooter>

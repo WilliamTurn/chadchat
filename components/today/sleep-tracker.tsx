@@ -100,7 +100,7 @@ export function SleepTracker({
     .map((n) => ({ iso: n.iso, minutes: n.minutes }));
 
   return (
-    <ModuleCard>
+    <ModuleCard glow="indigo">
       <ModuleHeader
         icon={<Moon className="size-4" />}
         title="Sleep & recovery"

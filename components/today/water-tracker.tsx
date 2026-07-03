@@ -135,7 +135,7 @@ export function WaterTracker({
       )}, ${formatOz(remaining)} to go.`;
 
   return (
-    <ModuleCard>
+    <ModuleCard glow="sky">
       <ModuleHeader
         icon={<Droplets className="size-4" />}
         title="Hydration"
