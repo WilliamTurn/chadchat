@@ -525,6 +525,8 @@ export type UserProfileInput = {
   experienceLevel?: "beginner" | "intermediate" | "advanced" | null;
   primaryGoal?: "muscle" | "fat_loss" | "strength" | "health" | null;
   trainingDaysPerWeek?: number | null;
+  primaryGoalDetail?: string | null;
+  trainingDescription?: string | null;
 };
 
 /**
@@ -545,6 +547,8 @@ export async function updateUserProfile(
     "experienceLevel",
     "primaryGoal",
     "trainingDaysPerWeek",
+    "primaryGoalDetail",
+    "trainingDescription",
   ] as const) {
     if (key in fields) {
       // biome-ignore lint/suspicious/noExplicitAny: narrowed key union assign

@@ -7,16 +7,13 @@ import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { PageShell } from "@/components/nav/page-shell";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { ReportActions } from "@/components/reports/report-actions";
+import { ReportTeaser } from "@/components/reports/report-teaser";
 import { ReportView } from "@/components/reports/report-view";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessEliteFeatures } from "@/lib/admin";
 import { formatCalendarDay } from "@/lib/date";
 import { getUserById, getWeeklyReportsByUserId } from "@/lib/db/queries";
-import {
-  parseWeeklyReportContent,
-  type WeeklyReportContent,
-} from "@/lib/reports/content";
+import { parseWeeklyReportContent } from "@/lib/reports/content";
 import { formatReportHour, reportDayLabel } from "@/lib/reports/schedule";
 
 /**
@@ -81,10 +78,10 @@ async function ReportsContent() {
   if (!canAccessChad(user)) {
     redirect("/pricing");
   }
-  // Elite-only: everyone else gets the upgrade teaser (Elite is purchasable
-  // now, so this is a real path — same pattern as the Pro-gated pages).
+  // Elite-only: everyone else gets the generate-a-sample teaser (ACC-24) —
+  // Elite is purchasable now, so this is a real upgrade path.
   if (!canAccessEliteFeatures(user)) {
-    return <UpgradePrompt />;
+    return <ReportTeaser />;
   }
 
   const reports = await getWeeklyReportsByUserId(user.id);
@@ -105,73 +102,6 @@ async function ReportsContent() {
     );
 
   return <ReportsList rendered={rendered} user={user} />;
-}
-
-/**
- * What a real weekly report looks like, shown blurred behind the Elite upgrade
- * prompt (VF-6); a text-only paywall punished the click that promised
- * "Reports". Static sample content; every number is invented for the mock and
- * it is never presented as the member's own data.
- */
-const SAMPLE_REPORT: WeeklyReportContent = {
-  headline: "Four sessions in, protein still 20g short",
-  intro:
-    "You trained four times this week and hit every planned session. Bodyweight moved from 214.2 to 212.9, right on the pace we set. Protein is the weak spot: you averaged 158g against a 180g target, and every day you missed it was a day you skipped the evening shake.",
-  sections: [
-    {
-      title: "Training",
-      body: "Four sessions logged: two lower, two upper. Squat top set moved 265 to 275 for the same five reps. Total volume 38,450 lb, up 6% on last week. Bench stalled at 205; bar speed on the last set says fatigue, not weakness.",
-    },
-    {
-      title: "Nutrition",
-      body: "Averages: 2,140 calories, 158g protein, 212g carbs, 71g fat. Five of seven days inside the calorie target. Protein missed on Tuesday, Friday and Sunday.",
-    },
-    {
-      title: "Bodyweight",
-      body: "214.2 to 212.9 lb. The trend line puts you 1.3 lb down on the week, inside the range we want for holding muscle on a cut.",
-    },
-  ],
-  adjustments: [
-    {
-      change: "Put the evening shake back on training days",
-      reason: "every protein miss this week was a day you skipped it",
-    },
-    {
-      change: "Hold bench at 205 and add a back-off set",
-      reason: "the top set stalled two sessions in a row",
-    },
-  ],
-  bottomLine:
-    "The cut is working and the squat is climbing. Fix the protein and next week's report has nothing to complain about.",
-};
-
-function UpgradePrompt() {
-  return (
-    <div className="relative max-h-[560px] overflow-hidden rounded-2xl border border-border bg-card">
-      {/* The blurred sample report behind the prompt: decorative only. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none select-none p-6 opacity-85 blur-[5px] sm:p-8"
-      >
-        <ReportView content={SAMPLE_REPORT} dateLabel="Sample week" />
-      </div>
-      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-transparent via-background/50 to-background/90 p-6">
-        <div className="max-w-md rounded-2xl border border-border/60 bg-background/85 p-6 text-center shadow-[var(--shadow-float)] backdrop-blur-sm">
-          <h2 className="font-medium text-lg">
-            Weekly reports are a Chad Elite feature
-          </h2>
-          <p className="mt-2 text-muted-foreground text-sm">
-            Upgrade to Elite and Chad writes you a full coach's review every
-            week: what you trained, how you ate, where your weight is heading,
-            and exactly what changes next week, delivered to your inbox.
-          </p>
-          <Button asChild className="mt-5">
-            <Link href="/account">Upgrade to Elite</Link>
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 function ReportsList({

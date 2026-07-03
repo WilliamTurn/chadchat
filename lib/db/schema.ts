@@ -93,6 +93,14 @@ export const user = pgTable("User", {
     enum: ["muscle", "fat_loss", "strength", "health"],
   }),
   trainingDaysPerWeek: integer("trainingDaysPerWeek"),
+  // The member's own words about their primary goal (ONB-3): the event, the
+  // deadline, the why behind the dropdown pick. Injected verbatim into Chad's
+  // CONFIRMED PROFILE block so he coaches toward the real target.
+  primaryGoalDetail: text("primaryGoalDetail"),
+  // The member's own words about how they train (ONB-4): cardio, HIIT,
+  // strength, sports, classes, or nothing yet. Same treatment as
+  // primaryGoalDetail so Chad plans around it.
+  trainingDescription: text("trainingDescription"),
   // --- Proactive check-ins (FEAT-11, Elite) ---
   // Whether Chad may email this member first (morning briefs, missed-workout
   // callouts). Default ON — it's the flagship of the Elite tier — with a

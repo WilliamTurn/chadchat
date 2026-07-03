@@ -138,6 +138,8 @@ export function formatProfileForPrompt(
     | "experienceLevel"
     | "primaryGoal"
     | "trainingDaysPerWeek"
+    | "primaryGoalDetail"
+    | "trainingDescription"
   >
 ): string {
   const lines: string[] = [];
@@ -159,6 +161,16 @@ export function formatProfileForPrompt(
   const goal = goalLabel(u.primaryGoal);
   if (goal) {
     lines.push(`- Primary goal: ${goal}`);
+  }
+  const goalDetail = u.primaryGoalDetail?.trim();
+  if (goalDetail) {
+    lines.push(`- About their goal, in their own words: "${goalDetail}"`);
+  }
+  const trainingDescription = u.trainingDescription?.trim();
+  if (trainingDescription) {
+    lines.push(
+      `- How they train, in their own words: "${trainingDescription}"`
+    );
   }
   if (u.trainingDaysPerWeek != null) {
     lines.push(`- Trains: ${u.trainingDaysPerWeek} day${u.trainingDaysPerWeek === 1 ? "" : "s"}/week`);

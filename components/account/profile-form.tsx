@@ -7,6 +7,7 @@ import { saveProfile } from "@/app/account/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   cmToFtIn,
   EXPERIENCE_OPTIONS,
@@ -14,6 +15,7 @@ import {
   ftInToCm,
   GOAL_OPTIONS,
   type PrimaryGoal,
+  PROFILE_TEXT_MAX,
   type Sex,
   SEX_OPTIONS,
   TRAINING_DAY_OPTIONS,
@@ -77,6 +79,8 @@ export function ProfileForm({
     experienceLevel: ExperienceLevel | null;
     primaryGoal: PrimaryGoal | null;
     trainingDaysPerWeek: number | null;
+    primaryGoalDetail: string | null;
+    trainingDescription: string | null;
   };
   weightUnit: "lb" | "kg" | null;
 }) {
@@ -102,8 +106,12 @@ export function ProfileForm({
     initial.experienceLevel
   );
   const [goal, setGoal] = useState<PrimaryGoal | null>(initial.primaryGoal);
+  const [goalDetail, setGoalDetail] = useState(initial.primaryGoalDetail ?? "");
   const [trainingDays, setTrainingDays] = useState<number | null>(
     initial.trainingDaysPerWeek
+  );
+  const [trainingDescription, setTrainingDescription] = useState(
+    initial.trainingDescription ?? ""
   );
 
   function currentHeightCm(): number | null {
@@ -125,6 +133,10 @@ export function ProfileForm({
           experienceLevel: experience,
           primaryGoal: goal,
           trainingDaysPerWeek: trainingDays,
+          // The schema turns an empty string into null, so clearing the box
+          // deletes the note.
+          primaryGoalDetail: goalDetail,
+          trainingDescription,
         });
         toast.success("Stats saved.");
       } catch {
@@ -206,11 +218,31 @@ export function ProfileForm({
 
         <div className="flex flex-col gap-2 sm:col-span-2">
           <Label>Primary goal</Label>
+          <p className="text-muted-foreground text-xs">
+            Your primary goal is the one outcome you most want from training.
+            The Goals on your dashboard are the measurable targets that serve
+            it.
+          </p>
           <LabeledSegmented
             columns="grid-cols-2 sm:grid-cols-4"
             options={GOAL_OPTIONS}
             onChange={setGoal}
             value={goal}
+          />
+          {/* ONB-3: the member's own words about the goal. Chad reads every
+              word of this, verbatim. */}
+          <Label className="mt-2" htmlFor="profile-goal-detail">
+            Tell us more about your goal{" "}
+            <span className="font-normal text-muted-foreground">
+              (optional)
+            </span>
+          </Label>
+          <Textarea
+            id="profile-goal-detail"
+            maxLength={PROFILE_TEXT_MAX}
+            onChange={(e) => setGoalDetail(e.target.value)}
+            placeholder="The event, the deadline, the number you want to hit, the reason behind it. Chad reads every word."
+            value={goalDetail}
           />
         </div>
 
@@ -221,6 +253,28 @@ export function ProfileForm({
             onChange={setTrainingDays}
             options={DAY_OPTIONS}
             value={trainingDays}
+          />
+        </div>
+
+        {/* ONB-4: how they train, in their own words, so Chad plans around
+            what they actually do. */}
+        <div className="flex flex-col gap-2 sm:col-span-2">
+          <Label htmlFor="profile-training-description">
+            About your training{" "}
+            <span className="font-normal text-muted-foreground">
+              (optional)
+            </span>
+          </Label>
+          <p className="text-muted-foreground text-xs">
+            Describe your training in your own words: lifting, cardio, HIIT,
+            sports, classes, or nothing yet. Chad plans around it.
+          </p>
+          <Textarea
+            id="profile-training-description"
+            maxLength={PROFILE_TEXT_MAX}
+            onChange={(e) => setTrainingDescription(e.target.value)}
+            placeholder="e.g. Push/pull/legs in a commercial gym, plus basketball on Saturdays."
+            value={trainingDescription}
           />
         </div>
       </div>

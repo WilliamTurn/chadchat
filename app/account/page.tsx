@@ -78,6 +78,22 @@ function MembershipCardSkeleton() {
   );
 }
 
+/**
+ * The "cancel anytime" phrase as a real submit button (ACC-21). Rendered inside
+ * a form whose action is `openBillingPortal`, so the promise is one click away
+ * instead of making the member hunt through the billing page.
+ */
+function CancelAnytimeButton() {
+  return (
+    <button
+      className="underline underline-offset-4 transition-colors hover:text-foreground"
+      type="submit"
+    >
+      cancel anytime
+    </button>
+  );
+}
+
 function formatDate(date: Date | null): string {
   if (!date) {
     return "—";
@@ -110,10 +126,14 @@ export default function AccountPage() {
           <Suspense fallback={<MembershipCardSkeleton />}>
             <MembershipCard />
           </Suspense>
-          <p className="mt-4 text-muted-foreground text-xs">
-            Billing is handled securely by Stripe. Update your card, switch
-            plans, or cancel anytime from the billing page.
-          </p>
+          {/* "cancel anytime" is a real one-click promise (ACC-21): the phrase
+              itself opens the Stripe billing portal. */}
+          <form action={openBillingPortal}>
+            <p className="mt-4 text-muted-foreground text-xs">
+              Billing is handled securely by Stripe. Update your card, switch
+              plans, or <CancelAnytimeButton /> from the billing page.
+            </p>
+          </form>
         </section>
 
         <Suspense fallback={null}>
@@ -162,20 +182,26 @@ async function AccountSettings() {
             experienceLevel: user.experienceLevel,
             primaryGoal: user.primaryGoal,
             trainingDaysPerWeek: user.trainingDaysPerWeek,
+            primaryGoalDetail: user.primaryGoalDetail,
+            trainingDescription: user.trainingDescription,
           }}
           weightUnit={user.weightUnit}
         />
       </section>
 
       {/* Preferences + Your data sit side-by-side on wide screens so the page
-          fills the standardized width instead of stranding a lonely column. */}
-      <div className="grid gap-8 lg:grid-cols-2">
+          fills the standardized width instead of stranding a lonely column.
+          items-start + no h-full (ACC-22): cards keep their natural height
+          instead of the shorter one stretching to match the taller column;
+          the Elite email settings live in the right column so the two columns
+          stay roughly balanced. */}
+      <div className="grid items-start gap-8 lg:grid-cols-2">
         {/* Preferences */}
         <section>
           <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
             Preferences
           </h2>
-          <div className="h-full rounded-2xl border border-border bg-card p-6">
+          <div className="rounded-2xl border border-border bg-card p-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <h3 className="font-medium text-sm">Units</h3>
@@ -206,18 +232,24 @@ async function AccountSettings() {
                 initialSound={user.soundEnabled}
               />
             </div>
+          </div>
+        </section>
 
-            {/* Proactive check-ins (FEAT-11) + the weekly report (FEAT-12) —
-                Elite only, so members who don't have the features never see a
-                dead control. */}
-            {canAccessEliteFeatures(user) && (
-              <>
-                <div className="mt-6 border-border border-t pt-6">
-                  <CheckInSettings
-                    initialEnabled={user.checkInsEnabled}
-                    initialFrequency={user.checkInFrequency}
-                  />
-                </div>
+        {/* Right column: Elite email settings (when they apply) + Your data. */}
+        <div className="flex flex-col gap-8">
+          {/* Proactive check-ins (FEAT-11) + the weekly report (FEAT-12) —
+              Elite only, so members who don't have the features never see a
+              dead control. */}
+          {canAccessEliteFeatures(user) && (
+            <section>
+              <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
+                Emails from Chad
+              </h2>
+              <div className="rounded-2xl border border-border bg-card p-6">
+                <CheckInSettings
+                  initialEnabled={user.checkInsEnabled}
+                  initialFrequency={user.checkInFrequency}
+                />
                 <div className="mt-6 border-border border-t pt-6">
                   <WeeklyReportSettings
                     initialDay={user.weeklyReportDay}
@@ -225,36 +257,39 @@ async function AccountSettings() {
                     initialHour={user.weeklyReportHour}
                   />
                 </div>
-              </>
-            )}
-          </div>
-        </section>
+              </div>
+            </section>
+          )}
 
-        {/* Your data */}
-        <section>
-          <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-            Your data
-          </h2>
-          <div className="h-full rounded-2xl border border-border bg-card p-6">
-            <h3 className="font-medium text-sm">Export</h3>
-            <p className="mt-1 text-muted-foreground text-sm">
-              Download your logged data as CSV — it's yours, take it anywhere.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {exports.map(({ dataset, label, icon: Icon }) => (
-                <a
-                  className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
-                  download
-                  href={`${basePath}/api/me/export?dataset=${dataset}`}
-                  key={dataset}
-                >
-                  <Icon className="size-4" />
-                  {label}
-                </a>
-              ))}
+          {/* Your data */}
+          <section>
+            <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
+              Your data
+            </h2>
+            <div className="rounded-2xl border border-border bg-card p-6">
+              <h3 className="font-medium text-sm">Export</h3>
+              <p className="mt-1 text-muted-foreground text-sm">
+                Download your logged data as CSV — it's yours, take it anywhere.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {exports.map(({ dataset, label, icon: Icon }) => (
+                  <a
+                    className={cn(
+                      buttonVariants({ variant: "outline" }),
+                      "gap-2"
+                    )}
+                    download
+                    href={`${basePath}/api/me/export?dataset=${dataset}`}
+                    key={dataset}
+                  >
+                    <Icon className="size-4" />
+                    {label}
+                  </a>
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </div>
       </div>
     </>
   );
@@ -439,10 +474,12 @@ function UpgradeToProCard({ price }: { price: string }) {
             Upgrade to Pro — {price}/month
           </Button>
         </form>
-        <p className="mt-2.5 text-muted-foreground text-xs">
-          You'll see the exact prorated amount before you confirm. Billed
-          securely by Stripe · cancel anytime.
-        </p>
+        <form action={openBillingPortal}>
+          <p className="mt-2.5 text-muted-foreground text-xs">
+            You'll see the exact prorated amount before you confirm. Billed
+            securely by Stripe · <CancelAnytimeButton />.
+          </p>
+        </form>
       </div>
     </div>
   );
@@ -492,10 +529,12 @@ function UpgradeToEliteCard({ price }: { price: string }) {
             Upgrade to Elite — {price}/month
           </Button>
         </form>
-        <p className="mt-2.5 text-muted-foreground text-xs">
-          You'll see the exact prorated amount before you confirm. Billed
-          securely by Stripe · cancel anytime.
-        </p>
+        <form action={openBillingPortal}>
+          <p className="mt-2.5 text-muted-foreground text-xs">
+            You'll see the exact prorated amount before you confirm. Billed
+            securely by Stripe · <CancelAnytimeButton />.
+          </p>
+        </form>
       </div>
     </div>
   );

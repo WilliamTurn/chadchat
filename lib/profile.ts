@@ -41,6 +41,10 @@ export type PrimaryGoal = (typeof GOAL_OPTIONS)[number]["value"];
 
 export const TRAINING_DAY_OPTIONS = [1, 2, 3, 4, 5, 6, 7] as const;
 
+/** Cap for the free-text profile fields (ONB-3/ONB-4) — roomy enough for a
+ * real paragraph, small enough to inject verbatim into Chad's prompt. */
+export const PROFILE_TEXT_MAX = 600;
+
 function labelFor<T extends string>(
   options: readonly { value: T; label: string }[],
   value: T | null | undefined
@@ -126,6 +130,22 @@ export const profileSchema = z.object({
     .nullable()
     .optional(),
   trainingDaysPerWeek: z.coerce.number().int().min(1).max(7).nullable().optional(),
+  // Free text, in the member's own words (ONB-3/ONB-4). Trimmed; an empty
+  // string clears the field (stored as null) so "deleted my note" works.
+  primaryGoalDetail: z
+    .string()
+    .trim()
+    .max(PROFILE_TEXT_MAX)
+    .transform((s) => (s.length === 0 ? null : s))
+    .nullable()
+    .optional(),
+  trainingDescription: z
+    .string()
+    .trim()
+    .max(PROFILE_TEXT_MAX)
+    .transform((s) => (s.length === 0 ? null : s))
+    .nullable()
+    .optional(),
 });
 
 export type ProfileInput = z.infer<typeof profileSchema>;
