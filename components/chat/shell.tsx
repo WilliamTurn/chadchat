@@ -109,6 +109,8 @@ export function ChatShell() {
               onRetry={retry}
               regenerate={regenerate}
               selectedModelId={currentModelId}
+              selectedVisibilityType={visibilityType}
+              sendMessage={sendMessage}
               setMessages={setMessages}
               status={status}
               votes={votes}

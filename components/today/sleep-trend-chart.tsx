@@ -65,8 +65,17 @@ function fmtAxis(minutes: number): string {
   return `${Math.round(minutes / 60)}h`;
 }
 
-export function SleepTrendChart({ days }: { days: Point[] }) {
+export function SleepTrendChart({
+  days,
+  goalMinutes = SLEEP_GOAL_MINUTES,
+}: {
+  days: Point[];
+  /** The user's nightly target (DSH-40); defaults to the recommended 7h. */
+  goalMinutes?: number;
+}) {
   const reveal = useMountReveal();
+  const isDefaultGoal = goalMinutes === SLEEP_GOAL_MINUTES;
+  const goalLabel = formatSleepDuration(goalMinutes);
 
   // Gap-fill unlogged nights so the date axis stays honest (bars are evenly
   // spaced bands — without the fill, missing days silently vanish).
@@ -87,24 +96,22 @@ export function SleepTrendChart({ days }: { days: Point[] }) {
     }
     const sum = loggedRows.reduce((s, r) => s + r.minutes, 0);
     const avg = Math.round(sum / loggedRows.length);
-    const hit = loggedRows.filter(
-      (r) => r.minutes >= SLEEP_GOAL_MINUTES
-    ).length;
+    const hit = loggedRows.filter((r) => r.minutes >= goalMinutes).length;
     // Denominator = logged nights only (LC-9): same basis as the average, so
     // the two stats can't disagree about what a "night" is. Unlogged nights
     // are unknowns, shown as gaps in the chart, not counted as misses.
     return { avg, hit, logged: loggedRows.length };
-  }, [rows]);
+  }, [rows, goalMinutes]);
 
   // Even whole-hour ticks (VF-8): 0h/2h/4h…, never the irregular 0h/3h/7h/9h
   // a raw-max domain produced. Data is minutes; steps are display hours.
   const { max: yMax, ticks: yTicks } = useMemo(
     () =>
-      niceScale(
-        Math.max(...rows.map((r) => r.minutes), SLEEP_GOAL_MINUTES),
-        { steps: [1, 2, 3, 4, 6, 12], unit: 60 }
-      ),
-    [rows]
+      niceScale(Math.max(...rows.map((r) => r.minutes), goalMinutes), {
+        steps: [1, 2, 3, 4, 6, 12],
+        unit: 60,
+      }),
+    [rows, goalMinutes]
   );
 
   if (days.length < 2) {
@@ -116,11 +123,9 @@ export function SleepTrendChart({ days }: { days: Point[] }) {
       askChadPrompt={ASK_CHAD_PROMPT}
       footer={
         <span>
-          <span className="font-medium text-indigo-400">
-            {formatSleepDuration(SLEEP_GOAL_MINUTES)}+
-          </span>{" "}
-          a night recommended · each bar is one night · gaps are unlogged
-          nights
+          <span className="font-medium text-indigo-400">{goalLabel}+</span>{" "}
+          a night {isDefaultGoal ? "recommended" : "is your goal"} · each bar
+          is one night · gaps are unlogged nights
         </span>
       }
       kpis={
@@ -133,8 +138,12 @@ export function SleepTrendChart({ days }: { days: Point[] }) {
               value={formatSleepDuration(stats.avg)}
             />
             <Kpi
-              help="How many of the nights you logged in this range hit the recommended 7 hours. Nights you didn't log show as gaps in the chart and don't count against you."
-              label="Nights with 7h+"
+              help={`How many of the nights you logged in this range hit ${
+                isDefaultGoal
+                  ? "the recommended 7 hours"
+                  : `your ${goalLabel} goal`
+              }. Nights you didn't log show as gaps in the chart and don't count against you.`}
+              label={`Nights with ${goalLabel}+`}
               sub="of logged nights"
               tone={stats.hit > 0 ? "good" : "neutral"}
               value={`${stats.hit} / ${stats.logged}`}
@@ -166,7 +175,7 @@ export function SleepTrendChart({ days }: { days: Point[] }) {
             width={36}
           />
           <ChartTooltip
-            content={<SleepTooltip />}
+            content={<SleepTooltip goalMinutes={goalMinutes} />}
             cursor={{ fill: "var(--muted-foreground)", fillOpacity: 0.08 }}
           />
           <ReferenceLine
@@ -174,7 +183,7 @@ export function SleepTrendChart({ days }: { days: Point[] }) {
             strokeDasharray="5 4"
             strokeOpacity={0.7}
             strokeWidth={1.5}
-            y={SLEEP_GOAL_MINUTES}
+            y={goalMinutes}
           />
           <Bar
             animationDuration={750}
@@ -188,7 +197,7 @@ export function SleepTrendChart({ days }: { days: Point[] }) {
               <Cell
                 fill={INDIGO}
                 fillOpacity={
-                  r.logged ? (r.minutes >= SLEEP_GOAL_MINUTES ? 0.9 : 0.4) : 0
+                  r.logged ? (r.minutes >= goalMinutes ? 0.9 : 0.4) : 0
                 }
                 key={r.t}
               />
@@ -203,9 +212,11 @@ export function SleepTrendChart({ days }: { days: Point[] }) {
 function SleepTooltip({
   active,
   payload,
+  goalMinutes,
 }: {
   active?: boolean;
   payload?: { payload?: Row }[];
+  goalMinutes: number;
 }) {
   if (!active || !payload?.length) {
     return null;
@@ -214,7 +225,8 @@ function SleepTooltip({
   if (!row) {
     return null;
   }
-  const hit = row.minutes >= SLEEP_GOAL_MINUTES;
+  const hit = row.minutes >= goalMinutes;
+  const goalLabel = formatSleepDuration(goalMinutes);
   return (
     <ChartTip
       rows={
@@ -235,8 +247,8 @@ function SleepTooltip({
           <span>{row.quality == null ? "—" : QUALITY_LABELS[row.quality]}</span>
           <span className={hit ? "font-medium text-emerald-500" : ""}>
             {hit
-              ? "7h+ reached"
-              : `${formatSleepDuration(SLEEP_GOAL_MINUTES - row.minutes)} short of 7h`}
+              ? `${goalLabel}+ reached`
+              : `${formatSleepDuration(goalMinutes - row.minutes)} short of ${goalLabel}`}
           </span>
         </div>
       ) : (

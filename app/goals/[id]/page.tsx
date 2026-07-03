@@ -52,7 +52,7 @@ export default function GoalDocPage({
   params: Promise<{ id: string }>;
 }) {
   return (
-    <PageShell size="narrow">
+    <PageShell>
       <Toaster
         position="top-center"
         theme="system"

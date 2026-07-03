@@ -24,6 +24,7 @@ import {
   getUserById,
 } from "@/lib/db/queries";
 import { buildLastNight, buildSleepWeek } from "@/lib/today/week";
+import { SLEEP_GOAL_MINUTES } from "@/lib/validation/sleep";
 
 /**
  * The dedicated Sleep & recovery page (NAV-30) — sleep's ONE deep surface
@@ -117,11 +118,21 @@ async function SleepContent() {
   // stays the readout + logger.
   const showTrend = sleepDaily.length >= 2;
 
+  // The user's nightly target (DSH-40); null = the recommended 7h default.
+  const goalMinutes = user.sleepGoalMinutes ?? SLEEP_GOAL_MINUTES;
+
   return (
     <div className="flex flex-col gap-6">
-      <SleepTracker last={lastNight} week={sleepWeek} weekChart={!showTrend} />
-      {showTrend && <SleepTrendChart days={sleepDaily} />}
-      <SleepHistory entries={history} />
+      <SleepTracker
+        goalMinutes={goalMinutes}
+        last={lastNight}
+        week={sleepWeek}
+        weekChart={!showTrend}
+      />
+      {showTrend && (
+        <SleepTrendChart days={sleepDaily} goalMinutes={goalMinutes} />
+      )}
+      <SleepHistory entries={history} goalMinutes={goalMinutes} />
     </div>
   );
 }

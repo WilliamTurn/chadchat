@@ -5,9 +5,10 @@
  *      never ordinary data. The training charts (volume, est. 1RM) draw in
  *      blood because lifting IS the brand domain, not because red "means"
  *      anything about the numbers.
- *   2. EMERALD means moving toward / hitting a goal, plus the weight trend
- *      line itself, which is ALWAYS emerald (owner call, s126: the toward/away
- *      verdict lives in the KPI tones, never in the line color). Anything
+ *   2. EMERALD means moving toward / hitting a goal. The weight trend line is
+ *      direction-colored (owner reversal, s138 / DSH-50: emerald toward goal,
+ *      blood away, a deliberate neutral when ambiguous or no goal is set —
+ *      the s126 "always emerald" call predated knowing this). Anything
  *      else that isn't a goal verdict draws in its domain accent below.
  *
  * This module is the single source of truth for every chart/data color.

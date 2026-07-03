@@ -83,7 +83,14 @@ function DeleteNightButton({ id }: { id: string }) {
   );
 }
 
-export function SleepHistory({ entries }: { entries: SleepHistoryEntry[] }) {
+export function SleepHistory({
+  entries,
+  goalMinutes = SLEEP_GOAL_MINUTES,
+}: {
+  entries: SleepHistoryEntry[];
+  /** The user's nightly target (DSH-40); defaults to the recommended 7h. */
+  goalMinutes?: number;
+}) {
   if (entries.length === 0) {
     return null;
   }
@@ -92,7 +99,7 @@ export function SleepHistory({ entries }: { entries: SleepHistoryEntry[] }) {
       <h2 className="mb-4 font-medium text-lg">History</h2>
       <div className="overflow-hidden rounded-2xl border border-border">
         {entries.map((e, i) => {
-          const hit = e.minutes >= SLEEP_GOAL_MINUTES;
+          const hit = e.minutes >= goalMinutes;
           const quality = e.quality;
           return (
             <div

@@ -760,6 +760,7 @@ async function TodayContent() {
 
           {isPro ? (
             <SleepTracker
+              goalMinutes={user.sleepGoalMinutes ?? undefined}
               last={lastNight}
               quiet={firstRun}
               viewHref="/sleep"

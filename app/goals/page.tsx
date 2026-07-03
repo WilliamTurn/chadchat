@@ -41,7 +41,7 @@ const GOALS_WORKOUT_LIMIT = 60;
 
 export default function GoalsPage() {
   return (
-    <PageShell size="narrow">
+    <PageShell>
       <Toaster
         position="top-center"
         theme="system"

@@ -29,7 +29,7 @@ import { formatReportHour, reportDayLabel } from "@/lib/reports/schedule";
 
 export default function ReportsPage() {
   return (
-    <PageShell size="narrow">
+    <PageShell>
       <Toaster
         position="top-center"
         theme="system"

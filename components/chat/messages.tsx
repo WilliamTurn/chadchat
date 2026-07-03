@@ -9,6 +9,7 @@ import { useDataStream } from "./data-stream-provider";
 import { Greeting } from "./greeting";
 import { PreviewMessage, ThinkingMessage } from "./message";
 import { submitRegenerateMessage } from "./message-editor";
+import type { VisibilityType } from "./visibility-selector";
 
 type MessagesProps = {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
@@ -18,6 +19,8 @@ type MessagesProps = {
   messages: ChatMessage[];
   setMessages: UseChatHelpers<ChatMessage>["setMessages"];
   regenerate: UseChatHelpers<ChatMessage>["regenerate"];
+  sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
+  selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
   isArtifactVisible: boolean;
   isLoading?: boolean;
@@ -36,6 +39,8 @@ function PureMessages({
   messages,
   setMessages,
   regenerate,
+  sendMessage,
+  selectedVisibilityType,
   isReadonly,
   isArtifactVisible,
   isLoading,
@@ -81,7 +86,14 @@ function PureMessages({
         style={isArtifactVisible ? { scrollbarWidth: "none" } : undefined}
       >
         <div className="mx-auto flex min-h-full min-w-0 max-w-4xl flex-col gap-5 px-2 py-6 md:gap-7 md:px-4">
-          {messages.length === 0 && !isLoading && <Greeting />}
+          {messages.length === 0 && !isLoading && (
+            <Greeting
+              chatId={chatId}
+              isReadonly={isReadonly}
+              selectedVisibilityType={selectedVisibilityType}
+              sendMessage={sendMessage}
+            />
+          )}
 
           {messages.map((message, index) => (
             <PreviewMessage

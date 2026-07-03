@@ -17,6 +17,7 @@ import {
   updateGoal,
   updatePlan,
   updateUserHero,
+  updateUserSleepGoal,
   upsertUserMemory,
 } from "@/lib/db/queries";
 import type { User } from "@/lib/db/schema";
@@ -323,6 +324,32 @@ export async function removeSleep(id: string): Promise<TodayActionState> {
     return { ok: false, error: gate.error };
   }
   await deleteSleepEntry({ id, userId: gate.user.id });
+  revalidatePath("/today");
+  revalidatePath("/sleep");
+  return { ok: true };
+}
+
+// Sane bounds for a nightly sleep goal: 4 to 12 hours. Stops a typo'd goal
+// from making every night read as a hit (or a miss) forever.
+const MIN_SLEEP_GOAL_MINUTES = 4 * 60;
+const MAX_SLEEP_GOAL_MINUTES = 12 * 60;
+
+/** Set the user's nightly sleep goal (DSH-40). Amount arrives in minutes. */
+export async function saveSleepGoal(
+  minutes: number
+): Promise<TodayActionState> {
+  const gate = await requireProUser();
+  if ("error" in gate) {
+    return { ok: false, error: gate.error };
+  }
+  if (!Number.isFinite(minutes) || minutes <= 0) {
+    return { ok: false, error: "Enter a nightly sleep goal." };
+  }
+  const clamped = Math.min(
+    Math.max(Math.round(minutes), MIN_SLEEP_GOAL_MINUTES),
+    MAX_SLEEP_GOAL_MINUTES
+  );
+  await updateUserSleepGoal(gate.user.id, clamped);
   revalidatePath("/today");
   revalidatePath("/sleep");
   return { ok: true };

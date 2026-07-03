@@ -386,6 +386,24 @@ export async function updateUserWaterGoal(
   }
 }
 
+/** Set the user's nightly sleep goal in minutes (null = the recommended 7h). */
+export async function updateUserSleepGoal(
+  userId: string,
+  sleepGoalMinutes: number | null
+) {
+  try {
+    return await db
+      .update(user)
+      .set({ sleepGoalMinutes, updatedAt: new Date() })
+      .where(eq(user.id, userId));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to update sleep goal"
+    );
+  }
+}
+
 // --- Memory layer (Phase 3) ---
 
 /** The user's durable memory profile, or undefined if none yet. */

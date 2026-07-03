@@ -31,7 +31,6 @@ import {
 import { Button } from "../ui/button";
 import { PaperclipIcon, StopIcon } from "./icons";
 import { PreviewAttachment } from "./preview-attachment";
-import { SuggestedActions } from "./suggested-actions";
 import type { VisibilityType } from "./visibility-selector";
 
 function PureMultimodalInput({
@@ -89,13 +88,6 @@ function PureMultimodalInput({
   const [localStorageInput, setLocalStorageInput] = useLocalStorage(
     "input",
     ""
-  );
-
-  // Lets users permanently dismiss the empty-state example prompts. A "show
-  // again" toggle will live in the Settings menu (task #10) once that exists.
-  const [hideSuggestions, setHideSuggestions] = useLocalStorage(
-    "chad-hide-suggestions",
-    false
   );
 
   // "Discuss with Chad" links arrive as /?prompt=… — read the param as a stable
@@ -310,19 +302,8 @@ function PureMultimodalInput({
         </div>
       )}
 
-      {!editingMessage &&
-        !isLoading &&
-        !hideSuggestions &&
-        messages.length === 0 &&
-        attachments.length === 0 &&
-        uploadQueue.length === 0 && (
-          <SuggestedActions
-            chatId={chatId}
-            onHide={() => setHideSuggestions(true)}
-            selectedVisibilityType={selectedVisibilityType}
-            sendMessage={sendMessage}
-          />
-        )}
+      {/* The empty-state example prompts moved into the Greeting hero (CHT-1)
+          — see components/chat/greeting.tsx. */}
 
       <input
         className="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0"

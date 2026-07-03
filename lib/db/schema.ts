@@ -58,6 +58,10 @@ export const user = pgTable("User", {
   // Daily water target in milliliters (stored in ml like the WaterLog rows, but
   // shown to the user in oz/gallons). Null = use the default of one US gallon.
   waterGoalMl: integer("waterGoalMl"),
+  // --- Sleep goal (DSH-40) ---
+  // Nightly sleep target in minutes (stored like SleepEntry.minutes so 7h30m
+  // is exact). Null = use the recommended default of 7 hours.
+  sleepGoalMinutes: integer("sleepGoalMinutes"),
   // --- Preferences (ACC-13) ---
   // Preferred body-weight unit for display + as the default for new weigh-ins.
   // Null = infer from the latest weigh-in (falling back to "lb"), so nothing

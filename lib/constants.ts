@@ -14,5 +14,5 @@ export const suggestions = [
   "I want to build muscle. Build me a workout plan.",
   "Make me a meal plan so I can lose weight fast.",
   "Rate my photo.",
-  "I keep failing — fix my routine.",
+  "I keep failing. Fix my routine.",
 ];

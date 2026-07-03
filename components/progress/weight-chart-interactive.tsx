@@ -21,7 +21,8 @@
  *     card + headline number), all history, shorter, no toggle/KPIs.
  */
 
-import { useId, useMemo } from "react";
+import { Minus, TrendingDown, TrendingUp, Trophy } from "lucide-react";
+import { type ReactNode, useId, useMemo } from "react";
 import {
   Area,
   CartesianGrid,
@@ -55,19 +56,50 @@ import {
   round1,
   type TrendRow,
 } from "@/lib/chart/trend";
-import { GOAL_EMERALD } from "@/lib/chart/palette";
+import { BLOOD, GOAL_EMERALD } from "@/lib/chart/palette";
 import { computeGoalProgress } from "@/lib/goals/progress";
+import { cn } from "@/lib/utils";
 
 const GOAL_COLOR = GOAL_EMERALD;
 
-// Owner call (s126): the weight trend line is ALWAYS the glowing emerald.
-// The R2-10 experiment (emerald only when trending toward goal, neutral
-// otherwise) made the line flip to a flat foreground white, which read as
-// broken. The toward/away verdict still lives in the Change and Rate KPI
-// tones (green/red); the line itself stays the signature green.
-const TREND_COLOR = GOAL_COLOR;
-// A soft emerald halo on the trend stroke so the line reads as glowing.
-const TREND_GLOW = "[filter:drop-shadow(0_0_6px_rgba(16,185,129,0.45))]";
+// The trend line is direction-colored (owner reversal, s138 / DSH-50, undoing
+// the s126 "always emerald" call): emerald when the trend is moving toward the
+// goal, blood when it's moving away, and a deliberate cool slate when there's
+// no goal or the trend is flat. Each state keeps its own glow so the neutral
+// line still reads as the intentional, finished centerpiece (the s126 lesson:
+// a flat unglowing line looks broken), and the KPI tones stay in agreement —
+// the line and the Change/Rate numbers always tell one story.
+const TREND_COLORS: Record<KpiTone, string> = {
+  good: GOAL_EMERALD,
+  bad: BLOOD,
+  neutral: "#94a3b8",
+};
+const TREND_GLOWS: Record<KpiTone, string> = {
+  good: "[filter:drop-shadow(0_0_6px_rgba(16,185,129,0.45))]",
+  bad: "[filter:drop-shadow(0_0_6px_rgba(164,22,26,0.55))]",
+  neutral: "[filter:drop-shadow(0_0_6px_rgba(148,163,184,0.35))]",
+};
+
+// Below this much trend movement (in display units) the window counts as
+// "holding steady" — too small to honestly call a direction.
+const STEADY_EPS = 0.2;
+
+/** Which way is the trend moving relative to the goal over these rows? */
+function directionTone(
+  rows: TrendRow[],
+  goalWeight: number | null
+): KpiTone {
+  if (goalWeight == null || rows.length < 2) {
+    return "neutral";
+  }
+  const change = round1(rows[rows.length - 1].trend - rows[0].trend);
+  if (Math.abs(change) < STEADY_EPS) {
+    return "neutral";
+  }
+  const goingDown = change < 0;
+  const goalIsBelow = goalWeight < rows[0].trend;
+  return goingDown === goalIsBelow ? "good" : "bad";
+}
 
 // Data thresholds for honest sparse states (see spec §4.6).
 const MIN_FOR_RATE = 5; // below this, a per-week rate is too noisy to show
@@ -106,7 +138,9 @@ export function WeightChartInteractive({
 
   // ---- Single source of truth: trend-based stats over the selected range ----
   const stats = useMemo(() => {
-    if (rows.length === 0) {
+    // A custom window can hold 0–1 weigh-ins; there's nothing honest to
+    // compute there (presets always fall back to >= 2 points).
+    if (rows.length < 2) {
       return null;
     }
     const last = rows[rows.length - 1];
@@ -115,12 +149,8 @@ export function WeightChartInteractive({
     const perWeek = round1(ratePerWeek(rows));
 
     // Toward-goal coloring: does the trend move in the goal's direction?
-    let tone: KpiTone = "neutral";
-    if (goalWeight != null && change !== 0) {
-      const goingDown = change < 0;
-      const goalIsBelow = goalWeight < first.trend;
-      tone = goingDown === goalIsBelow ? "good" : "bad";
-    }
+    // Shared with the line color (DSH-50) so the two can never disagree.
+    const tone = directionTone(rows, goalWeight);
 
     // Projection — only when we have enough data and a real rate toward goal.
     let projection: { dateMs: number } | null = null;
@@ -178,13 +208,18 @@ export function WeightChartInteractive({
         compact
         goalWeight={goalWeight}
         rows={allRows}
+        tone={directionTone(allRows, goalWeight)}
         unit={unit}
       />
     );
   }
 
   const rangeLabel =
-    control.range === "all" ? "all time" : control.range.toUpperCase();
+    control.range === "all"
+      ? "all time"
+      : control.range === "custom"
+        ? "custom range"
+        : control.range.toUpperCase();
 
   // ---- Single lonely weigh-in: show the number, never a one-dot line --------
   if (n === 1) {
@@ -289,9 +324,9 @@ export function WeightChartInteractive({
                   window.{" "}
                   <span className="text-emerald-500">Green</span> means it's
                   heading toward your goal,{" "}
-                  <span className="text-blood">red</span> means away. Use the{" "}
-                  <span className="text-foreground">1W / 1M / All</span> buttons to
-                  change the window.
+                  <span className="text-blood">red</span> means away. Use the
+                  range buttons (or the calendar for any custom window) to
+                  change it.
                 </>
               }
               label="Change"
@@ -346,8 +381,108 @@ export function WeightChartInteractive({
       range={control}
       title="Weight trend"
     >
-      <WeightChartBody goalWeight={goalWeight} rows={rows} unit={unit} />
+      {goalWeight != null && stats && (
+        <VerdictLine
+          change={stats.change}
+          rangeLabel={rangeLabel}
+          reached={reached}
+          tone={stats.tone}
+          unit={unit}
+        />
+      )}
+      {rows.length < 2 ? (
+        <p className="py-8 text-center text-muted-foreground text-sm">
+          {rows.length === 0
+            ? "No weigh-ins in this date range."
+            : "Only one weigh-in in this date range — pick a wider window to see the trend."}
+        </p>
+      ) : (
+        <WeightChartBody
+          goalWeight={goalWeight}
+          rows={rows}
+          tone={stats?.tone ?? "neutral"}
+          unit={unit}
+        />
+      )}
     </ChartCard>
+  );
+}
+
+/**
+ * The verdict, in words (DSH-52): pro scale apps say the conclusion instead of
+ * making the user decode number colors. Toward-goal gets the win treatment
+ * (emerald + trophy), away is called out honestly in blood, and a flat window
+ * gets a truthful in-between instead of a fake verdict.
+ */
+function VerdictLine({
+  tone,
+  change,
+  unit,
+  rangeLabel,
+  reached,
+}: {
+  tone: KpiTone;
+  change: number;
+  unit: string;
+  rangeLabel: string;
+  reached: boolean;
+}) {
+  const window =
+    rangeLabel === "all time"
+      ? "across your full history"
+      : rangeLabel === "custom range"
+        ? "in this date range"
+        : `over the last ${
+            (
+              {
+                "1W": "week",
+                "1M": "month",
+                "3M": "3 months",
+                "6M": "6 months",
+                "1Y": "year",
+              } as Record<string, string>
+            )[rangeLabel] ?? rangeLabel
+          }`;
+  const moved = `${Math.abs(change)} ${unit} ${change < 0 ? "down" : "up"} ${window}`;
+
+  let icon: ReactNode;
+  let text: string;
+  let className: string;
+  if (reached) {
+    icon = <Trophy className="size-4" />;
+    text = "You reached your goal. Time to set the next one.";
+    className = "border-emerald-500/25 bg-emerald-500/10 text-emerald-500";
+  } else if (tone === "good") {
+    icon = <Trophy className="size-4" />;
+    text = `Trending toward your goal: ${moved}.`;
+    className = "border-emerald-500/25 bg-emerald-500/10 text-emerald-500";
+  } else if (tone === "bad") {
+    icon =
+      change > 0 ? (
+        <TrendingUp className="size-4" />
+      ) : (
+        <TrendingDown className="size-4" />
+      );
+    text = `Moving away from your goal: ${moved}.`;
+    className = "border-blood/25 bg-blood-dim text-blood";
+  } else {
+    icon = <Minus className="size-4" />;
+    text = `Holding steady: your weight has barely moved ${window}.`;
+    className = "border-border bg-muted/40 text-muted-foreground";
+  }
+
+  return (
+    <div
+      className={cn(
+        "mb-4 flex items-center gap-2 rounded-lg border px-3 py-2 font-medium text-sm",
+        className
+      )}
+    >
+      <span aria-hidden className="shrink-0">
+        {icon}
+      </span>
+      <span>{text}</span>
+    </div>
   );
 }
 
@@ -360,19 +495,23 @@ function WeightChartBody({
   rows,
   unit,
   goalWeight,
+  tone,
   compact = false,
 }: {
   rows: TrendRow[];
   unit: string;
   goalWeight: number | null;
+  /** Direction verdict for the window shown — colors the line (DSH-50). */
+  tone: KpiTone;
   compact?: boolean;
 }) {
   // One-time draw-in on mount; scrub + range changes stay instant.
   const reveal = useMountReveal();
   const gradientId = useId();
 
-  // Always the glowing emerald (owner call, s126; see TREND_COLOR above).
-  const lineColor = TREND_COLOR;
+  // Direction-colored, with a matching glow (DSH-50; see TREND_COLORS above).
+  const lineColor = TREND_COLORS[tone];
+  const glowClass = TREND_GLOWS[tone];
 
   const chartConfig = {
     trend: { label: "Trend", color: lineColor },
@@ -504,12 +643,12 @@ function WeightChartBody({
           type="monotone"
         />
 
-        {/* The headline EMA trend, on top, with its emerald glow. */}
+        {/* The headline EMA trend, on top, with its matching glow. */}
         <Area
           activeDot={{ r: 4, fill: lineColor, strokeWidth: 0 }}
           animationDuration={750}
           animationEasing="ease-out"
-          className={TREND_GLOW}
+          className={glowClass}
           dataKey="trend"
           dot={false}
           fill={`url(#${gradientId})`}

@@ -13,12 +13,16 @@ type SuggestedActionsProps = {
   sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
   selectedVisibilityType: VisibilityType;
   onHide?: () => void;
+  /** Stagger start offset, so the chips can land after the hero above them
+   *  (CHT-1) instead of racing it. */
+  baseDelay?: number;
 };
 
 function PureSuggestedActions({
   chatId,
   sendMessage,
   onHide,
+  baseDelay = 0,
 }: SuggestedActionsProps) {
   const suggestedActions = suggestions;
 
@@ -41,7 +45,7 @@ function PureSuggestedActions({
           initial={{ opacity: 0, y: 16 }}
           key={suggestedAction}
           transition={{
-            delay: 0.06 * index,
+            delay: baseDelay + 0.06 * index,
             duration: 0.4,
             ease: [0.22, 1, 0.36, 1],
           }}

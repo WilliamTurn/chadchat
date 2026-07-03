@@ -35,7 +35,7 @@ import { buildWaterWeek } from "@/lib/today/week";
 
 export default function HydrationPage() {
   return (
-    <PageShell size="narrow">
+    <PageShell>
       <Toaster
         position="top-center"
         theme="system"
@@ -134,13 +134,22 @@ async function HydrationContent() {
       )}
       {/* One chart per page: the tracker's week strip only shows while there
           isn't enough history for the full trend chart below (the same call
-          /sleep made in s123). */}
-      <WaterTracker
-        goalMl={waterGoalMl}
-        totalMl={waterMl}
-        week={showTrend ? undefined : buildWaterWeek(waterDaily, timezone)}
-      />
-      <WaterTodayLog entries={todayLog} />
+          /sleep made in s123). Tracker + today's itemized log share a 2-up row
+          at the standard page width (DSH-49) so neither stretches sparse. */}
+      <div
+        className={
+          todayLog.length > 0
+            ? "grid gap-6 md:grid-cols-2 md:items-start"
+            : undefined
+        }
+      >
+        <WaterTracker
+          goalMl={waterGoalMl}
+          totalMl={waterMl}
+          week={showTrend ? undefined : buildWaterWeek(waterDaily, timezone)}
+        />
+        <WaterTodayLog entries={todayLog} />
+      </div>
       {showTrend && <WaterTrendChart days={waterDaily} goalMl={waterGoalMl} />}
       <WaterHistory days={waterDaily} goalMl={waterGoalMl} />
     </div>

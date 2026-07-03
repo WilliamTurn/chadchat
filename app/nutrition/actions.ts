@@ -376,14 +376,15 @@ export async function removeWaterEntry(
   return { ok: true };
 }
 
-/** Largest single log the water tracker accepts (a 1 L jug). Guards against a
- *  fat-fingered custom amount blowing out the day's total. */
-const MAX_WATER_ML = 2000;
+/** Largest single log the water tracker accepts — one US gallon (DSH-48: an
+ *  end-of-night member logs the whole day's jug in one shot). Still guards a
+ *  fat-fingered custom amount from blowing out the day's total. */
+const MAX_WATER_ML = 3785;
 
 /**
  * Log an arbitrary amount of water (in ml) for today — backs the water
- * tracker's quick-add buttons (+8 oz / +16 oz / custom). Amount is clamped to a
- * sane single-serving range so a typo can't poison the daily total.
+ * tracker's serving quick-adds (glass → gallon + custom). Amount is clamped to
+ * at most a gallon so a typo can't poison the daily total.
  */
 export async function logWaterAmount(
   amountMl: number

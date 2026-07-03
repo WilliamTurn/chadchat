@@ -2,8 +2,11 @@
 
 import {
   Check,
+  Coffee,
   Droplet,
   Droplets,
+  GlassWater,
+  Milk,
   Pencil,
   Plus,
   Undo2,
@@ -45,14 +48,36 @@ import {
 import type { WaterDay } from "@/lib/today/week";
 import { WeekStrip } from "@/components/today/week-strip";
 
-const MAX_CUSTOM_OZ = 64;
+// One-shot entries go up to a whole gallon (DSH-48): an end-of-night member
+// logging the day's jug shouldn't have to tap small increments repeatedly.
+const MAX_CUSTOM_OZ = 128;
+
+/**
+ * The quick-add serving row (DSH-47 + DSH-48): common vessel sizes with little
+ * icons, so "how many oz was that?" answers itself right where you log — and
+ * big one-shot entries (a whole gallon) are one tap. Every button states its
+ * ounces, so totals still speak ONLY oz/gallons (DSH-24/DSH-34); the vessel
+ * names are just size cues.
+ */
+const SERVINGS: {
+  label: string;
+  oz: number;
+  icon: typeof GlassWater;
+  iconClass?: string;
+}[] = [
+  { label: "Glass", oz: 8, icon: GlassWater },
+  { label: "Mug", oz: 12, icon: Coffee },
+  { label: "Bottle", oz: 17, icon: Milk },
+  { label: "Big bottle", oz: 24, icon: Milk, iconClass: "size-5" },
+  { label: "Gallon", oz: 128, icon: Droplets },
+];
 
 /**
  * Hydration module for the /today dashboard. Renders a WaterMinder-style
  * vessel that visually fills with an animated wave proportional to
- * totalMl / goalMl, plus quick-add controls (+8 oz / +16 oz / custom) and an
- * undo. Volumes speak ONLY US ounces & gallons (DSH-24/DSH-34 — no "glasses"
- * or "bottles") though stored in ml; the daily goal defaults to one gallon and
+ * totalMl / goalMl, plus the serving quick-add grid (glass → gallon + custom)
+ * and an undo. Volumes speak ONLY US ounces & gallons (DSH-24/DSH-34)
+ * though stored in ml; the daily goal defaults to one gallon and
  * is user-customizable.
  *
  * Quick-adds are optimistic (R2-15): the vessel fills the instant a button is
@@ -115,6 +140,12 @@ export function WaterTracker({
     const oz = Number(customValue);
     if (!Number.isFinite(oz) || oz <= 0) {
       toast.error("Enter how much you drank, in ounces.");
+      return;
+    }
+    if (oz > MAX_CUSTOM_OZ) {
+      toast.error(
+        `That's more than a gallon — log up to ${MAX_CUSTOM_OZ} oz at a time.`
+      );
       return;
     }
     const ml = ozToMl(oz);
@@ -302,39 +333,45 @@ export function WaterTracker({
         </div>
       </div>
 
-      {/* Quick-add controls — plain ounce amounts (DSH-34) */}
-      <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3">
+      {/* Serving quick-adds (DSH-47/DSH-48): each button is a common vessel —
+          icon + name + its ounces — so the grid doubles as the serving-size
+          key, and a whole gallon lands in one tap. */}
+      <div className="mt-6 grid grid-cols-3 gap-2">
         {/* Never disabled while pending: each tap applies instantly to the
             optimistic total, so rapid back-to-back adds all land (R2-15). */}
-        <Button
-          aria-label="Add 8 ounces of water"
-          className="h-11 gap-1.5 font-medium text-sm"
-          onClick={() => run(() => logWaterAmount(ozToMl(8)), ozToMl(8))}
-          variant="outline"
-        >
-          <Droplet className="size-4 text-sky-400" />
-          +8 oz
-        </Button>
-
-        <Button
-          aria-label="Add 16 ounces of water"
-          className="h-11 gap-1.5 font-medium text-sm"
-          onClick={() => run(() => logWaterAmount(ozToMl(16)), ozToMl(16))}
-          variant="outline"
-        >
-          <Droplet className="size-4 text-sky-400" />
-          +16 oz
-        </Button>
+        {SERVINGS.map((s) => {
+          const Icon = s.icon;
+          return (
+            <Button
+              aria-label={`Add a ${s.label.toLowerCase()} of water, ${s.oz} ounces`}
+              className="h-auto flex-col gap-0.5 py-2"
+              key={s.label}
+              onClick={() =>
+                run(() => logWaterAmount(ozToMl(s.oz)), ozToMl(s.oz))
+              }
+              variant="outline"
+            >
+              <Icon className={`${s.iconClass ?? "size-4"} text-sky-400`} />
+              <span className="font-semibold text-sm">+{s.oz} oz</span>
+              <span className="font-normal text-[11px] text-muted-foreground">
+                {s.label}
+              </span>
+            </Button>
+          );
+        })}
 
         <Popover onOpenChange={setCustomOpen} open={customOpen}>
           <PopoverTrigger asChild>
             <Button
               aria-label="Add a custom amount of water"
-              className="col-span-2 h-11 gap-1.5 font-medium text-sm sm:col-span-1"
+              className="h-auto flex-col gap-0.5 py-2"
               variant="outline"
             >
               <Plus className="size-4 text-sky-400" />
-              Custom
+              <span className="font-semibold text-sm">Custom</span>
+              <span className="font-normal text-[11px] text-muted-foreground">
+                Any amount
+              </span>
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-64">
@@ -342,11 +379,12 @@ export function WaterTracker({
               <div className="flex flex-col gap-1.5">
                 <span className="font-medium text-sm">Add water</span>
                 <span className="text-muted-foreground text-xs">
-                  Enter an amount in ounces (max {MAX_CUSTOM_OZ} oz).
+                  Enter an amount in ounces (max {MAX_CUSTOM_OZ} oz, a full
+                  gallon).
                 </span>
               </div>
               <div className="flex gap-2">
-                {[12, 24, 32].map((preset) => (
+                {[20, 32, 64].map((preset) => (
                   <Button
                     className="h-8 flex-1 px-0 text-xs"
                     key={preset}

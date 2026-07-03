@@ -7,15 +7,18 @@
  * hydration quick-adds, so every daily-logger card carries its input where you
  * read its number (audit rule 5). The chart is built on Recharts via the shadcn
  * chart primitive (the same engine as the weight/water trends). Nights that
- * reach the recommended 7 hours are full-strength indigo; short nights fade.
+ * reach the nightly goal (user-editable, DSH-40; defaults to the recommended
+ * 7 hours) are full-strength indigo; short nights fade.
  *
  * Honest framing (audit P1-2): an entry only reads as "Last night" when it is
  * actually for last night — an older entry is shown as "Last logged · Sun,
  * Jun 29" with no freshness verdict, and the card asks for last night instead.
  */
 
-import { Moon, Star } from "lucide-react";
-import { useState } from "react";
+import { Moon, Pencil, Star } from "lucide-react";
+import { type FormEvent, useState, useTransition } from "react";
+import { toast } from "sonner";
+import { saveSleepGoal } from "@/app/today/actions";
 import { Bar, BarChart, Cell, ReferenceLine, XAxis } from "recharts";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
 import {
@@ -39,6 +42,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useMountReveal } from "@/hooks/use-mount-reveal";
 import type { LastNight, SleepNight } from "@/lib/today/week";
 import { cn } from "@/lib/utils";
@@ -76,6 +86,7 @@ export function SleepTracker({
   viewHref,
   quiet = false,
   weekChart = true,
+  goalMinutes = SLEEP_GOAL_MINUTES,
 }: {
   last: LastNight;
   week: SleepNight[];
@@ -87,14 +98,17 @@ export function SleepTracker({
   /** /sleep hides this strip once the full Sleep-trend chart renders below,
    *  so the page carries ONE sleep chart (VF-2). */
   weekChart?: boolean;
+  /** The user's nightly target (DSH-40); defaults to the recommended 7h. */
+  goalMinutes?: number;
 }) {
   const [open, setOpen] = useState(false);
   const reveal = useMountReveal();
 
-  const goalHours = SLEEP_GOAL_MINUTES / 60;
+  // Custom goal vs the recommended default drives the footer wording.
+  const isDefaultGoal = goalMinutes === SLEEP_GOAL_MINUTES;
   // Only a genuinely-current entry gets the freshness verdict.
   const current = last?.isCurrent ? last : null;
-  const reached = current != null && current.minutes >= SLEEP_GOAL_MINUTES;
+  const reached = current != null && current.minutes >= goalMinutes;
   const loggedNights = week
     .filter((n) => n.logged)
     .map((n) => ({ iso: n.iso, minutes: n.minutes }));
@@ -185,12 +199,15 @@ export function SleepTracker({
                 tickLine={false}
                 tickMargin={6}
               />
-              <ChartTooltip content={<SleepTooltip />} cursor={false} />
+              <ChartTooltip
+                content={<SleepTooltip goalMinutes={goalMinutes} />}
+                cursor={false}
+              />
               <ReferenceLine
                 stroke={INDIGO}
                 strokeDasharray="4 4"
                 strokeOpacity={0.5}
-                y={SLEEP_GOAL_MINUTES}
+                y={goalMinutes}
               />
               <Bar
                 animationDuration={750}
@@ -203,7 +220,7 @@ export function SleepTracker({
                   <Cell
                     fill={INDIGO}
                     fillOpacity={
-                      d.logged ? (d.minutes >= SLEEP_GOAL_MINUTES ? 0.9 : 0.4) : 0
+                      d.logged ? (d.minutes >= goalMinutes ? 0.9 : 0.4) : 0
                     }
                     key={d.t}
                   />
@@ -240,18 +257,136 @@ export function SleepTracker({
         askChad={
           <AskChadButton prompt="Look at my sleep over the last week. Am I getting enough to recover and build muscle, and what should I change?" />
         }
-        status={`${goalHours}+ hrs a night recommended · this week`}
-      />
+        status={
+          isDefaultGoal
+            ? `${formatSleepDuration(goalMinutes)}+ a night recommended · this week`
+            : `Goal: ${formatSleepDuration(goalMinutes)}+ a night · this week`
+        }
+      >
+        <SleepGoalEditor goalMinutes={goalMinutes} />
+      </ModuleFooter>
     </ModuleCard>
+  );
+}
+
+/**
+ * Popover to set the nightly sleep goal — hour/quarter-hour selects (like the
+ * log form) plus common presets. Mirrors the hydration card's goal editor
+ * (DSH-40: every daily tracker's target is user-editable, rule-1 parity).
+ */
+function SleepGoalEditor({ goalMinutes }: { goalMinutes: number }) {
+  const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+  const [hours, setHours] = useState(String(Math.floor(goalMinutes / 60)));
+  const [minutes, setMinutes] = useState(String(goalMinutes % 60));
+
+  // Re-seed the selects with the current goal each time the popover opens.
+  function handleOpenChange(next: boolean) {
+    if (next) {
+      setHours(String(Math.floor(goalMinutes / 60)));
+      setMinutes(String(goalMinutes % 60));
+    }
+    setOpen(next);
+  }
+
+  function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    const total = Number(hours) * 60 + Number(minutes);
+    if (!Number.isFinite(total) || total <= 0) {
+      toast.error("Enter a nightly sleep goal.");
+      return;
+    }
+    startTransition(async () => {
+      const result = await saveSleepGoal(total);
+      if (result.ok) {
+        setOpen(false);
+      } else {
+        toast.error(result.error ?? "Couldn't save that goal.");
+      }
+    });
+  }
+
+  return (
+    <Popover onOpenChange={handleOpenChange} open={open}>
+      <PopoverTrigger asChild>
+        <Button
+          aria-label="Edit nightly sleep goal"
+          className="h-8 gap-1.5 text-muted-foreground text-xs"
+          size="sm"
+          variant="ghost"
+        >
+          <Pencil className="size-3.5" />
+          Goal
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-64">
+        <form className="flex flex-col gap-3" onSubmit={onSubmit}>
+          <div className="flex flex-col gap-1.5">
+            <span className="font-medium text-sm">Nightly goal</span>
+            <span className="text-muted-foreground text-xs">
+              How much sleep to aim for each night. 7 to 9 hours is the usual
+              recommendation.
+            </span>
+          </div>
+          <div className="flex gap-2">
+            {[7 * 60, 8 * 60, 9 * 60].map((preset) => (
+              <Button
+                className="h-8 flex-1 px-0 text-xs"
+                key={preset}
+                onClick={() => {
+                  setHours(String(Math.floor(preset / 60)));
+                  setMinutes(String(preset % 60));
+                }}
+                type="button"
+                variant="secondary"
+              >
+                {formatSleepDuration(preset)}
+              </Button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <Select onValueChange={setHours} value={hours}>
+              <SelectTrigger aria-label="Goal hours" className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[4, 5, 6, 7, 8, 9, 10, 11, 12].map((h) => (
+                  <SelectItem key={h} value={String(h)}>
+                    {h} h
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select onValueChange={setMinutes} value={minutes}>
+              <SelectTrigger aria-label="Goal minutes" className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[0, 15, 30, 45].map((m) => (
+                  <SelectItem key={m} value={String(m)}>
+                    {m} m
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button className="h-9 shrink-0" disabled={pending} type="submit">
+              Save
+            </Button>
+          </div>
+        </form>
+      </PopoverContent>
+    </Popover>
   );
 }
 
 function SleepTooltip({
   active,
   payload,
+  goalMinutes,
 }: {
   active?: boolean;
   payload?: { payload?: SleepNight }[];
+  goalMinutes: number;
 }) {
   if (!active || !payload?.length) {
     return null;
@@ -260,7 +395,8 @@ function SleepTooltip({
   if (!row) {
     return null;
   }
-  const hit = row.minutes >= SLEEP_GOAL_MINUTES;
+  const hit = row.minutes >= goalMinutes;
+  const goalLabel = formatSleepDuration(goalMinutes);
   return (
     <div className="min-w-[10rem] rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
       <div className="mb-1.5 flex items-center justify-between gap-4">
@@ -278,8 +414,8 @@ function SleepTooltip({
           )}
           <span className={hit ? "font-medium text-emerald-500" : ""}>
             {hit
-              ? "7h+ reached"
-              : `${formatSleepDuration(SLEEP_GOAL_MINUTES - row.minutes)} short of 7h`}
+              ? `${goalLabel}+ reached`
+              : `${formatSleepDuration(goalMinutes - row.minutes)} short of ${goalLabel}`}
           </span>
         </div>
       ) : (
