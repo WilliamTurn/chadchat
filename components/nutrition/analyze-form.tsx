@@ -25,7 +25,11 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { todayLocalISO } from "@/lib/date";
+import {
+  formatCalendarDay,
+  parseCalendarDay,
+  todayLocalISO,
+} from "@/lib/date";
 import {
   formatMacroSummary,
   type RecentFood,
@@ -74,7 +78,15 @@ function MacroField({
 
 type Mode = "search" | "photo" | "label" | "manual" | "recent";
 
-export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
+export function AnalyzeForm({
+  recentFoods,
+  initialDate,
+}: {
+  recentFoods: RecentFood[];
+  // The diary day being viewed (BT1-3): the form's date defaults to it, so
+  // logging from a past-day view lands on that day. Omitted = today.
+  initialDate?: string;
+}) {
   const router = useRouter();
   const reward = useReward();
   const [pending, startTransition] = useTransition();
@@ -86,7 +98,7 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
   const [meal, setMeal] = useState<MealCategory>(defaultMealForNow());
   // The member's own name for the "Other" slot ("Post-workout shake").
   const [mealLabel, setMealLabel] = useState("");
-  const [date, setDate] = useState(todayLocalISO);
+  const [date, setDate] = useState(initialDate ?? todayLocalISO());
   const [note, setNote] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -116,7 +128,24 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
     setNote("");
     setMeal(defaultMealForNow());
     setMealLabel("");
-    setDate(todayLocalISO());
+    setDate(initialDate ?? todayLocalISO());
+  }
+
+  // "Logged for Sat, Jun 28." tacked onto the success toast whenever the meal
+  // went to a day other than today, so a back-dated log is visibly confirmed
+  // instead of silently vanishing from the Today view (BT1-3).
+  function loggedDayNote(): string {
+    if (date === todayLocalISO()) {
+      return "";
+    }
+    const day = parseCalendarDay(date);
+    return day
+      ? ` Logged for ${formatCalendarDay(day, {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+        })}.`
+      : "";
   }
 
   async function submitPhoto(kind: "meal" | "label") {
@@ -173,7 +202,8 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
       });
       if (result.ok) {
         reward.celebrate(
-          kind === "label" ? "Label logged." : "Chad's verdict is in."
+          (kind === "label" ? "Label logged." : "Chad's verdict is in.") +
+            loggedDayNote()
         );
         resetCommon();
         pick(null);
@@ -219,7 +249,7 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
         note: note.trim() || null,
       });
       if (result.ok) {
-        reward.celebrate("Logged.");
+        reward.celebrate(`Logged.${loggedDayNote()}`);
         resetCommon();
         setTitle("");
         setCal("");
@@ -249,7 +279,7 @@ export function AnalyzeForm({ recentFoods }: { recentFoods: RecentFood[] }) {
       });
       setLoggingFood(null);
       if (result.ok) {
-        reward.celebrate(`Logged ${food.title}.`);
+        reward.celebrate(`Logged ${food.title}.${loggedDayNote()}`);
         router.refresh();
       } else {
         toast.error(result.error ?? "Couldn't log that.");

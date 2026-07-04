@@ -2945,6 +2945,7 @@ type WorkoutWriteInput = {
     name: string;
     muscleGroup: string | null;
     kind: WorkoutExercise["kind"];
+    supersetGroup: number | null;
     notes: string | null;
     sets: {
       weight: number | null;
@@ -2972,6 +2973,7 @@ async function insertWorkoutChildren(
         exerciseName: ex.name,
         muscleGroup: ex.muscleGroup,
         kind: ex.kind,
+        supersetGroup: ex.supersetGroup,
         position: exIndex,
         notes: ex.notes,
       })
@@ -3339,12 +3341,16 @@ export async function createCheckIn(entry: {
   }
 }
 
-/** Save the member's check-in preferences from /account. */
+/** Save the member's check-in preferences + schedule from /account. */
 export async function setCheckInSettings(
   userId: string,
   settings: {
     checkInsEnabled: boolean;
     checkInFrequency: "daily" | "three_per_week" | "weekly";
+    checkInDays: number[];
+    checkInMorningHour: number;
+    checkInEveningHour: number;
+    timezone?: string;
   }
 ): Promise<void> {
   try {

@@ -16,7 +16,7 @@ import {
   exerciseKind,
   findBuiltInExercise,
 } from "@/lib/workouts/exercise-library";
-import type { GhostSet } from "@/lib/workouts/stats";
+import type { LastExerciseLog } from "@/lib/workouts/stats";
 import {
   ghostsFromHistory,
   type PlanPrefill,
@@ -55,7 +55,7 @@ export function PlanRunner({
   planTitle: string;
   days: PlanDay[] | null;
   customExercises: CustomExerciseRow[];
-  lastSets: Record<string, GhostSet[]>;
+  lastSets: Record<string, LastExerciseLog>;
 }) {
   const router = useRouter();
   const [syncedDays, setSyncedDays] = useState<PlanDay[] | null>(days);
@@ -147,7 +147,7 @@ function DayCard({
 }: {
   day: PlanDay;
   customExercises: CustomExerciseRow[];
-  lastSets: Record<string, GhostSet[]>;
+  lastSets: Record<string, LastExerciseLog>;
 }) {
   const prefill = buildPrefill(day, customExercises, lastSets);
   const preview = day.exercises
@@ -196,7 +196,7 @@ function DayCard({
 function buildPrefill(
   day: PlanDay,
   customExercises: CustomExerciseRow[],
-  lastSets: Record<string, GhostSet[]>
+  lastSets: Record<string, LastExerciseLog>
 ): PlanPrefill {
   return {
     title: day.name,
@@ -215,7 +215,7 @@ function buildPrefill(
 
       const history = lastSets[key];
       const ghosts = history
-        ? ghostsFromHistory(history)
+        ? ghostsFromHistory(history.sets)
         : [planGhost(ex, kind)];
 
       return {

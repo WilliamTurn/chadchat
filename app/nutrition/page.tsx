@@ -1,7 +1,7 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Suspense } from "react";
+import { type ReactNode, Suspense } from "react";
 import { NutritionSkeleton } from "@/components/dashboard/page-skeletons";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
@@ -12,6 +12,7 @@ import { ScrollToHash } from "@/components/nav/scroll-to-hash";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { AnalysisCard } from "@/components/nutrition/analysis-card";
 import { AnalyzeForm } from "@/components/nutrition/analyze-form";
+import { DayNav } from "@/components/nutrition/day-nav";
 import { NutritionEmptyState } from "@/components/nutrition/empty-state";
 import { MacroRings } from "@/components/nutrition/macro-rings";
 import { MacroTrendChart } from "@/components/nutrition/macro-trend-chart";
@@ -20,12 +21,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import {
+  calendarRangeWindowInTz,
   formatCalendarDay,
+  parseCalendarDay,
   toCalendarDayISO,
+  todayAnchorInTz,
   todayStartInTz,
 } from "@/lib/date";
 import {
   getMealLogByUserId,
+  getMealsBetween,
   getNutritionTarget,
   getUserById,
 } from "@/lib/db/queries";
@@ -43,7 +48,11 @@ const MEAL_LABEL: Record<MealCategory, string> = {
   other: "Other",
 };
 
-export default function NutritionPage() {
+export default function NutritionPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ day?: string }>;
+}) {
   return (
     <PageShell>
       <Toaster
@@ -88,13 +97,17 @@ export default function NutritionPage() {
       </div>
 
       <Suspense fallback={<NutritionSkeleton />}>
-        <NutritionContent />
+        <NutritionContent searchParams={searchParams} />
       </Suspense>
     </PageShell>
   );
 }
 
-async function NutritionContent() {
+async function NutritionContent({
+  searchParams,
+}: {
+  searchParams: Promise<{ day?: string }>;
+}) {
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login");
@@ -111,7 +124,11 @@ async function NutritionContent() {
   const isPro = canAccessProFeatures(user);
   return isPro ? (
     <RewardProvider haptics={user.hapticsEnabled} sound={user.soundEnabled}>
-      <Feed timezone={user.timezone} userId={user.id} />
+      <Feed
+        searchParams={searchParams}
+        timezone={user.timezone}
+        userId={user.id}
+      />
     </RewardProvider>
   ) : (
     <UpgradePrompt />
@@ -150,13 +167,30 @@ function sumMacro(
   return meals.reduce((s, m) => s + (m[key] ?? 0), 0);
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 async function Feed({
   userId,
   timezone,
+  searchParams,
 }: {
   userId: string;
   timezone: string | null;
+  searchParams: Promise<{ day?: string }>;
 }) {
+  // Which day the diary shows (BT1-3): ?day=YYYY-MM-DD pages back through
+  // history like MFP/MacroFactor; no param (or today/garbage/future) = today.
+  const { day: dayParam } = await searchParams;
+  const todayISO = toCalendarDayISO(todayAnchorInTz(timezone));
+  const requested =
+    typeof dayParam === "string" &&
+    /^\d{4}-\d{2}-\d{2}$/.test(dayParam) &&
+    parseCalendarDay(dayParam)
+      ? dayParam
+      : null;
+  const dayISO = requested && requested < todayISO ? requested : todayISO;
+  const viewingToday = dayISO === todayISO;
+
   const [meals, target] = await Promise.all([
     getMealLogByUserId(userId),
     getNutritionTarget(userId),
@@ -165,10 +199,37 @@ async function Feed({
   // "Today" starts at the user's own local midnight (FEAT-8), so a late-night
   // log stays in their today instead of rolling into the next UTC day.
   const since = todayStartInTz(timezone);
-  const todays = meals.filter((m) => mealDay(m) >= since);
+  // The viewed day's meals. Today filters the loaded log; a past day gets its
+  // own bounded query (the same window math Chad's getDashboard tool uses), so
+  // even days beyond the log's row cap render complete.
+  let dayMeals: MealAnalysis[];
+  if (viewingToday) {
+    dayMeals = meals.filter((m) => mealDay(m) >= since);
+  } else {
+    const { start, end } = calendarRangeWindowInTz(dayISO, dayISO, timezone);
+    dayMeals = await getMealsBetween(userId, start, end);
+  }
   const earlier = meals.filter((m) => mealDay(m) < since);
   const recentFoods = deriveRecentFoods(meals);
   const macroDays = dailyMacroTrend(meals, timezone);
+
+  const anchor = parseCalendarDay(dayISO) as Date;
+  const yesterdayISO = toCalendarDayISO(
+    new Date((parseCalendarDay(todayISO) as Date).getTime() - DAY_MS)
+  );
+  const heading = viewingToday
+    ? "Today"
+    : dayISO === yesterdayISO
+      ? "Yesterday"
+      : formatCalendarDay(anchor, {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+        });
+  const prevISO = toCalendarDayISO(new Date(anchor.getTime() - DAY_MS));
+  const nextISO = viewingToday
+    ? null
+    : toCalendarDayISO(new Date(anchor.getTime() + DAY_MS));
 
   return (
     <div className="flex flex-col gap-8">
@@ -177,13 +238,29 @@ async function Feed({
         className="rounded-2xl border border-border bg-card p-6"
         id="log-meal"
       >
-        <AnalyzeForm recentFoods={recentFoods} />
+        {/* Keyed by day so browsing to a past day re-arms the form's date to
+            that day: logging from a day view lands ON that day, visibly. */}
+        <AnalyzeForm
+          initialDate={viewingToday ? undefined : dayISO}
+          key={dayISO}
+          recentFoods={recentFoods}
+        />
       </section>
 
-      <TodaySection
-        firstEver={meals.length === 0}
-        meals={todays}
+      <DaySection
+        dayNav={
+          <DayNav
+            dayISO={dayISO}
+            nextISO={nextISO}
+            prevISO={prevISO}
+            todayISO={todayISO}
+          />
+        }
+        firstEver={meals.length === 0 && viewingToday}
+        heading={heading}
+        meals={dayMeals}
         target={target}
+        viewingToday={viewingToday}
       />
 
       {macroDays.length >= 2 && (
@@ -207,14 +284,20 @@ async function Feed({
   );
 }
 
-function TodaySection({
+function DaySection({
   meals,
   target,
   firstEver,
+  heading,
+  viewingToday,
+  dayNav,
 }: {
   meals: MealAnalysis[];
   target: NutritionTarget | undefined;
   firstEver: boolean;
+  heading: string;
+  viewingToday: boolean;
+  dayNav: ReactNode;
 }) {
   const grouped: { label: string; items: MealAnalysis[] }[] = [];
   for (const cat of MEAL_CATEGORIES) {
@@ -249,19 +332,26 @@ function TodaySection({
     <section className="flex flex-col gap-4" id="history">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <div className="flex items-baseline gap-3">
-          <h2 className="font-medium text-lg">Today</h2>
+          <h2 className="font-medium text-lg">{heading}</h2>
           <span className="whitespace-nowrap text-muted-foreground text-sm">
             {meals.length} meal{meals.length === 1 ? "" : "s"}
           </span>
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-1">
+          {dayNav}
           <TargetEditor
             calories={target?.calories ?? null}
             carbs={target?.carbs ?? null}
             fat={target?.fat ?? null}
             protein={target?.protein ?? null}
           />
-          <AskChadButton prompt="Review my nutrition over the last few days — calories, protein, and the quality of what I've been eating. What's working and what should I fix?" />
+          <AskChadButton
+            prompt={
+              viewingToday
+                ? "Go through my Calorie Tracker for today: each meal I've logged so far and my calories and macros against my targets. What's working, and what should I eat (or skip) for the rest of the day?"
+                : `Go through my food log for ${heading} in my Calorie Tracker: each meal that day and how the day's calories and macros stacked up against my targets. What should I take away from that day?`
+            }
+          />
         </div>
       </div>
 
@@ -284,7 +374,9 @@ function TodaySection({
           <NutritionEmptyState />
         ) : (
           <p className="text-muted-foreground text-sm">
-            No meals logged today. Add your first above.
+            {viewingToday
+              ? "No meals logged today. Add your first above."
+              : "No meals logged this day. Log one above and it lands here."}
           </p>
         )
       ) : (
@@ -351,6 +443,12 @@ function HistorySection({ meals }: { meals: MealAnalysis[] }) {
                 {day.items.length} meal{day.items.length === 1 ? "" : "s"}
                 {cals > 0 ? ` · ${cals.toLocaleString()} cal` : ""}
               </span>
+              <Link
+                className="whitespace-nowrap text-muted-foreground text-xs underline-offset-4 hover:text-foreground hover:underline"
+                href={`/nutrition?day=${day.key}`}
+              >
+                Open day
+              </Link>
             </summary>
             <div className="flex flex-col gap-3">
               {day.items.map((entry) => (

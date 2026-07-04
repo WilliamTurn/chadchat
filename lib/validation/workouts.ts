@@ -22,6 +22,9 @@ const exerciseSchema = z.object({
   // Logging kind snapshot ("weighted" | "bodyweight" | "timed"); null on
   // pre-existing logs (treated as weighted).
   kind: z.enum(EXERCISE_KINDS).nullable().optional(),
+  // Superset/circuit grouping (FEAT-10): consecutive exercises sharing the
+  // same number were performed back-to-back; null/absent = standalone.
+  supersetGroup: z.number().int().min(1).max(50).nullable().optional(),
   notes: z.string().trim().max(1000).nullable().optional(),
   sets: z.array(setSchema).min(1).max(40),
 });

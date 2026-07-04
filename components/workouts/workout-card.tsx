@@ -10,11 +10,12 @@ import { formatCalendarDay } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import {
   formatDuration,
+  type LastExerciseLog,
   type WorkoutData,
   workoutSetCount,
   workoutVolumeLb,
 } from "@/lib/workouts/stats";
-import { WorkoutBuilder } from "./workout-builder";
+import { GROUP_CHIPS, supersetLabel, WorkoutBuilder } from "./workout-builder";
 
 type CustomExerciseRow = {
   id: string;
@@ -63,9 +64,12 @@ function fmtDate(iso: string): string {
 export function WorkoutCard({
   workout,
   customExercises,
+  lastSets,
 }: {
   workout: WorkoutData;
   customExercises: CustomExerciseRow[];
+  // Optional: lets "Repeat" show the inline "Last time" reference (FEAT-10).
+  lastSets?: Record<string, LastExerciseLog>;
 }) {
   const volume = workoutVolumeLb(workout);
   const sets = workoutSetCount(workout);
@@ -119,6 +123,7 @@ export function WorkoutCard({
           <WorkoutBuilder
             customExercises={customExercises}
             initial={workout}
+            lastSets={lastSets}
             mode="repeat"
             trigger={
               <Button
@@ -135,6 +140,7 @@ export function WorkoutCard({
           <WorkoutBuilder
             customExercises={customExercises}
             initial={workout}
+            lastSets={lastSets}
             mode="edit"
             trigger={
               <Button
@@ -154,7 +160,20 @@ export function WorkoutCard({
       <div className="mt-4 flex flex-col gap-3">
         {workout.exercises.map((ex, exIdx) => (
           <div key={`${ex.name}-${exIdx}`}>
-            <div className="font-medium text-sm">{ex.name}</div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="font-medium text-sm">{ex.name}</span>
+              {ex.supersetGroup != null && (
+                <span
+                  className={cn(
+                    "rounded px-1.5 py-0.5 font-medium text-[10px] uppercase tracking-wide",
+                    GROUP_CHIPS[(ex.supersetGroup - 1) % GROUP_CHIPS.length]
+                  )}
+                  title="Performed back-to-back with the other exercises in this superset"
+                >
+                  {supersetLabel(ex.supersetGroup)}
+                </span>
+              )}
+            </div>
             <div className="mt-1 flex flex-wrap gap-1.5">
               {ex.sets.map((s, i) => {
                 const tag = SET_TAG[s.setType];

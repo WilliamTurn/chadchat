@@ -255,7 +255,7 @@ export function SleepTracker({
 
       <ModuleFooter
         askChad={
-          <AskChadButton prompt="Look at my sleep over the last week. Am I getting enough to recover and build muscle, and what should I change?" />
+          <AskChadButton prompt="Look at the sleep card on my dashboard: last night and this week's nights. Am I getting enough to recover and build muscle, and what should I change tonight?" />
         }
         status={
           isDefaultGoal

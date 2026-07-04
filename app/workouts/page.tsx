@@ -34,7 +34,7 @@ import { parsePlanDays } from "@/lib/validation/plan-days";
 import {
   computePersonalRecords,
   exercise1RMTrend,
-  type GhostSet,
+  type LastExerciseLog,
   lastSetsByExercise,
   type WorkoutData,
   workoutVolumeLb,
@@ -57,6 +57,7 @@ function toWorkoutData(w: WorkoutWithChildren): WorkoutData {
       name: ex.exerciseName,
       muscleGroup: ex.muscleGroup,
       kind: ex.kind,
+      supersetGroup: ex.supersetGroup,
       notes: ex.notes,
       sets: ex.sets.map((s) => ({
         weight: s.weight,
@@ -206,12 +207,13 @@ async function Dashboard({
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-end gap-2">
           {workouts.length > 0 && (
-            <AskChadButton prompt="Review my recent workouts and training — volume, consistency, and PRs. How am I progressing, and what should I focus on next?" />
+            <AskChadButton prompt="Review my Workouts page: my logged sessions, weekly volume, training plan, and PRs. How is my training progressing overall, and what should I focus on next?" />
           )}
           {workouts.length > 0 && (
             <WorkoutBuilder
               customExercises={customExercises}
               initial={workouts[0]}
+              lastSets={lastSets}
               mode="repeat"
               trigger={
                 <Button className="gap-1.5" variant="outline">
@@ -307,6 +309,7 @@ async function Dashboard({
                 <WorkoutCard
                   customExercises={customExercises}
                   key={w.id}
+                  lastSets={lastSets}
                   workout={w}
                 />
               ))}
@@ -359,7 +362,7 @@ function EmptyState({
     kind: string;
     notes: string | null;
   }[];
-  lastSets: Record<string, GhostSet[]>;
+  lastSets: Record<string, LastExerciseLog>;
 }) {
   return (
     <div className="flex flex-col items-center gap-4 rounded-2xl border border-border border-dashed bg-card px-6 py-14 text-center">

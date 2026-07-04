@@ -67,7 +67,7 @@ const METRICS: Record<
 const METRIC_ORDER: MetricKey[] = ["calories", "protein", "carbs", "fat"];
 
 const ASK_CHAD_PROMPT =
-  "Review my nutrition trend over the last few weeks — calories and protein day to day against my targets. What's the pattern, and what should I change?";
+  "Review my nutrition trend chart: daily calories and protein against my targets over the last few weeks, not just today. What's the pattern, and what should I change?";
 
 const chartConfig = {
   value: { label: "Daily", color: MACRO.calories },

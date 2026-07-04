@@ -1,6 +1,14 @@
 "use client";
 
-import { Check, ChevronDown, ChevronUp, Plus, Trash2, X } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Link2,
+  Plus,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -26,11 +34,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { todayLocalISO } from "@/lib/date";
+import { formatCalendarDay, todayLocalISO } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import type {
   ExerciseKindData,
   GhostSet,
+  LastExerciseLog,
   SetType,
   WorkoutData,
 } from "@/lib/workouts/stats";
@@ -72,6 +81,9 @@ type EditorExercise = {
   target?: string | null;
   // Per-set-index placeholder values; the last one repeats for extra sets.
   ghosts?: GhostValue[];
+  // Supersets (FEAT-10) are edited as a link to the exercise above; group
+  // numbers are derived from the resulting chains on render and save.
+  linkedWithPrev: boolean;
   notes: string;
   sets: EditorSet[];
 };
@@ -133,11 +145,15 @@ function blankSet(prev?: EditorSet): EditorSet {
 }
 
 function fromWorkout(w: WorkoutData): EditorExercise[] {
-  return w.exercises.map((ex) => ({
+  return w.exercises.map((ex, i) => ({
     uid: uid(),
     name: ex.name,
     muscleGroup: ex.muscleGroup,
     kind: ex.kind ?? null,
+    linkedWithPrev:
+      i > 0 &&
+      ex.supersetGroup != null &&
+      w.exercises[i - 1].supersetGroup === ex.supersetGroup,
     notes: ex.notes ?? "",
     sets:
       ex.sets.length > 0
@@ -168,6 +184,7 @@ function fromPlan(exercises: PlanPrefillExercise[]): EditorExercise[] {
     kind: ex.kind,
     target: ex.target,
     ghosts: ex.ghosts,
+    linkedWithPrev: false,
     notes: "",
     sets: Array.from({ length: ex.sets }, () => ({
       uid: uid(),
@@ -189,6 +206,66 @@ function ghostAt(ex: EditorExercise, i: number): GhostValue | null {
   return ex.ghosts[Math.min(i, ex.ghosts.length - 1)];
 }
 
+/**
+ * Superset group number (1, 2, …) per exercise, derived from the linked-with-
+ * above chains; null = standalone. Used for both the visual grouping and the
+ * saved supersetGroup values.
+ */
+function deriveGroups(exercises: EditorExercise[]): (number | null)[] {
+  const groups: (number | null)[] = exercises.map(() => null);
+  let counter = 0;
+  for (let i = 1; i < exercises.length; i++) {
+    if (!exercises[i].linkedWithPrev) {
+      continue;
+    }
+    if (groups[i - 1] == null) {
+      counter += 1;
+      groups[i - 1] = counter;
+    }
+    groups[i] = groups[i - 1];
+  }
+  return groups;
+}
+
+const GROUP_LETTERS = "ABCDEFGHIJ";
+
+// Static class strings (one per chart token) so Tailwind keeps them.
+const GROUP_RAILS = [
+  "border-l-chart-1",
+  "border-l-chart-2",
+  "border-l-chart-3",
+  "border-l-chart-4",
+  "border-l-chart-5",
+] as const;
+export const GROUP_CHIPS = [
+  "bg-chart-1/15 text-chart-1",
+  "bg-chart-2/15 text-chart-2",
+  "bg-chart-3/15 text-chart-3",
+  "bg-chart-4/15 text-chart-4",
+  "bg-chart-5/15 text-chart-5",
+] as const;
+
+export function supersetLabel(groupNo: number): string {
+  return `Superset ${GROUP_LETTERS[(groupNo - 1) % GROUP_LETTERS.length]}`;
+}
+
+/** "Last time (Jun 28): 185 lb × 8, 185 lb × 8, 185 lb × 6" for the header. */
+function formatLastLine(last: LastExerciseLog, kind: ExerciseKindData): string {
+  const date = formatCalendarDay(new Date(last.performedAt), {
+    month: "short",
+    day: "numeric",
+  });
+  const shown = last.sets.slice(0, 5).map((s) => {
+    if (kind === "timed") {
+      return s.reps == null ? "?" : `${s.reps}s`;
+    }
+    const load = s.weight == null ? "BW" : `${s.weight} ${s.unit}`;
+    return s.reps == null ? load : `${load} × ${s.reps}`;
+  });
+  const extra = last.sets.length - shown.length;
+  return `Last time (${date}): ${shown.join(", ")}${extra > 0 ? ` +${extra}` : ""}`;
+}
+
 export function WorkoutBuilder({
   mode,
   initial,
@@ -203,9 +280,9 @@ export function WorkoutBuilder({
   mode: "create" | "edit" | "repeat" | "plan";
   initial?: WorkoutData;
   plan?: PlanPrefill;
-  // Last-session sets per exercise (lowercased name), for ghost placeholders
-  // when an exercise is added from the picker.
-  lastSets?: Record<string, GhostSet[]>;
+  // Last session per exercise (lowercased name): ghost placeholders + the
+  // inline "Last time" reference line (FEAT-10).
+  lastSets?: Record<string, LastExerciseLog>;
   customExercises: CustomExerciseRow[];
   trigger: ReactNode;
 }) {
@@ -263,11 +340,21 @@ export function WorkoutBuilder({
         name: picked.name,
         muscleGroup: picked.muscleGroup,
         kind: picked.kind ?? null,
-        ghosts: history ? ghostsFromHistory(history) : undefined,
+        ghosts: history ? ghostsFromHistory(history.sets) : undefined,
+        linkedWithPrev: false,
         notes: "",
         sets: [blankSet()],
       },
     ]);
+  }
+
+  // Link an exercise into a superset with the one above it (or unlink it).
+  function toggleLink(exUid: string) {
+    setExercises((prev) =>
+      prev.map((ex) =>
+        ex.uid === exUid ? { ...ex, linkedWithPrev: !ex.linkedWithPrev } : ex
+      )
+    );
   }
 
   function updateExercise(exUid: string, patch: Partial<EditorExercise>) {
@@ -336,6 +423,14 @@ export function WorkoutBuilder({
       return;
     }
 
+    // Superset groups come from the linked-with-above chains, resolved BEFORE
+    // plan mode drops untouched exercises so a group number survives even if
+    // a middle exercise was skipped.
+    const groupByUid = new Map<string, number | null>();
+    deriveGroups(exercises).forEach((g, i) => {
+      groupByUid.set(exercises[i].uid, g);
+    });
+
     // Plan mode lays out the WHOLE day; whatever the member never touched
     // (unchecked sets with nothing typed) is dropped on save, Hevy's
     // "discard empty sets", so skipping an exercise doesn't log four
@@ -385,6 +480,7 @@ export function WorkoutBuilder({
         name: ex.name.trim(),
         muscleGroup: ex.muscleGroup,
         kind: ex.kind,
+        supersetGroup: groupByUid.get(ex.uid) ?? null,
         notes: ex.notes.trim() || null,
         sets: ex.sets.map((s) => ({
           weight: s.weight.trim() ? Number(s.weight) : null,
@@ -507,21 +603,34 @@ export function WorkoutBuilder({
                 </p>
               </div>
             ) : (
-              exercises.map((ex, i) => (
-                <ExerciseBlock
-                  canMoveDown={i < exercises.length - 1}
-                  canMoveUp={i > 0}
-                  exercise={ex}
-                  key={ex.uid}
-                  onAddSet={() => addSet(ex.uid)}
-                  onMoveDown={() => moveExercise(ex.uid, 1)}
-                  onMoveUp={() => moveExercise(ex.uid, -1)}
-                  onRemove={() => removeExercise(ex.uid)}
-                  onRemoveSet={(setUid) => removeSet(ex.uid, setUid)}
-                  onUpdate={(patch) => updateExercise(ex.uid, patch)}
-                  onUpdateSet={(setUid, patch) => updateSet(ex.uid, setUid, patch)}
-                />
-              ))
+              (() => {
+                const groups = deriveGroups(exercises);
+                return exercises.map((ex, i) => (
+                  <ExerciseBlock
+                    canLink={i > 0}
+                    canMoveDown={i < exercises.length - 1}
+                    canMoveUp={i > 0}
+                    exercise={ex}
+                    groupNo={groups[i]}
+                    key={ex.uid}
+                    last={
+                      mode === "edit"
+                        ? null
+                        : (lastSets?.[ex.name.trim().toLowerCase()] ?? null)
+                    }
+                    onAddSet={() => addSet(ex.uid)}
+                    onMoveDown={() => moveExercise(ex.uid, 1)}
+                    onMoveUp={() => moveExercise(ex.uid, -1)}
+                    onRemove={() => removeExercise(ex.uid)}
+                    onRemoveSet={(setUid) => removeSet(ex.uid, setUid)}
+                    onToggleLink={() => toggleLink(ex.uid)}
+                    onUpdate={(patch) => updateExercise(ex.uid, patch)}
+                    onUpdateSet={(setUid, patch) =>
+                      updateSet(ex.uid, setUid, patch)
+                    }
+                  />
+                ));
+              })()
             )}
 
             <Button
@@ -580,24 +689,34 @@ export function WorkoutBuilder({
 
 function ExerciseBlock({
   exercise,
+  canLink,
   canMoveUp,
   canMoveDown,
+  groupNo,
+  last,
   onUpdate,
   onMoveUp,
   onMoveDown,
   onRemove,
   onAddSet,
+  onToggleLink,
   onUpdateSet,
   onRemoveSet,
 }: {
   exercise: EditorExercise;
+  canLink: boolean;
   canMoveUp: boolean;
   canMoveDown: boolean;
+  // Derived superset group number (1, 2, …) or null for standalone.
+  groupNo: number | null;
+  // The most recent logged session of this exercise, for the "Last time" line.
+  last: LastExerciseLog | null;
   onUpdate: (patch: Partial<EditorExercise>) => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onRemove: () => void;
   onAddSet: () => void;
+  onToggleLink: () => void;
   onUpdateSet: (setUid: string, patch: Partial<EditorSet>) => void;
   onRemoveSet: (setUid: string) => void;
 }) {
@@ -606,17 +725,66 @@ function ExerciseBlock({
   const kind = exercise.kind ?? "weighted";
 
   return (
-    <div className="rounded-xl border border-border bg-background/40 p-3">
+    <div
+      className={cn(
+        "rounded-xl border border-border bg-background/40 p-3",
+        groupNo != null && "border-l-2",
+        groupNo != null && GROUP_RAILS[(groupNo - 1) % GROUP_RAILS.length]
+      )}
+    >
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <span className="font-medium text-sm">{exercise.name}</span>
+          <span className="flex flex-wrap items-center gap-1.5">
+            <span className="font-medium text-sm">{exercise.name}</span>
+            {groupNo != null && (
+              <span
+                className={cn(
+                  "rounded px-1.5 py-0.5 font-medium text-[10px] uppercase tracking-wide",
+                  GROUP_CHIPS[(groupNo - 1) % GROUP_CHIPS.length]
+                )}
+              >
+                {supersetLabel(groupNo)}
+              </span>
+            )}
+          </span>
           {exercise.target ? (
             <div className="text-muted-foreground text-xs">
               Plan: {exercise.target}
             </div>
           ) : null}
+          {last ? (
+            <div className="text-muted-foreground text-xs">
+              {formatLastLine(last, kind)}
+            </div>
+          ) : null}
         </div>
         <div className="flex items-center gap-0.5">
+          {canLink && (
+            <Button
+              aria-label={
+                exercise.linkedWithPrev
+                  ? "Remove from superset"
+                  : "Superset with the exercise above"
+              }
+              className={cn(
+                "size-7",
+                exercise.linkedWithPrev
+                  ? "text-blood"
+                  : "text-muted-foreground"
+              )}
+              onClick={onToggleLink}
+              size="icon"
+              title={
+                exercise.linkedWithPrev
+                  ? "Remove from superset"
+                  : "Superset with the exercise above"
+              }
+              type="button"
+              variant="ghost"
+            >
+              <Link2 className="size-4" />
+            </Button>
+          )}
           <Button
             aria-label="Move exercise up"
             className="size-7 text-muted-foreground"

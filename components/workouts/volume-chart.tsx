@@ -34,7 +34,7 @@ import { DOMAIN } from "@/lib/chart/palette";
 const ACCENT = DOMAIN.training; // brand blood red (VF-7: the brand domain)
 
 const ASK_CHAD_PROMPT =
-  "Look at my training volume trend over time. Am I progressively overloading, stalling, or backing off — and what should I do about it?";
+  "Look at my training volume trend chart: total weight moved per session over time. Am I progressively overloading, stalling, or backing off, and what should I do about it?";
 
 const chartConfig = {
   volume: { label: "Volume", color: ACCENT },

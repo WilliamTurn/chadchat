@@ -26,6 +26,9 @@ export type ExerciseData = {
   muscleGroup: string | null;
   // Logging-kind snapshot; null on rows logged before kinds existed (weighted).
   kind?: ExerciseKindData | null;
+  // Superset/circuit grouping (FEAT-10): consecutive exercises sharing the
+  // same number were performed back-to-back; null/absent = standalone.
+  supersetGroup?: number | null;
   notes: string | null;
   sets: SetData[];
 };
@@ -270,16 +273,23 @@ export type GhostSet = {
   unit: WeightUnit;
 };
 
+/** One exercise's most recent logged session: when, and the working sets. */
+export type LastExerciseLog = {
+  performedAt: string; // ISO of the session the sets came from
+  sets: GhostSet[];
+};
+
 /**
  * The most recent session's sets for every exercise, keyed by lowercased name.
- * Backs last-session ghosting in the logger: start a plan day (or re-add an
- * exercise) and each set's placeholder shows what you lifted last time.
- * Warmups are skipped — the ghost answers "what did I work at?".
+ * Backs last-session ghosting in the logger AND the inline "Last time" line
+ * (FEAT-10): start a plan day (or add an exercise) and you see when you last
+ * did it and what you lifted. Warmups are skipped; the ghost answers "what
+ * did I work at?".
  */
 export function lastSetsByExercise(
   workouts: WorkoutData[]
-): Record<string, GhostSet[]> {
-  const latest = new Map<string, { t: number; sets: GhostSet[] }>();
+): Record<string, LastExerciseLog> {
+  const latest = new Map<string, { t: number; log: LastExerciseLog }>();
   for (const w of workouts) {
     const t = new Date(w.performedAt).getTime();
     for (const ex of w.exercises) {
@@ -295,13 +305,13 @@ export function lastSetsByExercise(
         .filter((s) => s.setType !== "warmup" && s.completed)
         .map((s) => ({ weight: s.weight, reps: s.reps, unit: s.unit }));
       if (sets.length > 0) {
-        latest.set(key, { t, sets });
+        latest.set(key, { t, log: { performedAt: w.performedAt, sets } });
       }
     }
   }
-  const out: Record<string, GhostSet[]> = {};
+  const out: Record<string, LastExerciseLog> = {};
   for (const [key, v] of latest) {
-    out[key] = v.sets;
+    out[key] = v.log;
   }
   return out;
 }

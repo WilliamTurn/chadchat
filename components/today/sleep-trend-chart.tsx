@@ -51,7 +51,7 @@ import { SLEEP_GOAL_MINUTES } from "@/lib/validation/sleep";
 const INDIGO = DOMAIN.sleep;
 
 const ASK_CHAD_PROMPT =
-  "Look at my sleep over the last couple of weeks. Am I getting enough sleep to recover and make progress, and what would help me sleep more consistently?";
+  "Look at my sleep trend chart: the night-to-night pattern over the last couple of weeks, not just one night. Is my sleep consistent enough to recover and make progress, and what would smooth it out?";
 
 const chartConfig = {
   minutes: { label: "Sleep", color: INDIGO },

@@ -25,6 +25,7 @@ import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { canAccessEliteFeatures } from "@/lib/admin";
+import { sanitizeCheckInDays } from "@/lib/checkins/schedule";
 import { getUserById } from "@/lib/db/queries";
 import { ELITE_PERKS, PRO_PERKS } from "@/lib/plans";
 import { PLANS } from "@/lib/stripe";
@@ -247,8 +248,11 @@ async function AccountSettings() {
               </h2>
               <div className="rounded-2xl border border-border bg-card p-6">
                 <CheckInSettings
+                  initialDays={sanitizeCheckInDays(user.checkInDays)}
                   initialEnabled={user.checkInsEnabled}
+                  initialEveningHour={user.checkInEveningHour}
                   initialFrequency={user.checkInFrequency}
+                  initialMorningHour={user.checkInMorningHour}
                 />
                 <div className="mt-6 border-border border-t pt-6">
                   <WeeklyReportSettings

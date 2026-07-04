@@ -47,7 +47,7 @@ import {
 const SKY = DOMAIN.hydration;
 
 const ASK_CHAD_PROMPT =
-  "Look at my water intake over the last couple of weeks. Am I hitting my hydration goal consistently, and what would help me stay on top of it?";
+  "Look at my hydration trend chart: how my daily water intake has tracked against my goal over the last couple of weeks. What's the pattern, and what would keep me consistent?";
 
 const chartConfig = {
   ml: { label: "Water", color: SKY },

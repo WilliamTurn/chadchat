@@ -59,6 +59,7 @@ function toWriteInput(
     name: string;
     muscleGroup: string | null;
     kind: "weighted" | "bodyweight" | "timed" | null;
+    supersetGroup: number | null;
     notes: string | null;
     sets: {
       weight: number | null;
@@ -81,6 +82,7 @@ function toWriteInput(
       name: ex.name,
       muscleGroup: ex.muscleGroup?.trim() ? ex.muscleGroup.trim() : null,
       kind: ex.kind ?? null,
+      supersetGroup: ex.supersetGroup ?? null,
       notes: ex.notes?.trim() ? ex.notes.trim() : null,
       sets: ex.sets.map((s) => ({
         weight: s.weight,

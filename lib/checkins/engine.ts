@@ -44,12 +44,14 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 // A week is enough to spot "gone quiet" patterns without bloating the prompt.
 const CONTEXT_DAYS = 7;
 
-// Rolling-7-day send caps per frequency choice. "daily" is uncapped weekly
-// (the per-slot dedup already bounds it to at most 2/day: brief + callout).
+// Rolling-7-day send caps per frequency choice: a backstop behind the real
+// limiter, the member's chosen checkInDays (FEAT-15). "daily" is uncapped
+// weekly (the per-slot dedup already bounds it to at most 2/day: brief +
+// callout); the others allow up to brief + callout on each chosen day.
 const WEEKLY_CAPS: Record<User["checkInFrequency"], number> = {
   daily: Number.POSITIVE_INFINITY,
-  three_per_week: 3,
-  weekly: 1,
+  three_per_week: 6,
+  weekly: 2,
 };
 
 // The same persona contract as the photo-analysis CHAD_VOICE: full edge, no
@@ -309,7 +311,7 @@ export async function runCheckInPass(
   const results: CheckInResult[] = [];
   for (const user of users) {
     try {
-      const slot = opts.slot ?? dueCheckInSlot(now, user.timezone);
+      const slot = opts.slot ?? dueCheckInSlot(now, user);
       if (!slot) {
         results.push({
           userId: user.id,

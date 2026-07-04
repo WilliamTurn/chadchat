@@ -14,6 +14,11 @@ import {
   setWeightUnit,
   updateUserProfile,
 } from "@/lib/db/queries";
+import {
+  EVENING_HOUR_CHOICES,
+  MORNING_HOUR_CHOICES,
+  maxDaysForFrequency,
+} from "@/lib/checkins/schedule";
 import { isValidTimezone } from "@/lib/date";
 import { type ProfileInput, profileSchema } from "@/lib/profile";
 import { getAppUrl, getStripe } from "@/lib/stripe";
@@ -146,26 +151,54 @@ export async function saveTimezone(timezone: string) {
   revalidatePath("/sleep");
 }
 
-/** Save the member's proactive check-in preferences (FEAT-11, Elite). */
+/**
+ * Save the member's proactive check-in preferences + schedule (FEAT-11 →
+ * FEAT-15, Elite). Days/hours are the member's own local time; the browser's
+ * IANA timezone rides along silently like the weekly-report save so the
+ * hourly cron hits the right local moment.
+ */
 export async function saveCheckInSettings(input: {
   enabled: boolean;
   frequency: "daily" | "three_per_week" | "weekly";
+  days: number[];
+  morningHour: number;
+  eveningHour: number;
+  timezone?: string;
 }) {
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login");
   }
 
+  const validDays =
+    Array.isArray(input.days) &&
+    input.days.length >= 1 &&
+    input.days.length <= maxDaysForFrequency(input.frequency) &&
+    input.days.every((d) => Number.isInteger(d) && d >= 0 && d <= 6) &&
+    new Set(input.days).size === input.days.length;
+
   if (
     typeof input.enabled !== "boolean" ||
-    !["daily", "three_per_week", "weekly"].includes(input.frequency)
+    !["daily", "three_per_week", "weekly"].includes(input.frequency) ||
+    !validDays ||
+    !MORNING_HOUR_CHOICES.includes(input.morningHour) ||
+    !EVENING_HOUR_CHOICES.includes(input.eveningHour)
   ) {
     throw new Error("Invalid check-in settings");
   }
 
+  const timezone =
+    typeof input.timezone === "string" && isValidTimezone(input.timezone)
+      ? input.timezone
+      : undefined;
+
   await setCheckInSettings(session.user.id, {
     checkInsEnabled: input.enabled,
     checkInFrequency: input.frequency,
+    checkInDays: [...input.days].sort((a, b) => a - b),
+    checkInMorningHour: input.morningHour,
+    checkInEveningHour: input.eveningHour,
+    ...(timezone ? { timezone } : {}),
   });
   revalidatePath("/account");
 }

@@ -97,7 +97,7 @@ describe("lastSetsByExercise", () => {
     ],
   });
 
-  it("returns the most recent session's working sets per exercise", () => {
+  it("returns the most recent session's working sets + date per exercise", () => {
     const map = lastSetsByExercise([
       workout("2026-07-01T12:00:00Z", "Barbell Bench Press", [
         { weight: 185, reps: 8 },
@@ -107,11 +107,12 @@ describe("lastSetsByExercise", () => {
         { weight: 175, reps: 8 },
       ]),
     ]);
-    const sets = map["barbell bench press"];
-    assert.ok(sets);
-    assert.equal(sets.length, 2);
-    assert.equal(sets[0].weight, 185);
-    assert.equal(sets[0].reps, 8);
+    const last = map["barbell bench press"];
+    assert.ok(last);
+    assert.equal(last.performedAt, "2026-07-01T12:00:00Z");
+    assert.equal(last.sets.length, 2);
+    assert.equal(last.sets[0].weight, 185);
+    assert.equal(last.sets[0].reps, 8);
   });
 
   it("skips warmups and incomplete sets", () => {
@@ -121,7 +122,7 @@ describe("lastSetsByExercise", () => {
     ]);
     w.exercises[0].sets[0].setType = "warmup";
     const map = lastSetsByExercise([w]);
-    assert.equal(map.deadlift.length, 1);
-    assert.equal(map.deadlift[0].weight, 315);
+    assert.equal(map.deadlift.sets.length, 1);
+    assert.equal(map.deadlift.sets[0].weight, 315);
   });
 });

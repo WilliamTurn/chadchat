@@ -169,6 +169,20 @@
       "when": 1783118610934,
       "tag": "0023_heavy_leo",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1783155896539,
+      "tag": "0024_old_shiver_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1783156093069,
+      "tag": "0025_natural_electro",
+      "breakpoints": true
     }
   ]
 }

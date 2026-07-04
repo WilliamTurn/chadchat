@@ -862,7 +862,7 @@ async function TodayContent() {
             </div>
             <ModuleFooter
               askChad={
-                <AskChadButton prompt="Look at my recent workouts. What's working, what's lagging, and what should I hit next session?" />
+                <AskChadButton prompt="Look at the workouts card on my dashboard: my last session and this week's training. What's working, what's lagging, and what should I hit next session?" />
               }
             >
               <Button asChild className="gap-1.5" size="sm" variant="outline">
@@ -1052,7 +1052,7 @@ async function TodayContent() {
             </div>
             <ModuleFooter
               askChad={
-                <AskChadButton prompt="Look at my weight trend and how it's tracking against my goal weight. Am I moving in the right direction, and should I change anything?" />
+                <AskChadButton prompt="Look at the weight card on my dashboard: my latest weigh-in and the recent trend toward my goal weight. Am I moving in the right direction, and should I change anything?" />
               }
             >
               <Button asChild className="gap-1.5" size="sm" variant="outline">

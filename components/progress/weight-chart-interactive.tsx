@@ -105,7 +105,7 @@ function directionTone(
 const MIN_FOR_RATE = 5; // below this, a per-week rate is too noisy to show
 
 const ASK_CHAD_PROMPT =
-  "Review my progress — weight, body measurements, and photos. How am I doing, and what should I adjust?";
+  "Review my Progress page: my weight trend line, body measurements, and progress photos. How am I trending against my goal weight, and what should I adjust?";
 
 /** Projection date, with the year whenever it isn't this year — a slow pace
  *  can project years out, and a bare "Jun 19" then reads as a past date. */

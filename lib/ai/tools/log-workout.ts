@@ -82,6 +82,7 @@ export const logWorkout = ({ session, user }: LogWorkoutProps) =>
           // Logging kind comes from the library when the name matches; a
           // chat-reported exercise we don't know defaults to weighted.
           kind: findBuiltInExercise(ex.name)?.kind ?? null,
+          supersetGroup: null,
           notes: null,
           sets: ex.sets.map((s) => ({
             weight: s.weight ?? null,

@@ -75,12 +75,15 @@ OUTPUT FORMAT — always return exactly these two sections, in this order, with 
 - Week / phase: <value or Unknown>
 
 ## Notes
-<Short bullet points for durable facts that don't fit a field above: standing orders or advice Chad gave, behavioral patterns, progress / PRs / milestones, life context the client stated, and anything else useful next session. Keep this header even if there are no bullets yet.>
+<Short bullet points for durable facts that don't fit a field above: standing orders or advice Chad gave, behavioral patterns, progress / PRs / milestones, life context the client stated, and anything else useful next session. Every bullet starts with the date it was learned and says who it came from, e.g. "- (2026-07-04) Client said ..." / "- (2026-07-04) Chad ordered ...". Keep this header even if there are no bullets yet.>
 
 RULES:
 - Fill EVERY "Client file" field. Use exactly "Unknown" when the client has not provided it. Never guess or invent a value to fill a field.
 - Only record what the client actually STATED or what Chad established in the conversation. Do NOT infer or assume facts that were not stated (e.g. do not assume the client has children, a job, etc.).
+- Every Notes bullet must carry its provenance: the date in parentheses, then who it came from ("Client said", "Chad advised", "Chad ordered", "They agreed"). New bullets use TODAY'S DATE given to you; keep the dates already on existing bullets.
+- Record an agreement or commitment ONLY if it is explicit in the RECENT CONVERSATION text. Never write "they agreed ..." or "Chad and the client discussed ..." for something that does not literally appear there.
 - Record Chad's orders and advice FAITHFULLY and precisely — never strengthen, escalate, or paraphrase them into something stronger than what he said. Example: if Chad criticized the client for wasting money on supplements, record "Chad criticized the client for spending on supplements" — do NOT write "Chad told the client to throw out / trash the supplements" unless Chad literally gave that order.
+- If the client corrects or denies something in the EXISTING PROFILE during the conversation, update or delete that entry. The client's own words outrank an old note.
 - If the conversation shows the client COMPLETED a standing order (or Chad acknowledged it as done), record it as done or remove the order. Never leave an order recorded as outstanding after the conversation shows it was carried out.
 - UPDATE facts that changed (e.g. new weight) rather than keeping both. Remove anything proven wrong.
 - Keep it concise: short values, short bullets. No conversation transcript, no chit-chat, no momentary feelings.
@@ -193,11 +196,11 @@ export function formatMemoryForPrompt(
   if (!trimmed) {
     return "";
   }
-  return `WHAT YOU ALREADY KNOW ABOUT THIS CLIENT (from previous sessions — this is real, do not greet them as a stranger):
+  return `YOUR COACH'S FILE ON THIS CLIENT (your own notes carried over from previous sessions; do not greet them as a stranger):
 
 ${trimmed}
 
-Use what you know: skip re-asking for information you already have and pick up where you left off. If a detail looks stale or you have reason to doubt it, confirm it rather than assuming. Same for any standing order you remember issuing: unless your notes say it was ignored, ask whether they did it instead of accusing them of blowing it off.`;
+Use the file: skip re-asking for what's already here and pick up where you left off. But know what this file IS: condensed notes, not a recording. You remember FACTS from past sessions, not the conversations themselves. So never claim to recall a specific past exchange ("we literally just talked about this") and never assert an agreement the client says never happened; if it's not in this file or in their logged data, you don't remember it. When the client disputes a note, the note may be wrong or stale: check it against their logged data, get the real number out of them, and correct the file's story without going soft on the standards themselves. A standing order you issued still stands: unless your notes say it was ignored, ask whether they did it instead of accusing them of blowing it off.`;
 }
 
 function truncateDetail(detail: string): string {
@@ -421,7 +424,7 @@ export async function maybeUpdateUserMemory({
     const { text } = await generateText({
       model: getLanguageModel(MEMORY_MODEL_ID),
       system: MEMORY_SYSTEM_PROMPT,
-      prompt: `EXISTING PROFILE:\n${existingProfile || "(none yet)"}\n\nRECENT CONVERSATION:\n${conversation}\n\nUPDATED PROFILE:`,
+      prompt: `TODAY'S DATE: ${new Date().toISOString().slice(0, 10)}\n\nEXISTING PROFILE:\n${existingProfile || "(none yet)"}\n\nRECENT CONVERSATION:\n${conversation}\n\nUPDATED PROFILE:`,
     });
 
     const updated = text.trim().slice(0, MAX_PROFILE_CHARS);

@@ -84,7 +84,7 @@ export const APP_GUIDE_SECTIONS: AppGuideSection[] = [
   {
     id: "check-ins",
     title: "Check-ins (Elite feature)",
-    content: `Chad reaches out first by email instead of waiting: morning briefs, missed-workout callouts, weigh-in nudges. The frequency is the member's choice, set on the Account page.`,
+    content: `Chad reaches out first by email instead of waiting: morning briefs, missed-workout callouts, weigh-in nudges. The schedule is the member's choice, set on the Account page: which days he may email (every day, a few days a week, or one day a week) plus the exact morning-brief and evening-callout times, in the member's own timezone.`,
   },
   {
     id: "plans-billing",

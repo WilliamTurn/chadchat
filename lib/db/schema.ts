@@ -106,14 +106,23 @@ export const user = pgTable("User", {
   // callouts). Default ON — it's the flagship of the Elite tier — with a
   // one-click off switch + a frequency control on /account.
   checkInsEnabled: boolean("checkInsEnabled").notNull().default(true),
-  // How often Chad is allowed to reach out. "daily" = up to a morning brief +
-  // an evening callout per day; the other two are rolling-7-day send caps so
-  // nobody ever feels spammed.
+  // How often Chad is allowed to reach out. "daily" = every day; the other two
+  // limit him to the member's chosen checkInDays (with a rolling-7-day cap as a
+  // backstop) so nobody ever feels spammed.
   checkInFrequency: varchar("checkInFrequency", {
     enum: ["daily", "three_per_week", "weekly"],
   })
     .notNull()
     .default("daily"),
+  // --- Check-in schedule (FEAT-15) ---
+  // The member's own concrete schedule, all on THEIR wall clock (timezone
+  // below). checkInDays = which days of the week Chad may email (0 = Sunday …
+  // 6 = Saturday); only consulted when frequency isn't "daily". The two hours
+  // are where each slot's ~3h delivery window STARTS: the morning brief lands
+  // from checkInMorningHour, the evening callout from checkInEveningHour.
+  checkInDays: json("checkInDays").$type<number[]>().notNull().default([1, 3, 5]),
+  checkInMorningHour: integer("checkInMorningHour").notNull().default(7),
+  checkInEveningHour: integer("checkInEveningHour").notNull().default(20),
   // --- Weekly Report (FEAT-12, Elite) ---
   // Whether Chad writes this member a weekly coach's review. Default ON — like
   // check-ins, the report IS the Elite product; one-click off on /account.
@@ -560,6 +569,10 @@ export const workoutExercise = pgTable("WorkoutExercise", {
   kind: varchar("kind", { enum: ["weighted", "bodyweight", "timed"] }),
   // Order within the workout.
   position: integer("position").notNull().default(0),
+  // Superset/circuit grouping (FEAT-10): consecutive exercises sharing the
+  // same number were performed back-to-back as one superset. Numbered 1, 2, …
+  // within the workout; null = a normal standalone exercise.
+  supersetGroup: integer("supersetGroup"),
   notes: text("notes"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 });

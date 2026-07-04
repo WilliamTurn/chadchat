@@ -30,6 +30,11 @@ import {
 import { BarcodeScannerDialog } from "@/components/nutrition/barcode-scanner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  formatCalendarDay,
+  parseCalendarDay,
+  todayLocalISO,
+} from "@/lib/date";
 import type { FoodHit, PortionUnit } from "@/lib/nutrition/food-hit";
 import { portionLabel, portionMacros } from "@/lib/nutrition/food-hit";
 import type { MealCategory } from "@/lib/validation/nutrition";
@@ -180,7 +185,18 @@ export function FoodSearch({
         note: null,
       });
       if (result.ok) {
-        reward.celebrate(`Logged ${baseName}.`);
+        // Spell out the day when it isn't today, so a back-dated log is
+        // visibly confirmed (BT1-3).
+        const day = date === todayLocalISO() ? null : parseCalendarDay(date);
+        reward.celebrate(
+          day
+            ? `Logged ${baseName} for ${formatCalendarDay(day, {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+              })}.`
+            : `Logged ${baseName}.`
+        );
         setSelectedId(null);
         router.refresh();
       } else {
