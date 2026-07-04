@@ -1,7 +1,8 @@
 "use client";
 
-import { signOut } from "next-auth/react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSignOut } from "@/hooks/use-sign-out";
 
 /**
  * Sign out from the pricing page. Without an escape hatch a logged-in member
@@ -9,14 +10,18 @@ import { Button } from "@/components/ui/button";
  * here), so this lets them log out / switch accounts. Returns to /login.
  */
 export function LogoutButton() {
+  const { handleSignOut, signingOut } = useSignOut();
+
   return (
     <Button
-      onClick={() => signOut({ redirectTo: "/login" })}
+      disabled={signingOut}
+      onClick={() => handleSignOut("/login")}
       size="sm"
       type="button"
       variant="ghost"
     >
-      Log out
+      {signingOut && <Loader2 className="size-4 animate-spin" />}
+      {signingOut ? "Logging out..." : "Log out"}
     </Button>
   );
 }

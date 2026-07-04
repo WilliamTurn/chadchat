@@ -3,6 +3,7 @@
 import {
   CreditCard,
   Dumbbell,
+  Loader2,
   LogOut,
   MenuIcon,
   Moon,
@@ -12,9 +13,10 @@ import {
 import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
+import { useSignOut } from "@/hooks/use-sign-out";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -66,6 +68,7 @@ function emailToHue(email: string): number {
 function AccountMenu() {
   const { data } = useSession();
   const { setTheme, resolvedTheme } = useTheme();
+  const { handleSignOut, signingOut } = useSignOut();
   const email = data?.user?.email ?? "";
   const hue = emailToHue(email);
   const avatar = (
@@ -126,10 +129,20 @@ function AccountMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="cursor-pointer"
-          onSelect={() => signOut({ redirectTo: "/" })}
+          disabled={signingOut}
+          onSelect={(event) => {
+            // Keep the menu open so the pending state is visible until the
+            // sign-out redirect unloads the page (DS-15).
+            event.preventDefault();
+            handleSignOut("/");
+          }}
         >
-          <LogOut className="size-4" />
-          Sign out
+          {signingOut ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <LogOut className="size-4" />
+          )}
+          {signingOut ? "Signing out..." : "Sign out"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -158,6 +171,7 @@ export function StandaloneHeader({ active }: { active?: string }) {
   const [open, setOpen] = useState(false);
   const reduce = useReducedMotion();
   const { setTheme, resolvedTheme } = useTheme();
+  const { handleSignOut, signingOut } = useSignOut();
 
   const isActive = (href: string) =>
     active ? active === href : pathname === href;
@@ -337,17 +351,21 @@ export function StandaloneHeader({ active }: { active?: string }) {
                 )}
                 <span>{`Toggle ${resolvedTheme === "dark" ? "light" : "dark"} mode`}</span>
               </motion.button>
+              {/* The sheet stays open so the pending state is visible until
+                  the sign-out redirect unloads the page (DS-15). */}
               <motion.button
-                className="flex items-center gap-3 rounded-lg px-3 py-3 text-left font-medium text-base text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
-                onClick={() => {
-                  setOpen(false);
-                  signOut({ redirectTo: "/" });
-                }}
+                className="flex items-center gap-3 rounded-lg px-3 py-3 text-left font-medium text-base text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground disabled:opacity-60"
+                disabled={signingOut}
+                onClick={() => handleSignOut("/")}
                 type="button"
                 variants={sheetItem}
               >
-                <LogOut className="size-5" />
-                <span>Sign out</span>
+                {signingOut ? (
+                  <Loader2 className="size-5 animate-spin" />
+                ) : (
+                  <LogOut className="size-5" />
+                )}
+                <span>{signingOut ? "Signing out..." : "Sign out"}</span>
               </motion.button>
             </motion.div>
           </SheetContent>

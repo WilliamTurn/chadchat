@@ -3,10 +3,11 @@
 import { ChevronUp } from "lucide-react";
 import Link from "next/link";
 import type { User } from "next-auth";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import { SettingsDialog } from "@/components/chat/settings-dialog";
+import { useSignOut } from "@/hooks/use-sign-out";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +35,7 @@ export function SidebarUserNav({ user }: { user: User }) {
   const { status } = useSession();
   const { setTheme, resolvedTheme } = useTheme();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const { handleSignOut, signingOut } = useSignOut();
 
   return (
     <SidebarMenu>
@@ -106,9 +108,16 @@ export function SidebarUserNav({ user }: { user: User }) {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild data-testid="user-nav-item-auth">
+            <DropdownMenuItem
+              asChild
+              data-testid="user-nav-item-auth"
+              // Keep the menu open so the pending state is visible until the
+              // sign-out redirect unloads the page (DS-15).
+              onSelect={(event) => event.preventDefault()}
+            >
               <button
-                className="w-full cursor-pointer text-[15px] md:text-[13px]"
+                className="flex w-full cursor-pointer items-center gap-2 text-[15px] md:text-[13px]"
+                disabled={signingOut}
                 onClick={() => {
                   if (status === "loading") {
                     toast({
@@ -120,13 +129,16 @@ export function SidebarUserNav({ user }: { user: User }) {
                     return;
                   }
 
-                  signOut({
-                    redirectTo: "/",
-                  });
+                  handleSignOut("/");
                 }}
                 type="button"
               >
-                Sign out
+                {signingOut && (
+                  <span className="animate-spin">
+                    <LoaderIcon size={14} />
+                  </span>
+                )}
+                {signingOut ? "Signing out..." : "Sign out"}
               </button>
             </DropdownMenuItem>
           </DropdownMenuContent>
