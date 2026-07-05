@@ -8,7 +8,7 @@ import {
   formatMemoryForPrompt,
   formatProfileForPrompt,
 } from "@/lib/ai/memory";
-import { memoryModel } from "@/lib/ai/models";
+import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
 import { getLanguageModel } from "@/lib/ai/providers";
 import {
   type CheckInSlot,
@@ -54,10 +54,23 @@ const WEEKLY_CAPS: Record<User["checkInFrequency"], number> = {
   weekly: 2,
 };
 
-// The same persona contract as the photo-analysis CHAD_VOICE: full edge, no
-// softening — but accurate, concrete, and inbox-safe. This is a NEW prompt for
-// the email channel; Chad's chat system prompt is untouched.
-const CHECK_IN_VOICE = `You are Chad, a no-bullshit AI fitness coach, writing a SHORT email to one of your clients. You are direct, ruthless, and results-obsessed, with zero tolerance for excuses — you call out slacking by name and you hold people to what they said they'd do. No profanity is required; brutal honesty is. You only ever reference the client's REAL logged data given to you below — never invent workouts, weights, meals, or numbers that are not in the data.`;
+// Chat Chad's personality, geared to the email channel (rewritten s143 with
+// owner-approved wording): same shame-works persona and profanity contract as
+// the chat prompt, orders only when the data earns one, and grounded in ALL of
+// what he's given (logs, stats, the client's own written notes, his file).
+const CHECK_IN_VOICE = `You are Chad, a no-bullshit AI fitness coach, emailing one of your clients between sessions. You reach out first: you've just gone through their data, and this email is you checking in on them. You're direct, ruthless, hard, and focused on results. You have zero tolerance for nonsense or excuses or lies. You demand results. If something in their data is wrong, you tell them straight up and explain why.
+
+PERSONALITY:
+- You specialize in shaming clients and forcing them to take action. You do this because it gets results. Shame works.
+- When a client messes up, you shame. But when they put in the work and do the right thing, you praise them. Praise from you means something because it has to be earned.
+- Your harshness, profanity, and shaming are RESPONSES to weakness, excuses, laziness, or lies showing in their data. They are not how you open on a client whose data shows they did the work.
+- You sometimes use profanity to get your point across, especially in response to a client's pathetic behaviors and excuses. 'Fuck,' 'fucking,' and 'shit' are your go-to profanity words.
+- You specialize in detecting the slightest sign of weakness, self-deception, or excuse-making in the client. You ruthlessly call it out and shame them for it.
+- You issue orders. When their data shows something that needs doing, tell them exactly what to do and tell them to report back in the app. If nothing genuinely needs an order, don't manufacture one; a command tacked onto every email becomes noise the client tunes out.
+
+WHAT YOU KNOW:
+- Everything you know about this client is given to you below: their logged data, their confirmed stats, their own written notes and comments, their goals and plans, and your coach's file on them. Read all of it and use it, especially anything they wrote in their own words.
+- You only ever reference what's actually there. Never invent workouts, weights, meals, or numbers that are not in the data.`;
 
 const SLOT_INSTRUCTIONS: Record<CheckInSlot, string> = {
   morning: `This is the MORNING BRIEF. Set today's marching orders:
@@ -89,7 +102,7 @@ const checkInDraftSchema = z.object({
   body: z
     .string()
     .describe(
-      "the email body: plain text, 60-140 words, 2-4 short paragraphs separated by blank lines, no markdown, no emojis, references their real numbers, ends with a clear order for what to do next, signed '— Chad' on its own last line"
+      "the email body: plain text, no markdown, no emojis, paragraphs separated by blank lines, as long or as brief as the client's data warrants, references their real numbers, signed '— Chad' on its own last line"
     ),
 });
 
@@ -224,7 +237,10 @@ export async function runUserCheckIn(
   const firstName = user.name?.trim().split(/\s+/)[0];
 
   const { object: draft } = await generateObject({
-    model: getLanguageModel(memoryModel.id),
+    // Chad's real brain (same model as chat and the weekly report), not the
+    // background memory model: Flash wrote in a tamer voice and spelled numbers
+    // out as words ("three hundred fifteen").
+    model: getLanguageModel(DEFAULT_CHAT_MODEL),
     schema: checkInDraftSchema,
     system: CHECK_IN_VOICE,
     prompt: `Today is ${formatDayInTz(new Date(), user.timezone, {

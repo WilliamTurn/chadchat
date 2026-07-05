@@ -202,25 +202,33 @@ export function formatTodaySnapshot({
 ${lines.join("\n")}`;
 }
 
-/** One workout rendered as a compact "Title — Ex A 3×135lb; Ex B 4×8" line. */
+/**
+ * One workout rendered as a compact "Title — Ex A 3×135lb; Ex B 4×8" line,
+ * including the client's own notes (session-level and per-exercise) so the
+ * model reads what they wrote, not just the numbers.
+ */
 function formatWorkoutLine(w: WorkoutWithChildren): string {
   const exParts = w.exercises
     .slice(0, MAX_EXERCISES_PER_WORKOUT_IN_LOG)
     .map((ex) => {
+      const exNote = ex.notes?.trim() ? ` [${ex.notes.trim()}]` : "";
       const working = ex.sets.filter(
         (s) => s.completed && s.setType !== "warmup"
       );
       if (working.length === 0) {
-        return ex.exerciseName;
+        return `${ex.exerciseName}${exNote}`;
       }
       const top = working.reduce((a, b) =>
         toLb(b.weight ?? 0, b.unit) > toLb(a.weight ?? 0, a.unit) ? b : a
       );
       const load = top.weight == null ? "BW" : `${top.weight}${top.unit}`;
       const reps = top.reps == null ? "" : `×${top.reps}`;
-      return `${ex.exerciseName} ${working.length}×(top ${load}${reps})`;
+      return `${ex.exerciseName} ${working.length}×(top ${load}${reps})${exNote}`;
     });
-  return `${w.title} — ${exParts.join("; ")}`;
+  const workoutNote = w.notes?.trim()
+    ? ` (client's note: "${w.notes.trim()}")`
+    : "";
+  return `${w.title} — ${exParts.join("; ")}${workoutNote}`;
 }
 
 export type DayLog = {

@@ -41,9 +41,10 @@ const MEMORY_MODEL_ID = memoryModel.id;
 // user is never throttled.)
 const MIN_SECONDS_BETWEEN_UPDATES = 60;
 
-// Hard ceiling on the stored profile so the prompt injection stays cheap and
-// the model is forced to keep it tight.
-const MAX_PROFILE_CHARS = 4000;
+// Hard ceiling on the stored profile so the prompt injection stays bounded and
+// the model is forced to keep it tight. Raised 4000 -> 8500 (s143) so
+// relationship notes never squeeze out the stats.
+const MAX_PROFILE_CHARS = 8500;
 
 // How many of the most recent messages to feed the updater. The profile is
 // cumulative, so we only need the latest exchange(s) plus the existing profile.
@@ -75,7 +76,7 @@ OUTPUT FORMAT — always return exactly these two sections, in this order, with 
 - Week / phase: <value or Unknown>
 
 ## Notes
-<Short bullet points for durable facts that don't fit a field above: standing orders or advice Chad gave, behavioral patterns, progress / PRs / milestones, life context the client stated, and anything else useful next session. Every bullet starts with the date it was learned and says who it came from, e.g. "- (2026-07-04) Client said ..." / "- (2026-07-04) Chad ordered ...". Keep this header even if there are no bullets yet.>
+<Short bullet points for durable facts AND the coaching relationship: standing orders or advice Chad gave, agreements and commitments, behavioral patterns, progress / PRs / milestones, life context the client stated, topics the client and Chad worked through and where they landed, Chad's assessments of the client (what he's called out, what he respects, what he's watching for), and how the client responds to coaching (what fires them up, what they push back on). Write what a real coach would remember about a client walking into the next session. Every bullet starts with the date it was learned and says who it came from, e.g. "- (2026-07-04) Client said ..." / "- (2026-07-04) Chad ordered ...". Keep this header even if there are no bullets yet.>
 
 RULES:
 - Fill EVERY "Client file" field. Use exactly "Unknown" when the client has not provided it. Never guess or invent a value to fill a field.
@@ -86,7 +87,7 @@ RULES:
 - If the client corrects or denies something in the EXISTING PROFILE during the conversation, update or delete that entry. The client's own words outrank an old note.
 - If the conversation shows the client COMPLETED a standing order (or Chad acknowledged it as done), record it as done or remove the order. Never leave an order recorded as outstanding after the conversation shows it was carried out.
 - UPDATE facts that changed (e.g. new weight) rather than keeping both. Remove anything proven wrong.
-- Keep it concise: short values, short bullets. No conversation transcript, no chit-chat, no momentary feelings.
+- Keep it concise: short values, short bullets, no verbatim transcript. A client's state of mind IS worth a bullet when it matters to coaching them (discouraged about a stall, fired up after a PR, dreading leg day); passing small talk is not.
 - If the conversation adds nothing new, return the existing profile unchanged.
 - Output ONLY the profile (the two sections above). No preamble, no explanation, no code fences.
 - Keep the whole profile under ${MAX_PROFILE_CHARS} characters.`;
