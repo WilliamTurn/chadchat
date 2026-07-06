@@ -68,10 +68,20 @@ export const loginFormSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-// Sign up (server): enforce the full requirements checklist.
+// The 18+/Terms/Privacy consent line (BLK-4). One string for the checkbox
+// error so the client checkbox and any future copy stay in sync.
+export const TERMS_ERROR =
+  "Please confirm you're 18 or older and agree to the Terms to continue";
+
+// Sign up (server): enforce the full requirements checklist. acceptTerms
+// arrives as the string "true" from the form's FormData (BLK-4) — final
+// server-side enforcement of the consent checkbox.
 export const registerSchema = z.object({
   email: emailField,
   password: newPasswordField,
+  acceptTerms: z.literal("true", {
+    errorMap: () => ({ message: TERMS_ERROR }),
+  }),
 });
 
 // Forgot password: just the email to send a reset link to.
@@ -90,6 +100,8 @@ export const resetPasswordSchema = z.object({
 export const registerFormSchema = withConfirm({
   email: emailField,
   password: newPasswordField,
+  // The consent checkbox (BLK-4): unchecked by default, required to submit.
+  acceptTerms: z.boolean().refine((v) => v === true, TERMS_ERROR),
 });
 
 // The reset form only edits the password (the token comes from the URL).

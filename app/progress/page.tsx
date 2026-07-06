@@ -9,6 +9,7 @@ import { EditEntryButton } from "@/components/progress/edit-entry-button";
 import { RewardProvider } from "@/components/dashboard/reward";
 import { LogEntryForm } from "@/components/progress/log-entry-form";
 import { MeasurementsSection } from "@/components/progress/measurements-section";
+import { MontageCard } from "@/components/progress/montage-card";
 import { PhotoCompare } from "@/components/progress/photo-compare";
 import { WeightChartInteractive } from "@/components/progress/weight-chart-interactive";
 import { BackToDashboard } from "@/components/nav/back-to-dashboard";
@@ -22,10 +23,12 @@ import { formatCalendarDay, toCalendarDayISO } from "@/lib/date";
 import {
   getActiveGoalsByUserId,
   getBodyMeasurementsByUserId,
+  getLatestProgressMontage,
   getProgressEntriesByUserId,
   getUserById,
 } from "@/lib/db/queries";
 import type { Goal, ProgressEntry } from "@/lib/db/schema";
+import { parseProgressMontageContent } from "@/lib/montage/content";
 
 const isoDate = toCalendarDayISO;
 
@@ -134,6 +137,10 @@ async function ProgressContent() {
   if (!user) {
     redirect("/login");
   }
+  // Legal gate (BLK-4): accept the Terms before using the product.
+  if (!user.acceptedTermsAt) {
+    redirect("/legal");
+  }
   if (!canAccessChad(user)) {
     redirect("/pricing");
   }
@@ -173,10 +180,11 @@ async function Dashboard({
   userId: string;
   preferredUnit: "lb" | "kg" | null;
 }) {
-  const [entries, measurements, goals] = await Promise.all([
+  const [entries, measurements, goals, latestMontage] = await Promise.all([
     getProgressEntriesByUserId(userId),
     getBodyMeasurementsByUserId(userId),
     getActiveGoalsByUserId(userId),
+    getLatestProgressMontage(userId),
   ]);
 
   const weighed = entries.filter(
@@ -246,6 +254,20 @@ async function Dashboard({
               url: e.photoUrl ?? "",
               date: displayDate(e.recordedAt),
             }))}
+        />
+      )}
+
+      {/* Chad's montage (FEAT-18): timeline strip + his verdict. */}
+      {photos.length >= 2 && (
+        <MontageCard
+          generatedAtLabel={
+            latestMontage ? displayDate(latestMontage.createdAt) : null
+          }
+          initial={
+            latestMontage
+              ? parseProgressMontageContent(latestMontage.content)
+              : null
+          }
         />
       )}
 

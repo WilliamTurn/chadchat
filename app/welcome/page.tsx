@@ -50,6 +50,11 @@ async function WelcomeGate() {
     redirect("/login");
   }
 
+  // Legal gate (BLK-4): accept the Terms before anything, onboarding included.
+  if (!user.acceptedTermsAt) {
+    redirect("/legal");
+  }
+
   // Onboarding is a post-access step — you can't hand your stats to a coach you
   // haven't unlocked yet. Non-subscribers go choose a plan first.
   if (!canAccessChad(user)) {
@@ -62,9 +67,18 @@ async function WelcomeGate() {
   }
 
   return (
-    <OnboardingWizard
-      initialName={user.name ?? ""}
-      initialWeightUnit={user.weightUnit}
-    />
+    <>
+      <OnboardingWizard
+        initialName={user.name ?? ""}
+        initialWeightUnit={user.weightUnit}
+      />
+      {/* First-use health disclaimer (BLK-4): the standard not-medical-advice
+          line, shown once at the door before any coaching happens. */}
+      <p className="relative z-10 mt-4 w-full max-w-md text-center text-muted-foreground text-xs leading-relaxed">
+        Chad is an AI coach, not a doctor, and his guidance is not medical
+        advice. Check with a physician before starting a new diet or training
+        program. You train at your own risk.
+      </p>
+    </>
   );
 }

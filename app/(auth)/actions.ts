@@ -129,6 +129,7 @@ export const register = async (
     const validatedData = registerSchema.parse({
       email: formData.get("email"),
       password: formData.get("password"),
+      acceptTerms: formData.get("acceptTerms"),
     });
 
     const [user] = await getUser(validatedData.email);

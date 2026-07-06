@@ -42,6 +42,11 @@ async function SidebarShell({ children }: { children: React.ReactNode }) {
   let showVerifyBanner = false;
   if (session?.user?.id) {
     const dbUser = await getUserById(session.user.id);
+    // Legal gate (BLK-4): Terms/Privacy acceptance comes before everything,
+    // including the paywall — Google signups and pre-gate accounts accept once.
+    if (dbUser && !dbUser.acceptedTermsAt) {
+      redirect("/legal");
+    }
     // Admins are comped (canAccessChad) — the owner is never trapped on /pricing.
     if (!(dbUser && canAccessChad(dbUser))) {
       redirect("/pricing");

@@ -117,6 +117,10 @@ async function NutritionContent({
   if (!user) {
     redirect("/login");
   }
+  // Legal gate (BLK-4): accept the Terms before using the product.
+  if (!user.acceptedTermsAt) {
+    redirect("/legal");
+  }
   if (!canAccessChad(user)) {
     redirect("/pricing");
   }

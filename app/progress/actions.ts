@@ -3,15 +3,20 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/app/(auth)/auth";
 import { canAccessProFeatures } from "@/lib/admin";
+import { buildMontageVerdict, type PhotoEntry } from "@/lib/ai/montage";
 import { parseCalendarDay } from "@/lib/date";
 import {
   createBodyMeasurement,
   createProgressEntry,
+  createProgressMontage,
   deleteBodyMeasurement,
   deleteProgressEntry,
+  getProgressEntriesByUserId,
   getUserById,
   updateProgressEntry,
 } from "@/lib/db/queries";
+import type { ProgressMontageContent } from "@/lib/montage/content";
+import { checkMontageAllowance } from "@/lib/montage/limit";
 import {
   type BodyMeasurementInput,
   bodyMeasurementSchema,
@@ -159,4 +164,51 @@ export async function removeBodyMeasurement(
   await deleteBodyMeasurement({ id, userId: user.id });
   revalidatePath("/progress");
   return { ok: true };
+}
+
+export type MontageActionResult =
+  | { ok: true; content: ProgressMontageContent }
+  | { ok: false; error: string };
+
+/**
+ * Build a fresh progress-photo montage (FEAT-18): Chad's vision read over the
+ * member's real photos. Text only comes back from the model — the composite
+ * image is drawn client-side from the same real photos, never generated.
+ * Fair-use capped (lib/montage/limit.ts) like every expensive generator.
+ */
+export async function generateMontage(): Promise<MontageActionResult> {
+  const user = await requirePro();
+  if (!user) {
+    return {
+      ok: false,
+      error: "The progress dashboard is a Chad Pro feature.",
+    };
+  }
+
+  const allowance = await checkMontageAllowance(user.id);
+  if (!allowance.allowed) {
+    return { ok: false, error: allowance.message };
+  }
+
+  const entries = await getProgressEntriesByUserId(user.id);
+  const photos = entries.filter((e): e is PhotoEntry => e.photoUrl != null);
+  if (photos.length < 2) {
+    return {
+      ok: false,
+      error:
+        "Chad needs at least two progress photos to build a montage. Log another photo first.",
+    };
+  }
+
+  try {
+    const content = await buildMontageVerdict(user, photos);
+    await createProgressMontage({ userId: user.id, content });
+    revalidatePath("/progress");
+    return { ok: true, content };
+  } catch (_error) {
+    return {
+      ok: false,
+      error: "Chad couldn't build the montage just now. Try again in a minute.",
+    };
+  }
 }

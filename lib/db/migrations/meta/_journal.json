@@ -183,6 +183,20 @@
       "when": 1783156093069,
       "tag": "0025_natural_electro",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1783335667621,
+      "tag": "0026_vengeful_ezekiel_stane",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1783336613866,
+      "tag": "0027_lowly_landau",
+      "breakpoints": true
     }
   ]
 }

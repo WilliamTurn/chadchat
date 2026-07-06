@@ -48,9 +48,11 @@ import {
   nutritionTarget,
   type Plan,
   type ProgressEntry,
+  type ProgressMontage,
   passwordResetToken,
   plan,
   progressEntry,
+  progressMontage,
   type SleepEntry,
   sleepEntry,
   type Suggestion,
@@ -91,7 +93,11 @@ export async function createUser(email: string, password: string) {
   const hashedPassword = generateHashedPassword(password);
 
   try {
-    return await db.insert(user).values({ email, password: hashedPassword });
+    // acceptedTermsAt: the register action only reaches this call after the
+    // required 18+/Terms/Privacy checkbox passed validation (BLK-4).
+    return await db
+      .insert(user)
+      .values({ email, password: hashedPassword, acceptedTermsAt: new Date() });
   } catch (_error) {
     throw new ChatbotError("bad_request:database", "Failed to create user");
   }
@@ -592,6 +598,25 @@ export async function markOnboarded(
     throw new ChatbotError(
       "bad_request:database",
       "Failed to save onboarding"
+    );
+  }
+}
+
+/**
+ * Stamp the member's 18+/Terms/Privacy acceptance (BLK-4). Idempotent like
+ * markOnboarded: an existing timestamp is never moved, so the original
+ * acceptance date survives re-submits.
+ */
+export async function markTermsAccepted(userId: string) {
+  try {
+    return await db
+      .update(user)
+      .set({ acceptedTermsAt: new Date(), updatedAt: new Date() })
+      .where(and(eq(user.id, userId), isNull(user.acceptedTermsAt)));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to save terms acceptance"
     );
   }
 }
@@ -3433,6 +3458,70 @@ export async function createWeeklyReport(entry: {
     throw new ChatbotError(
       "bad_request:database",
       "Failed to record weekly report"
+    );
+  }
+}
+
+/**
+ * Persist a generated progress montage (FEAT-18). The row is both the artifact
+ * (the /progress card re-renders it) and the fair-use ledger
+ * (countProgressMontagesCreatedSince window-counts it).
+ */
+export async function createProgressMontage(entry: {
+  userId: string;
+  content: unknown;
+}): Promise<ProgressMontage> {
+  try {
+    const [created] = await db.insert(progressMontage).values(entry).returning();
+    return created;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to record progress montage"
+    );
+  }
+}
+
+/** Rolling-window count for the montage fair-use cap (lib/montage/limit.ts). */
+export async function countProgressMontagesCreatedSince(
+  userId: string,
+  since: Date
+): Promise<number> {
+  try {
+    const [row] = await db
+      .select({ value: count() })
+      .from(progressMontage)
+      .where(
+        and(
+          eq(progressMontage.userId, userId),
+          gte(progressMontage.createdAt, since)
+        )
+      );
+    return row?.value ?? 0;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to count progress montages"
+    );
+  }
+}
+
+/** The member's most recent montage, if any (renders on /progress). */
+export async function getLatestProgressMontage(
+  userId: string
+): Promise<ProgressMontage | undefined> {
+  try {
+    const [latest] = await db
+      .select()
+      .from(progressMontage)
+      .where(eq(progressMontage.userId, userId))
+      .orderBy(desc(progressMontage.createdAt))
+      .limit(1);
+    return latest;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get latest progress montage"
     );
   }
 }

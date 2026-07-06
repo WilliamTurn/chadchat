@@ -73,6 +73,14 @@ export const user = pgTable("User", {
   // Backfilled to now() for all pre-existing users by migration 0016 so only
   // genuinely new signups see the wizard.
   onboardedAt: timestamp("onboardedAt"),
+  // --- Legal acceptance gate (BLK-4) ---
+  // When the member confirmed they're 18+ and accepted the Terms of Service +
+  // Privacy Policy. Stamped at registration for credentials signups (required
+  // checkbox) and by the /legal interstitial for Google signups and accounts
+  // that predate the gate. Null = must accept before using the product — every
+  // product page redirects to /legal. Deliberately NOT backfilled: existing
+  // members accept once on their next visit.
+  acceptedTermsAt: timestamp("acceptedTermsAt"),
   // --- Editable stats / profile (ONB-2) ---
   // The client's durable, user-confirmed stats: collected at onboarding and
   // correctable anytime on /account. This is the TRUSTED source of truth for
@@ -738,3 +746,24 @@ export const weeklyReport = pgTable("WeeklyReport", {
 });
 
 export type WeeklyReport = InferSelectModel<typeof weeklyReport>;
+
+/**
+ * A generated progress-photo montage (FEAT-18): Chad's side-by-side timeline
+ * read of the client's real photos. Stores the CONTENT (selected frames +
+ * Chad's captions + verdict), not a rendered image — the composite itself is
+ * drawn client-side from the member's real Blob photos (data-layer honesty:
+ * nothing ever redraws their body). Also the fair-use ledger for the
+ * montage generator (lib/montage/limit.ts window-counts this table).
+ */
+export const progressMontage = pgTable("ProgressMontage", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  // ProgressMontageContent (see lib/montage/content.ts): frames (photo URL,
+  // date + weight labels, Chad's caption) and the overall verdict.
+  content: json("content").notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type ProgressMontage = InferSelectModel<typeof progressMontage>;

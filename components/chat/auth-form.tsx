@@ -24,6 +24,8 @@ export type AuthFormValues = {
   email: string;
   password: string;
   confirmPassword?: string;
+  // Register-only 18+/Terms/Privacy consent (BLK-4); login never renders it.
+  acceptTerms?: boolean;
 };
 
 export function AuthForm({
