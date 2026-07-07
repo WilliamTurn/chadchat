@@ -64,15 +64,23 @@ export function sanitizeCheckInDays(days: unknown): number[] {
  * Which check-in slot (if any) is live for this member right now, on their own
  * wall clock and their own /account schedule. Null outside their windows (or
  * on a day they didn't pick), and the hourly pass just skips them.
+ *
+ * `dangerWindow` (FEAT-22): while the member's quit-date prediction says they
+ * are inside the fold window, cadence escalates — the chosen-days gate is
+ * ignored (every frequency behaves like daily), because the prediction is
+ * precisely WHEN they are weakest and Chad shows up exactly then. The hour
+ * windows still apply: escalation never emails anyone at 3am.
  */
 export function dueCheckInSlot(
   now: Date,
-  prefs: CheckInSchedulePrefs
+  prefs: CheckInSchedulePrefs,
+  opts: { dangerWindow?: boolean } = {}
 ): CheckInSlot | null {
   const { day, hour } = localDayHour(now, prefs.timezone);
 
   if (
     prefs.checkInFrequency !== "daily" &&
+    !opts.dangerWindow &&
     !sanitizeCheckInDays(prefs.checkInDays).includes(day)
   ) {
     return null;

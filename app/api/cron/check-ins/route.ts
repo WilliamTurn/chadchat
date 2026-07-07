@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { runCheckInPass } from "@/lib/checkins/engine";
+import {
+  type QuitResolution,
+  resolveDueQuitPredictions,
+} from "@/lib/quit/resolve";
 
 // One pass loops over every eligible member with a model call each — give it
 // the full Fluid Compute window like the other long-running AI work.
@@ -35,6 +39,17 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const slotParam = url.searchParams.get("slot");
 
+  // FEAT-22: resolve due quit predictions FIRST (beaten → Chad concedes and
+  // reissues harder; silent past the grace → hit), so the check-in pass below
+  // always composes against fresh prediction state. Best-effort: a resolution
+  // failure must never block the check-ins.
+  let quitResolutions: QuitResolution[] = [];
+  try {
+    quitResolutions = await resolveDueQuitPredictions();
+  } catch (error) {
+    console.error("Quit-date resolution sweep failed:", error);
+  }
+
   const results = await runCheckInPass({
     slot:
       slotParam === "morning" || slotParam === "evening"
@@ -47,6 +62,7 @@ export async function GET(request: Request) {
   return NextResponse.json({
     processed: results.length,
     sent: results.filter((r) => r.action === "sent").length,
+    quitResolutions: quitResolutions.filter((r) => r.action !== "pending"),
     results,
   });
 }

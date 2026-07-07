@@ -28,6 +28,29 @@ export const autopsyAnswersSchema = z.object({
 
 export type AutopsyAnswersInput = z.infer<typeof autopsyAnswersSchema>;
 
+/**
+ * The outcome record stamped onto a RESOLVED row's content (FEAT-22). This is
+ * the predicted-vs-actual ledger the spec calls half the acquisition value:
+ * which danger-window interventions (check-ins Chad sent in the escalation
+ * window) preceded each beaten/hit outcome, and how long the member lasted.
+ */
+export const quitOutcomeRecordSchema = z.object({
+  status: z.enum(["beaten", "hit"]),
+  resolvedAtISO: z.string(),
+  // Day-of-membership of the member's last logged activity at resolution
+  // (0 = they never logged anything).
+  daysLasted: z.number().int().nonnegative(),
+  dangerWindowCheckIns: z.array(
+    z.object({
+      sentAtISO: z.string(),
+      slot: z.string(),
+      subject: z.string(),
+    })
+  ),
+});
+
+export type QuitOutcomeRecord = z.infer<typeof quitOutcomeRecordSchema>;
+
 /** The stored shape of a QuitPrediction.content row. */
 export const quitPredictionContentSchema = z.object({
   answers: autopsyAnswersSchema,
@@ -40,6 +63,11 @@ export const quitPredictionContentSchema = z.object({
   failureMode: z.string(),
   // Chad's verdict narrative (model-written under lib/ai/quit.ts).
   narrative: z.string(),
+  // Which prediction this is (1 = the original autopsy verdict; each beaten
+  // date reissues at round + 1). Absent on pre-FEAT-22 rows = round 1.
+  round: z.number().int().positive().optional(),
+  // Present only on resolved (beaten/hit) rows: the ledger record.
+  outcome: quitOutcomeRecordSchema.optional(),
 });
 
 export type QuitPredictionContent = z.infer<

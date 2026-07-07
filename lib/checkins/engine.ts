@@ -10,15 +10,22 @@ import {
 } from "@/lib/ai/memory";
 import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
 import { getLanguageModel } from "@/lib/ai/providers";
+import { formatQuitPredictionForPrompt } from "@/lib/ai/quit";
 import {
   type CheckInSlot,
   dueCheckInSlot,
 } from "@/lib/checkins/schedule";
-import { formatCalendarDay, formatDayInTz, todayStartInTz } from "@/lib/date";
+import {
+  formatCalendarDay,
+  formatDayInTz,
+  todayAnchorInTz,
+  todayStartInTz,
+} from "@/lib/date";
 import {
   createCheckIn,
   getActiveGoalsByUserId,
   getActivePlansByUserId,
+  getActiveQuitPrediction,
   getBodyMeasurementsByUserId,
   getCheckInEligibleUsers,
   getCheckInsSince,
@@ -30,7 +37,8 @@ import {
   getWaterMlBetween,
   getWorkoutsBetween,
 } from "@/lib/db/queries";
-import type { CheckIn, User } from "@/lib/db/schema";
+import type { CheckIn, QuitPrediction, User } from "@/lib/db/schema";
+import { isInDangerWindow } from "@/lib/quit/lifecycle";
 import { sendEmail } from "@/lib/email/client";
 import { checkInEmailTemplate } from "@/lib/email/templates";
 import { getAppUrl } from "@/lib/stripe";
@@ -146,7 +154,12 @@ function formatRecentCheckIns(recent: CheckIn[]): string {
 export async function runUserCheckIn(
   user: User,
   slot: CheckInSlot,
-  opts: { dryRun?: boolean } = {}
+  opts: {
+    dryRun?: boolean;
+    // The member's active quit prediction (FEAT-22). undefined = look it up
+    // here; null = the caller already knows there isn't one.
+    prediction?: QuitPrediction | null;
+  } = {}
 ): Promise<CheckInResult> {
   const base: Pick<CheckInResult, "userId" | "email" | "slot"> = {
     userId: user.id,
@@ -176,8 +189,20 @@ export async function runUserCheckIn(
     return { ...base, action: "skipped_dedup" };
   }
 
+  // The quit-date danger window (FEAT-22): the prediction says this is
+  // exactly when the member folds, so Chad shows up every one of these days —
+  // the weekly frequency cap stands down (the per-slot daily dedup above
+  // still bounds it to brief + callout per day).
+  const prediction =
+    opts.prediction === undefined
+      ? ((await getActiveQuitPrediction(user.id)) ?? null)
+      : opts.prediction;
+  const dangerWindow =
+    prediction?.status === "active" &&
+    isInDangerWindow(todayAnchorInTz(user.timezone), prediction.quitDate);
+
   // The user's own "how often" dial.
-  if (recent.length >= WEEKLY_CAPS[user.checkInFrequency]) {
+  if (!dangerWindow && recent.length >= WEEKLY_CAPS[user.checkInFrequency]) {
     return { ...base, action: "skipped_cap" };
   }
 
@@ -228,6 +253,9 @@ export async function runUserCheckIn(
     formatProfileForPrompt(user),
     formatMemoryForPrompt(memory?.profile),
     formatGoalsForPrompt(goals, plans),
+    // The quit-date prediction (FEAT-22): Chad references it unprompted, and
+    // inside the danger window the block tells him this is the fold window.
+    formatQuitPredictionForPrompt(prediction ?? undefined, user.timezone),
     `THIS CLIENT'S LOGGED DATA FOR THE LAST ${CONTEXT_DAYS} DAYS (today inclusive — this is everything; if it's not here, it wasn't logged):\n\n${weekLog.summary}`,
     formatRecentCheckIns(recent),
   ]
@@ -327,7 +355,14 @@ export async function runCheckInPass(
   const results: CheckInResult[] = [];
   for (const user of users) {
     try {
-      const slot = opts.slot ?? dueCheckInSlot(now, user);
+      // The active quit prediction feeds both the slot gate (danger-window
+      // cadence escalation ignores the chosen-days filter) and the compose
+      // context, so fetch it once per member here.
+      const prediction = (await getActiveQuitPrediction(user.id)) ?? null;
+      const dangerWindow =
+        prediction?.status === "active" &&
+        isInDangerWindow(todayAnchorInTz(user.timezone), prediction.quitDate);
+      const slot = opts.slot ?? dueCheckInSlot(now, user, { dangerWindow });
       if (!slot) {
         results.push({
           userId: user.id,
@@ -336,7 +371,7 @@ export async function runCheckInPass(
         });
         continue;
       }
-      results.push(await runUserCheckIn(user, slot, opts));
+      results.push(await runUserCheckIn(user, slot, { ...opts, prediction }));
     } catch (error) {
       results.push({
         userId: user.id,

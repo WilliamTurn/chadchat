@@ -146,6 +146,35 @@ test("non-daily frequencies only fire on the member's chosen days", () => {
   );
 });
 
+test("danger window escalates cadence: chosen-days gate ignored, hours kept", () => {
+  const eightAmWedET = new Date("2026-07-01T12:00:00Z"); // Wednesday (3)
+  // Wednesday NOT picked → normally skipped, but the danger window fires it.
+  const notWednesday = prefs({
+    checkInFrequency: "three_per_week",
+    checkInDays: [1, 2, 5],
+  });
+  assert.equal(dueCheckInSlot(eightAmWedET, notWednesday), null);
+  assert.equal(
+    dueCheckInSlot(eightAmWedET, notWednesday, { dangerWindow: true }),
+    "morning"
+  );
+  assert.equal(
+    dueCheckInSlot(
+      eightAmWedET,
+      prefs({ checkInFrequency: "weekly", checkInDays: [1] }),
+      { dangerWindow: true }
+    ),
+    "morning"
+  );
+  // The hour windows still hold: 2pm ET stays silent even in the window.
+  assert.equal(
+    dueCheckInSlot(new Date("2026-07-01T18:00:00Z"), notWednesday, {
+      dangerWindow: true,
+    }),
+    null
+  );
+});
+
 test("garbage stored values fall back to safe defaults", () => {
   const eightAmET = new Date("2026-07-01T12:00:00Z");
   // Missing/garbage zones fall back to US Eastern.

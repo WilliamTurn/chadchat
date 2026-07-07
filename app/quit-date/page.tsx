@@ -8,7 +8,7 @@ import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { QuitDateExperience } from "@/components/quit/quit-date-experience";
 import { canAccessChad } from "@/lib/admin";
 import { formatCalendarDay } from "@/lib/date";
-import { getActiveQuitPrediction, getUserById } from "@/lib/db/queries";
+import { getLatestQuitPrediction, getUserById } from "@/lib/db/queries";
 import { parseQuitPredictionContent } from "@/lib/quit/content";
 
 /**
@@ -69,7 +69,10 @@ async function QuitDateContent() {
     redirect("/pricing");
   }
 
-  const prediction = await getActiveQuitPrediction(user.id);
+  // Latest row regardless of status (FEAT-22): an active one is the standing
+  // verdict; a resolved hit/beaten one keeps its verdict on screen with the
+  // "run it back" path (a resolved prediction no longer blocks a new autopsy).
+  const prediction = await getLatestQuitPrediction(user.id);
   const content = prediction
     ? parseQuitPredictionContent(prediction.content)
     : null;

@@ -122,15 +122,56 @@ export function predictQuitDay(
 
   day = Math.min(CLAMP_CEILING, Math.max(MIN_QUIT_DAY, day));
 
-  // De-round: a date that lands on a multiple of 5 or 7 reads as a made-up
-  // round number ("three weeks"); a specific day ("Day 23") lands as a
-  // diagnosis. Bump until it is neither. Terminates fast: runs of consecutive
-  // integers all divisible by 5 or 7 are at most two long.
-  while (day % 5 === 0 || day % 7 === 0) {
-    day += 1;
-  }
+  return deRoundDay(day);
+}
 
-  return day;
+/**
+ * De-round: a date that lands on a multiple of 5 or 7 reads as a made-up
+ * round number ("three weeks"); a specific day ("Day 23") lands as a
+ * diagnosis. Bump until it is neither. Terminates fast: runs of consecutive
+ * integers all divisible by 5 or 7 are at most two long.
+ */
+export function deRoundDay(day: number): number {
+  let d = day;
+  while (d % 5 === 0 || d % 7 === 0) {
+    d += 1;
+  }
+  return d;
+}
+
+// The reissue (FEAT-22): a beaten prediction earns a new, HARDER one — the
+// next date sits meaningfully further out than the one they just outlived, so
+// the loop stays a challenge instead of an insult. Growth is proportional to
+// what they already survived, bounded so early dates don't crawl and late
+// dates don't balloon.
+const REISSUE_MIN_GROWTH_DAYS = 11;
+const REISSUE_MAX_GROWTH_DAYS = 60;
+const REISSUE_GROWTH_FACTOR = 0.6;
+// The new date must always land at least this far past the day they beat the
+// old one on, so a slow resolution never issues a date that's already close.
+const REISSUE_MIN_RUNWAY_DAYS = 13;
+
+/**
+ * The next predicted quit day after the member beat `previousDayCount`.
+ * `currentDay` is their day-of-membership when the beat resolved. Same
+ * de-rounding contract as predictQuitDay; deterministic by design.
+ */
+export function reissueQuitDay(
+  previousDayCount: number,
+  currentDay: number
+): number {
+  const growth = Math.min(
+    REISSUE_MAX_GROWTH_DAYS,
+    Math.max(
+      REISSUE_MIN_GROWTH_DAYS,
+      Math.round(previousDayCount * REISSUE_GROWTH_FACTOR)
+    )
+  );
+  const day = Math.max(
+    previousDayCount + growth,
+    currentDay + REISSUE_MIN_RUNWAY_DAYS
+  );
+  return deRoundDay(day);
 }
 
 /** Short label of HOW this member is predicted to fail, from their own

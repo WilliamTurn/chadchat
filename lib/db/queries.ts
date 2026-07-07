@@ -14,6 +14,7 @@ import {
   isNotNull,
   isNull,
   lt,
+  lte,
   ne,
   or,
   type SQL,
@@ -3568,6 +3569,78 @@ export async function getActiveQuitPrediction(
     throw new ChatbotError(
       "bad_request:database",
       "Failed to get active quit prediction"
+    );
+  }
+}
+
+/**
+ * The member's newest quit prediction regardless of status (FEAT-22). The
+ * /today card and /quit-date render from this: an active row is the live
+ * countdown, a hit row is the "I called it" callback with the restart path.
+ */
+export async function getLatestQuitPrediction(
+  userId: string
+): Promise<QuitPrediction | undefined> {
+  try {
+    const [latest] = await db
+      .select()
+      .from(quitPrediction)
+      .where(eq(quitPrediction.userId, userId))
+      .orderBy(desc(quitPrediction.predictedAt))
+      .limit(1);
+    return latest;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get latest quit prediction"
+    );
+  }
+}
+
+/**
+ * Active predictions whose date has (probably) arrived, with their owners —
+ * the hourly resolution sweep's worklist (FEAT-22). The SQL bound is a
+ * generous pre-filter (the anchor convention keeps every zone within a day of
+ * it); the sweep re-checks on each member's own wall clock before resolving.
+ */
+export async function getDueQuitPredictionsWithUsers(
+  cutoff: Date
+): Promise<{ prediction: QuitPrediction; owner: User }[]> {
+  try {
+    const rows = await db
+      .select({ prediction: quitPrediction, owner: user })
+      .from(quitPrediction)
+      .innerJoin(user, eq(quitPrediction.userId, user.id))
+      .where(
+        and(
+          eq(quitPrediction.status, "active"),
+          lte(quitPrediction.quitDate, cutoff)
+        )
+      );
+    return rows;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get due quit predictions"
+    );
+  }
+}
+
+/** Resolve a prediction row to beaten/hit, stamping resolvedAt + the outcome
+ * ledger record into content (FEAT-22). */
+export async function resolveQuitPredictionRow(
+  id: string,
+  update: { status: "beaten" | "hit"; content: unknown }
+): Promise<void> {
+  try {
+    await db
+      .update(quitPrediction)
+      .set({ ...update, resolvedAt: new Date() })
+      .where(eq(quitPrediction.id, id));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to resolve quit prediction"
     );
   }
 }

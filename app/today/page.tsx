@@ -44,10 +44,10 @@ import {
   getActiveGoalsByUserId,
   getActiveMealPlanByUserId,
   getActivePlansByUserId,
-  getActiveQuitPrediction,
   getActivityDaysSince,
   getInactiveGoalsByUserId,
   getInactivePlansByUserId,
+  getLatestQuitPrediction,
   getMealsSince,
   getLatestSleepEntry,
   getNutritionTarget,
@@ -71,7 +71,6 @@ import {
 import { ema } from "@/lib/chart/trend";
 import type { ProgressEntry } from "@/lib/db/schema";
 import { toPlanStatusSummary } from "@/lib/subscription";
-import { parseQuitPredictionContent } from "@/lib/quit/content";
 import { normalizeSex, resolveHero } from "@/lib/today/goal-diagram";
 import { DEFAULT_WATER_GOAL_ML } from "@/lib/today/water-units";
 import {
@@ -219,7 +218,7 @@ async function TodayContent() {
     mealPlan,
     latestSleep,
     sleepDaily,
-    activeQuitPrediction,
+    latestQuitPrediction,
   ] = await Promise.all([
     getUserMemory(user.id),
     isPro ? getProgressEntriesByUserId(user.id) : Promise.resolve([]),
@@ -240,13 +239,11 @@ async function TodayContent() {
     isPro ? getActiveMealPlanByUserId(user.id) : Promise.resolve(null),
     isPro ? getLatestSleepEntry(user.id) : Promise.resolve(null),
     isPro ? getSleepDailyTotals(user.id, timezone) : Promise.resolve([]),
-    // Not tier-gated (FEAT-21): every member gets a quit date.
-    getActiveQuitPrediction(user.id),
+    // Not tier-gated (FEAT-21): every member gets a quit date. Latest row
+    // regardless of status (FEAT-22): active renders the live countdown, hit
+    // renders the "I called it" callback with the restart path.
+    getLatestQuitPrediction(user.id),
   ]);
-
-  const quitContent = activeQuitPrediction
-    ? parseQuitPredictionContent(activeQuitPrediction.content)
-    : null;
 
   // Active meal plan summary for the /today card. Targets stay structured so
   // the card can render them as labeled chips (VF-16). Plain nouns, not
@@ -681,7 +678,7 @@ async function TodayContent() {
 
       {/* The Quit Date (FEAT-21): Chad's prediction is STATUS, so it sits
           with the hero, above the loggers. Full width, every member. */}
-      <QuitDateCard content={quitContent} />
+      <QuitDateCard prediction={latestQuitPrediction} timezone={timezone} />
 
       {/* R2-13 + R2-14: the page's organizing model (STATUS → LOGGERS →
           PLANS → REVIEW) is visible as labeled section bands, and the cards

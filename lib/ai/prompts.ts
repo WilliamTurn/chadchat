@@ -158,6 +158,7 @@ export const systemPrompt = ({
   workouts,
   dashboard,
   mealPlan,
+  quit,
 }: {
   requestHints: RequestHints;
   supportsTools: boolean;
@@ -181,6 +182,10 @@ export const systemPrompt = ({
   // Pre-formatted active meal-plan summary (see lib/ai/memory.ts
   // formatMealPlanForPrompt). Empty when the client has no active plan.
   mealPlan?: string;
+  // Pre-formatted quit-date prediction block (see lib/ai/quit.ts
+  // formatQuitPredictionForPrompt, FEAT-22). Empty when the member has no
+  // prediction on the record.
+  quit?: string;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
   // The user-confirmed profile leads the data blocks: it's the authoritative
@@ -191,7 +196,8 @@ export const systemPrompt = ({
   const workoutsBlock = workouts ? `\n\n${workouts}` : "";
   const dashboardBlock = dashboard ? `\n\n${dashboard}` : "";
   const mealPlanBlock = mealPlan ? `\n\n${mealPlan}` : "";
-  const dataBlocks = `${profileBlock}${memoryBlock}${goalsBlock}${workoutsBlock}${dashboardBlock}${mealPlanBlock}`;
+  const quitBlock = quit ? `\n\n${quit}` : "";
+  const dataBlocks = `${profileBlock}${memoryBlock}${goalsBlock}${workoutsBlock}${dashboardBlock}${mealPlanBlock}${quitBlock}`;
 
   if (!supportsTools) {
     return `${regularPrompt}${dataBlocks}\n\n${requestPrompt}`;

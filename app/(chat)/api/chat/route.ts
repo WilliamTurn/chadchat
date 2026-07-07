@@ -39,6 +39,7 @@ import {
   systemPrompt,
 } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
+import { formatQuitPredictionForPrompt } from "@/lib/ai/quit";
 import { createDocument } from "@/lib/ai/tools/create-document";
 import { editDocument } from "@/lib/ai/tools/edit-document";
 import { generateMealPlanTool } from "@/lib/ai/tools/generate-meal-plan";
@@ -63,6 +64,7 @@ import {
   getActiveMealPlanByUserId,
   getActivePlansByUserId,
   getChatById,
+  getLatestQuitPrediction,
   getLatestSleepEntry,
   getMealsSince,
   getMessageCountByUserId,
@@ -266,13 +268,22 @@ export async function POST(request: Request) {
     // The client's saved goals & plans + recently logged workouts are explicit
     // records (not memory), so Chad sees them in every chat regardless of the
     // memory toggle.
-    const [activeGoals, activePlans, recentWorkouts] = await Promise.all([
-      getActiveGoalsByUserId(session.user.id),
-      getActivePlansByUserId(session.user.id),
-      getWorkoutsByUserId(session.user.id, 8),
-    ]);
+    const [activeGoals, activePlans, recentWorkouts, latestQuitPrediction] =
+      await Promise.all([
+        getActiveGoalsByUserId(session.user.id),
+        getActivePlansByUserId(session.user.id),
+        getWorkoutsByUserId(session.user.id, 8),
+        getLatestQuitPrediction(session.user.id),
+      ]);
     const goalsBlock = formatGoalsForPrompt(activeGoals, activePlans);
     const workoutsBlock = formatWorkoutsForPrompt(recentWorkouts);
+    // The Quit Date (FEAT-22): Chad's standing prediction (or its "you called
+    // it" aftermath) rides in every chat, all tiers, so he references it
+    // unprompted mid-conversation.
+    const quitBlock = formatQuitPredictionForPrompt(
+      latestQuitPrediction,
+      dbUser.timezone
+    );
 
     // Always-on "today's dashboard" snapshot so Chad has live, ambient
     // awareness of where the client stands (nutrition vs target, latest
@@ -364,6 +375,7 @@ export async function POST(request: Request) {
             workouts: workoutsBlock,
             dashboard: dashboardBlock,
             mealPlan: mealPlanBlock,
+            quit: quitBlock,
           }),
           messages: modelMessages,
           stopWhen: stepCountIs(5),

@@ -47,13 +47,21 @@ export function QuitDateExperience({
   const [issuedLabel, setIssuedLabel] = useState<string | null>(
     predictedAtLabel
   );
+  const [currentStatus, setCurrentStatus] = useState<
+    "active" | "beaten" | "hit"
+  >(status ?? "active");
 
   if (content) {
     return (
       <VerdictPanel
         content={content}
         issuedLabel={issuedLabel}
-        status={status ?? "active"}
+        // A resolved prediction no longer blocks the autopsy (FEAT-22), so a
+        // hit/beaten verdict offers the restart right here.
+        onRetake={
+          currentStatus === "active" ? undefined : () => setContent(null)
+        }
+        status={currentStatus}
       />
     );
   }
@@ -63,6 +71,7 @@ export function QuitDateExperience({
       onIssued={(c) => {
         setContent(c);
         setIssuedLabel("today");
+        setCurrentStatus("active");
       }}
     />
   );
@@ -262,18 +271,21 @@ const STATUS_LINES: Record<"active" | "beaten" | "hit", string> = {
 function VerdictPanel({
   content,
   issuedLabel,
+  onRetake,
   status,
 }: {
   content: QuitPredictionContent;
   issuedLabel: string | null;
+  onRetake?: () => void;
   status: "active" | "beaten" | "hit";
 }) {
+  const round = content.round ?? 1;
   return (
     <section className="rounded-2xl border border-border bg-card p-6 sm:p-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="font-semibold text-destructive text-xs tracking-[0.12em]">
-            THE VERDICT
+            {round > 1 ? `THE VERDICT, ROUND ${round}` : "THE VERDICT"}
           </p>
           <p className="mt-3 font-display font-bold text-4xl tracking-tight sm:text-5xl">
             {content.dateLabel}
@@ -299,10 +311,21 @@ function VerdictPanel({
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         <p className="text-muted-foreground text-sm">{STATUS_LINES[status]}</p>
-        <AskChadButton
-          label="Talk to Chad about it"
-          prompt={`You put my quit date on the record: ${content.dateLabel}, day ${content.dayCount}. Tell me exactly how I make that prediction wrong.`}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          {onRetake ? (
+            <Button onClick={onRetake} size="sm" variant="outline">
+              Run the autopsy again
+            </Button>
+          ) : null}
+          <AskChadButton
+            label="Talk to Chad about it"
+            prompt={
+              status === "hit"
+                ? `You called my quit date and I went quiet, just like you said. I'm back. Tell me how we restart this so it doesn't end that way again.`
+                : `You put my quit date on the record: ${content.dateLabel}, day ${content.dayCount}. Tell me exactly how I make that prediction wrong.`
+            }
+          />
+        </div>
       </div>
     </section>
   );
