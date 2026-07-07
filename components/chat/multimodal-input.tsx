@@ -31,6 +31,7 @@ import {
 import { Button } from "../ui/button";
 import { PaperclipIcon, StopIcon } from "./icons";
 import { PreviewAttachment } from "./preview-attachment";
+import { VoiceInputButton } from "./voice-input-button";
 import type { VisibilityType } from "./visibility-selector";
 
 function PureMultimodalInput({
@@ -118,6 +119,18 @@ function PureMultimodalInput({
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(event.target.value);
   };
+
+  // Dictated words append to whatever is already typed; the member still
+  // reviews and hits send themselves (FEAT-20 scope: input only, no auto-send).
+  const handleTranscript = useCallback(
+    (text: string) => {
+      setInput((current) =>
+        current.trim().length > 0 ? `${current.trimEnd()} ${text}` : text
+      );
+      textareaRef.current?.focus();
+    },
+    [setInput]
+  );
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);
@@ -388,27 +401,30 @@ function PureMultimodalInput({
             {/* Model selector intentionally removed — Chad is locked to one model. */}
           </PromptInputTools>
 
-          {status === "submitted" ? (
-            <StopButton setMessages={setMessages} stop={stop} />
-          ) : (
-            <PromptInputSubmit
-              className={cn(
-                "h-7 w-7 rounded-xl transition-all duration-200",
-                input.trim() || attachments.length > 0
-                  ? "bg-foreground text-background hover:opacity-85 active:scale-95"
-                  : "bg-muted text-muted-foreground/25 cursor-not-allowed"
-              )}
-              data-testid="send-button"
-              disabled={
-                (!input.trim() && attachments.length === 0) ||
-                uploadQueue.length > 0
-              }
-              status={status}
-              variant="secondary"
-            >
-              <ArrowUpIcon className="size-4" />
-            </PromptInputSubmit>
-          )}
+          <div className="flex items-center gap-1.5">
+            <VoiceInputButton onTranscript={handleTranscript} />
+            {status === "submitted" ? (
+              <StopButton setMessages={setMessages} stop={stop} />
+            ) : (
+              <PromptInputSubmit
+                className={cn(
+                  "h-7 w-7 rounded-xl transition-all duration-200",
+                  input.trim() || attachments.length > 0
+                    ? "bg-foreground text-background hover:opacity-85 active:scale-95"
+                    : "bg-muted text-muted-foreground/25 cursor-not-allowed"
+                )}
+                data-testid="send-button"
+                disabled={
+                  (!input.trim() && attachments.length === 0) ||
+                  uploadQueue.length > 0
+                }
+                status={status}
+                variant="secondary"
+              >
+                <ArrowUpIcon className="size-4" />
+              </PromptInputSubmit>
+            )}
+          </div>
         </PromptInputFooter>
       </PromptInput>
     </div>
