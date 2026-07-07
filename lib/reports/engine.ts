@@ -36,6 +36,7 @@ import {
   type WeeklyReportContent,
   weeklyReportContentSchema,
 } from "@/lib/reports/content";
+import { computeUserRecalibration } from "@/lib/nutrition/recalibrate";
 import { isReportDue } from "@/lib/reports/schedule";
 import { getAppUrl } from "@/lib/stripe";
 import { hasActiveAccess } from "@/lib/subscription";
@@ -348,6 +349,23 @@ ${previousContent.adjustments.map((a) => `  - ${a.change}`).join("\n")}
 Check this week's data against every one of those orders. Followed orders get named and credited. Ignored orders get called out AS ignored orders (you told them, it's on the record above), and the heat goes up accordingly.`
     : "";
 
+  // NUT-23: the app's own target recalibration (energy balance from real
+  // logged intake + the weight trend, computed in code). Same contract as the
+  // computed weight trend: Chad narrates these numbers exactly, he never
+  // invents target math himself.
+  const recalibration = await computeUserRecalibration(user);
+  const recalibrationBlock =
+    recalibration.kind === "recommend"
+      ? `COMPUTED TARGET RECALIBRATION (already calculated by the app from this client's real logged intake and weight trend — use these numbers exactly, do not recalculate or invent your own):
+- Average intake over their ${recalibration.loggedDays} fully logged days in the last two weeks: ${recalibration.avgIntake} kcal/day.
+- Observed weight trend over that window: ${recalibration.observedRate > 0 ? "+" : ""}${recalibration.observedRate} ${recalibration.unit}/week.
+- Estimated true daily expenditure from that balance: ~${recalibration.expenditure} kcal.
+- Target pace: ${recalibration.desiredRate === 0 ? "maintenance" : `${recalibration.desiredRate > 0 ? "+" : ""}${recalibration.desiredRate} ${recalibration.unit}/week`}.
+- Recommended daily calorie target: ${recalibration.calories} kcal (currently ${recalibration.currentCalories}, a change of ${recalibration.deltaCalories > 0 ? "+" : ""}${recalibration.deltaCalories}).${recalibration.protein != null && recalibration.carbs != null && recalibration.fat != null ? `\n- Recommended macros: protein ${recalibration.protein}g (unchanged), carbs ${recalibration.carbs}g, fat ${recalibration.fat}g.` : ""}
+
+Include this as one of the ADJUSTMENTS: state the new numbers and the reason from the balance above, and tell them the recalibrated targets are waiting on their Calorie Tracker page where one tap applies them. Nothing changes until they accept it.`
+      : "";
+
   const firstName = user.name?.trim().split(/\s+/)[0];
   const context = [
     formatProfileForPrompt(user),
@@ -357,6 +375,7 @@ Check this week's data against every one of those orders. Followed orders get na
     `THIS CLIENT'S LOGGED DATA FOR THE REPORT WEEK (${formatCalendarDay(start)} – ${formatCalendarDay(new Date(end.getTime() - 1))}, today inclusive — this is everything; if it's not here, it wasn't logged):\n\n${weekLog.summary}`,
     sleepBlock,
     formatWeightTrend(allWeighIns, end),
+    recalibrationBlock,
     photoNote,
   ]
     .filter(Boolean)

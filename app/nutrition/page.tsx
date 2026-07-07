@@ -16,6 +16,7 @@ import { DayNav } from "@/components/nutrition/day-nav";
 import { NutritionEmptyState } from "@/components/nutrition/empty-state";
 import { MacroRings } from "@/components/nutrition/macro-rings";
 import { MacroTrendChart } from "@/components/nutrition/macro-trend-chart";
+import { RecalibrationCard } from "@/components/nutrition/recalibration-card";
 import { TargetEditor } from "@/components/today/target-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,8 +35,9 @@ import {
   getNutritionTarget,
   getUserById,
 } from "@/lib/db/queries";
-import type { MealAnalysis, NutritionTarget } from "@/lib/db/schema";
+import type { MealAnalysis, NutritionTarget, User } from "@/lib/db/schema";
 import { dailyMacroTrend } from "@/lib/nutrition/daily-macros";
+import { computeUserRecalibration } from "@/lib/nutrition/recalibrate";
 import { deriveRecentFoods } from "@/lib/nutrition/recent-foods";
 import { RewardProvider } from "@/components/dashboard/reward";
 import { MEAL_CATEGORIES, type MealCategory } from "@/lib/validation/nutrition";
@@ -128,11 +130,7 @@ async function NutritionContent({
   const isPro = canAccessProFeatures(user);
   return isPro ? (
     <RewardProvider haptics={user.hapticsEnabled} sound={user.soundEnabled}>
-      <Feed
-        searchParams={searchParams}
-        timezone={user.timezone}
-        userId={user.id}
-      />
+      <Feed searchParams={searchParams} user={user} />
     </RewardProvider>
   ) : (
     <UpgradePrompt />
@@ -174,14 +172,14 @@ function sumMacro(
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 async function Feed({
-  userId,
-  timezone,
+  user,
   searchParams,
 }: {
-  userId: string;
-  timezone: string | null;
+  user: User;
   searchParams: Promise<{ day?: string }>;
 }) {
+  const userId = user.id;
+  const timezone = user.timezone;
   // Which day the diary shows (BT1-3): ?day=YYYY-MM-DD pages back through
   // history like MFP/MacroFactor; no param (or today/garbage/future) = today.
   const { day: dayParam } = await searchParams;
@@ -199,6 +197,14 @@ async function Feed({
     getMealLogByUserId(userId),
     getNutritionTarget(userId),
   ]);
+
+  // NUT-23: this week's target recalibration, computed in code from the real
+  // logs. Only surfaced on the today view, and only when the engine has an
+  // actionable recommendation (enough honest data, meaningful delta, not
+  // inside the post-update cooldown).
+  const recalibration = viewingToday
+    ? await computeUserRecalibration(user)
+    : null;
 
   // "Today" starts at the user's own local midnight (FEAT-8), so a late-night
   // log stays in their today instead of rolling into the next UTC day.
@@ -266,6 +272,10 @@ async function Feed({
         target={target}
         viewingToday={viewingToday}
       />
+
+      {recalibration?.kind === "recommend" && (
+        <RecalibrationCard rec={recalibration} />
+      )}
 
       {macroDays.length >= 2 && (
         <MacroTrendChart

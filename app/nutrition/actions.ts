@@ -14,6 +14,7 @@ import {
   deleteLatestWaterLog,
   deleteMealAnalysis,
   deleteWaterLogById,
+  getNutritionTarget,
   getUserById,
   restoreMealAnalysis,
   updateMealAnalysis,
@@ -25,6 +26,7 @@ import {
   lookupBarcode,
   searchFoodDatabase,
 } from "@/lib/nutrition/food-search";
+import { computeUserRecalibration } from "@/lib/nutrition/recalibrate";
 import { reconcileTarget } from "@/lib/nutrition/target-math";
 import {
   type AnalyzeMealInput,
@@ -464,6 +466,41 @@ export async function saveNutritionTarget(
   }
 
   await upsertNutritionTarget(user.id, parsed.data);
+  revalidatePath("/nutrition");
+  revalidatePath("/today");
+  return { ok: true };
+}
+
+/**
+ * NUT-23 — the member accepts this week's recalibration. The numbers are
+ * recomputed server-side from their real logs (never taken from the client),
+ * so the write is exactly what the card showed as long as nothing changed
+ * underneath it. This click IS the consent: nothing adapts automatically.
+ */
+export async function applyRecalibration(): Promise<NutritionActionState> {
+  const user = await requirePro();
+  if (!user) {
+    return { ok: false, error: "Targets are a Chad Pro feature." };
+  }
+
+  const rec = await computeUserRecalibration(user);
+  if (rec.kind !== "recommend") {
+    return {
+      ok: false,
+      error:
+        "Your numbers changed since this was computed. Refresh the page for the current recommendation.",
+    };
+  }
+
+  const existing = await getNutritionTarget(user.id);
+  await upsertNutritionTarget(user.id, {
+    calories: rec.calories,
+    // Macros only move when the member has a complete macro target for the
+    // engine to re-derive; otherwise whatever they had stays untouched.
+    protein: rec.protein ?? existing?.protein ?? null,
+    carbs: rec.carbs ?? existing?.carbs ?? null,
+    fat: rec.fat ?? existing?.fat ?? null,
+  });
   revalidatePath("/nutrition");
   revalidatePath("/today");
   return { ok: true };
