@@ -10,12 +10,12 @@ export const weeklyReportContentSchema = z.object({
   headline: z
     .string()
     .describe(
-      "a short, concrete title for the report in Chad's voice — references what actually happened this week (e.g. 'Four sessions, protein still short'); no emojis"
+      "a short, concrete title for the report in Chad's voice — references what actually happened this week (e.g. 'Four sessions, protein still short'); no emojis, no **bold**/[[red]] markers (titles don't render them)"
     ),
   intro: z
     .string()
     .describe(
-      "Chad's opening read on the week: one full paragraph (4-8 complete sentences), plain text, grounded in the client's real numbers. Sets the verdict for the week up front: what went right, what went wrong, in his voice."
+      "Chad's opening read on the week: one full paragraph (4-8 complete sentences), grounded in the client's real numbers. Sets the verdict for the week up front: what went right, what went wrong, in his voice. Emphasis renders here: **bold**, **ALL-CAPS BOLD**, and [[red]] for rare non-negotiables."
     ),
   sections: z
     .array(
@@ -23,12 +23,12 @@ export const weeklyReportContentSchema = z.object({
         title: z
           .string()
           .describe(
-            "section heading (e.g. 'Training', 'Nutrition', 'Bodyweight', 'Sleep', 'Photos', 'Goal check')"
+            "section heading (e.g. 'Training', 'Nutrition', 'Bodyweight', 'Sleep', 'Photos', 'Goal check'); plain text, no markers"
           ),
         body: z
           .string()
           .describe(
-            "a substantial, fully-written review of this area: one to three real paragraphs (separate paragraphs with a blank line). Complete sentences only, never fragments or bullet-style half-lines. Every claim tied to a concrete number or entry from the data, never invented."
+            "a substantial, fully-written review of this area: one to three real paragraphs (separate paragraphs with a blank line). Complete sentences only, never fragments or bullet-style half-lines. Every claim tied to a concrete number or entry from the data, never invented. Emphasis renders: **bold**, **ALL-CAPS BOLD**, [[red]] for rare non-negotiables."
           ),
       })
     )
@@ -60,7 +60,7 @@ export const weeklyReportContentSchema = z.object({
   bottomLine: z
     .string()
     .describe(
-      "2-4 closing sentences: the single most important order for next week, in Chad's voice, plus credit or a warning, whichever the week earned"
+      "2-4 closing sentences: the single most important order for next week, in Chad's voice, plus credit or a warning, whichever the week earned. Emphasis renders: **bold**, **ALL-CAPS BOLD**, [[red]]."
     ),
 });
 

@@ -14,9 +14,10 @@ import { dayNumberOn, daysUntilQuit } from "@/lib/quit/lifecycle";
 /**
  * The Quit Date card on /today. FEAT-21 put the prediction here; FEAT-22 made
  * it the live countdown ("Day 14 of 23. Chad still says you quit March 14.")
- * and gave the resolved states their moments: past-the-date (concession
- * pending), hit (the "I called it" callback + restart path), and the beaten
- * edge case. Plain server component: all interactivity lives on /quit-date.
+ * and gave the resolved states their moments: past-the-date (prove-him-wrong
+ * pending), hit (the owner's verbatim callback line + restart path), and the
+ * beaten edge case. Plain server component: all interactivity lives on
+ * /quit-date. FEAT-25 reworded the past-date + hit states (owner wording).
  */
 export function QuitDateCard({
   prediction,
@@ -30,21 +31,22 @@ export function QuitDateCard({
     : null;
 
   if (!(prediction && content)) {
+    // Pre-test the card sells the TEST, never the mechanic (owner copy,
+    // s157): the quit-date reveal happens in the verdict, after they take it.
     return (
       <ModuleCard glow="blood">
         <ModuleHeader
           icon={<Skull className="size-4" />}
-          title="The Quit Date"
+          title="The Test"
           tone="blood"
         />
         <p className="text-muted-foreground text-sm">
-          Every fitness app promises you will succeed. Chad reads your history
-          of abandoned plans and names the exact day you quit this one. Then
-          you prove him wrong.
+          See if you have what it takes. Take this test and try to outsmart
+          Chad.
         </p>
         <ModuleFooter>
           <Button asChild size="sm">
-            <Link href="/quit-date">Take the autopsy</Link>
+            <Link href="/quit-date">Take the test</Link>
           </Button>
         </ModuleFooter>
       </ModuleCard>
@@ -75,7 +77,8 @@ export function QuitDateCard({
             he said you would.
           </p>
           <p className="mt-1 font-display font-bold text-2xl tracking-tight">
-            &ldquo;I called it. Is this really how it ends?&rdquo;
+            &ldquo;I knew you didn&apos;t have what it takes. Either you start
+            again now, or just GTFO.&rdquo;
           </p>
           <ModuleFooter>
             <Button asChild size="sm">
@@ -106,7 +109,7 @@ export function QuitDateCard({
             Day {dayNumber}. Still here.
           </p>
           <p className="mt-1.5 text-muted-foreground text-sm">
-            Keep logging. He concedes on the record and sets a harder date.
+            Keep logging. Prove him wrong and he sets a harder date.
           </p>
           <ModuleFooter status="Prove it wasn't a fluke." />
         </>

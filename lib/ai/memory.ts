@@ -8,7 +8,7 @@ import type { Goal, MealPlan, Plan, User } from "@/lib/db/schema";
 import {
   experienceLabel,
   formatHeightBoth,
-  goalLabel,
+  goalsLabel,
   sexLabel,
 } from "@/lib/profile";
 import { planDaysSchema } from "@/lib/validation/meal-plan";
@@ -141,6 +141,7 @@ export function formatProfileForPrompt(
     | "heightCm"
     | "experienceLevel"
     | "primaryGoal"
+    | "primaryGoals"
     | "trainingDaysPerWeek"
     | "primaryGoalDetail"
     | "trainingDescription"
@@ -162,13 +163,17 @@ export function formatProfileForPrompt(
   if (experience) {
     lines.push(`- Training experience: ${experience}`);
   }
-  const goal = goalLabel(u.primaryGoal);
+  // All of their goal picks (multi-select, s157), falling back to the legacy
+  // single pick on older accounts.
+  const goal = goalsLabel(u.primaryGoals, u.primaryGoal);
   if (goal) {
-    lines.push(`- Primary goal: ${goal}`);
+    lines.push(`- Training goals: ${goal}`);
   }
   const goalDetail = u.primaryGoalDetail?.trim();
   if (goalDetail) {
-    lines.push(`- About their goal, in their own words: "${goalDetail}"`);
+    lines.push(
+      `- About their goals, in their own words: "${goalDetail}"`
+    );
   }
   const trainingDescription = u.trainingDescription?.trim();
   if (trainingDescription) {

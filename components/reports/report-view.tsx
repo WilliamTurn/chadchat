@@ -1,11 +1,32 @@
+import { chadAppHtml } from "@/lib/text/emphasis";
 import type { WeeklyReportContent } from "@/lib/reports/content";
 
 /**
  * One weekly report rendered in full (FEAT-12) — headline, Chad's read on the
  * week, the per-area sections, next week's adjustments with reasons, and the
  * bottom line. Pure presentational + server-safe; the same content shape the
- * email and the PDF render.
+ * email and the PDF render. Chad's emphasis (**bold** / [[red]], s157) is
+ * escaped-then-marked-up by chadAppHtml, so the model can never inject HTML.
  */
+
+function ChadText({
+  text,
+  className,
+}: {
+  text: string;
+  className: string;
+}) {
+  return (
+    <p
+      className={className}
+      // Safe: chadAppHtml HTML-escapes the model text first, then only adds
+      // <strong> / <span class="chad-red"> for Chad's emphasis markers.
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: escaped upstream
+      dangerouslySetInnerHTML={{ __html: chadAppHtml(text) }}
+    />
+  );
+}
+
 export function ReportView({
   content,
   dateLabel,
@@ -22,18 +43,20 @@ export function ReportView({
         <h2 className="mt-2 font-semibold text-xl tracking-tight">
           {content.headline}
         </h2>
-        <p className="mt-3 whitespace-pre-line text-muted-foreground text-sm leading-relaxed">
-          {content.intro}
-        </p>
+        <ChadText
+          className="mt-3 whitespace-pre-line text-muted-foreground text-sm leading-relaxed"
+          text={content.intro}
+        />
       </header>
 
       <div className="flex flex-col gap-5">
         {content.sections.map((section) => (
           <section key={section.title}>
             <h3 className="font-medium text-sm">{section.title}</h3>
-            <p className="mt-1.5 whitespace-pre-line text-muted-foreground text-sm leading-relaxed">
-              {section.body}
-            </p>
+            <ChadText
+              className="mt-1.5 whitespace-pre-line text-muted-foreground text-sm leading-relaxed"
+              text={section.body}
+            />
           </section>
         ))}
       </div>
@@ -45,18 +68,20 @@ export function ReportView({
         <ul className="mt-3 flex flex-col gap-3">
           {content.adjustments.map((a) => (
             <li key={a.change}>
-              <p className="font-medium text-sm">{a.change}</p>
-              <p className="mt-0.5 text-muted-foreground text-sm">
-                Why: {a.reason}
-              </p>
+              <ChadText className="font-medium text-sm" text={a.change} />
+              <ChadText
+                className="mt-0.5 text-muted-foreground text-sm"
+                text={`Why: ${a.reason}`}
+              />
             </li>
           ))}
         </ul>
       </section>
 
-      <p className="whitespace-pre-line font-medium text-sm leading-relaxed">
-        {content.bottomLine}
-      </p>
+      <ChadText
+        className="whitespace-pre-line font-medium text-sm leading-relaxed"
+        text={content.bottomLine}
+      />
     </article>
   );
 }

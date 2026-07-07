@@ -146,9 +146,10 @@ test("non-daily frequencies only fire on the member's chosen days", () => {
   );
 });
 
-test("danger window escalates cadence: chosen-days gate ignored, hours kept", () => {
+test("danger window escalates the MORNING BRIEF only (FEAT-25 cap)", () => {
   const eightAmWedET = new Date("2026-07-01T12:00:00Z"); // Wednesday (3)
-  // Wednesday NOT picked → normally skipped, but the danger window fires it.
+  // Wednesday NOT picked → normally skipped, but the danger window fires the
+  // morning brief anyway.
   const notWednesday = prefs({
     checkInFrequency: "three_per_week",
     checkInDays: [1, 2, 5],
@@ -165,6 +166,23 @@ test("danger window escalates cadence: chosen-days gate ignored, hours kept", ()
       { dangerWindow: true }
     ),
     "morning"
+  );
+  // The EVENING callout never escalates (FEAT-25: don't annoy members — at
+  // most one extra email a day): off-schedule evenings stay silent even in
+  // the danger window…
+  const ninePmWedET = new Date("2026-07-02T01:00:00Z"); // 9pm Wed in NY
+  assert.equal(
+    dueCheckInSlot(ninePmWedET, notWednesday, { dangerWindow: true }),
+    null
+  );
+  // …but a chosen-day evening still fires as normal.
+  assert.equal(
+    dueCheckInSlot(
+      ninePmWedET,
+      prefs({ checkInFrequency: "three_per_week", checkInDays: [1, 3, 5] }),
+      { dangerWindow: true }
+    ),
+    "evening"
   );
   // The hour windows still hold: 2pm ET stays silent even in the window.
   assert.equal(

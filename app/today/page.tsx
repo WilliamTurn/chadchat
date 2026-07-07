@@ -241,8 +241,11 @@ async function TodayContent() {
     isPro ? getSleepDailyTotals(user.id, timezone) : Promise.resolve([]),
     // Not tier-gated (FEAT-21): every member gets a quit date. Latest row
     // regardless of status (FEAT-22): active renders the live countdown, hit
-    // renders the "I called it" callback with the restart path.
-    getLatestQuitPrediction(user.id),
+    // renders the called-it callback with the restart path. Members who
+    // switched the feature off (FEAT-25) see no card at all.
+    user.quitDateEnabled
+      ? getLatestQuitPrediction(user.id)
+      : Promise.resolve(undefined),
   ]);
 
   // Active meal plan summary for the /today card. Targets stay structured so
@@ -677,8 +680,11 @@ async function TodayContent() {
       </header>
 
       {/* The Quit Date (FEAT-21): Chad's prediction is STATUS, so it sits
-          with the hero, above the loggers. Full width, every member. */}
-      <QuitDateCard prediction={latestQuitPrediction} timezone={timezone} />
+          with the hero, above the loggers. Full width, every member — unless
+          they switched the feature off on /account (FEAT-25). */}
+      {user.quitDateEnabled && (
+        <QuitDateCard prediction={latestQuitPrediction} timezone={timezone} />
+      )}
 
       {/* R2-13 + R2-14: the page's organizing model (STATUS → LOGGERS →
           PLANS → REVIEW) is visible as labeled section bands, and the cards

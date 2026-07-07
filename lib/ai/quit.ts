@@ -159,8 +159,10 @@ export function formatQuitPredictionForPrompt(
   const until = daysUntilQuit(todayAnchor, quitAnchor);
 
   if (prediction.status === "hit") {
+    // The stance below is the owner's exact line (FEAT-25), quoted verbatim so
+    // no new Chad register is invented (memory preserve-chad-edge).
     return `THE QUIT DATE — YOUR PREDICTION HIT:
-After their intake you put it on the record: this client quits on Day ${content.dayCount} of their membership, ${content.dateLabel} (how: ${content.failureMode}). The date came, they went silent, and the prediction resolved as CORRECT. If they are talking to you now, they came back after going dark. Show them the receipt: you called it, ask them straight whether that was really how it ends, and put them back to work immediately. They can run a new autopsy on the Quit Date page (/quit-date) to get a fresh date to beat; tell them to take it.`;
+After their intake you put it on the record: this client quits on Day ${content.dayCount} of their membership, ${content.dateLabel} (how: ${content.failureMode}). The date came, they went silent, and the prediction resolved as CORRECT. If they are talking to you now, they came back after going dark. Show them the receipt: you called it, you knew they didn't have what it takes, and the choice you give them is exactly this: "Either you start again now, or just GTFO." No third option, no easing back in; put whoever chooses to start back to work immediately. They can take the test again on the Quit Date page (/quit-date) to get a fresh date to beat; tell them to take it.`;
   }
 
   if (prediction.status !== "active") {

@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { runAutopsy } from "@/app/quit-date/actions";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
+import { QuitShareActions } from "@/components/quit/quit-share-actions";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,6 +25,7 @@ import type {
   LongestStreak,
   Restarts,
 } from "@/lib/quit/heuristics";
+import type { ReceiptCardData } from "@/lib/quit/share-cards";
 import { cn } from "@/lib/utils";
 
 /**
@@ -35,10 +37,12 @@ import { cn } from "@/lib/utils";
 export function QuitDateExperience({
   initial,
   predictedAtLabel,
+  receipt,
   status,
 }: {
   initial: QuitPredictionContent | null;
   predictedAtLabel: string | null;
+  receipt: ReceiptCardData | null;
   status: "active" | "beaten" | "hit" | null;
 }) {
   const [content, setContent] = useState<QuitPredictionContent | null>(
@@ -50,6 +54,9 @@ export function QuitDateExperience({
   const [currentStatus, setCurrentStatus] = useState<
     "active" | "beaten" | "hit"
   >(status ?? "active");
+  // The receipt is computed server-side against the prediction that rendered
+  // the page; a freshly issued day-1 prediction has nothing to brag yet.
+  const [currentReceipt, setCurrentReceipt] = useState(receipt);
 
   if (content) {
     return (
@@ -61,6 +68,7 @@ export function QuitDateExperience({
         onRetake={
           currentStatus === "active" ? undefined : () => setContent(null)
         }
+        receipt={currentReceipt}
         status={currentStatus}
       />
     );
@@ -72,6 +80,7 @@ export function QuitDateExperience({
         setContent(c);
         setIssuedLabel("today");
         setCurrentStatus("active");
+        setCurrentReceipt(null);
       }}
     />
   );
@@ -163,13 +172,15 @@ function AutopsyForm({
 
   return (
     <section className="rounded-2xl border border-border bg-card p-6 sm:p-8">
+      {/* Pre-verdict, the form is THE TEST (owner framing, s157): nothing
+          here names the quit-date mechanic — the verdict makes that reveal. */}
       <h2 className="flex items-center gap-2 font-medium text-lg">
         <Skull aria-hidden className="size-4 text-muted-foreground" />
-        The Autopsy
+        The Test
       </h2>
       <p className="mt-1 text-muted-foreground text-sm">
         Six questions about every attempt that came before this one. Answer
-        honestly: the prediction is only as sharp as your confession.
+        honestly: Chad&apos;s verdict is only as sharp as your confession.
       </p>
 
       <div className="mt-6 flex flex-col gap-6">
@@ -245,7 +256,7 @@ function AutopsyForm({
 
       <div className="mt-8 flex items-center justify-between gap-3">
         <p className="text-muted-foreground text-xs">
-          One prediction at a time. No re-rolls.
+          One verdict at a time. No re-rolls.
         </p>
         <Button disabled={isPending || !complete} onClick={handleSubmit}>
           {isPending ? (
@@ -254,7 +265,7 @@ function AutopsyForm({
               Chad is deciding...
             </>
           ) : (
-            "Get my date"
+            "Get Chad's verdict"
           )}
         </Button>
       </div>
@@ -272,11 +283,13 @@ function VerdictPanel({
   content,
   issuedLabel,
   onRetake,
+  receipt,
   status,
 }: {
   content: QuitPredictionContent;
   issuedLabel: string | null;
   onRetake?: () => void;
+  receipt: ReceiptCardData | null;
   status: "active" | "beaten" | "hit";
 }) {
   const round = content.round ?? 1;
@@ -312,9 +325,18 @@ function VerdictPanel({
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         <p className="text-muted-foreground text-sm">{STATUS_LINES[status]}</p>
         <div className="flex flex-wrap items-center gap-2">
+          {/* The receipts (FEAT-23): branded share cards, member-initiated. */}
+          <QuitShareActions
+            receipt={status === "hit" ? null : receipt}
+            verdict={{
+              dateLabel: content.dateLabel,
+              dayCount: content.dayCount,
+              failureMode: content.failureMode,
+            }}
+          />
           {onRetake ? (
             <Button onClick={onRetake} size="sm" variant="outline">
-              Run the autopsy again
+              Take the test again
             </Button>
           ) : null}
           <AskChadButton

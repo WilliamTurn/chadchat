@@ -5,9 +5,11 @@ import { redirect } from "next/navigation";
 import { auth } from "@/app/(auth)/auth";
 import {
   clearUserMemory,
+  deleteAllUserData,
   getUserById,
   setCheckInSettings,
   setMemoryEnabled,
+  setQuitDateEnabled,
   setSensoryPrefs,
   setUserTimezone,
   setWeeklyReportSettings,
@@ -271,6 +273,27 @@ export async function saveSensorySettings(prefs: {
   revalidatePath("/account");
 }
 
+/**
+ * Switch the Quit Date mechanic on or off (FEAT-25). Off hides the /today
+ * card, blocks new autopsies, and drops the prediction from Chad's chat and
+ * check-in prompts + the cron sweeps. The prediction ledger itself is kept.
+ */
+export async function saveQuitDateEnabled(enabled: boolean) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  if (typeof enabled !== "boolean") {
+    throw new Error("Invalid Quit Date setting");
+  }
+
+  await setQuitDateEnabled(session.user.id, enabled);
+  revalidatePath("/account");
+  revalidatePath("/today");
+  revalidatePath("/quit-date");
+}
+
 /** Turn Chad's cross-chat memory on or off for the current user. */
 export async function setChadMemoryEnabled(enabled: boolean) {
   const session = await auth();
@@ -291,4 +314,21 @@ export async function clearChadMemory() {
 
   await clearUserMemory(session.user.id);
   revalidatePath("/account");
+}
+
+/**
+ * Delete ALL of the member's data — chats, logs, photos, memory, reports,
+ * predictions — keeping only the account itself (login + subscription), so
+ * they can start clean or leave nothing behind. Irreversible; the UI
+ * double-confirms before calling this.
+ */
+export async function deleteMyData() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  await deleteAllUserData(session.user.id);
+  revalidatePath("/account");
+  revalidatePath("/today");
 }

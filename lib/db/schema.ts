@@ -100,6 +100,14 @@ export const user = pgTable("User", {
   primaryGoal: varchar("primaryGoal", {
     enum: ["muscle", "fat_loss", "strength", "health"],
   }),
+  // The member's full set of goal picks (owner, s157): people usually train
+  // for more than one outcome, so the picker is multi-select. primaryGoal
+  // above stays as the FIRST pick, mirrored on every save, for the readers
+  // that want one headline goal. Null on accounts that predate this column
+  // (fall back to primaryGoal).
+  primaryGoals: json("primaryGoals").$type<
+    ("muscle" | "fat_loss" | "strength" | "health")[]
+  >(),
   trainingDaysPerWeek: integer("trainingDaysPerWeek"),
   // The member's own words about their primary goal (ONB-3): the event, the
   // deadline, the why behind the dropdown pick. Injected verbatim into Chad's
@@ -150,6 +158,13 @@ export const user = pgTable("User", {
   // support it. Default ON (the reward is the point); one-click off on /account.
   soundEnabled: boolean("soundEnabled").notNull().default(true),
   hapticsEnabled: boolean("hapticsEnabled").notNull().default(true),
+  // --- The Quit Date (FEAT-25) ---
+  // Whether the Quit Date mechanic is on for this member (all tiers). Default
+  // ON — the prediction is the retention hook. OFF hides the /today card,
+  // blocks new autopsies, drops the prediction from Chad's chat + check-in
+  // prompts, and skips the member in the resolution sweep and danger-window
+  // escalation. Existing QuitPrediction rows are kept (the ledger survives).
+  quitDateEnabled: boolean("quitDateEnabled").notNull().default(true),
 });
 
 export type User = InferSelectModel<typeof user>;

@@ -273,7 +273,11 @@ export async function POST(request: Request) {
         getActiveGoalsByUserId(session.user.id),
         getActivePlansByUserId(session.user.id),
         getWorkoutsByUserId(session.user.id, 8),
-        getLatestQuitPrediction(session.user.id),
+        // Members who switched the Quit Date off (FEAT-25) never have the
+        // prediction in Chad's context, so he can't bring it up.
+        dbUser.quitDateEnabled
+          ? getLatestQuitPrediction(session.user.id)
+          : Promise.resolve(undefined),
       ]);
     const goalsBlock = formatGoalsForPrompt(activeGoals, activePlans);
     const workoutsBlock = formatWorkoutsForPrompt(recentWorkouts);

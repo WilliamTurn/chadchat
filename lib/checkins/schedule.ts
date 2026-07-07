@@ -65,11 +65,15 @@ export function sanitizeCheckInDays(days: unknown): number[] {
  * wall clock and their own /account schedule. Null outside their windows (or
  * on a day they didn't pick), and the hourly pass just skips them.
  *
- * `dangerWindow` (FEAT-22): while the member's quit-date prediction says they
- * are inside the fold window, cadence escalates — the chosen-days gate is
- * ignored (every frequency behaves like daily), because the prediction is
- * precisely WHEN they are weakest and Chad shows up exactly then. The hour
- * windows still apply: escalation never emails anyone at 3am.
+ * `dangerWindow` (FEAT-22, capped by FEAT-25): while the member's quit-date
+ * prediction says they are inside the fold window, cadence escalates — but
+ * ONLY the morning brief. The chosen-days gate is ignored for the morning
+ * slot (every frequency gets a daily brief), because the prediction is
+ * precisely WHEN they are weakest and Chad shows up exactly then; the evening
+ * callout fires only when the member's normal chosen schedule would have sent
+ * it anyway. That caps escalation at one extra email a day (≤8 across the
+ * 8-day window) instead of two. The hour windows still apply: escalation
+ * never emails anyone at 3am.
  */
 export function dueCheckInSlot(
   now: Date,
@@ -78,13 +82,9 @@ export function dueCheckInSlot(
 ): CheckInSlot | null {
   const { day, hour } = localDayHour(now, prefs.timezone);
 
-  if (
-    prefs.checkInFrequency !== "daily" &&
-    !opts.dangerWindow &&
-    !sanitizeCheckInDays(prefs.checkInDays).includes(day)
-  ) {
-    return null;
-  }
+  const onChosenDay =
+    prefs.checkInFrequency === "daily" ||
+    sanitizeCheckInDays(prefs.checkInDays).includes(day);
 
   const morning = sanitizeHour(
     prefs.checkInMorningHour,
@@ -98,10 +98,10 @@ export function dueCheckInSlot(
   );
 
   if (hour >= morning && hour < morning + WINDOW_HOURS) {
-    return "morning";
+    return onChosenDay || opts.dangerWindow ? "morning" : null;
   }
   if (hour >= evening && hour < evening + WINDOW_HOURS) {
-    return "evening";
+    return onChosenDay ? "evening" : null;
   }
   return null;
 }

@@ -62,6 +62,22 @@ export const experienceLabel = (v: ExperienceLevel | null | undefined) =>
 export const goalLabel = (v: PrimaryGoal | null | undefined) =>
   labelFor(GOAL_OPTIONS, v);
 
+/**
+ * The member's goal picks as one human-readable phrase ("Build muscle +
+ * Get stronger"). Prefers the multi-select list; falls back to the single
+ * legacy pick for accounts that predate it.
+ */
+export function goalsLabel(
+  goals: PrimaryGoal[] | null | undefined,
+  fallback: PrimaryGoal | null | undefined
+): string | null {
+  const picks = goals && goals.length > 0 ? goals : fallback ? [fallback] : [];
+  const labels = picks
+    .map((g) => goalLabel(g))
+    .filter((l): l is string => l != null);
+  return labels.length > 0 ? labels.join(" + ") : null;
+}
+
 // --- Height: stored canonically in whole centimeters, shown in the user's
 // preferred system (imperial ft/in or metric cm), derived from their weightUnit
 // so height and weight always read in the same system without a second toggle.
@@ -127,6 +143,14 @@ export const profileSchema = z.object({
     .optional(),
   primaryGoal: z
     .enum(["muscle", "fat_loss", "strength", "health"])
+    .nullable()
+    .optional(),
+  // The full multi-select goal list (owner, s157). De-duplicated; an empty
+  // array clears the picks. Callers mirror the first entry into primaryGoal.
+  primaryGoals: z
+    .array(z.enum(["muscle", "fat_loss", "strength", "health"]))
+    .max(4)
+    .transform((arr) => [...new Set(arr)])
     .nullable()
     .optional(),
   trainingDaysPerWeek: z.coerce.number().int().min(1).max(7).nullable().optional(),

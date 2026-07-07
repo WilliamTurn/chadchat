@@ -482,6 +482,23 @@ export async function setSensoryPrefs(
   }
 }
 
+/** Switch the Quit Date mechanic on/off for a member (FEAT-25). Off hides the
+ * card, blocks new autopsies, and drops the prediction from Chad's prompts +
+ * the cron sweeps; existing QuitPrediction rows are kept. */
+export async function setQuitDateEnabled(userId: string, enabled: boolean) {
+  try {
+    return await db
+      .update(user)
+      .set({ quitDateEnabled: enabled, updatedAt: new Date() })
+      .where(eq(user.id, userId));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to update Quit Date setting"
+    );
+  }
+}
+
 /** Set the user's preferred body-weight unit (lb/kg) for display + new logs. */
 export async function setWeightUnit(userId: string, unit: "lb" | "kg") {
   try {
@@ -533,6 +550,7 @@ export type UserProfileInput = {
   heightCm?: number | null;
   experienceLevel?: "beginner" | "intermediate" | "advanced" | null;
   primaryGoal?: "muscle" | "fat_loss" | "strength" | "health" | null;
+  primaryGoals?: ("muscle" | "fat_loss" | "strength" | "health")[] | null;
   trainingDaysPerWeek?: number | null;
   primaryGoalDetail?: string | null;
   trainingDescription?: string | null;
@@ -555,6 +573,7 @@ export async function updateUserProfile(
     "heightCm",
     "experienceLevel",
     "primaryGoal",
+    "primaryGoals",
     "trainingDaysPerWeek",
     "primaryGoalDetail",
     "trainingDescription",
@@ -836,6 +855,13 @@ export async function deleteUserByEmail(
       // Chad's weekly coach's reports.
       await tx.delete(weeklyReport).where(eq(weeklyReport.userId, userId));
 
+      // Structured meal plans, progress montages, quit predictions.
+      await tx.delete(mealPlan).where(eq(mealPlan.userId, userId));
+      await tx
+        .delete(progressMontage)
+        .where(eq(progressMontage.userId, userId));
+      await tx.delete(quitPrediction).where(eq(quitPrediction.userId, userId));
+
       // Any outstanding auth-email tokens.
       await tx
         .delete(emailVerificationToken)
@@ -851,6 +877,64 @@ export async function deleteUserByEmail(
     return { ok: true, email: normalized };
   } catch (_error) {
     throw new ChatbotError("bad_request:database", "Failed to delete user");
+  }
+}
+
+/**
+ * Wipe EVERYTHING a member has logged or generated (the /account "Delete my
+ * data" button): chats, logs, photos-rows, memory, reports, predictions — the
+ * same sweep the admin account-delete runs, minus the account row itself, so
+ * their login and subscription survive. Irreversible.
+ */
+export async function deleteAllUserData(userId: string): Promise<void> {
+  try {
+    await db.transaction(async (tx) => {
+      const userChats = await tx
+        .select({ id: chat.id })
+        .from(chat)
+        .where(eq(chat.userId, userId));
+      const chatIds = userChats.map((c) => c.id);
+      if (chatIds.length > 0) {
+        await tx.delete(vote).where(inArray(vote.chatId, chatIds));
+        await tx.delete(message).where(inArray(message.chatId, chatIds));
+        await tx.delete(stream).where(inArray(stream.chatId, chatIds));
+        await tx.delete(chat).where(eq(chat.userId, userId));
+      }
+
+      await tx.delete(suggestion).where(eq(suggestion.userId, userId));
+      await tx.delete(document).where(eq(document.userId, userId));
+      await tx.delete(userMemory).where(eq(userMemory.userId, userId));
+      await tx.delete(progressEntry).where(eq(progressEntry.userId, userId));
+      await tx.delete(mealAnalysis).where(eq(mealAnalysis.userId, userId));
+      await tx
+        .delete(nutritionTarget)
+        .where(eq(nutritionTarget.userId, userId));
+      await tx.delete(waterLog).where(eq(waterLog.userId, userId));
+      await tx.delete(sleepEntry).where(eq(sleepEntry.userId, userId));
+      await tx.delete(goal).where(eq(goal.userId, userId));
+      await tx.delete(plan).where(eq(plan.userId, userId));
+      await tx
+        .delete(bodyMeasurement)
+        .where(eq(bodyMeasurement.userId, userId));
+      await tx.delete(workoutSet).where(eq(workoutSet.userId, userId));
+      await tx
+        .delete(workoutExercise)
+        .where(eq(workoutExercise.userId, userId));
+      await tx.delete(workout).where(eq(workout.userId, userId));
+      await tx.delete(customExercise).where(eq(customExercise.userId, userId));
+      await tx.delete(checkIn).where(eq(checkIn.userId, userId));
+      await tx.delete(weeklyReport).where(eq(weeklyReport.userId, userId));
+      await tx.delete(mealPlan).where(eq(mealPlan.userId, userId));
+      await tx
+        .delete(progressMontage)
+        .where(eq(progressMontage.userId, userId));
+      await tx.delete(quitPrediction).where(eq(quitPrediction.userId, userId));
+    });
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to delete user data"
+    );
   }
 }
 
@@ -3354,6 +3438,27 @@ export async function getCheckInsSince(
   }
 }
 
+/** The member's most recent check-in email (FEAT-24): the /roast page the
+ * "share this roast" email link lands on pre-fills from it. */
+export async function getLatestCheckIn(
+  userId: string
+): Promise<CheckIn | undefined> {
+  try {
+    const [latest] = await db
+      .select()
+      .from(checkIn)
+      .where(eq(checkIn.userId, userId))
+      .orderBy(desc(checkIn.sentAt))
+      .limit(1);
+    return latest;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get latest check-in"
+    );
+  }
+}
+
 /** Record a check-in that was actually delivered (the dedup/frequency ledger). */
 export async function createCheckIn(entry: {
   userId: string;
@@ -3593,6 +3698,26 @@ export async function getLatestQuitPrediction(
     throw new ChatbotError(
       "bad_request:database",
       "Failed to get latest quit prediction"
+    );
+  }
+}
+
+/** Every quit prediction on a member's record, oldest first (FEAT-23): the
+ * share receipt cites the CHAIN's original date ("Chad gave me 23 days"), and
+ * reissued rounds share their day-one anchor with the row they replaced. */
+export async function getQuitPredictionsByUserId(
+  userId: string
+): Promise<QuitPrediction[]> {
+  try {
+    return await db
+      .select()
+      .from(quitPrediction)
+      .where(eq(quitPrediction.userId, userId))
+      .orderBy(asc(quitPrediction.predictedAt));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get quit predictions"
     );
   }
 }

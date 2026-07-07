@@ -32,6 +32,7 @@ import type { ProgressEntry, User } from "@/lib/db/schema";
 import { sendEmail } from "@/lib/email/client";
 import { weeklyReportEmailTemplate } from "@/lib/email/templates";
 import {
+  parseWeeklyReportContent,
   type WeeklyReportContent,
   weeklyReportContentSchema,
 } from "@/lib/reports/content";
@@ -49,13 +50,23 @@ const REPORT_DAYS = 7;
 // late, and so hour-drift across DST changes can't skip a whole week.
 const DEDUP_DAYS = 6;
 
-// Same persona contract as CHECK_IN_VOICE (FEAT-11): full edge, no softening —
-// but strictly grounded in the data. This is a NEW prompt for the weekly-report
-// channel; Chad's chat system prompt is untouched. Rewritten s130 (LC-6): the
-// report is the flagship Elite artifact, so it must be COMPREHENSIVE (full
-// written paragraphs, never fragments), earn both its praise and its criticism
-// from the numbers, and stay 100% factual.
-const WEEKLY_REPORT_VOICE = `You are Chad, a no-bullshit AI fitness coach, writing your client's WEEKLY COACH'S REPORT: the same weekly review a $300/month human online coach delivers, and it has to read like it. You are direct, ruthless, and results-obsessed, with zero tolerance for excuses. You call out slacking by name and you hold people to what they said they'd do. You also give real credit when the numbers earn it: a week of hit targets or a new rep PR gets called a win in plain words, because praise from you means something precisely because it has to be earned. No profanity is required; brutal honesty is.
+// Chad's REAL persona on the report channel (rewritten s157, owner order: the
+// old voice's "No profanity is required" line was a softener and the reports
+// read neutered). The PERSONALITY block is copied from the owner-approved
+// CHECK_IN_VOICE (s143) and the emphasis weapon from the chat FORMATTING
+// rules, so no new register is invented (memory preserve-chad-edge). The
+// report-specific factual + writing discipline stands unchanged.
+const WEEKLY_REPORT_VOICE = `You are Chad, a no-bullshit AI fitness coach, writing your client's WEEKLY COACH'S REPORT: the same weekly review a $300/month human online coach delivers, and it has to read like it. You're direct, ruthless, hard, and focused on results. You have zero tolerance for nonsense or excuses or lies. You demand results. If something in their data is wrong, you tell them straight up and explain why.
+
+PERSONALITY:
+- You specialize in shaming clients and forcing them to take action. You do this because it gets results. Shame works.
+- When a client messes up, you shame. But when they put in the work and do the right thing, you praise them. Praise from you means something because it has to be earned.
+- Your harshness, profanity, and shaming are RESPONSES to weakness, excuses, laziness, or lies showing in their data. They are not how you open on a client whose data shows they did the work.
+- You sometimes use profanity to get your point across, especially in response to a client's pathetic behaviors and excuses. 'Fuck,' 'fucking,' and 'shit' are your go-to profanity words.
+- You specialize in detecting the slightest sign of weakness, self-deception, or excuse-making in the client. You ruthlessly call it out and shame them for it.
+
+FORMATTING (these render in the report and the email exactly like they do in the app):
+- Emphasis is one of your weapons: USE it. Make key words **bold** liberally so your hard truths and orders land, and drop into **ALL-CAPS BOLD** when you're driving a point home or barking an order. Reserve red for your rare, crucial, non-negotiable moments: wrap those key words in double brackets [[like this]] (red renders bold automatically). Use red sparingly; if everything is red, nothing is.
 
 FACTUAL DISCIPLINE, non-negotiable: every number, exercise, meal, and date you write comes from the client's REAL logged data given to you below. Never invent, estimate, or round beyond what the data shows. Where the app has pre-computed a number for you (like the weight trend), use it exactly, do not recalculate. If an area has no data, say that bluntly instead of guessing.
 
@@ -78,7 +89,7 @@ const weeklyReportDraftSchema = weeklyReportContentSchema.extend({
   subject: z
     .string()
     .describe(
-      "email subject in Chad's voice — short, concrete, references their actual week; no ALL-CAPS spam, no emojis"
+      "email subject in Chad's voice — short, concrete, references their actual week; no ALL-CAPS spam, no emojis, no **bold**/[[red]] markers (subjects don't render them)"
     ),
 });
 
@@ -226,15 +237,16 @@ export async function runUserWeeklyReport(
   }
 
   // Once per week, ever — the hourly cron keeps matching ">= hour" for the
-  // rest of the report day, and this is what stops repeat sends.
-  if (!opts.force) {
-    const latest = await getLatestWeeklyReport(user.id);
-    if (
-      latest &&
-      latest.sentAt.getTime() > now.getTime() - DEDUP_DAYS * DAY_MS
-    ) {
-      return { ...base, action: "skipped_dedup" };
-    }
+  // rest of the report day, and this is what stops repeat sends. The previous
+  // report also feeds the compose context (s157): last week's adjustments are
+  // standing orders, and this week's report holds the client to them.
+  const previousReport = await getLatestWeeklyReport(user.id);
+  if (
+    !opts.force &&
+    previousReport &&
+    previousReport.sentAt.getTime() > now.getTime() - DEDUP_DAYS * DAY_MS
+  ) {
+    return { ...base, action: "skipped_dedup" };
   }
 
   // --- Assemble the week, from the same sources chat + check-ins use. ---
@@ -321,11 +333,27 @@ export async function runUserWeeklyReport(
       : `PROGRESS PHOTO ATTACHED: taken this week (${formatCalendarDay(currentPhoto.recordedAt)}). There is no earlier photo to compare against yet — comment on it and tell them the comparison starts next week.`
     : "";
 
+  // Last week's report is a standing record, not history to forget (s157):
+  // Chad remembers what he ordered and holds the client to every line of it.
+  const previousContent = previousReport
+    ? parseWeeklyReportContent(previousReport.content)
+    : null;
+  const previousBlock = previousContent
+    ? `YOUR PREVIOUS REPORT (you wrote and sent this on ${formatCalendarDay(previousReport?.sentAt ?? now)} — you remember it; this week's report continues that conversation, it never starts fresh):
+- Headline: "${previousContent.headline}"
+- Your bottom line was: "${previousContent.bottomLine}"
+- The adjustments you ORDERED for this week:
+${previousContent.adjustments.map((a) => `  - ${a.change}`).join("\n")}
+
+Check this week's data against every one of those orders. Followed orders get named and credited. Ignored orders get called out AS ignored orders (you told them, it's on the record above), and the heat goes up accordingly.`
+    : "";
+
   const firstName = user.name?.trim().split(/\s+/)[0];
   const context = [
     formatProfileForPrompt(user),
     formatMemoryForPrompt(memory?.profile),
     formatGoalsForPrompt(goals, plans),
+    previousBlock,
     `THIS CLIENT'S LOGGED DATA FOR THE REPORT WEEK (${formatCalendarDay(start)} – ${formatCalendarDay(new Date(end.getTime() - 1))}, today inclusive — this is everything; if it's not here, it wasn't logged):\n\n${weekLog.summary}`,
     sleepBlock,
     formatWeightTrend(allWeighIns, end),

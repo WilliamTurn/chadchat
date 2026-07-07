@@ -1,9 +1,10 @@
 import equal from "fast-deep-equal";
-import { RefreshCw } from "lucide-react";
-import { memo } from "react";
+import { RefreshCw, Share2 } from "lucide-react";
+import { memo, useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { useCopyToClipboard } from "usehooks-ts";
+import { RoastShareDialog } from "@/components/share/roast-share-dialog";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import {
@@ -31,6 +32,8 @@ export function PureMessageActions({
 }) {
   const { mutate } = useSWRConfig();
   const [_, copyToClipboard] = useCopyToClipboard();
+  // Roast Share (FEAT-24): turn any Chad message into a branded share card.
+  const [roastOpen, setRoastOpen] = useState(false);
 
   if (isLoading) {
     return null;
@@ -87,6 +90,26 @@ export function PureMessageActions({
       >
         <CopyIcon />
       </Action>
+
+      <Action
+        className="text-muted-foreground/50 hover:text-foreground"
+        data-testid="message-share-roast"
+        onClick={() => {
+          if (textFromParts) {
+            setRoastOpen(true);
+          } else {
+            toast.error("There's no text to share!");
+          }
+        }}
+        tooltip="Share this roast"
+      >
+        <Share2 size={15} />
+      </Action>
+      <RoastShareDialog
+        initialText={textFromParts ?? ""}
+        onOpenChange={setRoastOpen}
+        open={roastOpen}
+      />
 
       {showRegenerate && onRegenerate && (
         <Action

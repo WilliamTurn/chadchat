@@ -2,6 +2,7 @@
 // and on-brand (deep blood-red accent). All follow the same minimal layout.
 
 import type { WeeklyReportContent } from "@/lib/reports/content";
+import { chadEmailHtml } from "@/lib/text/emphasis";
 
 const BRAND_RED = "#a4161a";
 
@@ -92,14 +93,11 @@ export function passwordResetEmailTemplate(url: string): {
   };
 }
 
-/** Escape text for safe interpolation into the HTML email shell. */
+/** Escape text for safe interpolation into the HTML email shell, rendering
+ * Chad's emphasis (**bold** / [[red]]) along the way (s157: his emails carry
+ * his full voice, so the markers must render, never leak as literals). */
 function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+  return chadEmailHtml(text);
 }
 
 /**
@@ -114,10 +112,14 @@ export function checkInEmailTemplate({
   body,
   chatUrl,
   settingsUrl,
+  roastUrl,
 }: {
   body: string;
   chatUrl: string;
   settingsUrl: string;
+  // Roast Share (FEAT-24): "Share this roast" lands on the in-app card
+  // composer pre-filled with this check-in.
+  roastUrl?: string;
 }): string {
   const paragraphs = escapeHtml(body.trim())
     .split(/\n{2,}/)
@@ -137,10 +139,11 @@ export function checkInEmailTemplate({
             <tr><td style="color:#fff;font-size:18px;font-weight:700;letter-spacing:1px;padding-bottom:24px;">CHAD</td></tr>
             <tr><td style="color:#e5e5e5;font-size:15px;line-height:24px;padding-bottom:10px;">${paragraphs}</td></tr>
             <tr>
-              <td style="padding-bottom:24px;">
+              <td style="padding-bottom:${roastUrl ? "14" : "24"}px;">
                 <a href="${chatUrl}" style="display:inline-block;background:${BRAND_RED};color:#fff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 24px;border-radius:8px;">Reply to Chad</a>
               </td>
             </tr>
+            ${roastUrl ? `<tr><td style="color:#a3a3a3;font-size:13px;padding-bottom:24px;"><a href="${roastUrl}" style="color:#a3a3a3;">Share this roast →</a></td></tr>` : ""}
             <tr><td style="color:#737373;font-size:12px;line-height:20px;border-top:1px solid #262626;padding-top:16px;">You get these check-ins as a Chad Elite member — it's Chad holding you accountable between sessions. Choose how often he reaches out, or pause check-ins, anytime on <a href="${settingsUrl}" style="color:#a3a3a3;">your account page</a>.</td></tr>
           </table>
         </td>

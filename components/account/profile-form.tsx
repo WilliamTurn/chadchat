@@ -34,6 +34,42 @@ const segmentedButtonClass = (selected: boolean) =>
       : "border-border bg-background/40 text-muted-foreground hover:border-border hover:text-foreground"
   );
 
+/** Segmented multi-select (s157: goals are rarely singular — people pick two
+ * or more). Click toggles membership; clearing every pick is allowed. */
+function LabeledMultiSegmented<T extends string>({
+  options,
+  values,
+  onChange,
+  columns,
+}: {
+  options: readonly { value: T; label: string }[];
+  values: T[];
+  onChange: (v: T[]) => void;
+  columns?: string;
+}) {
+  return (
+    <div className={cn("grid gap-2", columns ?? "grid-cols-2")}>
+      {options.map((opt) => (
+        <button
+          aria-pressed={values.includes(opt.value)}
+          className={segmentedButtonClass(values.includes(opt.value))}
+          key={String(opt.value)}
+          onClick={() =>
+            onChange(
+              values.includes(opt.value)
+                ? values.filter((v) => v !== opt.value)
+                : [...values, opt.value]
+            )
+          }
+          type="button"
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /** Segmented single-select over {value,label} options. Click a selected option
  * again to clear it, so a mis-set field can be emptied. */
 function LabeledSegmented<T extends string | number>({
@@ -78,6 +114,7 @@ export function ProfileForm({
     heightCm: number | null;
     experienceLevel: ExperienceLevel | null;
     primaryGoal: PrimaryGoal | null;
+    primaryGoals: PrimaryGoal[] | null;
     trainingDaysPerWeek: number | null;
     primaryGoalDetail: string | null;
     trainingDescription: string | null;
@@ -105,7 +142,11 @@ export function ProfileForm({
   const [experience, setExperience] = useState<ExperienceLevel | null>(
     initial.experienceLevel
   );
-  const [goal, setGoal] = useState<PrimaryGoal | null>(initial.primaryGoal);
+  // Multi-select (s157): the stored list when present, else the legacy
+  // single pick lifted into a one-item list.
+  const [goals, setGoals] = useState<PrimaryGoal[]>(
+    initial.primaryGoals ?? (initial.primaryGoal ? [initial.primaryGoal] : [])
+  );
   const [goalDetail, setGoalDetail] = useState(initial.primaryGoalDetail ?? "");
   const [trainingDays, setTrainingDays] = useState<number | null>(
     initial.trainingDaysPerWeek
@@ -131,7 +172,10 @@ export function ProfileForm({
           age: age.trim() ? Number(age) : null,
           heightCm: currentHeightCm(),
           experienceLevel: experience,
-          primaryGoal: goal,
+          // The first pick mirrors into the legacy single-goal column so
+          // every older reader keeps working.
+          primaryGoal: goals[0] ?? null,
+          primaryGoals: goals,
           trainingDaysPerWeek: trainingDays,
           // The schema turns an empty string into null, so clearing the box
           // deletes the note.
@@ -217,22 +261,23 @@ export function ProfileForm({
         </div>
 
         <div className="flex flex-col gap-2 sm:col-span-2">
-          <Label>Primary goal</Label>
+          <Label>Training goals</Label>
           <p className="text-muted-foreground text-xs">
-            Your primary goal is the one outcome you most want from training.
-            The Goals on your dashboard are the measurable targets that serve
-            it.
+            Pick everything you&apos;re training for. Most people want more
+            than one. The Goals on your dashboard are the measurable targets
+            that serve them.
           </p>
-          <LabeledSegmented
+          <LabeledMultiSegmented
             columns="grid-cols-2 sm:grid-cols-4"
             options={GOAL_OPTIONS}
-            onChange={setGoal}
-            value={goal}
+            onChange={setGoals}
+            values={goals}
           />
-          {/* ONB-3: the member's own words about the goal. Chad reads every
-              word of this, verbatim. */}
+          {/* ONB-3: the member's own words about their goals. Chad reads
+              every word of this, verbatim. "Other" up front (owner, s157):
+              this box is for everything the buttons don't cover. */}
           <Label className="mt-2" htmlFor="profile-goal-detail">
-            Tell us more about your goal{" "}
+            Other goals: tell us more{" "}
             <span className="font-normal text-muted-foreground">
               (optional)
             </span>

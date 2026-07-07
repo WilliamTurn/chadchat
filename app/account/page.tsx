@@ -15,6 +15,8 @@ import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { CheckInSettings } from "@/components/account/check-in-settings";
+import { DeleteDataButton } from "@/components/account/delete-data-button";
+import { QuitDateSettings } from "@/components/account/quit-date-settings";
 import { SensorySettings } from "@/components/account/sensory-settings";
 import { WeeklyReportSettings } from "@/components/account/weekly-report-settings";
 import { ProfileForm } from "@/components/account/profile-form";
@@ -182,6 +184,7 @@ async function AccountSettings() {
             heightCm: user.heightCm,
             experienceLevel: user.experienceLevel,
             primaryGoal: user.primaryGoal,
+            primaryGoals: user.primaryGoals,
             trainingDaysPerWeek: user.trainingDaysPerWeek,
             primaryGoalDetail: user.primaryGoalDetail,
             trainingDescription: user.trainingDescription,
@@ -232,6 +235,11 @@ async function AccountSettings() {
                 initialHaptics={user.hapticsEnabled}
                 initialSound={user.soundEnabled}
               />
+            </div>
+
+            {/* The Quit Date on/off switch (FEAT-25, all members). */}
+            <div className="mt-6 border-border border-t pt-6">
+              <QuitDateSettings initialEnabled={user.quitDateEnabled} />
             </div>
           </div>
         </section>
@@ -290,6 +298,21 @@ async function AccountSettings() {
                     {label}
                   </a>
                 ))}
+              </div>
+
+              {/* Delete everything (owner ask, s157): the member's one-button
+                  wipe — every log, chat, and Chad's whole file, keeping the
+                  account + membership. */}
+              <div className="mt-6 border-border border-t pt-6">
+                <h3 className="font-medium text-sm">Delete</h3>
+                <p className="mt-1 text-muted-foreground text-sm">
+                  Permanently delete all of your data — chats, logs, photos,
+                  and everything Chad knows about you. Your account and
+                  membership stay.
+                </p>
+                <div className="mt-4">
+                  <DeleteDataButton />
+                </div>
               </div>
             </div>
           </section>

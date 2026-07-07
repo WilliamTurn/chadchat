@@ -1,13 +1,16 @@
 "use client";
 
-import { Download, MessageSquare } from "lucide-react";
+import { Download, MessageSquare, Share2 } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { toast } from "sonner";
+import { RoastShareDialog } from "@/components/share/roast-share-dialog";
 import { Button } from "@/components/ui/button";
 import { downloadWeeklyReportPdf } from "@/lib/pdf/weekly-report-pdf";
 import type { WeeklyReportContent } from "@/lib/reports/content";
 
-/** Download a weekly report as a PDF, or take it into chat with Chad. */
+/** Download a weekly report as a PDF, take it into chat with Chad, or turn
+ * its best burn into a share card (FEAT-24). */
 export function ReportActions({
   content,
   dateLabel,
@@ -16,6 +19,7 @@ export function ReportActions({
   dateLabel: string;
 }) {
   const discussPrompt = `I read my weekly report — "${content.headline}". Let's talk about it: `;
+  const [roastOpen, setRoastOpen] = useState(false);
 
   return (
     <div className="flex flex-wrap gap-2">
@@ -38,6 +42,21 @@ export function ReportActions({
           Discuss with Chad
         </Link>
       </Button>
+      <Button
+        className="gap-1.5"
+        onClick={() => setRoastOpen(true)}
+        size="sm"
+        variant="outline"
+      >
+        <Share2 className="size-3.5" />
+        Share a line
+      </Button>
+      {/* Pre-filled with the report's bottom line — the burn people post. */}
+      <RoastShareDialog
+        initialText={content.bottomLine}
+        onOpenChange={setRoastOpen}
+        open={roastOpen}
+      />
     </div>
   );
 }

@@ -53,7 +53,16 @@ export async function runAutopsy(
 ): Promise<AutopsyActionResult> {
   const user = await requireChad();
   if (!user) {
-    return { ok: false, error: "Sign in to take the autopsy." };
+    return { ok: false, error: "Sign in to take the test." };
+  }
+
+  // The member switched the whole mechanic off on /account (FEAT-25).
+  if (!user.quitDateEnabled) {
+    return {
+      ok: false,
+      error:
+        "The Quit Date is switched off on your account page. Turn it on first.",
+    };
   }
 
   const parsed = autopsyAnswersSchema.safeParse(input);
@@ -112,7 +121,7 @@ export async function runAutopsy(
   } catch (_error) {
     return {
       ok: false,
-      error: "Chad couldn't run the autopsy just now. Try again in a minute.",
+      error: "Chad couldn't score the test just now. Try again in a minute.",
     };
   }
 }

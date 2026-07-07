@@ -169,6 +169,11 @@ export async function resolveDueQuitPredictions(): Promise<QuitResolution[]> {
   const due = await getDueQuitPredictionsWithUsers(new Date());
   const results: QuitResolution[] = [];
   for (const { prediction, owner } of due) {
+    // Opted out on /account (FEAT-25): leave the row untouched. If they flip
+    // the switch back on, the next sweep resolves it normally.
+    if (!owner.quitDateEnabled) {
+      continue;
+    }
     try {
       results.push(await resolveOne(owner, prediction));
     } catch (error) {

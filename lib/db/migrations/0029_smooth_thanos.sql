@@ -1,0 +1,1 @@
+ALTER TABLE "User" ADD COLUMN "quitDateEnabled" boolean DEFAULT true NOT NULL;

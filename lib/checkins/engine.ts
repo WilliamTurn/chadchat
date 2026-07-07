@@ -78,7 +78,12 @@ PERSONALITY:
 
 WHAT YOU KNOW:
 - Everything you know about this client is given to you below: their logged data, their confirmed stats, their own written notes and comments, their goals and plans, and your coach's file on them. Read all of it and use it, especially anything they wrote in their own words.
-- You only ever reference what's actually there. Never invent workouts, weights, meals, or numbers that are not in the data.`;
+- You only ever reference what's actually there. Never invent workouts, weights, meals, or numbers that are not in the data.
+- You also get the full text of every email you sent this client in the past week. You REMEMBER sending them. You are a coach mid-conversation, not a bot starting fresh: read what you already said against what the data shows they did about it, and let that decide your register. An order they followed gets acknowledged. An order they ignored means you go harder than last time, and you SAY that you already told them.
+
+FORMATTING (these render in the email exactly like they do in the app):
+- Emphasis is one of your weapons: USE it. Make key words **bold** liberally so your hard truths and orders land, and drop into **ALL-CAPS BOLD** when you're driving a point home or barking an order. Reserve red for your rare, crucial, non-negotiable moments: wrap those key words in double brackets [[like this]] (red renders bold automatically). Use red sparingly; if everything is red, nothing is. For your single most important point you can stack ALL-CAPS + red together, but only when it's truly warranted.
+- Plain paragraphs separated by blank lines. No emojis, no markdown headers, no links.`;
 
 const SLOT_INSTRUCTIONS: Record<CheckInSlot, string> = {
   morning: `This is the MORNING BRIEF. Set today's marching orders:
@@ -105,12 +110,12 @@ const checkInDraftSchema = z.object({
   subject: z
     .string()
     .describe(
-      "email subject in Chad's voice — short, concrete, references their actual situation; no ALL-CAPS spam, no emojis"
+      "email subject in Chad's voice — short, concrete, references their actual situation; no ALL-CAPS spam, no emojis, no **bold**/[[red]] markers (subjects don't render them)"
     ),
   body: z
     .string()
     .describe(
-      "the email body: plain text, no markdown, no emojis, paragraphs separated by blank lines, as long or as brief as the client's data warrants, references their real numbers, signed '— Chad' on its own last line"
+      "the email body: paragraphs separated by blank lines, as long or as brief as the client's data warrants, references their real numbers, signed '— Chad' on its own last line. Emphasis renders: **bold**, **ALL-CAPS BOLD**, and [[red]] for rare non-negotiables. No emojis, no headers, no links."
     ),
 });
 
@@ -133,16 +138,32 @@ export type CheckInResult = {
   detail?: string;
 };
 
-/** Compact "what you already emailed them" block so Chad never repeats himself. */
+// How much of each past email body rides in the compose context. Enough to
+// remember what was actually said (the orders, the tone), bounded so a week
+// of long emails can't crowd out the client's data.
+const RECENT_BODY_CHARS = 700;
+
+/**
+ * The full "what you already emailed them" record (s157, owner order): the
+ * BODIES ride along, not just subjects, so Chad remembers what he actually
+ * said and escalates on ignored orders instead of politely re-asking every
+ * day like a bot with amnesia.
+ */
 function formatRecentCheckIns(recent: CheckIn[]): string {
   if (recent.length === 0) {
     return "";
   }
-  const lines = recent.map(
-    (c) =>
-      `- ${formatCalendarDay(c.sentAt)} (${c.slot}): "${c.subject}"`
-  );
-  return `EMAILS YOU ALREADY SENT THIS CLIENT IN THE PAST 7 DAYS (do not repeat these points — say something new or don't send):\n${lines.join("\n")}`;
+  const entries = recent.map((c) => {
+    const body =
+      c.body.length > RECENT_BODY_CHARS
+        ? `${c.body.slice(0, RECENT_BODY_CHARS)}…`
+        : c.body;
+    return `--- ${formatCalendarDay(c.sentAt)} (${c.slot} email), subject "${c.subject}":\n${body}`;
+  });
+  return `EMAILS YOU ALREADY SENT THIS CLIENT IN THE PAST 7 DAYS (newest first; you remember every one of these):
+${entries.join("\n\n")}
+
+Read these against today's data before you write. If you gave an order and the data shows they did it, acknowledge it. If you gave an order and the data shows nothing happened, they ignored their coach: do NOT re-send the same ask in the same register. Say you already told them, name how many days of silence it has been, and escalate. Never repeat yesterday's points word for word and never write like this is your first contact.`;
 }
 
 /**
@@ -189,20 +210,28 @@ export async function runUserCheckIn(
     return { ...base, action: "skipped_dedup" };
   }
 
-  // The quit-date danger window (FEAT-22): the prediction says this is
-  // exactly when the member folds, so Chad shows up every one of these days —
-  // the weekly frequency cap stands down (the per-slot daily dedup above
-  // still bounds it to brief + callout per day).
+  // The quit-date danger window (FEAT-22, capped by FEAT-25): the prediction
+  // says this is exactly when the member folds, so Chad's MORNING BRIEF shows
+  // up every one of these days — the weekly frequency cap stands down for it
+  // (the per-slot daily dedup above still bounds it to one a day). The evening
+  // callout never escalates: it keeps the member's normal schedule and caps,
+  // so the window adds at most one email a day. Respects the member's Quit
+  // Date switch (quitDateEnabled, FEAT-25): off = no prediction, no window.
   const prediction =
     opts.prediction === undefined
-      ? ((await getActiveQuitPrediction(user.id)) ?? null)
+      ? user.quitDateEnabled
+        ? ((await getActiveQuitPrediction(user.id)) ?? null)
+        : null
       : opts.prediction;
   const dangerWindow =
     prediction?.status === "active" &&
     isInDangerWindow(todayAnchorInTz(user.timezone), prediction.quitDate);
 
   // The user's own "how often" dial.
-  if (!dangerWindow && recent.length >= WEEKLY_CAPS[user.checkInFrequency]) {
+  if (
+    !(dangerWindow && slot === "morning") &&
+    recent.length >= WEEKLY_CAPS[user.checkInFrequency]
+  ) {
     return { ...base, action: "skipped_cap" };
   }
 
@@ -314,6 +343,9 @@ ${context}`,
       body: draft.body,
       chatUrl,
       settingsUrl: `${appUrl}/account`,
+      // Roast Share (FEAT-24): the composer pre-fills with the member's
+      // latest check-in, which by the time they read the email is this one.
+      roastUrl: `${appUrl}/roast?src=checkin`,
     }),
   });
 
@@ -356,9 +388,13 @@ export async function runCheckInPass(
   for (const user of users) {
     try {
       // The active quit prediction feeds both the slot gate (danger-window
-      // cadence escalation ignores the chosen-days filter) and the compose
-      // context, so fetch it once per member here.
-      const prediction = (await getActiveQuitPrediction(user.id)) ?? null;
+      // cadence escalation ignores the chosen-days filter for the morning
+      // brief) and the compose context, so fetch it once per member here.
+      // A member who switched the Quit Date off (FEAT-25) opted out of the
+      // whole mechanic: no escalation, no prediction in the prompt.
+      const prediction = user.quitDateEnabled
+        ? ((await getActiveQuitPrediction(user.id)) ?? null)
+        : null;
       const dangerWindow =
         prediction?.status === "active" &&
         isInDangerWindow(todayAnchorInTz(user.timezone), prediction.quitDate);

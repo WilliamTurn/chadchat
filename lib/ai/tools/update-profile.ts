@@ -6,6 +6,8 @@ import {
   experienceLabel,
   formatHeightBoth,
   goalLabel,
+  goalsLabel,
+  type ProfileInput,
   profileSchema,
   sexLabel,
 } from "@/lib/profile";
@@ -32,6 +34,13 @@ export const updateProfile = ({ session }: UpdateProfileProps) =>
         .optional()
         .describe(
           "Their primary goal: muscle = build muscle, fat_loss = lose fat, strength = get stronger, health = overall health."
+        ),
+      primaryGoals: z
+        .array(z.enum(["muscle", "fat_loss", "strength", "health"]))
+        .max(4)
+        .optional()
+        .describe(
+          "Their FULL set of training goals when they name more than one (e.g. build muscle AND lose fat). Use this instead of primaryGoal whenever multiple goals apply; list them in priority order."
         ),
       age: z.number().int().min(13).max(100).optional(),
       heightCm: z
@@ -76,7 +85,14 @@ export const updateProfile = ({ session }: UpdateProfileProps) =>
       // writes every present key, and an absent one leaves the field untouched.
       const fields = Object.fromEntries(
         Object.entries(parsed.data).filter(([, v]) => v !== undefined)
-      );
+      ) as ProfileInput;
+      // Keep the single-goal mirror and the multi-select list in lockstep
+      // (s157): whichever one Chad sent, derive the other.
+      if (Array.isArray(fields.primaryGoals)) {
+        fields.primaryGoal = fields.primaryGoals[0] ?? null;
+      } else if (fields.primaryGoal !== undefined) {
+        fields.primaryGoals = fields.primaryGoal ? [fields.primaryGoal] : [];
+      }
       const sensory: { soundEnabled?: boolean; hapticsEnabled?: boolean } = {};
       if (typeof soundEnabled === "boolean") {
         sensory.soundEnabled = soundEnabled;
@@ -96,7 +112,11 @@ export const updateProfile = ({ session }: UpdateProfileProps) =>
       }
 
       const changed: string[] = [];
-      if (parsed.data.primaryGoal) {
+      if (parsed.data.primaryGoals && parsed.data.primaryGoals.length > 0) {
+        changed.push(
+          `training goals: ${goalsLabel(parsed.data.primaryGoals, null)}`
+        );
+      } else if (parsed.data.primaryGoal) {
         changed.push(`primary goal: ${goalLabel(parsed.data.primaryGoal)}`);
       }
       if (parsed.data.age != null) {

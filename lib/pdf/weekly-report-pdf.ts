@@ -1,5 +1,6 @@
 import type { jsPDF as JsPdf } from "jspdf";
 import type { WeeklyReportContent } from "@/lib/reports/content";
+import { stripEmphasis } from "@/lib/text/emphasis";
 
 // A clean, dependency-light text PDF of a weekly coach's report (FEAT-12) —
 // the takeaway copy of what Chad wrote: headline, review sections, next week's
@@ -30,12 +31,29 @@ function safeFileName(s: string): string {
 }
 
 export async function downloadWeeklyReportPdf({
-  content,
+  content: rawContent,
   dateLabel,
 }: {
   content: WeeklyReportContent;
   dateLabel: string;
 }): Promise<void> {
+  // The PDF is plain text: Chad's emphasis markers (**bold** / [[red]],
+  // s157) would render as literal asterisks/brackets here, so strip them.
+  const content: WeeklyReportContent = {
+    ...rawContent,
+    headline: stripEmphasis(rawContent.headline),
+    intro: stripEmphasis(rawContent.intro),
+    bottomLine: stripEmphasis(rawContent.bottomLine),
+    sections: rawContent.sections.map((s) => ({
+      title: stripEmphasis(s.title),
+      body: stripEmphasis(s.body),
+    })),
+    adjustments: rawContent.adjustments.map((a) => ({
+      change: stripEmphasis(a.change),
+      reason: stripEmphasis(a.reason),
+    })),
+  };
+
   const doc = await newDoc();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();

@@ -96,6 +96,41 @@ function LabeledSegmented<T extends string>({
   );
 }
 
+/** Segmented multi-select (s157): click toggles membership. */
+function LabeledMultiSegmented<T extends string>({
+  options,
+  values,
+  onChange,
+  columns,
+}: {
+  options: readonly { value: T; label: string }[];
+  values: T[];
+  onChange: (v: T[]) => void;
+  columns?: string;
+}) {
+  return (
+    <div className={cn("grid gap-2", columns ?? "grid-cols-2")}>
+      {options.map((opt) => (
+        <button
+          aria-pressed={values.includes(opt.value)}
+          className={segmentedButtonClass(values.includes(opt.value))}
+          key={opt.value}
+          onClick={() =>
+            onChange(
+              values.includes(opt.value)
+                ? values.filter((v) => v !== opt.value)
+                : [...values, opt.value]
+            )
+          }
+          type="button"
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /**
  * First-run onboarding wizard (ONB-1). A short, familiar three-step form for a
  * member's stats. On finish it hands everything to Chad as the opening chat
@@ -128,7 +163,8 @@ export function OnboardingWizard({
   const [weight, setWeight] = useState("");
 
   const [experience, setExperience] = useState<ExperienceLevel | null>(null);
-  const [goal, setGoal] = useState<PrimaryGoal | null>(null);
+  // Multi-select (s157): people usually train for more than one outcome.
+  const [goals, setGoals] = useState<PrimaryGoal[]>([]);
   const [trainingDays, setTrainingDays] = useState<number | null>(null);
 
   const weightUnit: "lb" | "kg" = units === "metric" ? "kg" : "lb";
@@ -174,8 +210,13 @@ export function OnboardingWizard({
     if (experience) {
       lines.push(`- Training experience: ${experienceLabel(experience)}`);
     }
-    if (goal) {
-      lines.push(`- Primary goal: ${goalLabel(goal)}`);
+    if (goals.length > 0) {
+      lines.push(
+        `- Training goals: ${goals
+          .map((g) => goalLabel(g))
+          .filter(Boolean)
+          .join(" + ")}`
+      );
     }
     if (trainingDays) {
       lines.push(`- Training days per week: ${trainingDays}`);
@@ -197,7 +238,7 @@ export function OnboardingWizard({
     weight,
     weightUnit,
     experience,
-    goal,
+    goals,
     trainingDays,
   ]);
 
@@ -213,7 +254,8 @@ export function OnboardingWizard({
             age: age.trim() ? Number(age) : null,
             heightCm: heightCmValue,
             experienceLevel: experience,
-            primaryGoal: goal,
+            primaryGoal: goals[0] ?? null,
+            primaryGoals: goals,
             trainingDaysPerWeek: trainingDays,
           },
         });
@@ -386,11 +428,15 @@ export function OnboardingWizard({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label>Primary goal</Label>
-              <LabeledSegmented
+              <Label>Training goals</Label>
+              <p className="text-muted-foreground text-xs">
+                Pick everything you&apos;re after. Most people want more than
+                one.
+              </p>
+              <LabeledMultiSegmented
                 options={GOAL_OPTIONS}
-                onChange={setGoal}
-                value={goal}
+                onChange={setGoals}
+                values={goals}
               />
             </div>
             <div className="flex flex-col gap-2">
