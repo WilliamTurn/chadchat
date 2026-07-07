@@ -767,3 +767,33 @@ export const progressMontage = pgTable("ProgressMontage", {
 });
 
 export type ProgressMontage = InferSelectModel<typeof progressMontage>;
+
+/**
+ * The Quit Date (FEAT-21): Chad's on-the-record prediction of the exact day
+ * this member quits, issued from their own confessed failure history (The
+ * Autopsy) by deterministic heuristics, with the narrative written in Chad's
+ * voice. Doubles as the predicted-vs-actual ledger: FEAT-22 resolves rows to
+ * "beaten" (kept logging past the date) or "hit" (went silent), stamping
+ * resolvedAt, so announced predictions plus outcomes accumulate ground truth.
+ */
+export const quitPrediction = pgTable("QuitPrediction", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  predictedAt: timestamp("predictedAt").notNull().defaultNow(),
+  // The predicted quit day as a noon-UTC calendar-day anchor, computed on the
+  // member's own wall clock (todayAnchorInTz + the heuristic day count).
+  quitDate: timestamp("quitDate").notNull(),
+  // Short label of HOW they are predicted to fail (from lib/quit/heuristics.ts).
+  failureMode: text("failureMode").notNull(),
+  status: varchar("status", { enum: ["active", "beaten", "hit"] })
+    .notNull()
+    .default("active"),
+  resolvedAt: timestamp("resolvedAt"),
+  // QuitPredictionContent (see lib/quit/content.ts): the intake answers,
+  // computed day count and date label, failure mode, and Chad's narrative.
+  content: json("content").notNull(),
+});
+
+export type QuitPrediction = InferSelectModel<typeof quitPrediction>;

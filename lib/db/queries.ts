@@ -53,6 +53,8 @@ import {
   plan,
   progressEntry,
   progressMontage,
+  type QuitPrediction,
+  quitPrediction,
   type SleepEntry,
   sleepEntry,
   type Suggestion,
@@ -3522,6 +3524,50 @@ export async function getLatestProgressMontage(
     throw new ChatbotError(
       "bad_request:database",
       "Failed to get latest progress montage"
+    );
+  }
+}
+
+/** Put a quit-date prediction on the record (FEAT-21, The Quit Date). */
+export async function createQuitPrediction(entry: {
+  userId: string;
+  quitDate: Date;
+  failureMode: string;
+  content: unknown;
+}): Promise<QuitPrediction> {
+  try {
+    const [created] = await db.insert(quitPrediction).values(entry).returning();
+    return created;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to record quit prediction"
+    );
+  }
+}
+
+/** The member's standing (unresolved) quit prediction, if any. Renders on
+ * /today and /quit-date; FEAT-22 resolves it to beaten/hit. */
+export async function getActiveQuitPrediction(
+  userId: string
+): Promise<QuitPrediction | undefined> {
+  try {
+    const [active] = await db
+      .select()
+      .from(quitPrediction)
+      .where(
+        and(
+          eq(quitPrediction.userId, userId),
+          eq(quitPrediction.status, "active")
+        )
+      )
+      .orderBy(desc(quitPrediction.predictedAt))
+      .limit(1);
+    return active;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get active quit prediction"
     );
   }
 }
