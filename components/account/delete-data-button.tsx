@@ -67,10 +67,16 @@ export function DeleteDataButton() {
         />
         <AlertDialogFooter>
           <AlertDialogCancel>Keep my data</AlertDialogCancel>
+          {/* variant (not class overrides): AlertDialogAction slots classes
+              together without tailwind-merge, so bg utilities collide and the
+              ghosted state rendered gray-on-gray (owner report, s157). The
+              destructive variant + a readable disabled opacity keep "Delete
+              everything" legible even before DELETE is typed. */}
           <AlertDialogAction
-            className="bg-destructive text-white hover:bg-destructive/90"
+            className="disabled:opacity-60"
             disabled={confirmText.trim() !== "DELETE" || isPending}
             onClick={handleDelete}
+            variant="destructive"
           >
             {isPending ? "Deleting..." : "Delete everything"}
           </AlertDialogAction>

@@ -3702,6 +3702,27 @@ export async function getLatestQuitPrediction(
   }
 }
 
+/** One prediction by id WITH its owner (FEAT-23 public share page /q/[id]):
+ * the unguessable uuid is the capability, same model as public chat links. */
+export async function getQuitPredictionWithOwner(
+  id: string
+): Promise<{ prediction: QuitPrediction; owner: User } | undefined> {
+  try {
+    const [row] = await db
+      .select({ prediction: quitPrediction, owner: user })
+      .from(quitPrediction)
+      .innerJoin(user, eq(quitPrediction.userId, user.id))
+      .where(eq(quitPrediction.id, id))
+      .limit(1);
+    return row;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get quit prediction"
+    );
+  }
+}
+
 /** Every quit prediction on a member's record, oldest first (FEAT-23): the
  * share receipt cites the CHAIN's original date ("Chad gave me 23 days"), and
  * reissued rounds share their day-one anchor with the row they replaced. */

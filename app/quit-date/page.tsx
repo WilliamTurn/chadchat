@@ -148,7 +148,7 @@ async function QuitDateContent() {
         <PageHeading
           sub="See if you have what it takes. Take this test and try to
           outsmart Chad."
-          title="The Test"
+          title="The Quit Test"
         />
       )}
       <div className="max-w-2xl">
@@ -157,6 +157,7 @@ async function QuitDateContent() {
           predictedAtLabel={
             prediction ? formatCalendarDay(prediction.predictedAt) : null
           }
+          predictionId={prediction?.id ?? null}
           receipt={receipt}
           status={prediction?.status ?? null}
         />

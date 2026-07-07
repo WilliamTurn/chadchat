@@ -38,7 +38,8 @@ async function requireChad() {
 }
 
 export type AutopsyActionResult =
-  | { ok: true; content: QuitPredictionContent }
+  // id feeds the public share link (FEAT-23 pro share flow: /q/[id]).
+  | { ok: true; content: QuitPredictionContent; id: string | null }
   | { ok: false; error: string };
 
 /**
@@ -83,13 +84,29 @@ export async function runAutopsy(
     };
   }
 
-  const dayCount = predictQuitDay(parsed.data, user.trainingDaysPerWeek);
+  // Buttons are optional since s157 (no fixed answer may apply); the
+  // heuristics stay deterministic by treating a skipped question as the
+  // neutral middle of its scale. The failure mode comes from their FIRST
+  // picked reason (they're listed in the order clicked), falling back to the
+  // legacy single pick, then to the quiet-fade mode.
+  const answers = parsed.data;
+  const dayCount = predictQuitDay(
+    {
+      appsTried: answers.appsTried ?? "1-2",
+      restarts: answers.restarts ?? "2-3",
+      longestStreak: answers.longestStreak ?? "3-4w",
+      lifeLoad: answers.lifeLoad ?? "normal",
+    },
+    user.trainingDaysPerWeek
+  );
   // Day 1 = today on the member's own wall clock, so "Day 23" lands on the
   // noon-UTC anchor of their local calendar day 22 days out (FEAT-8 helpers).
   const quitDate = new Date(
     todayAnchorInTz(user.timezone).getTime() + (dayCount - 1) * DAY_MS
   );
-  const failureMode = failureModeFor(parsed.data.lastKiller);
+  const failureMode = failureModeFor(
+    answers.killers?.[0] ?? answers.lastKiller ?? "no-reason"
+  );
   const dateLabel = formatCalendarDay(quitDate);
 
   try {
@@ -108,7 +125,7 @@ export async function runAutopsy(
       narrative,
     };
 
-    await createQuitPrediction({
+    const created = await createQuitPrediction({
       userId: user.id,
       quitDate,
       failureMode,
@@ -117,7 +134,7 @@ export async function runAutopsy(
 
     revalidatePath("/quit-date");
     revalidatePath("/today");
-    return { ok: true, content };
+    return { ok: true, content, id: created?.id ?? null };
   } catch (_error) {
     return {
       ok: false,

@@ -16,6 +16,7 @@ import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { CheckInSettings } from "@/components/account/check-in-settings";
 import { DeleteDataButton } from "@/components/account/delete-data-button";
+import { MemorySettings } from "@/components/account/memory-settings";
 import { QuitDateSettings } from "@/components/account/quit-date-settings";
 import { SensorySettings } from "@/components/account/sensory-settings";
 import { WeeklyReportSettings } from "@/components/account/weekly-report-settings";
@@ -235,6 +236,12 @@ async function AccountSettings() {
                 initialHaptics={user.hapticsEnabled}
                 initialSound={user.soundEnabled}
               />
+            </div>
+
+            {/* Chad's memory (owner order, s157): the chat Settings popup has
+                the same switch; members expect it here too. */}
+            <div className="mt-6 border-border border-t pt-6">
+              <MemorySettings initialEnabled={user.memoryEnabled} />
             </div>
 
             {/* The Quit Date on/off switch (FEAT-25, all members). */}

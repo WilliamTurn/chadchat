@@ -1,9 +1,7 @@
 "use client";
 
-import { Download, Loader2, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { ShareDestinations } from "@/components/share/share-destinations";
 import { Textarea } from "@/components/ui/textarea";
 import { stripEmphasis } from "@/lib/text/emphasis";
 
@@ -25,7 +23,6 @@ export function RoastComposer({ initialText }: { initialText: string }) {
     stripEmphasis(initialText).slice(0, ROAST_MAX_CHARS)
   );
   const [preview, setPreview] = useState<string | null>(null);
-  const [busy, setBusy] = useState<"share" | "download" | null>(null);
 
   // Debounced live preview — drawing is cheap, but no need to redraw per key.
   useEffect(() => {
@@ -44,37 +41,12 @@ export function RoastComposer({ initialText }: { initialText: string }) {
     return () => clearTimeout(handle);
   }, [text]);
 
-  async function exportCard(mode: "share" | "download") {
-    if (!text.trim()) {
-      toast.error("There's nothing to share yet.");
-      return;
-    }
-    setBusy(mode);
-    try {
-      const [{ renderRoastCardCanvas }, canvasLib] = await Promise.all([
-        import("@/lib/roast/render"),
-        import("@/lib/share/canvas"),
-      ]);
-      const blob = await canvasLib.canvasToPngBlob(
-        renderRoastCardCanvas(text)
-      );
-      if (mode === "download") {
-        canvasLib.downloadPng(blob, "chad-roast.png");
-        toast.success("Card saved.");
-      } else {
-        const outcome = await canvasLib.shareOrDownloadPng(
-          blob,
-          "chad-roast.png"
-        );
-        if (outcome === "downloaded") {
-          toast.success("Card saved. Post it wherever people know you.");
-        }
-      }
-    } catch {
-      toast.error("Couldn't build the card on this device.");
-    } finally {
-      setBusy(null);
-    }
+  async function getBlob(): Promise<Blob> {
+    const [{ renderRoastCardCanvas }, canvasLib] = await Promise.all([
+      import("@/lib/roast/render"),
+      import("@/lib/share/canvas"),
+    ]);
+    return canvasLib.canvasToPngBlob(renderRoastCardCanvas(text));
   }
 
   return (
@@ -102,31 +74,13 @@ export function RoastComposer({ initialText }: { initialText: string }) {
         />
       )}
 
-      <div className="flex flex-wrap gap-2">
-        <Button
-          disabled={busy !== null || !text.trim()}
-          onClick={() => exportCard("share")}
-        >
-          {busy === "share" ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Share2 className="size-4" />
-          )}
-          Share
-        </Button>
-        <Button
-          disabled={busy !== null || !text.trim()}
-          onClick={() => exportCard("download")}
-          variant="outline"
-        >
-          {busy === "download" ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Download className="size-4" />
-          )}
-          Download
-        </Button>
-      </div>
+      {text.trim() && (
+        <ShareDestinations
+          caption={`"${stripEmphasis(text).replace(/\s+/g, " ").trim()}" — Chad, my AI coach. chadcoach.ai`}
+          filename="chad-roast.png"
+          getBlob={getBlob}
+        />
+      )}
     </div>
   );
 }

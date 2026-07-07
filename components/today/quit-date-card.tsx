@@ -37,7 +37,7 @@ export function QuitDateCard({
       <ModuleCard glow="blood">
         <ModuleHeader
           icon={<Skull className="size-4" />}
-          title="The Test"
+          title="The Quit Test"
           tone="blood"
         />
         <p className="text-muted-foreground text-sm">

@@ -12,13 +12,29 @@ import {
 // both render from these. The heuristics stay in lib/quit/heuristics.ts
 // (pure, unit-tested); this module owns validation and display labels.
 
-/** The Autopsy intake: the member's own failure history, validated. */
+/** One optional per-question free-text note (s157, owner order: the buttons
+ * never fit everyone, so every question takes the member's own words too). */
+const noteField = z.string().trim().max(300).optional();
+
+/**
+ * The Quit Test intake: the member's own failure history, validated. Every
+ * button answer is OPTIONAL (s157: no button may apply), "why did you stop"
+ * is multi-select (`killers`), and each question carries an optional note.
+ * `lastKiller` is the pre-s157 single-select shape — kept optional so every
+ * stored prediction row still parses.
+ */
 export const autopsyAnswersSchema = z.object({
-  appsTried: z.enum(APPS_TRIED_VALUES),
-  restarts: z.enum(RESTART_VALUES),
-  longestStreak: z.enum(STREAK_VALUES),
-  lastKiller: z.enum(KILLER_VALUES),
-  lifeLoad: z.enum(LIFE_LOAD_VALUES),
+  appsTried: z.enum(APPS_TRIED_VALUES).nullable().optional(),
+  restarts: z.enum(RESTART_VALUES).nullable().optional(),
+  longestStreak: z.enum(STREAK_VALUES).nullable().optional(),
+  lastKiller: z.enum(KILLER_VALUES).nullable().optional(),
+  killers: z.array(z.enum(KILLER_VALUES)).max(6).optional(),
+  lifeLoad: z.enum(LIFE_LOAD_VALUES).nullable().optional(),
+  appsTriedNote: noteField,
+  restartsNote: noteField,
+  streakNote: noteField,
+  killersNote: noteField,
+  lifeLoadNote: noteField,
   confession: z
     .string()
     .trim()
@@ -97,7 +113,7 @@ export const APPS_TRIED_OPTIONS = [
 }[];
 
 export const RESTART_OPTIONS = [
-  { value: "first-time", label: "This is my first real attempt" },
+  { value: "first-time", label: "Never, this is my first attempt" },
   { value: "2-3", label: "2 or 3 times" },
   { value: "4-6", label: "4 to 6 times" },
   { value: "lost-count", label: "I've lost count" },
@@ -146,14 +162,68 @@ function labelFor<T extends string>(
   return options.find((o) => o.value === value)?.label ?? value;
 }
 
-/** The member's answers as human-readable lines (for the verdict prompt). */
+/**
+ * The member's answers as human-readable lines (for the verdict prompt).
+ * Handles both the pre-s157 shape (all buttons required, single lastKiller)
+ * and the current one (optional buttons, multi-select killers, per-question
+ * notes). Skipped questions are simply omitted.
+ */
 export function describeAnswers(answers: AutopsyAnswersInput): string {
-  return [
-    `- Fitness apps or programs tried before this one: ${labelFor(APPS_TRIED_OPTIONS, answers.appsTried)}`,
-    `- Times started over from scratch: ${labelFor(RESTART_OPTIONS, answers.restarts)}`,
-    `- Longest they have ever stuck with it: ${labelFor(STREAK_OPTIONS, answers.longestStreak)}`,
-    `- What killed the last attempt: ${labelFor(KILLER_OPTIONS, answers.lastKiller)}`,
-    `- Current life load: ${labelFor(LIFE_LOAD_OPTIONS, answers.lifeLoad)}`,
-    `- Their own words on how the last attempt ended: "${answers.confession}"`,
-  ].join("\n");
+  const lines: string[] = [];
+  const add = (
+    prefix: string,
+    label: string | null | undefined,
+    note: string | null | undefined
+  ) => {
+    const parts: string[] = [];
+    if (label) {
+      parts.push(label);
+    }
+    if (note?.trim()) {
+      parts.push(`in their own words: "${note.trim()}"`);
+    }
+    if (parts.length > 0) {
+      lines.push(`- ${prefix}: ${parts.join("; ")}`);
+    }
+  };
+
+  add(
+    "Fitness apps or programs tried before this one",
+    answers.appsTried ? labelFor(APPS_TRIED_OPTIONS, answers.appsTried) : null,
+    answers.appsTriedNote
+  );
+  add(
+    "Times they have quit and started over in the past",
+    answers.restarts ? labelFor(RESTART_OPTIONS, answers.restarts) : null,
+    answers.restartsNote
+  );
+  add(
+    "Longest they have ever stuck with a training program",
+    answers.longestStreak
+      ? labelFor(STREAK_OPTIONS, answers.longestStreak)
+      : null,
+    answers.streakNote
+  );
+  const killerPicks =
+    answers.killers && answers.killers.length > 0
+      ? answers.killers
+      : answers.lastKiller
+        ? [answers.lastKiller]
+        : [];
+  add(
+    "Why their previous attempts ended",
+    killerPicks.length > 0
+      ? killerPicks.map((k) => labelFor(KILLER_OPTIONS, k)).join(", ")
+      : null,
+    answers.killersNote
+  );
+  add(
+    "Their day-to-day life right now",
+    answers.lifeLoad ? labelFor(LIFE_LOAD_OPTIONS, answers.lifeLoad) : null,
+    answers.lifeLoadNote
+  );
+  lines.push(
+    `- Their own words on how the last attempt ended: "${answers.confession}"`
+  );
+  return lines.join("\n");
 }

@@ -679,13 +679,6 @@ async function TodayContent() {
         </div>
       </header>
 
-      {/* The Quit Date (FEAT-21): Chad's prediction is STATUS, so it sits
-          with the hero, above the loggers. Full width, every member — unless
-          they switched the feature off on /account (FEAT-25). */}
-      {user.quitDateEnabled && (
-        <QuitDateCard prediction={latestQuitPrediction} timezone={timezone} />
-      )}
-
       {/* R2-13 + R2-14: the page's organizing model (STATUS → LOGGERS →
           PLANS → REVIEW) is visible as labeled section bands, and the cards
           are regrouped by role. The Workout log joins the daily loggers
@@ -1092,6 +1085,13 @@ async function TodayContent() {
           />
         )}
       </SectionBand>
+
+      {/* The Quit Test (FEAT-21/25/26): at the BOTTOM of the dashboard,
+          under Results (owner order, s157). Full width, every member —
+          unless they switched the feature off on /account (FEAT-25). */}
+      {user.quitDateEnabled && (
+        <QuitDateCard prediction={latestQuitPrediction} timezone={timezone} />
+      )}
 
       {/* No quick-actions row (P2-8): it duplicated the top nav incompletely,
           and the mobile sheet nav already covers reach. */}

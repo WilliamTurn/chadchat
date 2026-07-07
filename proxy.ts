@@ -68,9 +68,13 @@ export async function proxy(request: NextRequest) {
     // safely handles invalid/expired links, so it must stay reachable
     // logged-out — otherwise the paywall redirect eats the token.
     pathname === "/verify-email";
-  // Public share links must work for logged-out visitors (the page itself only
-  // renders chats whose visibility is "public").
-  const isPublicShare = pathname.startsWith("/share/");
+  // Public share links must work for logged-out visitors: /share/[id] only
+  // renders chats whose visibility is "public", and /q/[id] (FEAT-23) is the
+  // quit-prediction share page + its OG card image — social scrapers and
+  // click-throughs never have a session, and the unguessable uuid is the
+  // capability.
+  const isPublicShare =
+    pathname.startsWith("/share/") || pathname.startsWith("/q/");
 
   if (!token) {
     if (isAuthPage || isPublicShare) {
