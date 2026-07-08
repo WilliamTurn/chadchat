@@ -402,11 +402,12 @@ export function warmupRamp(
 // an old workout for correction isn't an in-progress session.)
 // ---------------------------------------------------------------------------
 
-export const DRAFT_KEY = "chad:workout-draft:v1";
+export const DRAFT_KEY = "chad:workout-draft:v2";
 
 export type SessionDraft = {
   mode: LoggerMode;
-  startedAt: number | null;
+  /** Stopwatch seconds at save time (the clock itself is strictly manual). */
+  elapsedSeconds: number;
   title: string;
   date: string;
   durationMin: string;

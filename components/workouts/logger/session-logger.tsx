@@ -10,6 +10,8 @@ import {
   Link2,
   MoreVertical,
   NotebookPen,
+  Pause,
+  Play,
   Plus,
   Trash2,
   Trophy,
@@ -19,6 +21,7 @@ import { useRouter } from "next/navigation";
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
   useTransition,
 } from "react";
@@ -115,20 +118,57 @@ function mmss(totalSeconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-/** Live elapsed-seconds ticker for the session clock. */
-function useElapsed(startedAt: number | null, frozen: boolean): number {
-  const [now, setNow] = useState(() => Date.now());
+/**
+ * The session stopwatch. NEVER starts on its own: opening the logger says
+ * nothing about whether the member is mid-workout or logging yesterday's
+ * session after the fact (owner order, s171 hotfix). It sits at 0:00 until
+ * they tap play; pause/resume at will; elapsed survives via the draft.
+ */
+function useStopwatch(frozen: boolean): {
+  elapsed: number;
+  running: boolean;
+  toggle: () => void;
+  reset: (seconds: number) => void;
+} {
+  const [baseSeconds, setBaseSeconds] = useState(0);
+  const [runningSince, setRunningSince] = useState<number | null>(null);
+  const [, setTick] = useState(0);
+
+  const running = runningSince != null && !frozen;
+
   useEffect(() => {
-    if (startedAt == null || frozen) {
+    if (!running) {
       return;
     }
-    const t = setInterval(() => setNow(Date.now()), 1000);
+    const t = setInterval(() => setTick((n) => n + 1), 1000);
     return () => clearInterval(t);
-  }, [startedAt, frozen]);
-  if (startedAt == null) {
-    return 0;
-  }
-  return Math.max(0, Math.floor(((frozen ? now : Date.now()) - startedAt) / 1000));
+  }, [running]);
+
+  const elapsed =
+    baseSeconds +
+    (runningSince != null
+      ? Math.max(0, Math.floor((Date.now() - runningSince) / 1000))
+      : 0);
+
+  const toggle = useCallback(() => {
+    setRunningSince((since) => {
+      if (since == null) {
+        return Date.now();
+      }
+      setBaseSeconds(
+        (b) => b + Math.max(0, Math.floor((Date.now() - since) / 1000))
+      );
+      return null;
+    });
+  }, []);
+
+  /** Load a saved elapsed value (draft resume), left PAUSED. */
+  const reset = useCallback((seconds: number) => {
+    setBaseSeconds(Math.max(0, Math.floor(seconds)));
+    setRunningSince(null);
+  }, []);
+
+  return { elapsed, running, toggle, reset };
 }
 
 /** Keep the screen awake during a live session (the Hevy "keep awake"
@@ -230,10 +270,6 @@ export function SessionLogger({
   const [exercises, setExercises] = useState<EditorExercise[]>(initialExercises);
   // Exercises whose notes editor is open even while empty.
   const [notesOpen, setNotesOpen] = useState<Set<string>>(new Set());
-  // Live sessions get a wall clock from first render; edit mode doesn't.
-  const [startedAt, setStartedAt] = useState<number | null>(() =>
-    isEdit ? null : Date.now()
-  );
   const [resumeOffer, setResumeOffer] = useState<SessionDraft | null>(null);
   const [summary, setSummary] = useState<{
     title: string;
@@ -248,8 +284,10 @@ export function SessionLogger({
   } | null>(null);
 
   const finished = summary != null;
-  const elapsed = useElapsed(startedAt, finished);
-  useWakeLock(!isEdit && !finished);
+  // The session stopwatch: 0:00 and PAUSED until the member taps play.
+  const clock = useStopwatch(finished);
+  // Keep the screen awake only while they're actually timing a session.
+  useWakeLock(clock.running && !finished);
 
   // Offer to resume an interrupted session (locked phone, killed tab). Never
   // in edit mode; reopening an old workout isn't an in-progress session.
@@ -265,6 +303,10 @@ export function SessionLogger({
   }, []);
 
   // Autosave the in-progress session (debounced). Cleared on finish/discard.
+  // The clock's elapsed value rides along via a ref so a ticking second
+  // doesn't rewrite the draft every second.
+  const elapsedRef = useRef(0);
+  elapsedRef.current = clock.elapsed;
   useEffect(() => {
     if (isEdit || finished) {
       return;
@@ -273,7 +315,7 @@ export function SessionLogger({
       if (draftIsMeaningful(exercises)) {
         writeDraft({
           mode,
-          startedAt,
+          elapsedSeconds: elapsedRef.current,
           title,
           date,
           durationMin,
@@ -284,7 +326,7 @@ export function SessionLogger({
       }
     }, 400);
     return () => clearTimeout(t);
-  }, [isEdit, finished, mode, startedAt, title, date, durationMin, notes, exercises]);
+  }, [isEdit, finished, mode, clock.running, title, date, durationMin, notes, exercises]);
 
   // Anything the member actually did this visit. Gates the leave-confirmation
   // so backing out of an untouched page never nags (and an untouched edit
@@ -304,7 +346,8 @@ export function SessionLogger({
     setDurationMin(draft.durationMin);
     setNotes(draft.notes);
     setExercises(draft.exercises);
-    setStartedAt(draft.startedAt ?? Date.now());
+    // The saved time comes back PAUSED; play resumes it if they're mid-session.
+    clock.reset(draft.elapsedSeconds ?? 0);
     setResumeOffer(null);
     setTouched(true);
   }
@@ -517,7 +560,7 @@ export function SessionLogger({
       const lastLine = last ? ` (last time: ${formatLastLine(last, ex.kind ?? "weighted")})` : "";
       return `${ex.name}: ${done || "not started"}${lastLine}`;
     });
-    return `I'm mid-workout right now (${title.trim() || "unnamed session"}, ${mmss(elapsed)} in). Here's where I am: ${lines.join("; ")}. Tell me exactly what to aim for on my remaining sets: weights, reps, and whether to push or hold back.`;
+    return `I'm mid-workout right now (${title.trim() || "unnamed session"}${clock.elapsed > 0 ? `, ${mmss(clock.elapsed)} in` : ""}). Here's where I am: ${lines.join("; ")}. Tell me exactly what to aim for on my remaining sets: weights, reps, and whether to push or hold back.`;
   }
 
   function submit() {
@@ -587,8 +630,8 @@ export function SessionLogger({
         return;
       }
       durationSeconds = Math.round(n * 60);
-    } else if (!isEdit && startedAt != null) {
-      durationSeconds = Math.min(86_400, elapsed);
+    } else if (!isEdit && clock.elapsed > 0) {
+      durationSeconds = Math.min(86_400, clock.elapsed);
     }
 
     const payload = {
@@ -741,7 +784,30 @@ export function SessionLogger({
           </Button>
           <div className="flex min-w-0 items-center gap-3 text-sm tabular-nums">
             {!isEdit && (
-              <span className="font-display font-semibold">{mmss(elapsed)}</span>
+              <button
+                aria-label={
+                  clock.running
+                    ? "Pause the workout timer"
+                    : "Start the workout timer"
+                }
+                className={cn(
+                  "flex h-9 items-center gap-1.5 rounded-full border px-3 transition-colors",
+                  clock.running
+                    ? "border-blood/40 bg-blood/10 text-blood"
+                    : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                )}
+                onClick={clock.toggle}
+                type="button"
+              >
+                {clock.running ? (
+                  <Pause className="size-3.5" />
+                ) : (
+                  <Play className="size-3.5" />
+                )}
+                <span className="font-display font-semibold">
+                  {mmss(clock.elapsed)}
+                </span>
+              </button>
             )}
             <span className="text-muted-foreground">
               {volumeNow > 0 ? `${volumeNow.toLocaleString()} lb` : "0 lb"}
@@ -827,9 +893,9 @@ export function SessionLogger({
             Duration (minutes)
             {!isEdit && (
               <KpiHelp label="Duration">
-                Tracked automatically by the session clock in the top bar.
-                Only type a number here if you want to override it, for
-                example when logging a workout after the fact.
+                Optional. Timing your session? Tap the play button on the
+                clock in the top bar and this fills itself in. Logging after
+                the fact? Just type the minutes, or leave it blank.
               </KpiHelp>
             )}
           </Label>
@@ -838,7 +904,7 @@ export function SessionLogger({
             id="wk-duration"
             inputMode="numeric"
             onChange={(e) => { setTouched(true); setDurationMin(e.target.value); }}
-            placeholder={isEdit ? "optional" : "auto from the clock"}
+            placeholder="optional"
             value={durationMin}
           />
         </div>

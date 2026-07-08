@@ -177,7 +177,7 @@ async function LoggerContent({
         ? "Same exercises as last time. Your previous numbers are ghosted in: check a set off to accept them, or type what you did."
         : mode === "plan"
           ? "Your plan day, ready to run. Check sets off as you train."
-          : "Every set, rep, and pound. The timer is already running.";
+          : "Every set, rep, and pound. Want the session timed? Tap play on the clock. Logging a past workout? Just type it in.";
 
   return (
     <RewardProvider haptics={user.hapticsEnabled} sound={user.soundEnabled}>
