@@ -126,22 +126,17 @@ export function CustomExercisePanel({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <Button
-          className="gap-1.5"
+        <button
+          className="mb-2 inline-flex min-h-9 items-center gap-1 text-muted-foreground text-xs underline-offset-4 transition-colors hover:text-foreground hover:underline"
           onClick={onBack}
-          size="sm"
           type="button"
-          variant="ghost"
         >
-          <ArrowLeft className="size-4" />
-          Back to exercise list
-        </Button>
-      </div>
-
-      <div>
-        <h2 className="font-semibold text-xl tracking-tight">
+          <ArrowLeft className="size-3.5" />
+          Back to the exercise list
+        </button>
+        <h1 className="font-semibold text-2xl tracking-tight">
           {isEdit ? "Edit custom exercise" : "Create a custom exercise"}
-        </h2>
+        </h1>
         <p className="mt-1 text-muted-foreground text-sm">
           It joins your library like any built-in exercise: searchable, with
           its own history, PRs, and strength trend.

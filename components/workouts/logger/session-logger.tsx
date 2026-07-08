@@ -28,6 +28,7 @@ import {
 import { toast } from "sonner";
 import { editWorkout, saveWorkout } from "@/app/workouts/actions";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
+import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { KpiHelp } from "@/components/dashboard/kpi";
 import { useReward } from "@/components/dashboard/reward";
 import { Button } from "@/components/ui/button";
@@ -220,6 +221,8 @@ export function SessionLogger({
   customExercises,
   prBaseline,
   recentVolumes,
+  heading,
+  sub,
 }: {
   // "repeat" prefills exercises from `initial` with values ghosted and saves a
   // NEW workout dated today; "plan" lays out a training-plan day (FN-2).
@@ -232,6 +235,9 @@ export function SessionLogger({
   prBaseline: Record<string, PrBaseline>;
   /** Recent sessions' volumes (lb), for the summary's vs-average line. */
   recentVolumes: number[];
+  /** Page title + one-line subtitle, shown on the main logger view only. */
+  heading: string;
+  sub: string;
 }) {
   const router = useRouter();
   const reward = useReward();
@@ -768,6 +774,12 @@ export function SessionLogger({
 
   return (
     <div className="flex flex-col gap-5">
+      <div className="mb-1">
+        <BackToDashboard href="/workouts" label="Workouts" />
+        <h1 className="font-semibold text-2xl tracking-tight">{heading}</h1>
+        <p className="mt-1 text-muted-foreground text-sm">{sub}</p>
+      </div>
+
       {/* Sticky session bar: always-visible back, live clock + volume, and
           the finish action, however deep the page scrolls. */}
       <div className="sticky top-0 z-30 -mx-4 border-border border-b bg-background/95 px-4 py-2.5 backdrop-blur sm:-mx-6 sm:px-6">

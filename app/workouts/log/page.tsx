@@ -2,7 +2,6 @@ import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
-import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { WorkoutsSkeleton } from "@/components/dashboard/page-skeletons";
@@ -181,19 +180,19 @@ async function LoggerContent({
 
   return (
     <RewardProvider haptics={user.hapticsEnabled} sound={user.soundEnabled}>
-      <div className="mb-6">
-        <BackToDashboard href="/workouts" label="Workouts" />
-        <h1 className="font-semibold text-2xl tracking-tight">{heading}</h1>
-        <p className="mt-1 text-muted-foreground text-sm">{sub}</p>
-      </div>
+      {/* The page header renders INSIDE the logger so each view (log, add
+          exercises, create custom) shows exactly ONE header and ONE back
+          path — never two stacked page headers (owner report, s171). */}
       <SessionLogger
         customExercises={customExercises}
+        heading={heading}
         initial={initial}
         lastSets={lastSets}
         mode={mode}
         plan={plan}
         prBaseline={prBaseline}
         recentVolumes={recentVolumes}
+        sub={sub}
       />
     </RewardProvider>
   );

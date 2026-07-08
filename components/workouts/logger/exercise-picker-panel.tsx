@@ -5,6 +5,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   BUILT_IN_EXERCISES,
   EQUIPMENT_LABELS,
   type Equipment,
@@ -215,23 +222,18 @@ export function ExercisePickerPanel({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-2">
-        <Button
-          className="gap-1.5"
-          onClick={onBack}
-          size="sm"
-          type="button"
-          variant="ghost"
-        >
-          <ArrowLeft className="size-4" />
-          Back to workout
-        </Button>
-      </div>
-
       <div>
-        <h2 className="font-semibold text-xl tracking-tight">
+        <button
+          className="mb-2 inline-flex min-h-9 items-center gap-1 text-muted-foreground text-xs underline-offset-4 transition-colors hover:text-foreground hover:underline"
+          onClick={onBack}
+          type="button"
+        >
+          <ArrowLeft className="size-3.5" />
+          Back to your workout
+        </button>
+        <h1 className="font-semibold text-2xl tracking-tight">
           {replacing ? `Replace ${replaceTarget}` : "Add exercises"}
-        </h2>
+        </h1>
         <p className="mt-1 text-muted-foreground text-sm">
           {replacing
             ? "Pick the exercise to swap in. Your sets and typed numbers carry over."
@@ -250,38 +252,48 @@ export function ExercisePickerPanel({
         />
       </div>
 
-      {/* Filters: one row per dimension, horizontally scrollable on phones. */}
-      <div className="flex flex-col gap-2">
-        <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
-          <FilterChip
-            active={muscle == null}
-            label="All muscles"
-            onClick={() => setMuscle(null)}
-          />
-          {MUSCLE_GROUPS.map((m) => (
-            <FilterChip
-              active={muscle === m}
-              key={m}
-              label={MUSCLE_GROUP_LABELS[m]}
-              onClick={() => setMuscle(muscle === m ? null : m)}
-            />
-          ))}
-        </div>
-        <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
-          <FilterChip
-            active={equipment == null}
-            label="All equipment"
-            onClick={() => setEquipment(null)}
-          />
-          {(Object.keys(EQUIPMENT_LABELS) as Equipment[]).map((eq) => (
-            <FilterChip
-              active={equipment === eq}
-              key={eq}
-              label={EQUIPMENT_LABELS[eq]}
-              onClick={() => setEquipment(equipment === eq ? null : eq)}
-            />
-          ))}
-        </div>
+      {/* Filters: two plain dropdowns, the standard pro-app pattern. */}
+      <div className="grid grid-cols-2 gap-2">
+        <Select
+          onValueChange={(v) => setMuscle(v === "all" ? null : (v as MuscleGroup))}
+          value={muscle ?? "all"}
+        >
+          <SelectTrigger
+            aria-label="Filter by muscle group"
+            className="h-11 w-full"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All muscles</SelectItem>
+            {MUSCLE_GROUPS.map((m) => (
+              <SelectItem key={m} value={m}>
+                {MUSCLE_GROUP_LABELS[m]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          onValueChange={(v) =>
+            setEquipment(v === "all" ? null : (v as Equipment))
+          }
+          value={equipment ?? "all"}
+        >
+          <SelectTrigger
+            aria-label="Filter by equipment"
+            className="h-11 w-full"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All equipment</SelectItem>
+            {(Object.keys(EQUIPMENT_LABELS) as Equipment[]).map((eq) => (
+              <SelectItem key={eq} value={eq}>
+                {EQUIPMENT_LABELS[eq]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {recents.length > 0 && (
@@ -351,30 +363,5 @@ export function ExercisePickerPanel({
         </div>
       )}
     </div>
-  );
-}
-
-function FilterChip({
-  active,
-  label,
-  onClick,
-}: {
-  active: boolean;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      className={cn(
-        "h-9 shrink-0 whitespace-nowrap rounded-full border px-3 text-xs transition-colors",
-        active
-          ? "border-blood/40 bg-blood/10 font-medium text-blood"
-          : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
-      )}
-      onClick={onClick}
-      type="button"
-    >
-      {label}
-    </button>
   );
 }
