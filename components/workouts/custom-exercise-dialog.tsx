@@ -156,7 +156,16 @@ export function CustomExerciseDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-md">
+      {/* No uninvited keyboard on phones (NUT-27b rule): block the open
+          auto-focus on coarse pointers; desktop still lands in the name. */}
+      <DialogContent
+        className="gap-0 overflow-hidden p-0 sm:max-w-md"
+        onOpenAutoFocus={(e) => {
+          if (window.matchMedia("(pointer: coarse)").matches) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader className="border-border border-b px-4 py-3">
           <DialogTitle>
             {isEdit ? "Edit custom exercise" : "Create a custom exercise"}
@@ -167,7 +176,6 @@ export function CustomExerciseDialog({
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="cx-name">Name</Label>
             <Input
-              autoFocus={!isEdit}
               id="cx-name"
               maxLength={120}
               onChange={(e) => setName(e.target.value)}

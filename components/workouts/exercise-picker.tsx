@@ -108,7 +108,25 @@ export function ExercisePicker({
   return (
     <>
       <Dialog onOpenChange={onOpenChange} open={open}>
-        <DialogContent className="max-h-[85vh] gap-0 overflow-hidden p-0 sm:max-w-md">
+        {/* While the create/edit exercise dialog is stacked on top, taps
+            inside it register as outside presses of THIS dialog on touch
+            devices and would dismiss the picker underneath (s167). */}
+        <DialogContent
+          className="max-h-[85vh] gap-0 overflow-hidden p-0 sm:max-w-md"
+          onInteractOutside={(e) => {
+            if (editorState != null) {
+              e.preventDefault();
+            }
+          }}
+          // On phones, auto-focusing the search pops the keyboard over the
+          // exercise list the moment the dialog opens (the NUT-27b rule: no
+          // uninvited keyboards). Desktop keeps type-to-search immediately.
+          onOpenAutoFocus={(e) => {
+            if (window.matchMedia("(pointer: coarse)").matches) {
+              e.preventDefault();
+            }
+          }}
+        >
           <DialogHeader className="border-border border-b px-4 py-3">
             <DialogTitle>Add exercise</DialogTitle>
           </DialogHeader>
@@ -117,7 +135,6 @@ export function ExercisePicker({
             <div className="relative">
               <Search className="-translate-y-1/2 absolute top-1/2 left-2.5 size-4 text-muted-foreground" />
               <Input
-                autoFocus
                 className="pl-8"
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search exercises…"

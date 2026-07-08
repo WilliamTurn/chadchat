@@ -417,6 +417,18 @@ export function WorkoutBuilder({
     );
   }
 
+  // One lb/kg control per exercise (the pro-app pattern) instead of a select
+  // squeezed into every set row; it applies to all of the exercise's sets.
+  function setUnit(exUid: string, unit: "lb" | "kg") {
+    setExercises((prev) =>
+      prev.map((ex) =>
+        ex.uid === exUid
+          ? { ...ex, sets: ex.sets.map((s) => ({ ...s, unit })) }
+          : ex
+      )
+    );
+  }
+
   function submit() {
     if (!title.trim()) {
       toast.error("Name this workout.");
@@ -539,7 +551,15 @@ export function WorkoutBuilder({
         open={open}
       >
         <DialogTrigger asChild>{trigger}</DialogTrigger>
-        <DialogContent className="max-h-[90vh] gap-0 overflow-hidden p-0 sm:max-w-2xl">
+        {/* Outside interactions never dismiss the logger: a stray tap must not
+            throw away a half-entered session, and on touch devices a tap
+            inside the stacked exercise-picker dialog registers as an outside
+            press of THIS dialog and silently closed both (the s167 mobile
+            dead-tap bug). Close = Cancel, the X, or Escape. */}
+        <DialogContent
+          className="max-h-[90vh] gap-0 overflow-hidden p-0 sm:max-w-2xl"
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader className="border-border border-b px-5 py-4">
             <DialogTitle>
               {mode === "edit"
@@ -559,7 +579,7 @@ export function WorkoutBuilder({
             ) : null}
           </DialogHeader>
 
-          <div className="flex max-h-[70vh] flex-col gap-5 overflow-y-auto px-5 py-4">
+          <div className="flex max-h-[70vh] flex-col gap-5 overflow-y-auto px-3 py-4 sm:px-5">
             {/* Session meta */}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div className="flex flex-col gap-1.5 sm:col-span-1">
@@ -623,6 +643,7 @@ export function WorkoutBuilder({
                     onMoveUp={() => moveExercise(ex.uid, -1)}
                     onRemove={() => removeExercise(ex.uid)}
                     onRemoveSet={(setUid) => removeSet(ex.uid, setUid)}
+                    onSetUnit={(unit) => setUnit(ex.uid, unit)}
                     onToggleLink={() => toggleLink(ex.uid)}
                     onUpdate={(patch) => updateExercise(ex.uid, patch)}
                     onUpdateSet={(setUid, patch) =>
@@ -699,6 +720,7 @@ function ExerciseBlock({
   onMoveDown,
   onRemove,
   onAddSet,
+  onSetUnit,
   onToggleLink,
   onUpdateSet,
   onRemoveSet,
@@ -716,6 +738,7 @@ function ExerciseBlock({
   onMoveDown: () => void;
   onRemove: () => void;
   onAddSet: () => void;
+  onSetUnit: (unit: "lb" | "kg") => void;
   onToggleLink: () => void;
   onUpdateSet: (setUid: string, patch: Partial<EditorSet>) => void;
   onRemoveSet: (setUid: string) => void;
@@ -723,11 +746,12 @@ function ExerciseBlock({
   // Running index of working sets, for the set-number badge.
   let workingCount = 0;
   const kind = exercise.kind ?? "weighted";
+  const unit = exercise.sets[0]?.unit ?? "lb";
 
   return (
     <div
       className={cn(
-        "rounded-xl border border-border bg-background/40 p-3",
+        "rounded-xl border border-border bg-background/40 p-2.5 sm:p-3",
         groupNo != null && "border-l-2",
         groupNo != null && GROUP_RAILS[(groupNo - 1) % GROUP_RAILS.length]
       )}
@@ -821,12 +845,35 @@ function ExerciseBlock({
       </div>
 
       {/* Column headers. A timed exercise (plank, cardio) logs seconds, not
-          load × reps; a bodyweight one logs reps with optional added load. */}
-      <div className="mb-1 flex items-center gap-2 px-1 text-[11px] text-muted-foreground uppercase tracking-wide">
+          load × reps; a bodyweight one logs reps with optional added load.
+          The lb/kg unit lives HERE, once per exercise, not as a select inside
+          every set row — per-row selects crushed the weight/reps inputs to
+          unreadable slivers at phone widths (s167). */}
+      <div className="mb-1 flex items-center gap-1.5 px-1 text-[11px] text-muted-foreground uppercase tracking-wide sm:gap-2">
         <span className="w-8 text-center">Set</span>
-        {kind !== "timed" && <span className="flex-1">Weight</span>}
+        {kind !== "timed" && (
+          <span className="flex flex-1 items-center gap-1">
+            Weight
+            <Select
+              onValueChange={(v) => onSetUnit(v as "lb" | "kg")}
+              value={unit}
+            >
+              <SelectTrigger
+                aria-label="Weight unit for this exercise"
+                className="h-6 gap-0.5 rounded-md px-1.5 text-[11px] text-muted-foreground"
+                size="sm"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="lb">lb</SelectItem>
+                <SelectItem value="kg">kg</SelectItem>
+              </SelectContent>
+            </Select>
+          </span>
+        )}
         <span className="flex-1">{kind === "timed" ? "Seconds" : "Reps"}</span>
-        <span className="flex w-12 items-center justify-center gap-0.5">
+        <span className="flex w-11 items-center justify-center gap-0.5">
           RPE
           <KpiHelp label="RPE">
             Rate of Perceived Exertion: how hard the set felt, 1 to 10. A 10
@@ -856,7 +903,7 @@ function ExerciseBlock({
             ghost?.weight || (kind === "bodyweight" ? "BW" : "–");
           const repsGhost = ghost?.reps || "–";
           return (
-            <div className="flex items-center gap-2" key={s.uid}>
+            <div className="flex items-center gap-1.5 sm:gap-2" key={s.uid}>
               <button
                 aria-label={`Set type: ${SET_TYPE_LABEL[s.setType]} (tap to change)`}
                 className={cn(
@@ -882,40 +929,21 @@ function ExerciseBlock({
               </button>
 
               {kind !== "timed" && (
-                <div className="flex flex-1 items-center gap-1">
-                  <Input
-                    aria-label="Weight"
-                    className="h-9"
-                    inputMode="decimal"
-                    onChange={(e) =>
-                      onUpdateSet(s.uid, { weight: e.target.value })
-                    }
-                    placeholder={weightGhost}
-                    value={s.weight}
-                  />
-                  <Select
-                    onValueChange={(v) =>
-                      onUpdateSet(s.uid, { unit: v as "lb" | "kg" })
-                    }
-                    value={s.unit}
-                  >
-                    <SelectTrigger
-                      aria-label="Unit"
-                      className="h-9 shrink-0 gap-1 rounded-md px-2 text-muted-foreground text-xs"
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="lb">lb</SelectItem>
-                      <SelectItem value="kg">kg</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <Input
+                  aria-label={`Weight (${unit})`}
+                  className="h-9 flex-1 px-2 text-center"
+                  inputMode="decimal"
+                  onChange={(e) =>
+                    onUpdateSet(s.uid, { weight: e.target.value })
+                  }
+                  placeholder={weightGhost}
+                  value={s.weight}
+                />
               )}
 
               <Input
                 aria-label={kind === "timed" ? "Seconds" : "Reps"}
-                className="h-9 flex-1"
+                className="h-9 flex-1 px-2 text-center"
                 inputMode="numeric"
                 onChange={(e) => onUpdateSet(s.uid, { reps: e.target.value })}
                 placeholder={repsGhost}
@@ -924,7 +952,7 @@ function ExerciseBlock({
 
               <Input
                 aria-label="RPE"
-                className="h-9 w-12 px-1 text-center"
+                className="h-9 w-11 px-1 text-center"
                 inputMode="decimal"
                 onChange={(e) => onUpdateSet(s.uid, { rpe: e.target.value })}
                 placeholder="–"

@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
+import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { QuitDateExperience } from "@/components/quit/quit-date-experience";
@@ -169,6 +170,7 @@ async function QuitDateContent() {
 function PageHeading({ title, sub }: { title: string; sub: string }) {
   return (
     <div className="mb-8 max-w-2xl">
+      <BackToDashboard />
       <h1 className="font-semibold text-2xl tracking-tight">{title}</h1>
       <p className="mt-1 text-muted-foreground text-sm">{sub}</p>
     </div>
