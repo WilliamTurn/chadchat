@@ -22,10 +22,7 @@ import { formatDayInTzSmartYear } from "@/lib/date";
 import { findCalorieConflict, findOverlapIds } from "@/lib/goals/coherence";
 import { trendWeightInUnit } from "@/lib/goals/latest-weight";
 import { clientField } from "@/lib/memory/client-field";
-import {
-  distinctExerciseNames,
-  toWorkoutData,
-} from "@/lib/workouts/serialize";
+import { toWorkoutData } from "@/lib/workouts/serialize";
 import { exercise1RMTrend } from "@/lib/workouts/stats";
 
 /**
@@ -125,7 +122,6 @@ async function GoalsContent() {
     trendWeightInUnit(entries, user.weightUnit)?.value ?? null;
 
   const workoutData = recentWorkouts.map(toWorkoutData);
-  const exerciseNames = distinctExerciseNames(workoutData);
   const liftProgress: Record<string, LiftProgress> = {};
   for (const g of goalItems) {
     if (g.metric === "lift" && g.metricRef) {
@@ -147,7 +143,6 @@ async function GoalsContent() {
       <GoalList
         calorieConflict={calorieConflict}
         currentWeight={currentWeight}
-        exerciseNames={exerciseNames}
         goals={goalItems}
         liftProgress={liftProgress}
         memoryGoalHint={memoryGoalHint}

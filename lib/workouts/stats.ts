@@ -316,6 +316,55 @@ export function lastSetsByExercise(
   return out;
 }
 
+// The all-time bests the live logger compares typed sets against, per
+// exercise (lowercased name). Everything is normalized to lb so a kg set is
+// judged fairly against a lb history.
+export type PrBaseline = {
+  bestWeightLb: number;
+  bestE1RMLb: number;
+  bestReps: number;
+};
+
+/**
+ * All-time bests per exercise, for live PR detection while logging: the page
+ * computes this once from history and the logger flags any typed set that
+ * beats it ("PR" chip) the moment it's entered — not after saving.
+ */
+export function prBaselineByExercise(
+  workouts: WorkoutData[]
+): Record<string, PrBaseline> {
+  const out: Record<string, PrBaseline> = {};
+  for (const w of workouts) {
+    for (const ex of w.exercises) {
+      const key = ex.name.trim().toLowerCase();
+      if (!key) {
+        continue;
+      }
+      const rec = out[key] ?? { bestWeightLb: 0, bestE1RMLb: 0, bestReps: 0 };
+      for (const s of ex.sets) {
+        if (!isWorkingSet(s)) {
+          continue;
+        }
+        if (s.reps != null && s.reps > rec.bestReps) {
+          rec.bestReps = s.reps;
+        }
+        if (s.weight != null) {
+          const wl = toLb(s.weight, s.unit);
+          if (wl > rec.bestWeightLb) {
+            rec.bestWeightLb = wl;
+          }
+          const e = epley1RM(s.weight, s.reps);
+          if (e != null) {
+            rec.bestE1RMLb = Math.max(rec.bestE1RMLb, toLb(e, s.unit));
+          }
+        }
+      }
+      out[key] = rec;
+    }
+  }
+  return out;
+}
+
 /** "1h 12m" / "45m" / "30s" from a duration in seconds. */
 export function formatDuration(seconds: number | null): string | null {
   if (seconds == null || seconds <= 0) {

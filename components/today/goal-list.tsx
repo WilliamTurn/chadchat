@@ -1,6 +1,6 @@
 "use client";
 
-import { RotateCcw, Target, Trash2, TriangleAlert } from "lucide-react";
+import { Pencil, Plus, RotateCcw, Target, Trash2, TriangleAlert } from "lucide-react";
 import { KpiHelp } from "@/components/dashboard/kpi";
 import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
@@ -13,7 +13,7 @@ import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExerciseTrendChart } from "@/components/workouts/exercise-trend-chart";
-import { type EditableGoal, GoalEditor } from "./goal-editor";
+import type { EditableGoal } from "@/components/goals/types";
 import { ModuleFooter, ModuleHeader } from "./module-card";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -164,12 +164,10 @@ function GoalItem({
   goal,
   currentWeight,
   lift,
-  exerciseNames,
 }: {
   goal: EditableGoal;
   currentWeight: number | null;
   lift: LiftProgress | undefined;
-  exerciseNames: string[];
 }) {
   const isLift = goal.metric === "lift";
   const current = isLift ? (lift?.current ?? null) : goal.metric === "weight" ? currentWeight : null;
@@ -236,7 +234,18 @@ function GoalItem({
         <Button asChild className="px-0 text-blood" size="sm" variant="link">
           <Link href={goalHref(goal)}>View</Link>
         </Button>
-        <GoalEditor exerciseNames={exerciseNames} goal={goal} variant="icon" />
+        {/* The dedicated edit page (MOB-19), not a dialog. */}
+        <Button
+          aria-label="Edit goal"
+          asChild
+          className="size-7 text-muted-foreground"
+          size="icon"
+          variant="ghost"
+        >
+          <Link href={`/goals/${goal.id}/edit`}>
+            <Pencil className="size-3.5" />
+          </Link>
+        </Button>
         <RowDeleteGoal id={goal.id} />
       </div>
     </div>
@@ -357,7 +366,6 @@ export function GoalList({
   memoryGoalHint,
   pastGoals = [],
   liftProgress = {},
-  exerciseNames = [],
   quiet = false,
   calorieConflict = null,
   overlapIds = [],
@@ -369,8 +377,6 @@ export function GoalList({
   pastGoals?: EditableGoal[];
   /** Est.-1RM history per lift-goal id, for live progress + the trend chart. */
   liftProgress?: Record<string, LiftProgress>;
-  /** Logged exercise names, offered as suggestions when adding a lift goal. */
-  exerciseNames?: string[];
   /** First-run (P1-4): the empty state describes what will appear here instead
    *  of adding another CTA to the chorus — the hero owns the one first action. */
   quiet?: boolean;
@@ -409,7 +415,6 @@ export function GoalList({
           {goals.map((g) => (
             <GoalItem
               currentWeight={currentWeight}
-              exerciseNames={exerciseNames}
               goal={g}
               key={g.id}
               lift={liftProgress[g.id]}
@@ -433,7 +438,14 @@ export function GoalList({
                 : "No goal set yet. Set it here, or tell Chad in chat and he'll build the plan around it."}
             </p>
           )}
-          {!quiet && <GoalEditor exerciseNames={exerciseNames} variant="cta" />}
+          {!quiet && (
+            <Button asChild className="gap-1.5" size="sm" variant="outline">
+              <Link href="/goals/new">
+                <Plus className="size-3.5" />
+                Set your goal
+              </Link>
+            </Button>
+          )}
         </div>
       )}
 
@@ -457,7 +469,12 @@ export function GoalList({
         }
       >
         {goals.length > 0 && (
-          <GoalEditor exerciseNames={exerciseNames} variant="add" />
+          <Button asChild className="gap-1.5" size="sm" variant="outline">
+            <Link href="/goals/new">
+              <Plus className="size-3.5" />
+              Add goal
+            </Link>
+          </Button>
         )}
       </ModuleFooter>
     </>

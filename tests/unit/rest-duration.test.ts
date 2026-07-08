@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { parseRestDuration } from "@/components/workouts/rest-timer";
+import { parseRestDuration } from "@/components/workouts/logger/rest-timer";
 
 describe("parseRestDuration", () => {
   it("parses plain seconds", () => {

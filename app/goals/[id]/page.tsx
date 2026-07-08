@@ -32,10 +32,7 @@ import {
   trendWeightInUnit,
   weightPointsInUnit,
 } from "@/lib/goals/latest-weight";
-import {
-  distinctExerciseNames,
-  toWorkoutData,
-} from "@/lib/workouts/serialize";
+import { toWorkoutData } from "@/lib/workouts/serialize";
 import { exercise1RMTrend } from "@/lib/workouts/stats";
 
 /**
@@ -184,7 +181,6 @@ async function GoalDocContent({
     : null;
 
   const workoutData = recentWorkouts.map(toWorkoutData);
-  const exerciseNames = distinctExerciseNames(workoutData);
   let lift: LiftProgress | null = null;
   if (needsLift && goal.metricRef) {
     const points = exercise1RMTrend(workoutData, goal.metricRef);
@@ -199,7 +195,6 @@ async function GoalDocContent({
     <GoalDoc
       coherence={coherence}
       currentWeight={currentWeight}
-      exerciseNames={exerciseNames}
       goal={goalItem}
       lift={lift}
       weightChart={weightChart}

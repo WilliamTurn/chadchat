@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, MessageSquare, Trash2, TriangleAlert } from "lucide-react";
+import { Download, MessageSquare, Pencil, Trash2, TriangleAlert } from "lucide-react";
 import { KpiHelp } from "@/components/dashboard/kpi";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExerciseTrendChart } from "@/components/workouts/exercise-trend-chart";
 import { downloadGoalPdf } from "@/lib/pdf/goal-pdf";
-import { type EditableGoal, GoalEditor } from "./goal-editor";
+import type { EditableGoal } from "@/components/goals/types";
 import { GoalProgress, type LiftProgress } from "./goal-list";
 
 /** The weight-goal chart's inputs, all pre-converted to the display unit. */
@@ -40,7 +40,6 @@ export function GoalDoc({
   goal,
   currentWeight,
   lift,
-  exerciseNames,
   weightChart = null,
   coherence = null,
 }: {
@@ -50,7 +49,6 @@ export function GoalDoc({
   currentWeight: number | null;
   /** Est.-1RM history for a lift goal's exercise. */
   lift: LiftProgress | null;
-  exerciseNames: string[];
   /** Weigh-in history for a weight goal, re-plotted against the goal line
    *  with the projected finish date (VF-6). */
   weightChart?: GoalWeightChart | null;
@@ -118,11 +116,13 @@ export function GoalDoc({
               </p>
             )}
           </div>
-          <GoalEditor
-            exerciseNames={exerciseNames}
-            goal={goal}
-            variant="button"
-          />
+          {/* The dedicated edit page (MOB-19), not a dialog. */}
+          <Button asChild className="gap-1.5" size="sm" variant="outline">
+            <Link href={`/goals/${goal.id}/edit`}>
+              <Pencil className="size-3.5" />
+              Edit
+            </Link>
+          </Button>
         </div>
 
         <GoalProgress current={current} firstValue={lift?.first} goal={goal} />

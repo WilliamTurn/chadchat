@@ -86,10 +86,7 @@ import { HeroCustomizer } from "@/components/today/hero-customizer";
 import type { LiftProgress } from "@/components/today/goal-list";
 import { findCalorieConflict, findOverlapIds } from "@/lib/goals/coherence";
 import { clientField } from "@/lib/memory/client-field";
-import {
-  distinctExerciseNames,
-  toWorkoutData,
-} from "@/lib/workouts/serialize";
+import { toWorkoutData } from "@/lib/workouts/serialize";
 import { exercise1RMTrend, workoutVolumeLb } from "@/lib/workouts/stats";
 
 const LB_PER_KG = 2.204_62;
@@ -331,10 +328,8 @@ async function TodayContent() {
 
   // Lift goals (DSH-28): read the est.-1RM trend for each tracked exercise from
   // the logged workouts, so the goal card shows live progress + charts against
-  // the PR data already collected. Exercise names double as add-a-goal
-  // suggestions.
+  // the PR data already collected.
   const workoutData = recentWorkouts.map(toWorkoutData);
-  const exerciseNames = distinctExerciseNames(workoutData);
 
   const liftProgress: Record<string, LiftProgress> = {};
   for (const g of goalItems) {
@@ -880,7 +875,8 @@ async function TodayContent() {
               }
             >
               <Button asChild className="gap-1.5" size="sm" variant="outline">
-                <Link href="/workouts">
+                {/* Straight into the full-page logger (MOB-18). */}
+                <Link href="/workouts/log">
                   Log a workout
                   <ArrowRight className="size-3.5" />
                 </Link>
@@ -908,7 +904,6 @@ async function TodayContent() {
           <GoalList
             calorieConflict={calorieConflict}
             currentWeight={trendWeight}
-            exerciseNames={exerciseNames}
             goals={goalItems}
             liftProgress={liftProgress}
             memoryGoalHint={goal}

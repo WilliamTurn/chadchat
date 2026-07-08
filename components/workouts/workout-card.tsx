@@ -1,6 +1,7 @@
 "use client";
 
 import { Calendar, Clock, Dumbbell, Pencil, Repeat, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -10,21 +11,11 @@ import { formatCalendarDay } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import {
   formatDuration,
-  type LastExerciseLog,
   type WorkoutData,
   workoutSetCount,
   workoutVolumeLb,
 } from "@/lib/workouts/stats";
-import { GROUP_CHIPS, supersetLabel, WorkoutBuilder } from "./workout-builder";
-
-type CustomExerciseRow = {
-  id: string;
-  name: string;
-  muscleGroup: string;
-  equipment: string;
-  kind: string;
-  notes: string | null;
-};
+import { GROUP_CHIPS, supersetLabel } from "./superset";
 
 const SET_TAG: Record<string, string> = {
   warmup: "warm-up",
@@ -61,16 +52,7 @@ function fmtDate(iso: string): string {
   });
 }
 
-export function WorkoutCard({
-  workout,
-  customExercises,
-  lastSets,
-}: {
-  workout: WorkoutData;
-  customExercises: CustomExerciseRow[];
-  // Optional: lets "Repeat" show the inline "Last time" reference (FEAT-10).
-  lastSets?: Record<string, LastExerciseLog>;
-}) {
+export function WorkoutCard({ workout }: { workout: WorkoutData }) {
   const volume = workoutVolumeLb(workout);
   const sets = workoutSetCount(workout);
   const duration = formatDuration(workout.durationSeconds);
@@ -120,39 +102,31 @@ export function WorkoutCard({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          <WorkoutBuilder
-            customExercises={customExercises}
-            initial={workout}
-            lastSets={lastSets}
-            mode="repeat"
-            trigger={
-              <Button
-                aria-label="Repeat this workout"
-                className="size-8 text-muted-foreground"
-                size="icon"
-                title="Repeat this workout"
-                variant="ghost"
-              >
-                <Repeat className="size-3.5" />
-              </Button>
-            }
-          />
-          <WorkoutBuilder
-            customExercises={customExercises}
-            initial={workout}
-            lastSets={lastSets}
-            mode="edit"
-            trigger={
-              <Button
-                aria-label="Edit workout"
-                className="size-8 text-muted-foreground"
-                size="icon"
-                variant="ghost"
-              >
-                <Pencil className="size-3.5" />
-              </Button>
-            }
-          />
+          {/* Repeat/Edit open the full-page logger (MOB-18), not a popup. */}
+          <Button
+            aria-label="Repeat this workout"
+            asChild
+            className="size-8 text-muted-foreground"
+            size="icon"
+            title="Repeat this workout"
+            variant="ghost"
+          >
+            <Link href={`/workouts/log?repeat=${workout.id}`}>
+              <Repeat className="size-3.5" />
+            </Link>
+          </Button>
+          <Button
+            aria-label="Edit workout"
+            asChild
+            className="size-8 text-muted-foreground"
+            size="icon"
+            title="Edit workout"
+            variant="ghost"
+          >
+            <Link href={`/workouts/log?edit=${workout.id}`}>
+              <Pencil className="size-3.5" />
+            </Link>
+          </Button>
           <DeleteWorkout id={workout.id} />
         </div>
       </div>

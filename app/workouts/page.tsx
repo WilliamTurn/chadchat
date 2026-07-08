@@ -18,13 +18,11 @@ import { RewardProvider } from "@/components/dashboard/reward";
 import { PersonalRecords } from "@/components/workouts/personal-records";
 import { PlanRunner } from "@/components/workouts/plan-runner";
 import { VolumeChart } from "@/components/workouts/volume-chart";
-import { WorkoutBuilder } from "@/components/workouts/workout-builder";
 import { WorkoutCard } from "@/components/workouts/workout-card";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import { calendarDayAnchorInTz } from "@/lib/date";
 import {
   getActivePlansByUserId,
-  getCustomExercisesByUserId,
   getUserById,
   getWorkoutsByUserId,
   type WorkoutWithChildren,
@@ -34,8 +32,6 @@ import { parsePlanDays } from "@/lib/validation/plan-days";
 import {
   computePersonalRecords,
   exercise1RMTrend,
-  type LastExerciseLog,
-  lastSetsByExercise,
   type WorkoutData,
   workoutVolumeLb,
   volumeTrend,
@@ -157,30 +153,18 @@ async function Dashboard({
   userId: string;
   timezone: string | null;
 }) {
-  const [rawWorkouts, customExercisesRaw, activePlans] = await Promise.all([
+  const [rawWorkouts, activePlans] = await Promise.all([
     getWorkoutsByUserId(userId, MAX_WORKOUTS),
-    getCustomExercisesByUserId(userId),
     getActivePlansByUserId(userId),
   ]);
 
   const workouts = rawWorkouts.map(toWorkoutData);
-  const customExercises = customExercisesRaw.map((e) => ({
-    id: e.id,
-    name: e.name,
-    muscleGroup: e.muscleGroup,
-    equipment: e.equipment,
-    kind: e.kind,
-    notes: e.notes,
-  }));
 
   // The current training plan, runnable from this page (FN-2). `days` is the
   // structured program; null means an older free-text plan — PlanRunner
   // backfills it via a one-time AI extraction.
   const trainingPlan = activePlans.find((p) => p.kind === "training") ?? null;
   const planDays = trainingPlan ? parsePlanDays(trainingPlan.days) : null;
-
-  // Last session's numbers per exercise, ghosted into the logger.
-  const lastSets = lastSetsByExercise(workouts);
 
   const records = computePersonalRecords(workouts)
     .slice(0, 6)
@@ -213,31 +197,24 @@ async function Dashboard({
           {workouts.length > 0 && (
             <AskChadButton prompt="Review my Workouts page: my logged sessions, weekly volume, training plan, and PRs. How is my training progressing overall, and what should I focus on next?" />
           )}
+          {/* Both actions open the full-page logger (MOB-18), never a popup. */}
           {workouts.length > 0 && (
-            <WorkoutBuilder
-              customExercises={customExercises}
-              initial={workouts[0]}
-              lastSets={lastSets}
-              mode="repeat"
-              trigger={
-                <Button className="gap-1.5" variant="outline">
-                  <Repeat className="size-4" />
-                  Repeat last
-                </Button>
-              }
-            />
+            <Button asChild className="gap-1.5" variant="outline">
+              <Link href={`/workouts/log?repeat=${workouts[0].id}`}>
+                <Repeat className="size-4" />
+                Repeat last
+              </Link>
+            </Button>
           )}
-          <WorkoutBuilder
-            customExercises={customExercises}
-            lastSets={lastSets}
-            mode="create"
-            trigger={
-              <Button className="order-first w-full gap-1.5 sm:order-none sm:w-auto">
-                <Plus className="size-4" />
-                Log a workout
-              </Button>
-            }
-          />
+          <Button
+            asChild
+            className="order-first w-full gap-1.5 sm:order-none sm:w-auto"
+          >
+            <Link href="/workouts/log">
+              <Plus className="size-4" />
+              Log a workout
+            </Link>
+          </Button>
         </div>
 
         {workouts.length > 0 && (
@@ -270,16 +247,14 @@ async function Dashboard({
           Start-a-day matters most. */}
       {trainingPlan && (
         <PlanRunner
-          customExercises={customExercises}
           days={planDays}
-          lastSets={lastSets}
           planId={trainingPlan.id}
           planTitle={trainingPlan.title}
         />
       )}
 
       {workouts.length === 0 ? (
-        <EmptyState customExercises={customExercises} lastSets={lastSets} />
+        <EmptyState />
       ) : (
         <>
           {/* Volume trend */}
@@ -310,12 +285,7 @@ async function Dashboard({
             </h2>
             <div className="flex flex-col gap-4">
               {workouts.map((w) => (
-                <WorkoutCard
-                  customExercises={customExercises}
-                  key={w.id}
-                  lastSets={lastSets}
-                  workout={w}
-                />
+                <WorkoutCard key={w.id} workout={w} />
               ))}
             </div>
           </section>
@@ -354,20 +324,7 @@ function StatCard({
   );
 }
 
-function EmptyState({
-  customExercises,
-  lastSets,
-}: {
-  customExercises: {
-    id: string;
-    name: string;
-    muscleGroup: string;
-    equipment: string;
-    kind: string;
-    notes: string | null;
-  }[];
-  lastSets: Record<string, LastExerciseLog>;
-}) {
+function EmptyState() {
   return (
     <div className="flex flex-col items-center gap-4 rounded-2xl border border-border border-dashed bg-card px-6 py-14 text-center">
       <span className="flex size-12 items-center justify-center rounded-2xl bg-muted/60 ring-1 ring-border/50">
@@ -380,17 +337,12 @@ function EmptyState({
           tracking your PRs and volume the moment you do.
         </p>
       </div>
-      <WorkoutBuilder
-        customExercises={customExercises}
-        lastSets={lastSets}
-        mode="create"
-        trigger={
-          <Button className="gap-1.5">
-            <Plus className="size-4" />
-            Log your first workout
-          </Button>
-        }
-      />
+      <Button asChild className="gap-1.5">
+        <Link href="/workouts/log">
+          <Plus className="size-4" />
+          Log your first workout
+        </Link>
+      </Button>
     </div>
   );
 }

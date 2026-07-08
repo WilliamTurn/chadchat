@@ -3200,6 +3200,30 @@ export async function getWorkoutsByUserId(
   }
 }
 
+/** One workout by id, owner-scoped, hydrated with exercises + sets. Backs the
+ *  full-page logger's edit/repeat modes (/workouts/log?edit=…). */
+export async function getWorkoutById({
+  id,
+  userId,
+}: {
+  id: string;
+  userId: string;
+}): Promise<WorkoutWithChildren | null> {
+  try {
+    const [row] = await db
+      .select()
+      .from(workout)
+      .where(and(eq(workout.id, id), eq(workout.userId, userId)));
+    if (!row) {
+      return null;
+    }
+    const [hydrated] = await hydrateWorkouts([row]);
+    return hydrated ?? null;
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get workout");
+  }
+}
+
 /**
  * A user's workouts trained within a half-open [start, end) window (newest
  * first), hydrated with exercises + sets. Backs Chad's day/range dashboard
