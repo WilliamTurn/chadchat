@@ -48,20 +48,74 @@ function titleCase(s: string): string {
   return t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
 }
 
+/**
+ * Clean up a database product name for display. Branded entries arrive
+ * SHOUTING with the flavor repeated ("WHITE CHOCOLATE RASPBERRY PROTEIN BAR,
+ * WHITE CHOCOLATE RASPBERRY"): drop comma segments already contained in
+ * another segment, and sentence-case anything that's all caps.
+ */
+function tidyProductName(raw: string): string {
+  const segments = raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const kept = segments.filter((seg, i) => {
+    const low = seg.toLowerCase();
+    return !segments.some(
+      (other, j) =>
+        j !== i &&
+        other.toLowerCase().includes(low) &&
+        (other.length > seg.length || j < i)
+    );
+  });
+  let name = (kept.length > 0 ? kept : segments).join(", ");
+  if (name && name === name.toUpperCase() && /[A-Z]/.test(name)) {
+    name = name.toLowerCase();
+  }
+  return titleCase(name);
+}
+
+/** Brands also arrive shouting ("QUEST" -> "Quest"). Words of 3 letters or
+ *  fewer stay as-is so real acronyms (BSN, GNC) survive. */
+function tidyBrand(raw: string | null): string | null {
+  if (!raw) {
+    return null;
+  }
+  return raw
+    .split(/\s+/)
+    .map((w) =>
+      w.length > 3 && w === w.toUpperCase() && /[A-Z]/.test(w)
+        ? w.charAt(0) + w.slice(1).toLowerCase()
+        : w
+    )
+    .join(" ");
+}
+
 function fdcItemToHit(item: FdcListItem): FoodHit {
+  // Serving macros: the printed Nutrition Facts values when FDC carries them
+  // (exact), else per100g scaled to the serving's gram weight (within
+  // rounding of the label).
+  let serving: FoodHit["serving"] = null;
+  if (item.serving) {
+    const macros = item.serving.macros
+      ? tidyMacros(item.serving.macros)
+      : item.serving.grams != null
+        ? servingMacros(item.per100g, item.serving.grams)
+        : null;
+    if (macros) {
+      serving = {
+        label: item.serving.label,
+        grams: item.serving.grams,
+        macros,
+      };
+    }
+  }
   return {
     id: `fdc:${item.fdcId}`,
-    name: titleCase(item.description),
-    brand: item.brand,
+    name: tidyProductName(item.description),
+    brand: tidyBrand(item.brand),
     per100g: tidyMacros(item.per100g),
-    serving:
-      item.serving?.grams != null
-        ? {
-            label: item.serving.label,
-            grams: item.serving.grams,
-            macros: servingMacros(item.per100g, item.serving.grams),
-          }
-        : null,
+    serving,
     source: "usda",
   };
 }
@@ -181,15 +235,32 @@ async function lookupOffBarcode(code: string): Promise<FoodHit | null> {
       ? Number.parseFloat(product.serving_quantity)
       : product.serving_quantity;
   const servingGrams =
-    typeof servingQty === "number" && Number.isFinite(servingQty) && servingQty > 0
+    typeof servingQty === "number" &&
+    Number.isFinite(servingQty) &&
+    servingQty > 0
       ? servingQty
       : null;
   const servingLabel = product.serving_size?.trim()
     ? tidyServingLabel(product.serving_size)
     : null;
 
-  // Prefer per-100g values; derive them from per-serving when that's all the
-  // product publishes and the serving's gram weight is known.
+  // The label's own per-serving values, when the product publishes them.
+  // These beat anything derived from per-100g (which OFF often stores
+  // pre-rounded, so re-multiplying drifts off the printed label).
+  const kcalServ = offNumber(n, "energy-kcal_serving");
+  const proServ = offNumber(n, "proteins_serving");
+  const servingFromLabel: Macros | null =
+    kcalServ != null && proServ != null
+      ? {
+          calories: kcalServ,
+          protein: proServ,
+          carbs: offNumber(n, "carbohydrates_serving") ?? 0,
+          fat: offNumber(n, "fat_serving") ?? 0,
+        }
+      : null;
+
+  // Per-100g values for gram/ounce portions; derive them from per-serving
+  // when that's all the product publishes and the serving weight is known.
   let per100g: Macros | null = null;
   const kcal100 = offNumber(n, "energy-kcal_100g");
   const pro100 = offNumber(n, "proteins_100g");
@@ -200,37 +271,42 @@ async function lookupOffBarcode(code: string): Promise<FoodHit | null> {
       carbs: offNumber(n, "carbohydrates_100g") ?? 0,
       fat: offNumber(n, "fat_100g") ?? 0,
     };
-  } else {
-    const kcalServ = offNumber(n, "energy-kcal_serving");
-    const proServ = offNumber(n, "proteins_serving");
-    if (kcalServ != null && proServ != null && servingGrams) {
-      const f = 100 / servingGrams;
-      per100g = {
-        calories: kcalServ * f,
-        protein: proServ * f,
-        carbs: (offNumber(n, "carbohydrates_serving") ?? 0) * f,
-        fat: (offNumber(n, "fat_serving") ?? 0) * f,
-      };
-    }
+  } else if (servingFromLabel && servingGrams) {
+    const f = 100 / servingGrams;
+    per100g = {
+      calories: servingFromLabel.calories * f,
+      protein: servingFromLabel.protein * f,
+      carbs: servingFromLabel.carbs * f,
+      fat: servingFromLabel.fat * f,
+    };
   }
-  if (!per100g) {
+  if (!(per100g || servingFromLabel)) {
     return null;
   }
 
-  const brand = product.brands?.split(",")[0]?.trim() || null;
+  const servingMacrosFinal =
+    servingFromLabel ??
+    (per100g && servingGrams != null
+      ? servingMacros(per100g, servingGrams)
+      : null);
+
+  const brand = tidyBrand(product.brands?.split(",")[0]?.trim() || null);
   return {
     id: `off:${code}`,
-    name: titleCase(name),
+    name: tidyProductName(name),
     brand,
-    per100g: tidyMacros(per100g),
-    serving:
-      servingGrams != null
-        ? {
-            label: servingLabel ?? `${Math.round(servingGrams)} g serving`,
-            grams: servingGrams,
-            macros: servingMacros(per100g, servingGrams),
-          }
-        : null,
+    per100g: per100g ? tidyMacros(per100g) : null,
+    serving: servingMacrosFinal
+      ? {
+          label:
+            servingLabel ??
+            (servingGrams != null
+              ? `${Math.round(servingGrams)} g serving`
+              : "1 serving"),
+          grams: servingGrams,
+          macros: tidyMacros(servingMacrosFinal),
+        }
+      : null,
     source: "off",
   };
 }
@@ -258,10 +334,23 @@ export async function lookupBarcode(raw: string): Promise<FoodHit | null> {
     return null;
   }
 
+  // Try every digit variant against BOTH sources. Camera scanners report a
+  // US UPC-A as 13-digit EAN-13 ("0" + the UPC), and FDC's index only knows
+  // the bare UPC. Before this, every scanned US barcode missed USDA and fell
+  // through to OFF's crowdsourced (sometimes stale) numbers.
+  const variants = barcodeVariants(digits);
   const [fdcItem, offHit] = await Promise.all([
-    lookupFdcBarcode(digits),
     (async () => {
-      for (const variant of barcodeVariants(digits)) {
+      for (const variant of variants) {
+        const item = await lookupFdcBarcode(variant);
+        if (item) {
+          return item;
+        }
+      }
+      return null;
+    })(),
+    (async () => {
+      for (const variant of variants) {
         const hit = await lookupOffBarcode(variant);
         if (hit) {
           return hit;

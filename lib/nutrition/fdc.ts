@@ -63,6 +63,13 @@ type FdcFood = {
   servingSize?: number;
   servingSizeUnit?: string;
   householdServingFullText?: string;
+  // The printed Nutrition Facts values per serving, when FDC carries them.
+  labelNutrients?: {
+    calories?: { value?: number };
+    protein?: { value?: number };
+    carbohydrates?: { value?: number };
+    fat?: { value?: number };
+  };
 };
 
 // Description words that signal a processed/wrong variant of a plain whole food.
@@ -346,32 +353,61 @@ export type FdcListItem = {
   brand: string | null;
   /** Macros per 100 g (FDC search normalizes Branded label data to 100 g). */
   per100g: Macros;
-  /** The product's labeled serving, when the entry carries one. */
-  serving: { label: string; grams: number | null } | null;
+  /** The product's labeled serving, when the entry carries one. `macros` are
+   *  the EXACT printed Nutrition Facts values when FDC has them (null means
+   *  derive from per100g x grams). */
+  serving: {
+    label: string;
+    grams: number | null;
+    macros: Macros | null;
+  } | null;
 };
 
 /** Serving units FDC uses that mean "grams" (ml treated as g, label basis). */
 const GRAM_UNITS = new Set(["g", "grm", "gram", "grams", "ml", "mlt"]);
 
+/** The printed Nutrition Facts per-serving macros, when FDC carries them.
+ *  These are the label's own numbers; per100g x grams reproduces them only
+ *  within rounding error, so prefer these whenever present. */
+function labelServingMacros(food: FdcFood): Macros | null {
+  const ln = food.labelNutrients;
+  const calories = ln?.calories?.value;
+  const protein = ln?.protein?.value;
+  if (typeof calories !== "number" || typeof protein !== "number") {
+    return null;
+  }
+  return {
+    calories,
+    protein,
+    carbs:
+      typeof ln?.carbohydrates?.value === "number" ? ln.carbohydrates.value : 0,
+    fat: typeof ln?.fat?.value === "number" ? ln.fat.value : 0,
+  };
+}
+
 function extractServing(
   food: FdcFood
-): { label: string; grams: number | null } | null {
+): { label: string; grams: number | null; macros: Macros | null } | null {
   const size = food.servingSize;
   const unit = (food.servingSizeUnit ?? "").trim().toLowerCase();
-  const household = food.householdServingFullText?.trim();
+  // USDA household text uses raw unit codes ("1.125 ONZ", "2 GRM"); show the
+  // units people actually read.
+  const household = food.householdServingFullText
+    ?.trim()
+    .replace(/\bONZ\b/gi, "oz")
+    .replace(/\bGRM\b/gi, "g");
+  const macros = labelServingMacros(food);
   const grams =
-    typeof size === "number" && size > 0 && GRAM_UNITS.has(unit)
-      ? size
-      : null;
+    typeof size === "number" && size > 0 && GRAM_UNITS.has(unit) ? size : null;
   if (household) {
     const label =
       grams != null && !household.toLowerCase().includes("g")
         ? `${household} (${Math.round(grams)} g)`
         : household;
-    return { label, grams };
+    return { label, grams, macros };
   }
   if (grams != null) {
-    return { label: `${Math.round(grams)} g serving`, grams };
+    return { label: `${Math.round(grams)} g serving`, grams, macros };
   }
   return null;
 }

@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * The Calorie Tracker's Search tab (FN-1): text search over verified food
- * databases (curated table + USDA generic/branded) plus a camera barcode
- * scanner (USDA Branded + Open Food Facts) - the MacroFactor/MFP core
- * logging path. Pick a result, set the portion (grams / oz / servings), see
- * the exact macros live, and it lands in the diary under the meal + date
- * chosen above. All arithmetic is code (lib/nutrition/food-hit.ts), never a
- * model estimate.
+ * The Calorie Tracker's Search AND Barcode tabs (FN-1, NUT-24): text search
+ * over verified food databases (curated table + USDA generic/branded), and a
+ * camera barcode scanner (USDA Branded + Open Food Facts) as its own
+ * top-level tab - the MacroFactor/MFP core logging path. Pick a result, set
+ * the portion (grams / oz / servings), see the exact macros live, and it
+ * lands in the diary under the meal + date chosen above. All arithmetic is
+ * code (lib/nutrition/food-hit.ts), never a model estimate.
  */
 
 import {
@@ -21,24 +21,20 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { useReward } from "@/components/dashboard/reward";
 import {
   logMealManually,
   lookupFoodBarcode,
   searchFoods,
 } from "@/app/nutrition/actions";
+import { useReward } from "@/components/dashboard/reward";
 import { BarcodeScannerDialog } from "@/components/nutrition/barcode-scanner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  formatCalendarDay,
-  parseCalendarDay,
-  todayLocalISO,
-} from "@/lib/date";
+import { formatCalendarDay, parseCalendarDay, todayLocalISO } from "@/lib/date";
 import type { FoodHit, PortionUnit } from "@/lib/nutrition/food-hit";
 import { portionLabel, portionMacros } from "@/lib/nutrition/food-hit";
-import type { MealCategory } from "@/lib/validation/nutrition";
 import { cn } from "@/lib/utils";
+import type { MealCategory } from "@/lib/validation/nutrition";
 
 const SEARCH_DEBOUNCE_MS = 350;
 const MIN_QUERY_CHARS = 2;
@@ -72,11 +68,15 @@ export function FoodSearch({
   meal,
   mealLabel,
   date,
+  variant = "search",
 }: {
   meal: MealCategory;
   /** Custom slot name when meal = "other" (already trimmed, or null). */
   mealLabel: string | null;
   date: string;
+  /** "search" = text search over the databases; "barcode" = the Barcode tab
+   *  (camera scanner front and center, no text input). */
+  variant?: "search" | "barcode";
 }) {
   const router = useRouter();
   const reward = useReward();
@@ -88,7 +88,9 @@ export function FoodSearch({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [amount, setAmount] = useState("100");
   const [unit, setUnit] = useState<PortionUnit>("g");
-  const [scanOpen, setScanOpen] = useState(false);
+  // The Barcode tab opens the camera immediately (the tap on the tab IS the
+  // "scan something" intent, same as MyFitnessPal / MacroFactor).
+  const [scanOpen, setScanOpen] = useState(variant === "barcode");
   const [scanning, setScanning] = useState(false);
   // A scanned barcode product is pinned above the text results until
   // dismissed or replaced by the next scan.
@@ -144,7 +146,7 @@ export function FoodSearch({
     }
     if (!res.result) {
       toast.error(
-        "That barcode isn't in the food databases yet. Scan the nutrition label with the Label tab instead. Chad reads it straight off the package."
+        "That barcode isn't in the food databases yet. Photograph the nutrition facts panel with the Label Photo tab instead and Chad reads it straight off the package."
       );
       return;
     }
@@ -209,9 +211,25 @@ export function FoodSearch({
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Search input + scan button */}
-      <div className="flex gap-2">
-        <div className="relative flex-1">
+      {variant === "barcode" ? (
+        /* Barcode tab: the scanner IS the interface. */
+        <Button
+          className="gap-2"
+          disabled={scanning}
+          onClick={() => setScanOpen(true)}
+          size="lg"
+          type="button"
+        >
+          {scanning ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <ScanBarcode className="size-4" />
+          )}
+          {scanning ? "Looking the product up…" : "Scan a barcode"}
+        </Button>
+      ) : (
+        /* Search input */
+        <div className="relative">
           <Search className="pointer-events-none absolute inset-y-0 left-3 my-auto size-4 text-muted-foreground" />
           <Input
             aria-label="Search foods"
@@ -243,22 +261,7 @@ export function FoodSearch({
             </button>
           )}
         </div>
-        <Button
-          className="shrink-0 gap-2"
-          disabled={scanning}
-          onClick={() => setScanOpen(true)}
-          type="button"
-          variant="secondary"
-        >
-          {scanning ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <ScanBarcode className="size-4" />
-          )}
-          <span className="hidden sm:inline">Scan barcode</span>
-          <span className="sm:hidden">Scan</span>
-        </Button>
-      </div>
+      )}
 
       {/* Scanned product - pinned above the text results until dismissed */}
       {scanned && (
@@ -293,6 +296,11 @@ export function FoodSearch({
             open={selectedId === scanned.id}
             unit={unit}
           />
+          <p className="text-muted-foreground text-xs">
+            {scanned.source === "off"
+              ? "Numbers from Open Food Facts, a public product database. If they don't match the package, photograph the label with the Label Photo tab and Chad reads the printed numbers instead."
+              : "Numbers from the USDA's official product database, exactly as printed on the label."}
+          </p>
         </div>
       )}
 
@@ -305,8 +313,9 @@ export function FoodSearch({
       ) : results.length > 0 ? (
         <div className="flex flex-col gap-2">
           <p className="text-muted-foreground text-xs">
-            Tap a food to set the portion. Numbers are verified database
-            values, never estimates.
+            Tap a food to set the portion. Numbers come straight from the named
+            database (USDA is official US label data; Open Food Facts is a
+            public product database), never from estimates.
           </p>
           {results
             .filter((hit) => hit.id !== scanned?.id)
@@ -328,14 +337,14 @@ export function FoodSearch({
       ) : trimmed.length >= MIN_QUERY_CHARS && searched ? (
         <p className="rounded-xl border border-border border-dashed bg-background/40 px-4 py-8 text-center text-muted-foreground text-sm">
           No match for "{trimmed}". Try fewer or simpler words ("chicken
-          breast", not "my grilled chicken"), scan the barcode, or log it with
-          the Photo, Label, or Manual tab.
+          breast", not "my grilled chicken"), scan its barcode with the Barcode
+          tab, or log it with the Food Photo, Label Photo, or Manual tab.
         </p>
       ) : scanned ? null : (
         <p className="rounded-xl border border-border border-dashed bg-background/40 px-4 py-8 text-center text-muted-foreground text-sm">
-          Search verified foods by name, like "chicken breast" or "greek
-          yogurt", or scan a packaged food's barcode. Set the portion and the
-          exact macros land in your diary.
+          {variant === "barcode"
+            ? "Point your camera at the barcode on any packaged food. The product's verified label numbers come up; set how much you ate and it lands in your diary."
+            : 'Search verified foods by name, like "chicken breast" or "greek yogurt". Set the portion and the exact macros land in your diary.'}
         </p>
       )}
 
@@ -370,10 +379,14 @@ function ResultRow({
   onUnit: (u: PortionUnit) => void;
   onLog: () => void;
 }) {
-  const sub = hit.per100g
-    ? `${macroLine(hit.per100g)} / 100 g`
-    : hit.serving
-      ? `${macroLine(hit.serving.macros)} / ${hit.serving.label}`
+  // Lead with the label's own per-serving numbers when the product has a
+  // serving ("Per 1 bar (60 g): 190 cal…"); per-100g is the fallback for
+  // whole foods. Always say what the numbers are per: a bare
+  // "300 cal · 33.3g P /100g" read as gibberish (user report).
+  const sub = hit.serving
+    ? `Per ${hit.serving.label}: ${macroLine(hit.serving.macros)}`
+    : hit.per100g
+      ? `Per 100 g: ${macroLine(hit.per100g)}`
       : "";
   return (
     <div

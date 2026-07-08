@@ -6,14 +6,15 @@ import {
   Loader2,
   PencilLine,
   Plus,
+  ScanBarcode,
   ScanLine,
   Search,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { useReward } from "@/components/dashboard/reward";
 import { analyzeMeal, logMealManually } from "@/app/nutrition/actions";
+import { useReward } from "@/components/dashboard/reward";
 import { FoodSearch } from "@/components/nutrition/food-search";
 import {
   defaultMealForNow,
@@ -25,17 +26,13 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  formatCalendarDay,
-  parseCalendarDay,
-  todayLocalISO,
-} from "@/lib/date";
+import { formatCalendarDay, parseCalendarDay, todayLocalISO } from "@/lib/date";
 import {
   formatMacroSummary,
   type RecentFood,
 } from "@/lib/nutrition/recent-foods";
-import type { MealCategory } from "@/lib/validation/nutrition";
 import { cn } from "@/lib/utils";
+import type { MealCategory } from "@/lib/validation/nutrition";
 
 /**
  * A single manual-macro field. The unit ("cal"/"g") is a persistent suffix
@@ -76,7 +73,7 @@ function MacroField({
   );
 }
 
-type Mode = "search" | "photo" | "label" | "manual" | "recent";
+type Mode = "search" | "barcode" | "photo" | "label" | "manual" | "recent";
 
 export function AnalyzeForm({
   recentFoods,
@@ -150,7 +147,11 @@ export function AnalyzeForm({
 
   async function submitPhoto(kind: "meal" | "label") {
     if (!file) {
-      toast.error("Add a photo first.");
+      toast.error(
+        kind === "label"
+          ? "Add a photo of the nutrition label first."
+          : "Add a photo of your food first."
+      );
       return;
     }
     let servingsNum = 1;
@@ -183,7 +184,7 @@ export function AnalyzeForm({
       photoUrl = data.url;
       mediaType = data.contentType === "image/png" ? "image/png" : "image/jpeg";
     } catch {
-      toast.error("Upload failed — try again.");
+      toast.error("Upload failed. Try again.");
       setUploading(false);
       return;
     }
@@ -289,7 +290,7 @@ export function AnalyzeForm({
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
-    // "search" and "recent" log per-row with their own buttons.
+    // "search", "barcode", and "recent" log per-row with their own buttons.
     if (mode === "photo") {
       submitPhoto("meal");
     } else if (mode === "label") {
@@ -304,13 +305,13 @@ export function AnalyzeForm({
       if (uploading) {
         return "Uploading…";
       }
-      return pending ? "Chad's analyzing…" : "Analyze with Chad";
+      return pending ? "Chad's analyzing…" : "Analyze Food Photo";
     }
     if (mode === "label") {
       if (uploading) {
         return "Uploading…";
       }
-      return pending ? "Reading label…" : "Scan label";
+      return pending ? "Reading label…" : "Analyze Nutrition Label";
     }
     return pending ? "Logging…" : "Log meal";
   }
@@ -320,20 +321,22 @@ export function AnalyzeForm({
       <div>
         <h2 className="font-medium text-lg">Log a meal</h2>
         <p className="mt-1 text-muted-foreground text-sm">
-          Search the food database or scan a barcode for verified numbers.
-          Snap your plate or a packaged-food label and Chad reads it, with a
-          straight verdict on what it's doing to your goal. Or type the
-          numbers yourself, or re-log something in one tap.
+          Search the food database or scan a product barcode for verified
+          numbers. Snap a photo of your food or of its nutrition facts label and
+          Chad reads it, with a straight verdict on what it's doing to your
+          goal. Or type the numbers yourself, or re-log a recent meal in one
+          tap.
         </p>
       </div>
 
       {/* Mode toggle */}
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+      <div className="grid grid-cols-3 gap-2">
         {(
           [
             { value: "search", label: "Search", Icon: Search },
-            { value: "photo", label: "Photo", Icon: Camera },
-            { value: "label", label: "Label", Icon: ScanLine },
+            { value: "barcode", label: "Barcode", Icon: ScanBarcode },
+            { value: "photo", label: "Food Photo", Icon: Camera },
+            { value: "label", label: "Label Photo", Icon: ScanLine },
             { value: "manual", label: "Manual", Icon: PencilLine },
             { value: "recent", label: "Recent", Icon: History },
           ] as const
@@ -378,15 +381,29 @@ export function AnalyzeForm({
       </div>
 
       {mode === "search" ? (
-        <FoodSearch date={date} meal={meal} mealLabel={mealLabel.trim() || null} />
+        <FoodSearch
+          date={date}
+          key="search"
+          meal={meal}
+          mealLabel={mealLabel.trim() || null}
+        />
+      ) : mode === "barcode" ? (
+        // key forces a fresh mount when hopping Search <-> Barcode, so the
+        // Barcode tab's auto-opening camera actually opens every time.
+        <FoodSearch
+          date={date}
+          key="barcode"
+          meal={meal}
+          mealLabel={mealLabel.trim() || null}
+          variant="barcode"
+        />
       ) : mode === "photo" || mode === "label" ? (
         <>
-          {mode === "label" && (
-            <p className="rounded-xl border border-border border-dashed bg-background/40 px-3 py-2.5 text-muted-foreground text-xs">
-              Photograph the nutrition facts panel on packaged food. Chad reads
-              the calories and macros straight off the label.
-            </p>
-          )}
+          <p className="rounded-xl border border-border border-dashed bg-background/40 px-3 py-2.5 text-muted-foreground text-xs">
+            {mode === "label"
+              ? "Photograph the nutrition facts panel on packaged food. Chad reads the calories and macros straight off the label."
+              : "Photograph your plate or meal. Chad identifies the food and estimates the calories and macros."}
+          </p>
           <button
             className="relative flex min-h-44 w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-border border-dashed bg-background/40 px-4 py-6 text-center transition-colors hover:bg-accent/40"
             onClick={() => inputRef.current?.click()}
@@ -408,8 +425,8 @@ export function AnalyzeForm({
                 )}
                 <span className="font-medium text-sm">
                   {mode === "label"
-                    ? "Tap to add the nutrition label"
-                    : "Tap to add a photo"}
+                    ? "Tap to add a photo of the nutrition label"
+                    : "Tap to add a photo of your food"}
                 </span>
                 <span className="text-muted-foreground text-xs">
                   JPEG or PNG, up to 5MB
@@ -441,14 +458,14 @@ export function AnalyzeForm({
                 value={servings}
               />
               <p className="text-muted-foreground text-xs">
-                The label lists values per serving — Chad multiplies by this.
+                The label lists values per serving. Chad multiplies by this.
               </p>
             </div>
           )}
           <Textarea
             maxLength={500}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="Anything Chad should know? (optional) — e.g. 'post-workout', 'cutting'"
+            placeholder="Anything Chad should know? (optional) e.g. 'post-workout', 'cutting'"
             rows={2}
             value={note}
           />
@@ -539,11 +556,12 @@ export function AnalyzeForm({
 
       {mode !== "recent" &&
         mode !== "search" &&
+        mode !== "barcode" &&
         (() => {
           // At rest with no photo, don't render a dead flat-grey slab (which made
           // the whole form look inert on first load). Keep the button live and
-          // brand-tinted with a clear "add a photo first" affordance — clicking
-          // it prompts for the photo instead of doing nothing (NUT-15).
+          // brand-tinted — clicking it without a photo toasts exactly what's
+          // missing (NUT-15).
           const needsPhoto = (mode === "photo" || mode === "label") && !file;
           const PhotoIcon = mode === "label" ? ScanLine : Camera;
           return (
@@ -559,11 +577,7 @@ export function AnalyzeForm({
             >
               {busy && <Loader2 className="size-4 animate-spin" />}
               {!busy && needsPhoto && <PhotoIcon className="size-4" />}
-              {needsPhoto
-                ? mode === "label"
-                  ? "Add a label to scan"
-                  : "Add a photo to analyze"
-                : renderSubmitLabel()}
+              {renderSubmitLabel()}
             </Button>
           );
         })()}

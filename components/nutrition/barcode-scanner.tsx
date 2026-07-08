@@ -294,11 +294,16 @@ export function BarcodeScannerDialog({
                 Starting camera…
               </div>
             )}
-            {/* Aiming guide */}
+            {/* Aiming guide + sweeping red scan line (laser-scanner style,
+                so it unmistakably reads as an active scanner) */}
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-x-10 top-1/2 h-24 -translate-y-1/2 rounded-lg border-2 border-white/70"
-            />
+              className="pointer-events-none absolute inset-x-10 top-1/2 h-24 -translate-y-1/2 overflow-hidden rounded-lg border-2 border-white/70"
+            >
+              {!starting && (
+                <div className="barcode-scan-line absolute inset-x-1 h-0.5 rounded-full bg-red-500 shadow-[0_0_10px_2px_rgba(239,68,68,0.8)]" />
+              )}
+            </div>
             {/* Live "scanning" pulse so it reads as an active scanner, not a
                 plain camera view. */}
             {!starting && (
