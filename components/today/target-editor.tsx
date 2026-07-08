@@ -9,14 +9,14 @@ import { saveNutritionTarget } from "@/app/nutrition/actions";
 import { SegmentedPicker } from "@/components/meal-plan/segmented-picker";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  AdaptiveDialog as Dialog,
+  AdaptiveDialogContent as DialogContent,
+  AdaptiveDialogDescription as DialogDescription,
+  AdaptiveDialogFooter as DialogFooter,
+  AdaptiveDialogHeader as DialogHeader,
+  AdaptiveDialogTitle as DialogTitle,
+  AdaptiveDialogTrigger as DialogTrigger,
+} from "@/components/ui/adaptive-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {

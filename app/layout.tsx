@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Archivo, Inter, JetBrains_Mono } from "next/font/google";
 import { TimezoneSync } from "@/components/account/timezone-sync";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -13,8 +13,14 @@ export const metadata: Metadata = {
   description: "Chad is a no-nonsense AI fitness coach who builds your training and nutrition plan and holds you to it.",
 };
 
-export const viewport = {
+export const viewport: Viewport = {
   maximumScale: 1,
+  // MOB-3: mobile Chrome defaults to interactive-widget=resizes-visual, which
+  // keeps the layout viewport (and the h-dvh chat shell with its sticky
+  // composer) full-height behind the open keyboard — the send button lands
+  // under the keys. resizes-content shrinks the layout viewport instead, so
+  // the composer rides above the keyboard like WhatsApp/ChatGPT.
+  interactiveWidget: "resizes-content",
 };
 
 // Brand fonts — matched to the Chad landing page.

@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   archivePlan,
@@ -432,7 +432,7 @@ export function MealPlanView({ plan }: { plan: MealPlanViewData }) {
 
       {/* Week-at-a-glance day switcher */}
       {days.length > 1 && (
-        <div className="-mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1">
+        <DaySwitcherRow>
           {days.map((d, i) => (
             <DaySwitchCard
               active={i === dayIdx}
@@ -442,7 +442,7 @@ export function MealPlanView({ plan }: { plan: MealPlanViewData }) {
               target={plan.target}
             />
           ))}
-        </div>
+        </DaySwitcherRow>
       )}
 
       {/* Selected day */}
@@ -483,6 +483,55 @@ export function MealPlanView({ plan }: { plan: MealPlanViewData }) {
             />
           ))}
         </div>
+      )}
+    </div>
+  );
+}
+
+/** The horizontally scrolling day-card row with edge-fade scroll affordance
+ * (MOB-4): on phones only ~3 of 7 day cards fit, and a hard clip at the edge
+ * reads as "that's all there is". A fade on whichever side has more content
+ * (the MyFitnessPal chip-row pattern) signals the swipe. */
+function DaySwitcherRow({ children }: { children: React.ReactNode }) {
+  const rowRef = useRef<HTMLDivElement>(null);
+  const [fadeLeft, setFadeLeft] = useState(false);
+  const [fadeRight, setFadeRight] = useState(false);
+
+  const updateFades = useCallback(() => {
+    const el = rowRef.current;
+    if (!el) {
+      return;
+    }
+    setFadeLeft(el.scrollLeft > 4);
+    setFadeRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    updateFades();
+    window.addEventListener("resize", updateFades);
+    return () => window.removeEventListener("resize", updateFades);
+  }, [updateFades]);
+
+  return (
+    <div className="relative">
+      <div
+        className="-mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1"
+        onScroll={updateFades}
+        ref={rowRef}
+      >
+        {children}
+      </div>
+      {fadeLeft && (
+        <div
+          aria-hidden
+          className="day-row-fade pointer-events-none absolute inset-y-0 -left-1 w-10 bg-linear-to-r from-background to-transparent"
+        />
+      )}
+      {fadeRight && (
+        <div
+          aria-hidden
+          className="day-row-fade pointer-events-none absolute inset-y-0 -right-1 w-10 bg-linear-to-l from-background to-transparent"
+        />
       )}
     </div>
   );
