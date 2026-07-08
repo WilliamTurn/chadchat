@@ -262,7 +262,14 @@ export function BarcodeScannerDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="sm:max-w-md">
+      {/* Radix auto-focuses the first focusable element on open, which is the
+          typed-fallback input, and on phones a focused input POPS THE
+          KEYBOARD over the camera view. The camera is the interface here;
+          tapping the field still focuses it when someone wants to type. */}
+      <DialogContent
+        className="sm:max-w-md"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ScanBarcode className="size-5" />

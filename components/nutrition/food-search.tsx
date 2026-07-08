@@ -338,7 +338,8 @@ export function FoodSearch({
         <p className="rounded-xl border border-border border-dashed bg-background/40 px-4 py-8 text-center text-muted-foreground text-sm">
           No match for "{trimmed}". Try fewer or simpler words ("chicken
           breast", not "my grilled chicken"), scan its barcode with the Barcode
-          tab, or log it with the Food Photo, Label Photo, or Manual tab.
+          Scanner tab, or log it with the Food Photo, Label Photo, or Manual
+          Entry tab.
         </p>
       ) : scanned ? null : (
         <p className="rounded-xl border border-border border-dashed bg-background/40 px-4 py-8 text-center text-muted-foreground text-sm">
@@ -480,10 +481,12 @@ function PortionEditor({
           1 serving = {hit.serving.label}
         </p>
       )}
+      {/* No autoFocus: on phones a focused input pops the keyboard the
+          moment a scanned/tapped food expands, burying the food card. The
+          member taps the field when they want to change the amount. */}
       <div className="flex flex-wrap items-center gap-2">
         <Input
           aria-label="Amount"
-          autoFocus
           className="w-24"
           inputMode="decimal"
           min="0"

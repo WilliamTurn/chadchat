@@ -329,20 +329,24 @@ export function AnalyzeForm({
         </p>
       </div>
 
-      {/* Mode toggle */}
-      <div className="grid grid-cols-3 gap-2">
+      {/* Mode toggle. The two-word labels ("Barcode Scanner", "Label Photo")
+          must always sit on ONE line: on phones the tiles stack icon-over-
+          label (the standard mobile logging-sheet pattern; a horizontal pill
+          can't hold the longest label at 320-390px), from sm up they're
+          horizontal pills in a 3-col grid (owner report, s164). */}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {(
           [
             { value: "search", label: "Search", Icon: Search },
-            { value: "barcode", label: "Barcode", Icon: ScanBarcode },
+            { value: "barcode", label: "Barcode Scanner", Icon: ScanBarcode },
             { value: "photo", label: "Food Photo", Icon: Camera },
             { value: "label", label: "Label Photo", Icon: ScanLine },
-            { value: "manual", label: "Manual", Icon: PencilLine },
+            { value: "manual", label: "Manual Entry", Icon: PencilLine },
             { value: "recent", label: "Recent", Icon: History },
           ] as const
         ).map(({ value, label, Icon }) => (
           <button
-            className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 font-medium text-sm transition-colors ${
+            className={`flex flex-col items-center justify-center gap-1 whitespace-nowrap rounded-xl border px-2 py-2 font-medium text-xs transition-colors sm:flex-row sm:gap-1.5 sm:py-2.5 sm:text-sm ${
               mode === value
                 ? "border-blood bg-blood/10"
                 : "border-border bg-background/40 text-muted-foreground hover:bg-accent/50"
@@ -351,7 +355,7 @@ export function AnalyzeForm({
             onClick={() => setMode(value)}
             type="button"
           >
-            <Icon className="size-4" />
+            <Icon className="size-4 shrink-0" />
             {label}
           </button>
         ))}

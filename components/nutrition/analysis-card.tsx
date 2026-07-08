@@ -89,7 +89,15 @@ function ScoreRing({ score }: { score: number }) {
   );
 }
 
-function Macro({ label, value, unit }: { label: string; value: number | null; unit: string }) {
+function Macro({
+  label,
+  value,
+  unit,
+}: {
+  label: string;
+  value: number | null;
+  unit: string;
+}) {
   if (value == null) {
     return null;
   }
@@ -157,7 +165,7 @@ export function AnalysisCard({ entry }: { entry: MealAnalysis }) {
                 )}
                 {entry.source === "manual" && (
                   <Badge className="text-[11px]" variant="outline">
-                    Manual
+                    Manual entry
                   </Badge>
                 )}
                 <span className="text-muted-foreground text-xs">
