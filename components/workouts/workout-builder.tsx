@@ -559,6 +559,14 @@ export function WorkoutBuilder({
         <DialogContent
           className="max-h-[90vh] gap-0 overflow-hidden p-0 sm:max-w-2xl"
           onInteractOutside={(e) => e.preventDefault()}
+          // No uninvited keyboard on phones (owner order s168 / NUT-27b rule):
+          // Radix otherwise focuses the title input on open, which pops the
+          // keyboard before the member is ready to type anything.
+          onOpenAutoFocus={(e) => {
+            if (window.matchMedia("(pointer: coarse)").matches) {
+              e.preventDefault();
+            }
+          }}
         >
           <DialogHeader className="border-border border-b px-5 py-4">
             <DialogTitle>
@@ -849,8 +857,8 @@ function ExerciseBlock({
           The lb/kg unit lives HERE, once per exercise, not as a select inside
           every set row — per-row selects crushed the weight/reps inputs to
           unreadable slivers at phone widths (s167). */}
-      <div className="mb-1 flex items-center gap-1.5 px-1 text-[11px] text-muted-foreground uppercase tracking-wide sm:gap-2">
-        <span className="w-8 text-center">Set</span>
+      <div className="mb-1 flex items-center gap-2 px-1 text-[11px] text-muted-foreground uppercase tracking-wide">
+        <span className="w-11 text-center sm:w-8">Set</span>
         {kind !== "timed" && (
           <span className="flex flex-1 items-center gap-1">
             Weight
@@ -873,7 +881,9 @@ function ExerciseBlock({
           </span>
         )}
         <span className="flex-1">{kind === "timed" ? "Seconds" : "Reps"}</span>
-        <span className="flex w-11 items-center justify-center gap-0.5">
+        {/* On phones RPE gets its own labeled line under each set (below), so
+            the main row keeps only four big touch targets. */}
+        <span className="hidden w-11 items-center justify-center gap-0.5 sm:flex">
           RPE
           <KpiHelp label="RPE">
             Rate of Perceived Exertion: how hard the set felt, 1 to 10. A 10
@@ -881,11 +891,11 @@ function ExerciseBlock({
             two more reps. Optional: leave it blank if you don't track it.
           </KpiHelp>
         </span>
-        <span className="w-8 text-center">Done</span>
-        <span className="w-7" />
+        <span className="w-11 text-center sm:w-8">Done</span>
+        <span className="hidden w-7 sm:block" />
       </div>
 
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-3 sm:gap-1.5">
         {exercise.sets.map((s, setIndex) => {
           if (s.setType === "working") {
             workingCount += 1;
@@ -903,105 +913,138 @@ function ExerciseBlock({
             ghost?.weight || (kind === "bodyweight" ? "BW" : "–");
           const repsGhost = ghost?.reps || "–";
           return (
-            <div className="flex items-center gap-1.5 sm:gap-2" key={s.uid}>
-              <button
-                aria-label={`Set type: ${SET_TYPE_LABEL[s.setType]} (tap to change)`}
-                className={cn(
-                  "flex size-8 shrink-0 items-center justify-center rounded-md border font-medium text-xs transition-colors",
-                  s.setType === "working"
-                    ? "border-border bg-card"
-                    : s.setType === "warmup"
-                      ? "border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                      : "border-blood/40 bg-blood/10 text-blood"
-                )}
-                onClick={() => {
-                  const next =
-                    SET_TYPE_ORDER[
-                      (SET_TYPE_ORDER.indexOf(s.setType) + 1) %
-                        SET_TYPE_ORDER.length
-                    ];
-                  onUpdateSet(s.uid, { setType: next });
-                }}
-                title={SET_TYPE_LABEL[s.setType]}
-                type="button"
-              >
-                {badge}
-              </button>
+            // MOBILE-FIRST set layout (owner order s168): on phones the main
+            // row holds only FOUR big touch targets (set type, weight, reps,
+            // done) so nothing is crammed or needs a precision tap; RPE and
+            // Remove get their own labeled line underneath. sm+ keeps the
+            // desktop single-row grid.
+            <div className="flex flex-col gap-1.5 sm:gap-0" key={s.uid}>
+              <div className="flex items-center gap-2">
+                <button
+                  aria-label={`Set type: ${SET_TYPE_LABEL[s.setType]} (tap to change)`}
+                  className={cn(
+                    "flex size-11 shrink-0 items-center justify-center rounded-md border font-medium text-sm transition-colors sm:size-8 sm:text-xs",
+                    s.setType === "working"
+                      ? "border-border bg-card"
+                      : s.setType === "warmup"
+                        ? "border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                        : "border-blood/40 bg-blood/10 text-blood"
+                  )}
+                  onClick={() => {
+                    const next =
+                      SET_TYPE_ORDER[
+                        (SET_TYPE_ORDER.indexOf(s.setType) + 1) %
+                          SET_TYPE_ORDER.length
+                      ];
+                    onUpdateSet(s.uid, { setType: next });
+                  }}
+                  title={SET_TYPE_LABEL[s.setType]}
+                  type="button"
+                >
+                  {badge}
+                </button>
 
-              {kind !== "timed" && (
+                {kind !== "timed" && (
+                  <Input
+                    aria-label={`Weight (${unit})`}
+                    className="h-11 flex-1 px-2 text-center sm:h-9"
+                    inputMode="decimal"
+                    onChange={(e) =>
+                      onUpdateSet(s.uid, { weight: e.target.value })
+                    }
+                    placeholder={weightGhost}
+                    value={s.weight}
+                  />
+                )}
+
                 <Input
-                  aria-label={`Weight (${unit})`}
-                  className="h-9 flex-1 px-2 text-center"
-                  inputMode="decimal"
-                  onChange={(e) =>
-                    onUpdateSet(s.uid, { weight: e.target.value })
-                  }
-                  placeholder={weightGhost}
-                  value={s.weight}
+                  aria-label={kind === "timed" ? "Seconds" : "Reps"}
+                  className="h-11 flex-1 px-2 text-center sm:h-9"
+                  inputMode="numeric"
+                  onChange={(e) => onUpdateSet(s.uid, { reps: e.target.value })}
+                  placeholder={repsGhost}
+                  value={s.reps}
                 />
-              )}
 
-              <Input
-                aria-label={kind === "timed" ? "Seconds" : "Reps"}
-                className="h-9 flex-1 px-2 text-center"
-                inputMode="numeric"
-                onChange={(e) => onUpdateSet(s.uid, { reps: e.target.value })}
-                placeholder={repsGhost}
-                value={s.reps}
-              />
+                <Input
+                  aria-label="RPE"
+                  className="hidden h-9 w-11 px-1 text-center sm:block"
+                  inputMode="decimal"
+                  onChange={(e) => onUpdateSet(s.uid, { rpe: e.target.value })}
+                  placeholder="–"
+                  value={s.rpe}
+                />
 
-              <Input
-                aria-label="RPE"
-                className="h-9 w-11 px-1 text-center"
-                inputMode="decimal"
-                onChange={(e) => onUpdateSet(s.uid, { rpe: e.target.value })}
-                placeholder="–"
-                value={s.rpe}
-              />
-
-              <button
-                aria-label={s.completed ? "Mark not done" : "Mark done"}
-                className={cn(
-                  "flex size-8 shrink-0 items-center justify-center rounded-md border transition-colors",
-                  s.completed
-                    ? "border-emerald-500/50 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                    : "border-border text-muted-foreground hover:bg-accent"
-                )}
-                onClick={() => {
-                  // Checking off an empty set adopts its ghost numbers (the
-                  // Hevy flow: did what was planned → one tap logs it). Only
-                  // plain numbers adopt; a range target like "4-6" stays a
-                  // placeholder for the member to type over.
-                  const patch: Partial<EditorSet> = {
-                    completed: !s.completed,
-                  };
-                  if (!s.completed && ghost) {
-                    if (
-                      kind !== "timed" &&
-                      !s.weight.trim() &&
-                      isNumeric(ghost.weight)
-                    ) {
-                      patch.weight = ghost.weight;
+                <button
+                  aria-label={s.completed ? "Mark not done" : "Mark done"}
+                  className={cn(
+                    "flex size-11 shrink-0 items-center justify-center rounded-md border transition-colors sm:size-8",
+                    s.completed
+                      ? "border-emerald-500/50 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                      : "border-border text-muted-foreground hover:bg-accent"
+                  )}
+                  onClick={() => {
+                    // Checking off an empty set adopts its ghost numbers (the
+                    // Hevy flow: did what was planned → one tap logs it). Only
+                    // plain numbers adopt; a range target like "4-6" stays a
+                    // placeholder for the member to type over.
+                    const patch: Partial<EditorSet> = {
+                      completed: !s.completed,
+                    };
+                    if (!s.completed && ghost) {
+                      if (
+                        kind !== "timed" &&
+                        !s.weight.trim() &&
+                        isNumeric(ghost.weight)
+                      ) {
+                        patch.weight = ghost.weight;
+                      }
+                      if (!s.reps.trim() && isNumeric(ghost.reps)) {
+                        patch.reps = ghost.reps;
+                      }
                     }
-                    if (!s.reps.trim() && isNumeric(ghost.reps)) {
-                      patch.reps = ghost.reps;
-                    }
-                  }
-                  onUpdateSet(s.uid, patch);
-                }}
-                type="button"
-              >
-                <Check className="size-4" />
-              </button>
+                    onUpdateSet(s.uid, patch);
+                  }}
+                  type="button"
+                >
+                  <Check className="size-5 sm:size-4" />
+                </button>
 
-              <button
-                aria-label="Remove set"
-                className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                onClick={() => onRemoveSet(s.uid)}
-                type="button"
-              >
-                <X className="size-3.5" />
-              </button>
+                <button
+                  aria-label="Remove set"
+                  className="hidden size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:flex"
+                  onClick={() => onRemoveSet(s.uid)}
+                  type="button"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </div>
+
+              {/* Phone-only second line: the optional/rare controls, labeled
+                  in plain words so nothing needs decoding or a precise tap. */}
+              <div className="flex items-center justify-between pl-[52px] sm:hidden">
+                <label className="flex items-center gap-1.5 text-muted-foreground text-xs">
+                  RPE (effort 1-10, optional)
+                  <Input
+                    aria-label="RPE"
+                    className="h-9 w-12 px-1 text-center"
+                    inputMode="decimal"
+                    onChange={(e) =>
+                      onUpdateSet(s.uid, { rpe: e.target.value })
+                    }
+                    placeholder="–"
+                    value={s.rpe}
+                  />
+                </label>
+                <button
+                  className="flex h-9 items-center gap-1 rounded-md px-2 text-muted-foreground text-xs transition-colors hover:bg-accent hover:text-foreground"
+                  onClick={() => onRemoveSet(s.uid)}
+                  type="button"
+                >
+                  <X className="size-3.5" />
+                  Remove set
+                </button>
+              </div>
             </div>
           );
         })}
