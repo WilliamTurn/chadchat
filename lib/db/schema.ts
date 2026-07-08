@@ -812,3 +812,26 @@ export const quitPrediction = pgTable("QuitPrediction", {
 });
 
 export type QuitPrediction = InferSelectModel<typeof quitPrediction>;
+
+// --- Workout templates (the member-built "My Workouts" plans) ---
+// A template is a reusable workout PLAN the member builds ahead of time
+// ("Push Day": bench 3×8, rows 3×10 …). Starting one spawns a live session in
+// the player; finishing that session writes Workout/WorkoutExercise/WorkoutSet
+// rows as usual, so history, PRs, and Chad's dashboard reads are unchanged.
+// `exercises` is a TemplateExercise[] (see lib/validation/workout-templates.ts):
+// name/muscleGroup/kind snapshots plus targetSets, rep range, and rest seconds.
+export const workoutTemplate = pgTable("WorkoutTemplate", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  name: text("name").notNull(),
+  exercises: json("exercises").notNull(),
+  // Stamped each time a session started from this template is saved, so the
+  // list can show "Last done Tuesday".
+  lastPerformedAt: timestamp("lastPerformedAt"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+export type WorkoutTemplate = InferSelectModel<typeof workoutTemplate>;

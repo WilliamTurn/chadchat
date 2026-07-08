@@ -1,71 +1,54 @@
-import { Dumbbell, Plus, Repeat, Trophy } from "lucide-react";
+import { ChevronRight, Dumbbell, Trophy } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
+import { CountUp } from "@/components/dashboard/count-up";
+import { KpiHelp } from "@/components/dashboard/kpi";
+import { WorkoutsSkeleton } from "@/components/dashboard/page-skeletons";
 import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
 import { ScrollToHash } from "@/components/nav/scroll-to-hash";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
-import { CountUp } from "@/components/dashboard/count-up";
-import { KpiHelp } from "@/components/dashboard/kpi";
-import { WorkoutsSkeleton } from "@/components/dashboard/page-skeletons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { RewardProvider } from "@/components/dashboard/reward";
+import { toCustomExerciseData } from "@/components/workouts/v2/catalog";
+import { HistoryCard } from "@/components/workouts/v2/history-card";
+import {
+  ChadPlanSection,
+  IntroCard,
+  MyWorkoutsSection,
+  ResumeCard,
+  StartEmptySection,
+  type TemplateData,
+} from "@/components/workouts/v2/workouts-home";
 import { PersonalRecords } from "@/components/workouts/personal-records";
-import { PlanRunner } from "@/components/workouts/plan-runner";
 import { VolumeChart } from "@/components/workouts/volume-chart";
-import { WorkoutCard } from "@/components/workouts/workout-card";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import { calendarDayAnchorInTz } from "@/lib/date";
 import {
   getActivePlansByUserId,
+  getCustomExercisesByUserId,
   getUserById,
   getWorkoutsByUserId,
-  type WorkoutWithChildren,
+  getWorkoutTemplatesByUserId,
 } from "@/lib/db/queries";
+import type { User } from "@/lib/db/schema";
 import { weekAnchors } from "@/lib/today/week";
 import { parsePlanDays } from "@/lib/validation/plan-days";
+import { parseTemplateExercises } from "@/lib/validation/workout-templates";
+import { toWorkoutData } from "@/lib/workouts/serialize";
 import {
   computePersonalRecords,
   exercise1RMTrend,
-  type WorkoutData,
-  workoutVolumeLb,
+  lastSetsByExercise,
+  prCountsByWorkout,
   volumeTrend,
+  workoutVolumeLb,
 } from "@/lib/workouts/stats";
-
-// Cap the history we hydrate per page load. Generous (years of training at a
-// session a day) but bounds an otherwise unbounded query + payload as a user's
-// log grows. PRs and the volume trend are computed from this window.
-const MAX_WORKOUTS = 200;
-
-function toWorkoutData(w: WorkoutWithChildren): WorkoutData {
-  return {
-    id: w.id,
-    title: w.title,
-    performedAt: w.performedAt.toISOString(),
-    durationSeconds: w.durationSeconds,
-    notes: w.notes,
-    exercises: w.exercises.map((ex) => ({
-      name: ex.exerciseName,
-      muscleGroup: ex.muscleGroup,
-      kind: ex.kind,
-      supersetGroup: ex.supersetGroup,
-      notes: ex.notes,
-      sets: ex.sets.map((s) => ({
-        weight: s.weight,
-        reps: s.reps,
-        unit: s.unit,
-        rpe: s.rpe,
-        setType: s.setType,
-        completed: s.completed,
-      })),
-    })),
-  };
-}
+import { MAX_WORKOUTS } from "./data";
 
 export default function WorkoutsPage() {
   return (
@@ -84,13 +67,11 @@ export default function WorkoutsPage() {
         <BackToDashboard />
         <div className="flex items-center gap-3">
           <h1 className="font-semibold text-2xl tracking-tight">Workouts</h1>
-          {/* "Pro feature", not bare "Pro": the badge labels the FEATURE's
-              tier; a bare tier name reads as the member's own plan (LC-13). */}
           <Badge variant="secondary">Pro feature</Badge>
         </div>
         <p className="mt-1 text-muted-foreground text-sm">
-          Log every set, rep, and pound. Chad tracks your PRs and volume — and
-          holds you to them.
+          Build your workouts, run them live at the gym, and log every set.
+          Chad tracks your PRs and volume, and holds you to them.
         </p>
       </div>
 
@@ -111,33 +92,27 @@ async function WorkoutsContent() {
   if (!user) {
     redirect("/login");
   }
-  // Legal gate (BLK-4): accept the Terms before using the product.
   if (!user.acceptedTermsAt) {
     redirect("/legal");
   }
   if (!canAccessChad(user)) {
     redirect("/pricing");
   }
-
   if (!canAccessProFeatures(user)) {
     return <UpgradePrompt />;
   }
 
-  return (
-    <RewardProvider haptics={user.hapticsEnabled} sound={user.soundEnabled}>
-      <Dashboard timezone={user.timezone} userId={user.id} />
-    </RewardProvider>
-  );
+  return <Home user={user} />;
 }
 
 function UpgradePrompt() {
   return (
     <div className="rounded-2xl border border-border bg-card p-8 text-center">
-      <h2 className="font-medium text-lg">Workout logging is a Chad Pro feature</h2>
+      <h2 className="font-medium text-lg">Workouts are a Chad Pro feature</h2>
       <p className="mx-auto mt-2 max-w-md text-muted-foreground text-sm">
-        Upgrade to Pro to log your training set by set, build an exercise
-        library, and watch your strength and volume climb — the stuff a real
-        coach tracks for you.
+        Upgrade to Pro to build your own workouts, run them live at the gym,
+        and watch your strength and volume climb. That's what a real coach
+        tracks for you.
       </p>
       <Button asChild className="mt-5">
         <Link href="/account">Upgrade to Pro</Link>
@@ -146,23 +121,34 @@ function UpgradePrompt() {
   );
 }
 
-async function Dashboard({
-  userId,
-  timezone,
-}: {
-  userId: string;
-  timezone: string | null;
-}) {
-  const [rawWorkouts, activePlans] = await Promise.all([
-    getWorkoutsByUserId(userId, MAX_WORKOUTS),
-    getActivePlansByUserId(userId),
+async function Home({ user }: { user: User }) {
+  const [rawWorkouts, rawTemplates, activePlans, customs] = await Promise.all([
+    getWorkoutsByUserId(user.id, MAX_WORKOUTS),
+    getWorkoutTemplatesByUserId(user.id),
+    getActivePlansByUserId(user.id),
+    getCustomExercisesByUserId(user.id),
   ]);
 
   const workouts = rawWorkouts.map(toWorkoutData);
+  const lastSets = lastSetsByExercise(workouts);
+  const customExercises = customs.map(toCustomExerciseData);
+  const unit = user.weightUnit === "kg" ? ("kg" as const) : ("lb" as const);
 
-  // The current training plan, runnable from this page (FN-2). `days` is the
-  // structured program; null means an older free-text plan — PlanRunner
-  // backfills it via a one-time AI extraction.
+  const templates: TemplateData[] = rawTemplates.flatMap((t) => {
+    const exercises = parseTemplateExercises(t.exercises);
+    if (!exercises) {
+      return [];
+    }
+    return [
+      {
+        id: t.id,
+        name: t.name,
+        exercises,
+        lastPerformedAt: t.lastPerformedAt ? t.lastPerformedAt.getTime() : null,
+      },
+    ];
+  });
+
   const trainingPlan = activePlans.find((p) => p.kind === "training") ?? null;
   const planDays = trainingPlan ? parsePlanDays(trainingPlan.days) : null;
 
@@ -173,61 +159,34 @@ async function Dashboard({
       trend: exercise1RMTrend(workouts, r.exerciseName),
     }));
   const trend = volumeTrend(workouts);
+  const prCounts = prCountsByWorkout(workouts);
 
-  // "This week" = the member's current Sunday-start calendar week (LC-10) —
-  // the same week the dashboard strips and the /today "Days active this week"
-  // stat show, so every "week" number in the app answers the same question.
-  // (These stats used to be a rolling last-7-days window, which the label
-  // contradicted.)
-  const weekStartMs = weekAnchors(timezone).days[0].getTime();
+  // "This week" = the member's current Sunday-start calendar week (LC-10).
+  const weekStartMs = weekAnchors(user.timezone).days[0].getTime();
   const weekWorkouts = workouts.filter(
     (w) =>
-      calendarDayAnchorInTz(new Date(w.performedAt), timezone).getTime() >=
+      calendarDayAnchorInTz(new Date(w.performedAt), user.timezone).getTime() >=
       weekStartMs
   );
-  const weekVolume = weekWorkouts.reduce((sum, w) => sum + workoutVolumeLb(w), 0);
+  const weekVolume = weekWorkouts.reduce(
+    (sum, w) => sum + workoutVolumeLb(w),
+    0
+  );
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 pb-24">
       <ScrollToHash />
-      {/* Action + summary. On mobile the primary CTA comes first and spans the
-          full width instead of wrapping alone onto a second line (VF-9). */}
+
       <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          {workouts.length > 0 && (
-            <AskChadButton prompt="Review my Workouts page: my logged sessions, weekly volume, training plan, and PRs. How is my training progressing overall, and what should I focus on next?" />
-          )}
-          {/* Both actions open the full-page logger (MOB-18), never a popup. */}
-          {workouts.length > 0 && (
-            <Button asChild className="gap-1.5" variant="outline">
-              <Link href={`/workouts/log?repeat=${workouts[0].id}`}>
-                <Repeat className="size-4" />
-                Repeat last
-              </Link>
-            </Button>
-          )}
-          <Button
-            asChild
-            className="order-first w-full gap-1.5 sm:order-none sm:w-auto"
-          >
-            <Link href="/workouts/log">
-              <Plus className="size-4" />
-              Log a workout
-            </Link>
-          </Button>
-        </div>
+        <ResumeCard />
+        <IntroCard />
 
         {workouts.length > 0 && (
-          // DSH-27: after logging a workout the page refetches (revalidatePath +
-          // router.refresh), so the chart and PRs update — but the count-up
-          // counters kept the old total until a manual reload. Keying the block
-          // on the live figures remounts the StatCards whenever they change, so
-          // the numbers can't go stale (and re-count to the new total as feedback).
           <div
             className="grid gap-2 sm:grid-cols-3 sm:gap-3"
             key={`${workouts.length}-${weekWorkouts.length}-${weekVolume}`}
           >
-            <StatCard label="Workouts" value={String(workouts.length)} />
+            <StatCard label="Workouts logged" value={String(workouts.length)} />
             <StatCard
               help="Sessions you logged this calendar week, Sunday through Saturday, in your time zone. Resets every Sunday."
               label="This week"
@@ -236,26 +195,30 @@ async function Dashboard({
             <StatCard
               help="Volume is the total weight you moved: weight times reps, added up across every set. This is your total for this calendar week, Sunday through Saturday."
               label="Volume this week"
-              value={weekVolume > 0 ? `${weekVolume.toLocaleString()} lb` : "—"}
+              value={weekVolume > 0 ? `${weekVolume.toLocaleString()} lb` : "-"}
             />
           </div>
         )}
       </div>
 
-      {/* The active training plan, runnable (FN-2). Rendered even before the
-          first workout — "plan generated, nothing logged yet" is exactly when
-          Start-a-day matters most. */}
+      {/* The member's own workouts, the headline feature. */}
+      <MyWorkoutsSection lastSets={lastSets} templates={templates} unit={unit} />
+
+      {/* Chad's plan, startable the same way. */}
       {trainingPlan && (
-        <PlanRunner
+        <ChadPlanSection
+          customExercises={customExercises}
           days={planDays}
+          lastSets={lastSets}
           planId={trainingPlan.id}
           planTitle={trainingPlan.title}
+          unit={unit}
         />
       )}
 
-      {workouts.length === 0 ? (
-        <EmptyState />
-      ) : (
+      <StartEmptySection unit={unit} />
+
+      {workouts.length > 0 && (
         <>
           {/* Volume trend */}
           {trend.length >= 2 && <VolumeChart points={trend} />}
@@ -278,30 +241,65 @@ async function Dashboard({
             </section>
           )}
 
-          {/* History. id: the dashboard card's "View all" landing spot (R2-5). */}
+          {/* Recent history + the full log. id: dashboard "View all" target. */}
           <section id="history">
-            <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-              History
-            </h2>
-            <div className="flex flex-col gap-4">
-              {workouts.map((w) => (
-                <WorkoutCard key={w.id} workout={w} />
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
+                Recent workouts
+              </h2>
+              <div className="flex items-center gap-2">
+                <AskChadButton prompt="Review my Workouts page: my logged sessions, weekly volume, training plan, and PRs. How is my training progressing overall, and what should I focus on next?" />
+              </div>
+            </div>
+            <div className="flex flex-col gap-3">
+              {workouts.slice(0, 5).map((w) => (
+                <HistoryCard
+                  key={w.id}
+                  prCount={prCounts[w.id] ?? 0}
+                  workout={w}
+                />
               ))}
             </div>
+            <Link
+              className="mt-3 flex min-h-[52px] items-center justify-center gap-1.5 rounded-xl border border-border bg-card font-semibold text-[14.5px] text-foreground transition hover:bg-muted/50"
+              href="/workouts/history"
+            >
+              View all history ({workouts.length}{" "}
+              {workouts.length === 1 ? "workout" : "workouts"})
+              <ChevronRight aria-hidden className="size-4" />
+            </Link>
           </section>
+
+          {/* The full exercise library, one tap away. */}
+          <Link
+            className="flex min-h-[56px] items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 font-semibold text-[15px] text-foreground transition hover:bg-muted/50"
+            href="/workouts/exercises"
+          >
+            <span className="flex items-center gap-2.5">
+              <Dumbbell aria-hidden className="size-5 text-blood" />
+              Exercise library: your records and progress for every exercise
+            </span>
+            <ChevronRight aria-hidden className="size-4 shrink-0" />
+          </Link>
         </>
+      )}
+
+      {workouts.length === 0 && (
+        <Link
+          className="flex min-h-[56px] items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 font-semibold text-[15px] text-foreground transition hover:bg-muted/50"
+          href="/workouts/exercises"
+        >
+          <span className="flex items-center gap-2.5">
+            <Dumbbell aria-hidden className="size-5 text-blood" />
+            Browse the exercise library
+          </span>
+          <ChevronRight aria-hidden className="size-4 shrink-0" />
+        </Link>
       )}
     </div>
   );
 }
 
-/**
- * One summary stat inside a card so the top-of-page numbers match the chart
- * KPIs rather than reading as three bare figures. On mobile it's a full-width
- * row (label left, number right) — three side-by-side tiles at 390px wrapped
- * "6,880 lb" mid-value (VF-9); on sm+ it keeps the Kpi column treatment.
- * `help` attaches the shared "?" popover next to the label (HLP-1).
- */
 function StatCard({
   label,
   value,
@@ -320,29 +318,6 @@ function StatCard({
         {label}
         {help && <KpiHelp label={label}>{help}</KpiHelp>}
       </div>
-    </div>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div className="flex flex-col items-center gap-4 rounded-2xl border border-border border-dashed bg-card px-6 py-14 text-center">
-      <span className="flex size-12 items-center justify-center rounded-2xl bg-muted/60 ring-1 ring-border/50">
-        <Dumbbell className="size-6 text-blood" />
-      </span>
-      <div>
-        <h3 className="font-medium text-lg">No workouts logged yet</h3>
-        <p className="mx-auto mt-1 max-w-sm text-muted-foreground text-sm">
-          Log your first session — every set, rep, and weight. Chad will start
-          tracking your PRs and volume the moment you do.
-        </p>
-      </div>
-      <Button asChild className="gap-1.5">
-        <Link href="/workouts/log">
-          <Plus className="size-4" />
-          Log your first workout
-        </Link>
-      </Button>
     </div>
   );
 }

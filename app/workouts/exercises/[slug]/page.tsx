@@ -1,0 +1,312 @@
+import { Suspense } from "react";
+import { Pencil, Trophy } from "lucide-react";
+import Link from "next/link";
+import { StandaloneHeader } from "@/components/nav/standalone-header";
+import { WorkoutsPageLoading } from "@/components/workouts/v2/loading";
+import { PageShell } from "@/components/nav/page-shell";
+import {
+  equipmentLabel,
+  exerciseSlug,
+  findInCatalog,
+  mergeCatalog,
+  muscleLabel,
+} from "@/components/workouts/v2/catalog";
+import { formatDay, formatWeight } from "@/components/workouts/v2/format";
+import { WorkoutPageHeader } from "@/components/workouts/v2/page-header";
+import { ProgressChart } from "@/components/workouts/v2/progress-chart";
+import { Pill, WButton, WCard } from "@/components/workouts/v2/ui";
+import { exerciseCue } from "@/lib/workouts/exercise-library";
+import { epley1RM, toLb, type WorkoutData } from "@/lib/workouts/stats";
+import { loadWorkoutContext, requireWorkoutsUser } from "../../data";
+
+export const metadata = { title: "Exercise" };
+
+/** Per-session best e1RM series for the progress chart, oldest first. */
+function e1rmSeries(workouts: WorkoutData[], name: string) {
+  const key = name.trim().toLowerCase();
+  const points: { date: number; value: number; label: string }[] = [];
+  for (const w of [...workouts].sort(
+    (a, b) =>
+      new Date(a.performedAt).getTime() - new Date(b.performedAt).getTime()
+  )) {
+    let best = 0;
+    let label = "";
+    for (const ex of w.exercises) {
+      if (ex.name.trim().toLowerCase() !== key) {
+        continue;
+      }
+      for (const s of ex.sets) {
+        if (!s.completed || s.setType === "warmup" || s.weight == null) {
+          continue;
+        }
+        const e = epley1RM(s.weight, s.reps);
+        if (e != null && toLb(e, s.unit) > best) {
+          best = toLb(e, s.unit);
+          label = `${s.weight} ${s.unit} × ${s.reps}`;
+        }
+      }
+    }
+    if (best > 0) {
+      points.push({
+        date: new Date(w.performedAt).getTime(),
+        value: best,
+        label,
+      });
+    }
+  }
+  return points;
+}
+
+/** All past performances of this exercise, newest first. */
+function pastSessions(workouts: WorkoutData[], name: string) {
+  const key = name.trim().toLowerCase();
+  return workouts
+    .filter((w) =>
+      w.exercises.some(
+        (ex) =>
+          ex.name.trim().toLowerCase() === key &&
+          ex.sets.some((s) => s.completed)
+      )
+    )
+    .map((w) => ({
+      workout: w,
+      exercise: w.exercises.find(
+        (ex) => ex.name.trim().toLowerCase() === key
+      )!,
+    }));
+}
+
+export default function ExerciseDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  return (
+    <PageShell>
+      <StandaloneHeader active="/workouts" />
+      <Suspense fallback={<WorkoutsPageLoading />}>
+        <Content params={params} />
+      </Suspense>
+    </PageShell>
+  );
+}
+
+async function Content({ params }: { params: Promise<{ slug: string }> }) {
+  const user = await requireWorkoutsUser();
+  const context = await loadWorkoutContext(user);
+  const { slug } = await params;
+  const name = decodeURIComponent(slug);
+  const catalog = mergeCatalog(context.customExercises);
+  const entry = findInCatalog(catalog, name);
+  // History may contain exercises no longer in the catalog, still show them.
+  const loggedHere = pastSessions(context.workouts, name);
+
+  if (!entry && loggedHere.length === 0) {
+    return (
+      <div className="py-24 text-center">
+          <p className="font-bold text-[17px] text-foreground">
+            Exercise not found
+          </p>
+        <Link className="mt-5 inline-block" href="/workouts/exercises">
+          <WButton variant="primary">Back to Exercises</WButton>
+        </Link>
+      </div>
+    );
+  }
+
+  const displayName = entry?.name ?? loggedHere[0].exercise.name;
+  const timed = entry
+    ? entry.kind === "timed"
+    : loggedHere[0]?.exercise.kind === "timed";
+  const cue = exerciseCue(displayName);
+  const custom = entry?.custom
+    ? context.customExercises.find(
+        (c) => c.name.trim().toLowerCase() === displayName.trim().toLowerCase()
+      )
+    : undefined;
+  const best = context.prBaseline[displayName.trim().toLowerCase()];
+  const series = e1rmSeries(context.workouts, displayName);
+
+  return (
+    <>
+      <WorkoutPageHeader
+        action={
+          custom ? (
+            <Link href={`/workouts/exercises/${exerciseSlug(displayName)}/edit`}>
+              <WButton size="sm">
+                <Pencil aria-hidden className="size-4" />
+                Edit
+              </WButton>
+            </Link>
+          ) : undefined
+        }
+        back={{ href: "/workouts/exercises", label: "Exercises" }}
+        title={displayName}
+      />
+      <div className="-mt-2 mb-5 flex flex-wrap gap-1.5">
+        {entry?.muscleGroup && <Pill>{muscleLabel(entry.muscleGroup)}</Pill>}
+        {entry?.equipment && <Pill>{equipmentLabel(entry.equipment)}</Pill>}
+        {entry?.kind === "bodyweight" && (
+          <Pill>Bodyweight, log added weight</Pill>
+        )}
+        {timed && <Pill>Timed, log seconds per set</Pill>}
+        {entry?.custom && <Pill tone="blood">Your exercise</Pill>}
+      </div>
+
+      {/* How to */}
+      {(cue || custom?.notes) && (
+        <WCard className="p-4">
+          <h2 className="font-black text-[13px] text-muted-foreground/80 uppercase tracking-[0.14em]">
+            {custom?.notes ? "Your setup notes" : "How to do it"}
+          </h2>
+          <p className="mt-1.5 text-[14.5px] text-foreground leading-relaxed">
+            {custom?.notes ?? cue}
+          </p>
+        </WCard>
+      )}
+
+      {/* Records */}
+      {!timed && (
+        <>
+          <h2 className="mt-7 mb-2.5 font-black font-display text-[13px] text-muted-foreground/80 uppercase tracking-[0.14em]">
+            Your records
+          </h2>
+          {!best || best.bestWeightLb === 0 ? (
+            <WCard className="p-6 text-center">
+              <p className="font-semibold text-[15px] text-foreground">
+                No records yet
+              </p>
+              <p className="mx-auto mt-1 max-w-[300px] text-[13.5px] text-muted-foreground">
+                Log this exercise in a workout and your best lifts will show up
+                here.
+              </p>
+            </WCard>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              <WCard className="p-4">
+                <div className="flex items-center gap-1.5">
+                  <Trophy
+                    aria-hidden
+                    className="size-3.5 text-amber-500 dark:text-amber-300"
+                  />
+                  <span className="font-bold text-[11.5px] text-muted-foreground uppercase tracking-wide">
+                    Heaviest weight
+                  </span>
+                </div>
+                <div className="mt-2 font-bold font-mono text-[26px] text-foreground leading-none tabular-nums">
+                  {formatWeight(best.bestWeightLb)}{" "}
+                  <span className="text-[15px] text-muted-foreground">lb</span>
+                </div>
+                <p className="mt-1.5 text-[12px] text-muted-foreground leading-snug">
+                  The most weight you&apos;ve ever lifted for at least one rep.
+                </p>
+              </WCard>
+              <WCard className="p-4">
+                <div className="flex items-center gap-1.5">
+                  <Trophy
+                    aria-hidden
+                    className="size-3.5 text-amber-500 dark:text-amber-300"
+                  />
+                  <span className="font-bold text-[11.5px] text-muted-foreground uppercase tracking-wide">
+                    Estimated strength
+                  </span>
+                </div>
+                <div className="mt-2 font-bold font-mono text-[26px] text-foreground leading-none tabular-nums">
+                  {formatWeight(Math.round(best.bestE1RMLb))}{" "}
+                  <span className="text-[15px] text-muted-foreground">lb</span>
+                </div>
+                <p className="mt-1.5 text-[12px] text-muted-foreground leading-snug">
+                  The most we estimate you could lift once, based on your best
+                  set.
+                </p>
+              </WCard>
+            </div>
+          )}
+
+          {/* Progress */}
+          <h2 className="mt-7 mb-2.5 font-black font-display text-[13px] text-muted-foreground/80 uppercase tracking-[0.14em]">
+            Your progress
+          </h2>
+          <WCard className="p-4">
+            <p className="mb-3 text-[12.5px] text-muted-foreground leading-snug">
+              Each dot is one workout, plotted by estimated strength that day.
+              Light days dip the line. The direction over weeks is what
+              matters.
+            </p>
+            <ProgressChart points={series} />
+          </WCard>
+        </>
+      )}
+
+      {/* Past sessions */}
+      <h2 className="mt-7 mb-2.5 font-black font-display text-[13px] text-muted-foreground/80 uppercase tracking-[0.14em]">
+        Every time you&apos;ve done it
+      </h2>
+      {loggedHere.length === 0 ? (
+        <WCard className="p-6 text-center">
+          <p className="text-[13.5px] text-muted-foreground">
+            Nothing logged yet.
+          </p>
+        </WCard>
+      ) : (
+        <div className="flex flex-col gap-3 pb-24">
+          {loggedHere.map(({ workout, exercise }) => {
+            let workingIndex = 0;
+            return (
+              <WCard className="p-4" key={workout.id}>
+                <Link
+                  className="flex min-h-[44px] items-center justify-between gap-2"
+                  href={`/workouts/history/${workout.id}`}
+                >
+                  <span className="truncate font-bold text-[14.5px] text-foreground hover:underline">
+                    {workout.title}
+                  </span>
+                  <span className="shrink-0 text-[12.5px] text-muted-foreground/80">
+                    {formatDay(new Date(workout.performedAt).getTime())}
+                  </span>
+                </Link>
+                <div className="mt-2 flex flex-col gap-1">
+                  {exercise.sets
+                    .filter((s) => s.completed)
+                    .map((set, i) => {
+                      if (set.setType !== "warmup") {
+                        workingIndex++;
+                      }
+                      return (
+                        <div
+                          className="flex items-center gap-3 px-1"
+                          key={`${workout.id}-${i}`}
+                        >
+                          <span className="w-6 text-center font-bold font-mono text-[12.5px] text-muted-foreground/80">
+                            {set.setType === "warmup" ? "W" : workingIndex}
+                          </span>
+                          <span className="font-mono text-[14px] text-foreground tabular-nums">
+                            {(() => {
+                              if (timed) {
+                                return set.reps == null
+                                  ? "Done"
+                                  : `${set.reps}s`;
+                              }
+                              if (set.weight == null && set.reps == null) {
+                                return "Done (no numbers entered)";
+                              }
+                              return `${set.weight ?? 0} ${set.unit} × ${set.reps ?? 0}`;
+                            })()}
+                          </span>
+                          {set.rpe != null && (
+                            <span className="text-[11.5px] text-muted-foreground">
+                              RPE {set.rpe}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                </div>
+              </WCard>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+}

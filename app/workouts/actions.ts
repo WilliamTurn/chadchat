@@ -8,15 +8,24 @@ import { extractPlanDays } from "@/lib/ai/plan-days";
 import {
   createCustomExercise,
   createWorkout,
+  createWorkoutTemplate,
   deleteCustomExercise,
   deleteWorkout,
+  deleteWorkoutTemplate,
   getPlanById,
   getUserById,
+  getWorkoutTemplateById,
+  touchWorkoutTemplatePerformed,
   updateCustomExercise,
   updatePlanDays,
   updateWorkout,
+  updateWorkoutTemplate,
 } from "@/lib/db/queries";
 import { parsePlanDays, type PlanDay } from "@/lib/validation/plan-days";
+import {
+  type SaveTemplateInput,
+  saveTemplateSchema,
+} from "@/lib/validation/workout-templates";
 import {
   type CustomExerciseInput,
   customExerciseSchema,
@@ -96,9 +105,18 @@ function toWriteInput(
   };
 }
 
+export type SaveWorkoutResult = WorkoutActionState & { id?: string };
+
+/**
+ * Save a finished session. `templateId` (optional) is the "My Workouts"
+ * template the session was started from, it gets its lastPerformedAt stamped
+ * so the list can show "Last done Tuesday". Returns the new workout's id so
+ * the player can land on /workouts/history/[id]?new=1.
+ */
 export async function saveWorkout(
-  input: SaveWorkoutInput
-): Promise<WorkoutActionState> {
+  input: SaveWorkoutInput,
+  templateId?: string
+): Promise<SaveWorkoutResult> {
   const user = await requirePro();
   if (!user) {
     return { ok: false, error: PRO_REQUIRED };
@@ -112,10 +130,18 @@ export async function saveWorkout(
     };
   }
 
-  await createWorkout(toWriteInput(user.id, parsed.data));
+  const created = await createWorkout(toWriteInput(user.id, parsed.data));
+  if (templateId) {
+    await touchWorkoutTemplatePerformed({
+      id: templateId,
+      userId: user.id,
+      when: created.performedAt,
+    });
+  }
   revalidatePath("/workouts");
+  revalidatePath("/workouts/history");
   revalidatePath("/today");
-  return { ok: true };
+  return { ok: true, id: created.id };
 }
 
 export async function editWorkout(
@@ -148,7 +174,56 @@ export async function removeWorkout(id: string): Promise<WorkoutActionState> {
   }
   await deleteWorkout({ id, userId: user.id });
   revalidatePath("/workouts");
+  revalidatePath("/workouts/history");
   revalidatePath("/today");
+  return { ok: true };
+}
+
+export type SaveTemplateResult = WorkoutActionState & { id?: string };
+
+/** Create or update a "My Workouts" template (the member-built plan). */
+export async function saveTemplate(
+  input: SaveTemplateInput
+): Promise<SaveTemplateResult> {
+  const user = await requirePro();
+  if (!user) {
+    return { ok: false, error: PRO_REQUIRED };
+  }
+  const parsed = saveTemplateSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.errors[0]?.message ?? "Couldn't save that workout.",
+    };
+  }
+
+  const { id, name, exercises } = parsed.data;
+  if (id) {
+    const existing = await getWorkoutTemplateById({ id, userId: user.id });
+    if (!existing) {
+      return { ok: false, error: "That workout wasn't found." };
+    }
+    await updateWorkoutTemplate({ id, userId: user.id, name, exercises });
+    revalidatePath("/workouts");
+    return { ok: true, id };
+  }
+
+  const created = await createWorkoutTemplate({
+    userId: user.id,
+    name,
+    exercises,
+  });
+  revalidatePath("/workouts");
+  return { ok: true, id: created.id };
+}
+
+export async function removeTemplate(id: string): Promise<WorkoutActionState> {
+  const user = await requirePro();
+  if (!user) {
+    return { ok: false, error: "Not authorized." };
+  }
+  await deleteWorkoutTemplate({ id, userId: user.id });
+  revalidatePath("/workouts");
   return { ok: true };
 }
 
@@ -172,7 +247,7 @@ export async function addCustomExercise(
     ...rest,
     notes: notes?.trim() ? notes.trim() : null,
   });
-  revalidatePath("/workouts");
+  revalidateExercisePages();
   return { ok: true };
 }
 
@@ -197,7 +272,7 @@ export async function editCustomExercise(
     ...rest,
     notes: notes?.trim() ? notes.trim() : null,
   });
-  revalidatePath("/workouts");
+  revalidateExercisePages();
   return { ok: true };
 }
 
@@ -209,8 +284,15 @@ export async function removeCustomExercise(
     return { ok: false, error: "Not authorized." };
   }
   await deleteCustomExercise({ id, userId: user.id });
-  revalidatePath("/workouts");
+  revalidateExercisePages();
   return { ok: true };
+}
+
+/** Custom-exercise edits surface on every page that renders the library. */
+function revalidateExercisePages() {
+  revalidatePath("/workouts");
+  revalidatePath("/workouts/exercises");
+  revalidatePath("/workouts/exercises/pick");
 }
 
 export type SyncPlanDaysState =
@@ -235,7 +317,7 @@ export async function syncPlanDays(planId: string): Promise<SyncPlanDaysState> {
     return { ok: false, error: "That training plan wasn't found." };
   }
 
-  // Already structured (a concurrent sync or a Chad-saved plan) — reuse it.
+  // Already structured (a concurrent sync or a Chad-saved plan), reuse it.
   const existing = parsePlanDays(record.days);
   if (existing) {
     return { ok: true, days: existing };

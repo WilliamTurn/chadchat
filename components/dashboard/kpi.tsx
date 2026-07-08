@@ -72,9 +72,11 @@ export function KpiHelp({
   return (
     <Popover>
       <PopoverTrigger asChild>
+        {/* The glyph stays small but the hit area is 44px (negative margins
+            keep the layout unchanged) so a thumb can actually land on it. */}
         <button
           aria-label={`What does "${label}" mean?`}
-          className="inline-flex size-4 shrink-0 items-center justify-center rounded-full text-muted-foreground/50 transition-colors hover:text-foreground"
+          className="-m-3 inline-flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground/50 transition-colors hover:text-foreground"
           type="button"
         >
           <HelpCircle className="size-3.5" />

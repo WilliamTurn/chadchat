@@ -365,6 +365,72 @@ export function prBaselineByExercise(
   return out;
 }
 
+/**
+ * How many personal records each workout set WHEN IT HAPPENED: replay history
+ * oldest-first, counting the working sets that beat every prior session's
+ * best weight or best est. 1RM for that exercise (first-ever sessions are a
+ * baseline, not a record). Keyed by workout id — backs the "2 records" pill
+ * on history cards and the celebration screen.
+ */
+export function prCountsByWorkout(workouts: WorkoutData[]): Record<string, number> {
+  const ordered = [...workouts].sort(
+    (a, b) =>
+      new Date(a.performedAt).getTime() - new Date(b.performedAt).getTime()
+  );
+  const best = new Map<string, { weightLb: number; e1rmLb: number }>();
+  const counts: Record<string, number> = {};
+  for (const w of ordered) {
+    let count = 0;
+    for (const ex of w.exercises) {
+      const key = ex.name.trim().toLowerCase();
+      if (!key || ex.kind === "timed") {
+        continue;
+      }
+      const prior = best.get(key);
+      let sessionBestWeight = prior?.weightLb ?? 0;
+      let sessionBestE1rm = prior?.e1rmLb ?? 0;
+      for (const s of ex.sets) {
+        if (!isWorkingSet(s) || s.weight == null) {
+          continue;
+        }
+        const wl = toLb(s.weight, s.unit);
+        const e = epley1RM(s.weight, s.reps);
+        const el = e != null ? toLb(e, s.unit) : 0;
+        if (prior && (wl > sessionBestWeight || el > sessionBestE1rm)) {
+          count++;
+        }
+        sessionBestWeight = Math.max(sessionBestWeight, wl);
+        sessionBestE1rm = Math.max(sessionBestE1rm, el);
+      }
+      best.set(key, { weightLb: sessionBestWeight, e1rmLb: sessionBestE1rm });
+    }
+    counts[w.id] = count;
+  }
+  return counts;
+}
+
+/** The single strongest set of a workout by est. 1RM ("Bench 185 lb × 8"). */
+export function bestSetOfWorkout(w: WorkoutData): string | null {
+  let best = 0;
+  let label: string | null = null;
+  for (const ex of w.exercises) {
+    if (ex.kind === "timed") {
+      continue;
+    }
+    for (const s of ex.sets) {
+      if (!isWorkingSet(s) || s.weight == null || s.reps == null) {
+        continue;
+      }
+      const e = epley1RM(s.weight, s.reps);
+      if (e != null && toLb(e, s.unit) > best) {
+        best = toLb(e, s.unit);
+        label = `${ex.name} ${s.weight} ${s.unit} × ${s.reps}`;
+      }
+    }
+  }
+  return label;
+}
+
 /** "1h 12m" / "45m" / "30s" from a duration in seconds. */
 export function formatDuration(seconds: number | null): string | null {
   if (seconds == null || seconds <= 0) {

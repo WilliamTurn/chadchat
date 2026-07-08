@@ -1,0 +1,46 @@
+import { Suspense } from "react";
+import { Toaster } from "sonner";
+import { WorkoutsPageLoading } from "@/components/workouts/v2/loading";
+import { PageShell } from "@/components/nav/page-shell";
+import { StandaloneHeader } from "@/components/nav/standalone-header";
+import { SessionPlayer } from "@/components/workouts/v2/session-player";
+import { getWorkoutTemplatesByUserId } from "@/lib/db/queries";
+import { parseTemplateExercises } from "@/lib/validation/workout-templates";
+import { loadWorkoutContext, requireWorkoutsUser } from "../data";
+
+export const metadata = { title: "Workout in Progress" };
+
+/** The live workout player. The session itself lives client-side (store +
+ * localStorage); this page supplies history-derived context: "last time"
+ * ghosts, PR baselines, and the member's templates for the update-plan
+ * checkbox on Finish. */
+export default function SessionPage() {
+  return (
+    <PageShell>
+      <Toaster position="top-center" theme="system" />
+      <StandaloneHeader active="/workouts" />
+      <Suspense fallback={<WorkoutsPageLoading />}>
+        <Content />
+      </Suspense>
+    </PageShell>
+  );
+}
+
+async function Content() {
+  const user = await requireWorkoutsUser();
+  const [context, rawTemplates] = await Promise.all([
+    loadWorkoutContext(user),
+    getWorkoutTemplatesByUserId(user.id),
+  ]);
+  const templates = rawTemplates.flatMap((t) => {
+    const exercises = parseTemplateExercises(t.exercises);
+    return exercises ? [{ id: t.id, name: t.name, exercises }] : [];
+  });
+  return (
+    <SessionPlayer
+      lastSets={context.lastSets}
+      prBaseline={context.prBaseline}
+      templates={templates}
+    />
+  );
+}

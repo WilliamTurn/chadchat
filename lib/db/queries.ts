@@ -70,11 +70,13 @@ import {
   type Workout,
   type WorkoutExercise,
   type WorkoutSet,
+  type WorkoutTemplate,
   waterLog,
   weeklyReport,
   workout,
   workoutExercise,
   workoutSet,
+  workoutTemplate,
 } from "./schema";
 import { generateHashedPassword } from "./utils";
 
@@ -3411,6 +3413,137 @@ export async function deleteCustomExercise({
       "bad_request:database",
       "Failed to delete custom exercise"
     );
+  }
+}
+
+// --- Workout templates (member-built "My Workouts" plans) ---
+
+/** A user's workout templates, most recently updated first. */
+export async function getWorkoutTemplatesByUserId(
+  userId: string
+): Promise<WorkoutTemplate[]> {
+  try {
+    return await db
+      .select()
+      .from(workoutTemplate)
+      .where(eq(workoutTemplate.userId, userId))
+      .orderBy(desc(workoutTemplate.updatedAt));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get workout templates"
+    );
+  }
+}
+
+export async function getWorkoutTemplateById({
+  id,
+  userId,
+}: {
+  id: string;
+  userId: string;
+}): Promise<WorkoutTemplate | null> {
+  try {
+    const [row] = await db
+      .select()
+      .from(workoutTemplate)
+      .where(
+        and(eq(workoutTemplate.id, id), eq(workoutTemplate.userId, userId))
+      );
+    return row ?? null;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get workout template"
+    );
+  }
+}
+
+export async function createWorkoutTemplate(entry: {
+  userId: string;
+  name: string;
+  exercises: unknown;
+}): Promise<WorkoutTemplate> {
+  try {
+    const [created] = await db.insert(workoutTemplate).values(entry).returning();
+    return created;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to create workout template"
+    );
+  }
+}
+
+export async function updateWorkoutTemplate(entry: {
+  id: string;
+  userId: string;
+  name: string;
+  exercises: unknown;
+}): Promise<void> {
+  try {
+    await db
+      .update(workoutTemplate)
+      .set({
+        name: entry.name,
+        exercises: entry.exercises,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(workoutTemplate.id, entry.id),
+          eq(workoutTemplate.userId, entry.userId)
+        )
+      );
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to update workout template"
+    );
+  }
+}
+
+export async function deleteWorkoutTemplate({
+  id,
+  userId,
+}: {
+  id: string;
+  userId: string;
+}): Promise<void> {
+  try {
+    await db
+      .delete(workoutTemplate)
+      .where(
+        and(eq(workoutTemplate.id, id), eq(workoutTemplate.userId, userId))
+      );
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to delete workout template"
+    );
+  }
+}
+
+/** Stamp a template as just-performed (called when a session from it saves).
+ * Intentionally NOT bumping updatedAt: performing a workout isn't an edit. */
+export async function touchWorkoutTemplatePerformed({
+  id,
+  userId,
+  when,
+}: {
+  id: string;
+  userId: string;
+  when: Date;
+}): Promise<void> {
+  try {
+    await db
+      .update(workoutTemplate)
+      .set({ lastPerformedAt: when })
+      .where(
+        and(eq(workoutTemplate.id, id), eq(workoutTemplate.userId, userId))
+      );
+  } catch (_error) {
+    // Non-fatal: the workout itself already saved.
   }
 }
 

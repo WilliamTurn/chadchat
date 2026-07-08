@@ -178,6 +178,20 @@
   ::file-selector-button {
     border-color: var(--border);
   }
+
+  /* Tailwind v4's preflight gives buttons `cursor: default`, so clickable
+     controls showed the arrow cursor on desktop (owner order, workout
+     overhaul session): every enabled interactive control shows the hand. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  [role="tab"]:not(:disabled),
+  select:not(:disabled),
+  summary,
+  label[for],
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled) {
+    cursor: pointer;
+  }
 }
 
 @layer base {

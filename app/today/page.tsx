@@ -875,9 +875,9 @@ async function TodayContent() {
               }
             >
               <Button asChild className="gap-1.5" size="sm" variant="outline">
-                {/* Straight into the full-page logger (MOB-18). */}
-                <Link href="/workouts/log">
-                  Log a workout
+                {/* Straight into the Workouts page to start a session. */}
+                <Link href="/workouts">
+                  Start a workout
                   <ArrowRight className="size-3.5" />
                 </Link>
               </Button>
