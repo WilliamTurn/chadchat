@@ -15,6 +15,7 @@ import {
   Refrigerator,
   Rocket,
   Share2,
+  Sparkles,
   Target,
   UtensilsCrossed,
   Wrench,
@@ -206,6 +207,29 @@ const FEATURES: Feature[] = [
     ),
   },
   {
+    icon: Sparkles,
+    title: "Future You",
+    href: "/future-you",
+    tier: "Pro",
+    body: (
+      <>
+        <p>
+          Submit 3 to 6 clear photos of yourself (face fully visible in every
+          one, at least one full-body shot) and Chad shows you exactly what
+          you will look like at each dated checkpoint on the way to your
+          active goal if you do the work, plus one photo of where you land if
+          you quit. Every photo is built from deep analysis of your photos,
+          your goal, and your stats, at a calculated pace with a real calendar
+          date on every checkpoint.
+        </p>
+        <p>
+          It needs an active goal, so set one first. Save any checkpoint photo
+          to your phone and make it your wallpaper.
+        </p>
+      </>
+    ),
+  },
+  {
     icon: Droplets,
     title: "Hydration",
     href: "/hydration",
@@ -317,7 +341,7 @@ const PLAN_ROWS: PlanRow[] = [
     name: "Chad Pro",
     price: "$39/month",
     summary:
-      "Everything in Basic, plus the full dashboard: the Workouts log, Calorie Tracker with photo and label analysis, Meal Plans, Rate My Kitchen, Progress tracking with trend weight and photos, Hydration, and Sleep.",
+      "Everything in Basic, plus the full dashboard: the Workouts log, Calorie Tracker with photo and label analysis, Meal Plans, Rate My Kitchen, Future You photo forecasts, Progress tracking with trend weight and photos, Hydration, and Sleep.",
   },
   {
     name: "Chad Elite",

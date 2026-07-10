@@ -11,6 +11,7 @@ import {
   MessageSquare,
   Moon,
   Refrigerator,
+  Sparkles,
   Target,
   UtensilsCrossed,
 } from "lucide-react";
@@ -93,6 +94,15 @@ export const NAV_LINKS: NavLink[] = [
     href: "/goals",
     label: "Goals",
     icon: Target,
+    surfaces: ["header", "sidebar"],
+  },
+  {
+    // Future You (FEAT-29): dated forecast photos of the member at their goal,
+    // generated from their own photos. Sits next to Goals because the
+    // forecast is computed FROM the active goal.
+    href: "/future-you",
+    label: "Future You",
+    icon: Sparkles,
     surfaces: ["header", "sidebar"],
   },
   {

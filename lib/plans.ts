@@ -1,6 +1,7 @@
 import {
   BellRing,
   Camera,
+  Eye,
   FileText,
   type LucideIcon,
   Rocket,
@@ -25,6 +26,10 @@ export type ProPerk = PlanFeature & { icon: LucideIcon };
  * card; the plain pricing list ignores them and uses a generic check.
  */
 export const PRO_PERKS: ProPerk[] = [
+  {
+    icon: Eye,
+    label: "Future You: see photos of yourself at your goal, before you get there",
+  },
   { icon: Camera, label: "Progress photo analysis — Chad reviews your form" },
   {
     icon: Sparkles,

@@ -38,6 +38,8 @@ import {
   type DBMessage,
   document,
   emailVerificationToken,
+  type FutureYouForecast,
+  futureYouForecast,
   type Goal,
   goal,
   type MealAnalysis,
@@ -3805,6 +3807,104 @@ export async function getLatestProgressMontage(
     throw new ChatbotError(
       "bad_request:database",
       "Failed to get latest progress montage"
+    );
+  }
+}
+
+/**
+ * Open a Future You forecast run (FEAT-29): the row is created "pending"
+ * before generation starts so the page can poll it, and it doubles as the
+ * fair-use ledger (countFutureYouForecastsCreatedSince window-counts it).
+ */
+export async function createFutureYouForecast(entry: {
+  userId: string;
+  goalId: string;
+  sourcePhotoUrls: string[];
+}): Promise<FutureYouForecast> {
+  try {
+    const [created] = await db
+      .insert(futureYouForecast)
+      .values(entry)
+      .returning();
+    return created;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to record Future You forecast"
+    );
+  }
+}
+
+/** Resolve a Future You run: ready (with content) or failed (with message). */
+export async function updateFutureYouForecast(entry: {
+  id: string;
+  status: "ready" | "failed";
+  content?: unknown;
+  error?: string | null;
+}): Promise<void> {
+  try {
+    await db
+      .update(futureYouForecast)
+      .set({
+        status: entry.status,
+        content: entry.content ?? null,
+        error: entry.error ?? null,
+        updatedAt: new Date(),
+      })
+      .where(eq(futureYouForecast.id, entry.id));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to update Future You forecast"
+    );
+  }
+}
+
+/** The member's most recent forecast, if any (renders on /future-you). */
+export async function getLatestFutureYouForecast(
+  userId: string
+): Promise<FutureYouForecast | undefined> {
+  try {
+    const [latest] = await db
+      .select()
+      .from(futureYouForecast)
+      .where(eq(futureYouForecast.userId, userId))
+      .orderBy(desc(futureYouForecast.createdAt))
+      .limit(1);
+    return latest;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get latest Future You forecast"
+    );
+  }
+}
+
+/**
+ * Rolling-window count for the Future You fair-use cap
+ * (lib/future-you/limit.ts). Failed runs don't count against the member —
+ * they got nothing for them.
+ */
+export async function countFutureYouForecastsCreatedSince(
+  userId: string,
+  since: Date
+): Promise<number> {
+  try {
+    const [row] = await db
+      .select({ value: count() })
+      .from(futureYouForecast)
+      .where(
+        and(
+          eq(futureYouForecast.userId, userId),
+          gte(futureYouForecast.createdAt, since),
+          ne(futureYouForecast.status, "failed")
+        )
+      );
+    return row?.value ?? 0;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to count Future You forecasts"
     );
   }
 }

@@ -847,3 +847,45 @@ export const workoutTemplate = pgTable("WorkoutTemplate", {
 });
 
 export type WorkoutTemplate = InferSelectModel<typeof workoutTemplate>;
+
+/**
+ * A Future You forecast (FEAT-29): photorealistic photos of what this member
+ * will look like at each dated checkpoint on the way to their active goal,
+ * generated from their own submitted photos (gpt-image-2 edits with the
+ * member's photos as identity references), plus one "if you quit" frame at
+ * the goal date. Unlike the Progress Montage (which never redraws a body),
+ * every image here IS generated; the copy frames each frame confidently as a
+ * calculated forecast (owner order s175: no timid AI-labeling), and frames
+ * live in their own table so they never mix into the progress-photo history.
+ *
+ * Generation runs in the background after the start action returns (the page
+ * polls), so `status` drives the UI: pending → ready | failed. The row is also
+ * the fair-use ledger (lib/future-you/limit.ts window-counts this table).
+ */
+export const futureYouForecast = pgTable("FutureYouForecast", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  // The active goal the projection is computed against (checkpoint math and
+  // the image prompts both derive from it).
+  goalId: uuid("goalId")
+    .notNull()
+    .references(() => goal.id),
+  status: varchar("status", { enum: ["pending", "ready", "failed"] })
+    .notNull()
+    .default("pending"),
+  // The member's submitted source photos (Vercel Blob URLs, 3-6), kept so a
+  // ready forecast can always show what it was generated from.
+  sourcePhotoUrls: json("sourcePhotoUrls").$type<string[]>().notNull(),
+  // FutureYouContent (see lib/future-you/content.ts): Chad's physique read,
+  // the dated work frames + the quit frame (generated image URLs + captions),
+  // and his closing verdict. Null until status is "ready".
+  content: json("content"),
+  // Member-facing failure message when status is "failed".
+  error: text("error"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+export type FutureYouForecast = InferSelectModel<typeof futureYouForecast>;

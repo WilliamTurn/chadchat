@@ -45,6 +45,7 @@ import { editDocument } from "@/lib/ai/tools/edit-document";
 import { generateMealPlanTool } from "@/lib/ai/tools/generate-meal-plan";
 import { getAppGuide } from "@/lib/ai/tools/get-app-guide";
 import { getDashboard } from "@/lib/ai/tools/get-dashboard";
+import { getFutureYou } from "@/lib/ai/tools/get-future-you";
 import { logMeal } from "@/lib/ai/tools/log-meal";
 import { logSleep } from "@/lib/ai/tools/log-sleep";
 import { logWater } from "@/lib/ai/tools/log-water";
@@ -402,6 +403,7 @@ export async function POST(request: Request) {
                   "logWeighIn",
                   "updateProfile",
                   "getDashboard",
+                  "getFutureYou",
                   "getAppGuide",
                 ],
           providerOptions: {
@@ -442,6 +444,7 @@ export async function POST(request: Request) {
               session,
               timezone: dbUser.timezone,
             }),
+            getFutureYou: getFutureYou({ session }),
             getAppGuide,
           },
           experimental_telemetry: {

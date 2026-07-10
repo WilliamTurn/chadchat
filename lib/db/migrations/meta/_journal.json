@@ -232,6 +232,13 @@
       "when": 1783670773887,
       "tag": "0032_ambiguous_tenebrous",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1783675765961,
+      "tag": "0033_superb_stryfe",
+      "breakpoints": true
     }
   ]
 }

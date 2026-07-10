@@ -67,6 +67,11 @@ export const APP_GUIDE_SECTIONS: AppGuideSection[] = [
     content: `Members set goals in chat or on the Goals page: lose weight, build muscle, or hit a lift (a target estimated 1RM on a named exercise, tracked from logged sets). Chad writes each goal up properly: the target, the pace, and the plan behind it. Goal progress shows on the Dashboard and the Goals page, Chad brings goals up in chat, and goals and training plans download as PDFs. Past (completed or replaced) goals stay listed on the Goals page.`,
   },
   {
+    id: "future-you",
+    title: "Future You (Pro feature)",
+    content: `On the Future You page, members submit 3 to 6 clear photos of themselves (face fully visible in every photo, at least one full-body shot, sharp and well-lit) and Chad shows them exactly what they will look like at each dated checkpoint on the way to their active goal if they do the work, plus one photo of where they land at the goal date if they quit. Every photo is built from deep analysis of the member's photos, goal, and stats: checkpoints are computed at a calculated, sustainable pace, each with a real calendar date and (for weight goals) an expected weight. It requires an active goal (set on the Goals page or in chat) so there is something real to project. Any checkpoint photo can be saved to the member's phone. Generation takes a few minutes; the forecast waits on the page. Chad can discuss the forecast in chat and holds members to its dates.`,
+  },
+  {
     id: "hydration",
     title: "Hydration (Pro feature)",
     content: `Log water through the day in ounces: quick-add +8 oz or +16 oz, or a custom amount. The daily target defaults to 1 gallon (128 oz) and is customizable on the card. The Dashboard card shows progress and what's left; the Hydration page has the full trend chart and an itemized log of today's entries (each deletable), plus an "Undo last add" for mis-taps. Chad sees water in his review of the day.`,
@@ -89,7 +94,7 @@ export const APP_GUIDE_SECTIONS: AppGuideSection[] = [
   {
     id: "plans-billing",
     title: "Plans and billing",
-    content: `Three plans, monthly: Chad Basic at $29/month (chat with Chad anytime: personalized workout and nutrition guidance, goals and training plans, full coaching history). Chad Pro at $39/month (everything in Basic plus the full dashboard: Workouts, Calorie Tracker with photo and label analysis, Meal Plan, Rate My Kitchen, Progress, Hydration, Sleep). Chad Elite at $59/month (everything in Pro, plus Chad comes to you: proactive Check-ins, the Weekly Report, and new features ship to Elite first). New members start with a 3-day free trial (card up front; it converts to the chosen plan after the trial). Billing lives on the Account page under "Manage billing": see the current plan and renewal date, update the card, move between Basic, Pro, and Elite, or cancel. Upgrades also work from the Pricing page (/pricing). Payments are handled by Stripe; canceling keeps access through the end of the paid period.`,
+    content: `Three plans, monthly: Chad Basic at $29/month (chat with Chad anytime: personalized workout and nutrition guidance, goals and training plans, full coaching history). Chad Pro at $39/month (everything in Basic plus the full dashboard: Workouts, Calorie Tracker with photo and label analysis, Meal Plan, Rate My Kitchen, Future You, Progress, Hydration, Sleep). Chad Elite at $59/month (everything in Pro, plus Chad comes to you: proactive Check-ins, the Weekly Report, and new features ship to Elite first). New members start with a 3-day free trial (card up front; it converts to the chosen plan after the trial). Billing lives on the Account page under "Manage billing": see the current plan and renewal date, update the card, move between Basic, Pro, and Elite, or cancel. Upgrades also work from the Pricing page (/pricing). Payments are handled by Stripe; canceling keeps access through the end of the paid period.`,
   },
   {
     id: "account",
