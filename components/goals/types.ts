@@ -10,6 +10,10 @@ export type EditableGoal = {
   /** Exercise a "lift" goal tracks (its est. 1RM). Null for other metrics. */
   metricRef: string | null;
   startValue: number | null;
+  /** Latest value for metrics with no automatic data source (bodyfat,
+   *  measurement, custom); the member updates it by hand. Null/undefined
+   *  falls back to startValue. Weight and lift goals ignore it. */
+  currentValue?: number | null;
   targetValue: number | null;
   unit: string | null;
   /** Display-only "set on" date ("Jun 20"), preformatted in the member's

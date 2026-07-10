@@ -6,15 +6,33 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { removeGoal } from "@/app/today/actions";
+import { removeGoal, updateGoalRecord } from "@/app/today/actions";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { WeightChartInteractive } from "@/components/progress/weight-chart-interactive";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExerciseTrendChart } from "@/components/workouts/exercise-trend-chart";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { downloadGoalPdf } from "@/lib/pdf/goal-pdf";
 import type { EditableGoal } from "@/components/goals/types";
-import { GoalProgress, type LiftProgress } from "./goal-list";
+import {
+  GoalProgress,
+  isManualMetric,
+  liftInGoalUnit,
+  type LiftProgress,
+} from "./goal-list";
 
 /** The weight-goal chart's inputs, all pre-converted to the display unit. */
 export type GoalWeightChart = {
@@ -55,15 +73,19 @@ export function GoalDoc({
   coherence?: GoalCoherence | null;
 }) {
   const router = useRouter();
-  const [confirming, setConfirming] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const isLift = goal.metric === "lift";
+  // Est.-1RM history in the goal's own unit (kg lift goals convert from lb).
+  const liftData = isLift ? liftInGoalUnit(lift, goal.unit) : null;
+  const isManual = isManualMetric(goal.metric);
   const current = isLift
-    ? (lift?.current ?? null)
+    ? (liftData?.current ?? null)
     : goal.metric === "weight"
       ? currentWeight
-      : null;
+      : isManual
+        ? (goal.currentValue ?? goal.startValue ?? null)
+        : null;
 
   const discussPrompt = `Let's review my goal: "${goal.title}". Where am I at, and what should I be doing right now to hit it?`;
 
@@ -76,7 +98,6 @@ export function GoalDoc({
         router.refresh();
       } else {
         toast.error(result.error ?? "Couldn't delete that.");
-        setConfirming(false);
       }
     });
   }
@@ -117,7 +138,12 @@ export function GoalDoc({
             )}
           </div>
           {/* The dedicated edit page (MOB-19), not a dialog. */}
-          <Button asChild className="gap-1.5" size="sm" variant="outline">
+          <Button
+            asChild
+            className="h-11 gap-1.5 px-4"
+            size="sm"
+            variant="outline"
+          >
             <Link href={`/goals/${goal.id}/edit`}>
               <Pencil className="size-3.5" />
               Edit
@@ -125,16 +151,24 @@ export function GoalDoc({
           </Button>
         </div>
 
-        <GoalProgress current={current} firstValue={lift?.first} goal={goal} />
+        <GoalProgress current={current} firstValue={liftData?.first} goal={goal} />
 
-        {isLift && lift && lift.points.length >= 2 && (
+        {isLift && liftData && liftData.points.length >= 2 && (
           <div className="mt-4">
             <ExerciseTrendChart
-              points={lift.points}
+              points={liftData.points}
               target={goal.targetValue}
               unit={goal.unit ?? "lb"}
             />
           </div>
+        )}
+
+        {/* Metrics with no automatic data source (body fat, measurements,
+            custom numbers) get their update control right here, where the
+            progress bar lives — the table-stakes "log progress" affordance
+            every real goal tracker has. */}
+        {isManual && goal.status === "active" && goal.targetValue != null && (
+          <UpdateProgress goal={goal} />
         )}
       </section>
 
@@ -209,39 +243,40 @@ export function GoalDoc({
       </section>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        {confirming ? (
-          <div className="flex items-center gap-2">
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
             <Button
-              disabled={pending}
-              onClick={onDelete}
-              size="sm"
-              variant="destructive"
-            >
-              {pending ? "Deleting…" : "Delete goal"}
-            </Button>
-            <Button
-              disabled={pending}
-              onClick={() => setConfirming(false)}
+              className="h-11 gap-1.5 text-muted-foreground"
               size="sm"
               variant="ghost"
             >
-              Cancel
+              <Trash2 className="size-3.5" />
+              Delete
             </Button>
-          </div>
-        ) : (
-          <Button
-            className="gap-1.5 text-muted-foreground"
-            onClick={() => setConfirming(true)}
-            size="sm"
-            variant="ghost"
-          >
-            <Trash2 className="size-3.5" />
-            Delete
-          </Button>
-        )}
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete this goal?</AlertDialogTitle>
+              <AlertDialogDescription>
+                "{goal.title}" and its progress will be permanently deleted,
+                and Chad will stop tracking it.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={pending}
+                onClick={onDelete}
+              >
+                {pending ? "Deleting…" : "Delete goal"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         <div className="flex flex-wrap items-center gap-2">
           <Button
-            className="gap-1.5"
+            className="h-11 gap-1.5 px-4"
             onClick={() => {
               downloadGoalPdf(goal).catch(() =>
                 toast.error("Couldn't generate the PDF.")
@@ -253,7 +288,7 @@ export function GoalDoc({
             <Download className="size-3.5" />
             PDF
           </Button>
-          <Button asChild className="gap-1.5" size="sm">
+          <Button asChild className="h-11 gap-1.5 px-4" size="sm">
             <Link href={`/?prompt=${encodeURIComponent(discussPrompt)}`}>
               <MessageSquare className="size-3.5" />
               Discuss with Chad
@@ -261,6 +296,89 @@ export function GoalDoc({
           </Button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Inline progress logging for metrics with no automatic data source: type the
+ * latest number, save, and the progress bar above moves. Weight and lift goals
+ * never render this — their numbers flow in from weigh-ins and logged sets.
+ */
+function UpdateProgress({ goal }: { goal: EditableGoal }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const currentNow = goal.currentValue ?? goal.startValue;
+  const [value, setValue] = useState(
+    currentNow != null ? String(currentNow) : ""
+  );
+  const [error, setError] = useState<string | null>(null);
+
+  function onSave() {
+    const n = Number(value.trim());
+    if (!value.trim() || !Number.isFinite(n) || n <= 0) {
+      setError("Enter a number above zero.");
+      return;
+    }
+    if (goal.metric === "bodyfat" && (n < 1 || n > 75)) {
+      setError("Body fat is a percentage between 1 and 75.");
+      return;
+    }
+    startTransition(async () => {
+      const result = await updateGoalRecord({ ...goal, currentValue: n });
+      if (result.ok) {
+        toast.success("Progress updated.");
+        router.refresh();
+      } else {
+        toast.error(result.error ?? "Couldn't save that.");
+      }
+    });
+  }
+
+  const noun =
+    goal.metric === "bodyfat"
+      ? "body fat reading"
+      : goal.metric === "measurement"
+        ? `${goal.metricRef ?? "measurement"} number`.trim()
+        : "number";
+
+  return (
+    <div className="mt-4 rounded-xl border border-border bg-background/40 p-3.5">
+      <Label className="text-sm" htmlFor="g-update-current">
+        Update your progress
+      </Label>
+      <p className="mt-0.5 text-muted-foreground text-xs">
+        Enter your latest {noun} and the progress bar updates.
+      </p>
+      <div className="mt-2 flex items-start gap-2">
+        <div className="relative w-32">
+          <Input
+            aria-invalid={error ? true : undefined}
+            className={goal.metric === "bodyfat" ? "h-11 pr-8" : "h-11"}
+            id="g-update-current"
+            inputMode="decimal"
+            onChange={(e) => {
+              setValue(e.target.value);
+              setError(null);
+            }}
+            value={value}
+          />
+          {goal.metric === "bodyfat" && (
+            <span className="-translate-y-1/2 pointer-events-none absolute top-1/2 right-3 text-muted-foreground text-sm">
+              %
+            </span>
+          )}
+        </div>
+        {goal.metric !== "bodyfat" && goal.unit && (
+          <span className="self-center text-muted-foreground text-sm">
+            {goal.unit}
+          </span>
+        )}
+        <Button className="h-11" disabled={pending} onClick={onSave} type="button">
+          {pending ? "Saving…" : "Save"}
+        </Button>
+      </div>
+      {error && <p className="mt-1.5 text-destructive text-xs">{error}</p>}
     </div>
   );
 }

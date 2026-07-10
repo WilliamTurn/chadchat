@@ -54,9 +54,9 @@ export default function GoalsPage() {
         <BackToDashboard />
         <h1 className="font-semibold text-2xl tracking-tight">Goals</h1>
         <p className="mt-1 text-muted-foreground text-sm">
-          Everything you're chasing, in one place: live progress on the active
-          goals, your past goals, and the full write-ups. Chad sees these in
-          every chat and holds you to them.
+          All of your goals in one place: live progress on the active ones,
+          your past goals, and the full write-ups. Chad reads these in every
+          chat and holds you to them.
         </p>
       </div>
 
@@ -108,6 +108,7 @@ async function GoalsContent() {
     metric: g.metric,
     metricRef: g.metricRef,
     startValue: g.startValue,
+    currentValue: g.currentValue,
     targetValue: g.targetValue,
     unit: g.unit,
     // Anchors relative deadlines like "8 weeks" on the card (LC-5).

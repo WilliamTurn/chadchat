@@ -465,6 +465,10 @@ export const goal = pgTable("Goal", {
   // metrics that need no reference (weight, body-fat %).
   metricRef: text("metricRef"),
   startValue: doublePrecision("startValue"),
+  // Latest value for metrics with no automatic data source (bodyfat,
+  // measurement, custom) — the member updates it by hand. Weight and lift
+  // goals ignore it: their "current" comes from weigh-ins / logged sets.
+  currentValue: doublePrecision("currentValue"),
   targetValue: doublePrecision("targetValue"),
   unit: text("unit"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),

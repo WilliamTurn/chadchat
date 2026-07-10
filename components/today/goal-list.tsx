@@ -25,6 +25,41 @@ export type LiftProgress = {
   points: { t: number; value: number }[];
 };
 
+const LB_PER_KG = 2.204_62;
+
+/** Est.-1RM data is stored in lb; a kg lift goal charts and scores in kg, so
+ *  convert at the display boundary. Shared with the /goals/[id] document. */
+export function liftInGoalUnit(
+  lift: LiftProgress | null | undefined,
+  unit: string | null
+): LiftProgress | null {
+  if (!lift) {
+    return null;
+  }
+  const isKg = (unit ?? "").trim().toLowerCase().startsWith("k");
+  if (!isKg) {
+    return lift;
+  }
+  const conv = (n: number | null) =>
+    n == null ? null : Math.round((n / LB_PER_KG) * 10) / 10;
+  return {
+    current: conv(lift.current),
+    first: conv(lift.first),
+    points: lift.points.map((p) => ({
+      t: p.t,
+      value: p.value / LB_PER_KG,
+    })),
+  };
+}
+
+/** True for metrics with no automatic data source: the member updates the
+ *  goal's own `currentValue` by hand. */
+export function isManualMetric(metric: EditableGoal["metric"]): boolean {
+  return (
+    metric === "bodyfat" || metric === "measurement" || metric === "custom"
+  );
+}
+
 /** The full-page goal document (R2-9). */
 function goalHref(goal: EditableGoal): string {
   return `/goals/${goal.id}`;
@@ -56,7 +91,8 @@ export function GoalProgress({
     return null;
   }
   const { pct, toGo, reached } = progress;
-  const unit = goal.unit ? ` ${goal.unit}` : "";
+  // "%" hugs its number ("15%"); word units keep the space ("15 lb").
+  const unit = goal.unit ? (goal.unit === "%" ? "%" : ` ${goal.unit}`) : "";
   const start = Math.round(progress.start * 10) / 10;
 
   return (
@@ -170,7 +206,15 @@ function GoalItem({
   lift: LiftProgress | undefined;
 }) {
   const isLift = goal.metric === "lift";
-  const current = isLift ? (lift?.current ?? null) : goal.metric === "weight" ? currentWeight : null;
+  // Est.-1RM history in the goal's own unit (kg lift goals convert from lb).
+  const liftData = isLift ? liftInGoalUnit(lift, goal.unit) : null;
+  const current = isLift
+    ? (liftData?.current ?? null)
+    : goal.metric === "weight"
+      ? currentWeight
+      : isManualMetric(goal.metric)
+        ? (goal.currentValue ?? goal.startValue ?? null)
+        : null;
   const unit = goal.unit ? ` ${goal.unit}` : "";
   // A lift goal whose exercise has no logged sets yet — show the target, and a
   // nudge to start logging it, instead of a bar that can't move.
@@ -210,40 +254,47 @@ function GoalItem({
       </div>
       <GoalProgress
         current={current}
-        firstValue={lift?.first}
+        firstValue={liftData?.first}
         goal={goal}
       />
       {liftAwaitingData && (
         <p className="mt-2 text-muted-foreground text-xs">
           Target {goal.targetValue}
-          {unit} — no sets logged for {goal.metricRef ?? "this lift"} yet. Log it
+          {unit}: no sets logged for {goal.metricRef ?? "this lift"} yet. Log it
           in Workouts and the chart fills in.
         </p>
       )}
-      {isLift && lift && lift.points.length >= 2 && (
+      {isLift && liftData && liftData.points.length >= 2 && (
         <div className="mt-3">
           <ExerciseTrendChart
-            points={lift.points}
+            points={liftData.points}
             target={goal.targetValue}
             unit={goal.unit ?? "lb"}
           />
         </div>
       )}
-      <div className="mt-1 flex items-center gap-1">
+      {/* 44px touch targets with real gaps: Edit and the destructive Delete
+          were 30px icons 4px apart, a guaranteed phone mis-tap. */}
+      <div className="mt-1 flex items-center gap-1.5">
         {/* The goal's full-page document (R2-9), not a cramped dialog. */}
-        <Button asChild className="px-0 text-blood" size="sm" variant="link">
+        <Button
+          asChild
+          className="-ml-2 h-11 px-2 text-blood"
+          size="sm"
+          variant="link"
+        >
           <Link href={goalHref(goal)}>View</Link>
         </Button>
         {/* The dedicated edit page (MOB-19), not a dialog. */}
         <Button
           aria-label="Edit goal"
           asChild
-          className="size-7 text-muted-foreground"
+          className="size-11 text-muted-foreground"
           size="icon"
           variant="ghost"
         >
           <Link href={`/goals/${goal.id}/edit`}>
-            <Pencil className="size-3.5" />
+            <Pencil className="size-4" />
           </Link>
         </Button>
         <RowDeleteGoal id={goal.id} />
@@ -266,20 +317,20 @@ function RowDeleteGoal({ id }: { id: string }) {
     return (
       <Button
         aria-label="Delete goal"
-        className="size-7 text-muted-foreground"
+        className="size-11 text-muted-foreground"
         onClick={() => setConfirming(true)}
         size="icon"
         variant="ghost"
       >
-        <Trash2 className="size-3.5" />
+        <Trash2 className="size-4" />
       </Button>
     );
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1.5">
       <Button
-        className="h-7 px-2 text-xs"
+        className="h-11 px-3 text-xs"
         disabled={pending}
         onClick={() =>
           startTransition(async () => {
@@ -299,7 +350,7 @@ function RowDeleteGoal({ id }: { id: string }) {
         {pending ? "Deleting…" : "Delete"}
       </Button>
       <Button
-        className="h-7 px-2 text-xs"
+        className="h-11 px-3 text-xs"
         disabled={pending}
         onClick={() => setConfirming(false)}
         size="sm"
@@ -334,19 +385,24 @@ function PastGoalItem({ goal }: { goal: EditableGoal }) {
         <p className="truncate text-sm">{goal.title}</p>
         <Badge variant="secondary">{goal.status}</Badge>
       </div>
-      <div className="flex shrink-0 items-center gap-1">
-        <Button asChild className="px-0 text-blood" size="sm" variant="link">
+      <div className="flex shrink-0 items-center gap-1.5">
+        <Button
+          asChild
+          className="h-11 px-2 text-blood"
+          size="sm"
+          variant="link"
+        >
           <Link href={goalHref(goal)}>View</Link>
         </Button>
         <Button
           aria-label="Reopen goal"
-          className="size-7 text-muted-foreground"
+          className="size-11 text-muted-foreground"
           disabled={pending}
           onClick={onReopen}
           size="icon"
           variant="ghost"
         >
-          <RotateCcw className="size-3.5" />
+          <RotateCcw className="size-4" />
         </Button>
       </div>
     </div>
@@ -439,7 +495,12 @@ export function GoalList({
             </p>
           )}
           {!quiet && (
-            <Button asChild className="gap-1.5" size="sm" variant="outline">
+            <Button
+              asChild
+              className="h-11 gap-1.5 px-4"
+              size="sm"
+              variant="outline"
+            >
               <Link href="/goals/new">
                 <Plus className="size-3.5" />
                 Set your goal
@@ -465,11 +526,19 @@ export function GoalList({
 
       <ModuleFooter
         askChad={
-          <AskChadButton prompt="Look at my goals and my progress toward them. Am I on track, and what should I focus on this week?" />
+          <AskChadButton
+            className="h-11"
+            prompt="Look at my goals and my progress toward them. Am I on track, and what should I focus on this week?"
+          />
         }
       >
         {goals.length > 0 && (
-          <Button asChild className="gap-1.5" size="sm" variant="outline">
+          <Button
+            asChild
+            className="h-11 gap-1.5 px-4"
+            size="sm"
+            variant="outline"
+          >
             <Link href="/goals/new">
               <Plus className="size-3.5" />
               Add goal

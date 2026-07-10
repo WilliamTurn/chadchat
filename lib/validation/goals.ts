@@ -21,6 +21,10 @@ const measurableTarget = {
   // The exercise a "lift" goal tracks (its est. 1RM). Ignored for other metrics.
   metricRef: z.string().trim().max(80).nullable().optional(),
   startValue: z.number().finite().nullable().optional(),
+  // Latest value for metrics with no automatic data source (bodyfat,
+  // measurement, custom); the member updates it by hand. Weight and lift
+  // goals ignore it.
+  currentValue: z.number().finite().nullable().optional(),
   targetValue: z.number().finite().nullable().optional(),
   unit: z.string().trim().max(20).nullable().optional(),
 };

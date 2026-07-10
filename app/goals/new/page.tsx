@@ -29,18 +29,22 @@ export default function NewGoalPage() {
       />
       <StandaloneHeader active="/goals" />
 
-      <div className="mb-8">
-        <BackToDashboard href="/goals" label="Goals" />
-        <h1 className="font-semibold text-2xl tracking-tight">New goal</h1>
-        <p className="mt-1 text-muted-foreground text-sm">
-          Write the real thing: what you're chasing and why. Chad sees this in
-          every chat and holds you to it.
-        </p>
-      </div>
+      {/* A form reads best as one centered column (the standard pro-app form
+          layout), not content pinned to the left edge of a wide shell. */}
+      <div className="mx-auto w-full max-w-2xl">
+        <div className="mb-8">
+          <BackToDashboard href="/goals" label="Goals" />
+          <h1 className="font-semibold text-2xl tracking-tight">New goal</h1>
+          <p className="mt-1 text-muted-foreground text-sm">
+            Set exactly what you want to achieve and by when. Chad reads this
+            in every chat and holds you to it.
+          </p>
+        </div>
 
-      <Suspense fallback={<TodaySkeleton />}>
-        <NewGoalContent />
-      </Suspense>
+        <Suspense fallback={<TodaySkeleton />}>
+          <NewGoalContent />
+        </Suspense>
+      </div>
     </PageShell>
   );
 }

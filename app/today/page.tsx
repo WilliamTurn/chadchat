@@ -314,6 +314,7 @@ async function TodayContent() {
     metric: g.metric,
     metricRef: g.metricRef,
     startValue: g.startValue,
+    currentValue: g.currentValue,
     targetValue: g.targetValue,
     unit: g.unit,
     // Anchors relative deadlines like "8 weeks" on the card (LC-5).

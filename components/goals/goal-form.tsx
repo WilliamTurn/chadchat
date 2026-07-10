@@ -11,11 +11,30 @@ import {
   Target,
   Trash2,
 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useMemo, useState, useTransition } from "react";
+import {
+  type FormEvent,
+  type ReactNode,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 import { toast } from "sonner";
 import { removeGoal, saveGoalRecord, updateGoalRecord } from "@/app/today/actions";
+import { KpiHelp } from "@/components/dashboard/kpi";
 import type { EditableGoal } from "@/components/goals/types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,6 +57,12 @@ import {
 import { cn } from "@/lib/utils";
 
 const NONE = "none";
+const LB_PER_KG = 2.204_62;
+
+/** Metrics with no automatic data source: the member updates the number by
+ *  hand (on this form or the goal's page). Weight reads from weigh-ins and
+ *  lift from logged sets, so they never need a manual "now" value. */
+const MANUAL_METRICS = new Set(["bodyfat", "measurement", "custom"]);
 
 type MetricChoice = {
   value: string;
@@ -46,42 +71,50 @@ type MetricChoice = {
   icon: React.ReactNode;
 };
 
+// Ordered by how often people pick them; "No number" last, so the measurable
+// options lead but the escape hatch is always visible.
 const METRIC_CHOICES: MetricChoice[] = [
   {
-    value: NONE,
-    label: "Just a goal",
-    description: "No number to track. Chad still sees it and holds you to it.",
-    icon: <Sparkles className="size-4" />,
-  },
-  {
     value: "weight",
-    label: "Bodyweight",
-    description: "Hit a target weight. Progress tracks itself from your weigh-ins.",
+    label: "Body weight",
+    description:
+      "Reach a target body weight. Progress updates automatically from your weigh-ins.",
     icon: <Scale className="size-4" />,
   },
   {
     value: "lift",
-    label: "A lift (est. 1RM)",
-    description: "Get a lift to a target max. Tracks from your logged sets.",
+    label: "Strength (1-rep max)",
+    description:
+      "Bring a lift like the squat or bench press up to a target max. Progress updates automatically from your logged workouts.",
     icon: <Dumbbell className="size-4" />,
   },
   {
     value: "bodyfat",
     label: "Body fat %",
-    description: "Bring your body fat percentage down to a target.",
+    description:
+      "Reach a target body fat percentage. You update it whenever you get a new reading.",
     icon: <Percent className="size-4" />,
   },
   {
     value: "measurement",
-    label: "A measurement",
-    description: "Waist, arms, chest: any body measurement you track.",
+    label: "Body measurement",
+    description:
+      "Waist, arms, chest, or any other measurement you take with a tape. You update it whenever you measure.",
     icon: <Ruler className="size-4" />,
   },
   {
     value: "custom",
-    label: "Something else",
-    description: "Any other number you want to move. You update it.",
+    label: "Custom number",
+    description:
+      "Any other number you want to change, like push-ups in one set or miles run. You update it yourself.",
     icon: <Activity className="size-4" />,
+  },
+  {
+    value: NONE,
+    label: "No number",
+    description:
+      "For goals that can't be measured with a number, like a sharper jawline. Chad still sees this goal and holds you to it.",
+    icon: <Sparkles className="size-4" />,
   },
 ];
 
@@ -108,6 +141,10 @@ function numOrNull(s: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+function round1(n: number): number {
+  return Math.round(n * 10) / 10;
+}
+
 /** The stored target-date string ("Sep 30, 2026") as a native date-input
  *  value ("2026-09-30"); "" when the stored text isn't a parseable date. */
 function toDateInputValue(raw: string): string {
@@ -128,10 +165,13 @@ function todayInputValue(): string {
 }
 
 /**
- * The dedicated goal create/edit page body (MOB-19): the full-width form that
- * replaced the cramped dialog, plus what no popup had room for, live
- * feasibility coaching: required pace vs a sustainable pace, a realistic
- * landing date, and your actual lift baseline.
+ * The dedicated goal create/edit page body (MOB-19, rebuilt s177 to the
+ * pro-app bar): a centered column of clearly-titled section cards, plain
+ * self-explanatory labels with "?" explainers, per-metric unit controls that
+ * can't produce nonsense (body fat is always %, weight and lifts are lb/kg
+ * pickers), inline validation, and the live feasibility coaching: required
+ * pace vs a sustainable pace, a realistic landing date, and your actual lift
+ * baseline.
  */
 export function GoalForm({
   mode,
@@ -145,7 +185,7 @@ export function GoalForm({
   goal?: EditableGoal;
   /** Logged exercise names, offered as suggestions for a lift goal. */
   exerciseNames: string[];
-  /** The member's current trend weight, for the one-tap start prefill. */
+  /** The member's current trend weight, for the start-value prefill. */
   currentWeight: { value: number; unit: "lb" | "kg" } | null;
   /** Current best est. 1RM (lb) per logged exercise, lowercased name. */
   liftE1rm: Record<string, number>;
@@ -154,7 +194,6 @@ export function GoalForm({
   const router = useRouter();
   const isEdit = mode === "edit";
   const [pending, startTransition] = useTransition();
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const [title, setTitle] = useState(goal?.title ?? "");
   const [detail, setDetail] = useState(goal?.detail ?? "");
@@ -165,18 +204,42 @@ export function GoalForm({
   const [status, setStatus] = useState<EditableGoal["status"]>(
     goal?.status ?? "active"
   );
-  const [metric, setMetric] = useState<string>(goal?.metric ?? NONE);
+  // Create starts with nothing selected (choosing is an explicit act; saving
+  // without a choice means "no number"). Edit shows the goal's saved state.
+  const [metric, setMetric] = useState<string>(
+    goal?.metric ?? (isEdit ? NONE : "")
+  );
   const [metricRef, setMetricRef] = useState(goal?.metricRef ?? "");
   const [startValue, setStartValue] = useState(
     goal?.startValue != null ? String(goal.startValue) : ""
+  );
+  const [currentValue, setCurrentValue] = useState(
+    goal?.currentValue != null ? String(goal.currentValue) : ""
   );
   const [targetValue, setTargetValue] = useState(
     goal?.targetValue != null ? String(goal.targetValue) : ""
   );
   const [unit, setUnit] = useState(goal?.unit ?? "");
+  // Inline validation messages, keyed by field. Set on submit, cleared per
+  // field as the member fixes it.
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const isLift = metric === "lift";
-  const hasMetric = metric !== NONE;
+  const hasMetric = metric !== NONE && metric !== "";
+  const isManual = MANUAL_METRICS.has(metric);
+  // Which metrics carry a "what exactly?" reference field.
+  const needsRef = isLift || metric === "measurement" || metric === "custom";
+
+  function clearError(key: string) {
+    setErrors((prev) => {
+      if (!(key in prev)) {
+        return prev;
+      }
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  }
 
   // A selected pace chip's claim ("Lose 1 lb a week") is only true for the
   // numbers it was computed from; editing them makes it stale.
@@ -192,23 +255,59 @@ export function GoalForm({
     : "lb";
 
   function onMetricChange(value: string) {
+    if (value === metric) {
+      return;
+    }
     setMetric(value);
-    // Sensible default units per metric so members only type the numbers.
-    if (value === "lift" && !unit.trim()) {
+    setErrors({});
+    // Numbers never survive a metric switch: 200 (lb) is not 200 (%). But
+    // switching back to the metric this goal was saved with restores its
+    // saved numbers, so an accidental tap loses nothing.
+    if (goal && value === goal.metric) {
+      setMetricRef(goal.metricRef ?? "");
+      setStartValue(goal.startValue != null ? String(goal.startValue) : "");
+      setCurrentValue(
+        goal.currentValue != null ? String(goal.currentValue) : ""
+      );
+      setTargetValue(goal.targetValue != null ? String(goal.targetValue) : "");
+      setUnit(goal.unit ?? "");
+      return;
+    }
+    setStartValue("");
+    setCurrentValue("");
+    setTargetValue("");
+    // Sensible defaults per metric so members only type the numbers.
+    if (value === "lift") {
       setUnit("lb");
-    }
-    if (value === "weight" && !unit.trim()) {
-      setUnit(defaultUnit);
-    }
-    if (value === "bodyfat") {
+    } else if (value === "weight") {
+      // Prefill from the latest trend weight (the MyFitnessPal pattern):
+      // members shouldn't have to remember a number the app already knows.
+      if (currentWeight != null) {
+        setStartValue(String(currentWeight.value));
+        setUnit(currentWeight.unit);
+      } else {
+        setUnit(defaultUnit);
+      }
+    } else if (value === "bodyfat") {
       setUnit("%");
+    } else if (value === "measurement") {
+      setUnit(defaultUnit === "kg" ? "cm" : "in");
+    } else {
+      setUnit("");
     }
   }
 
-  // The member's current best est. 1RM for the typed lift, if they've logged it.
-  const liftBaseline = isLift
+  // The member's current best est. 1RM (lb) for the typed lift, if logged.
+  const liftBaselineLb = isLift
     ? (liftE1rm[metricRef.trim().toLowerCase()] ?? null)
     : null;
+  const liftUnit: "lb" | "kg" = unit.trim().toLowerCase().startsWith("k")
+    ? "kg"
+    : "lb";
+  const liftBaselineDisplay =
+    liftBaselineLb == null
+      ? null
+      : Math.round(liftUnit === "kg" ? liftBaselineLb / LB_PER_KG : liftBaselineLb);
 
   // Live feasibility: the coaching no mainstream app gives at the rate picker.
   const feasibility = useMemo(() => {
@@ -224,47 +323,119 @@ export function GoalForm({
     }
     if (isLift) {
       const target = numOrNull(targetValue);
-      if (target != null && liftBaseline != null) {
-        return {
-          kind: "lift" as const,
-          data: liftFeasibility({
-            currentE1rm: liftBaseline,
-            target,
-            targetDate,
-          }),
-        };
+      if (target != null && liftBaselineLb != null) {
+        // Feasibility math runs in lb (the unit the e1RM baselines are stored
+        // in); a kg target converts in, and the result converts back out.
+        const targetLb = liftUnit === "kg" ? target * LB_PER_KG : target;
+        const raw = liftFeasibility({
+          currentE1rm: liftBaselineLb,
+          target: targetLb,
+          targetDate,
+        });
+        if (raw && liftUnit === "kg") {
+          return {
+            kind: "lift" as const,
+            data: {
+              ...raw,
+              gain: round1(raw.gain / LB_PER_KG),
+              ratePerWeek:
+                raw.ratePerWeek == null
+                  ? null
+                  : round1(raw.ratePerWeek / LB_PER_KG),
+            },
+          };
+        }
+        return { kind: "lift" as const, data: raw };
       }
     }
     return null;
-  }, [metric, isLift, startValue, targetValue, targetDate, liftBaseline]);
+  }, [metric, isLift, startValue, targetValue, targetDate, liftBaselineLb, liftUnit]);
 
   // Narrowed weight-goal feasibility for the pace-first chips (TS can't carry
   // the discriminated-union narrowing into the chip onClick closures).
-  const weightPace =
-    feasibility?.kind === "weight" ? feasibility.data : null;
+  const weightPace = feasibility?.kind === "weight" ? feasibility.data : null;
+
+  function validate(): Record<string, string> {
+    const found: Record<string, string> = {};
+    if (!title.trim()) {
+      found["g-title"] = "Enter your goal.";
+    }
+    if (isLift && !metricRef.trim()) {
+      found["g-ref"] = "Enter the lift you want to track, like Back Squat.";
+    }
+    if (metric === "measurement" && !metricRef.trim()) {
+      found["g-ref"] = "Enter what you're measuring, like Waist.";
+    }
+    if (metric === "custom" && !metricRef.trim()) {
+      found["g-ref"] = "Enter what you're tracking, like Push-ups in one set.";
+    }
+    if (hasMetric) {
+      const target = numOrNull(targetValue);
+      if (!targetValue.trim()) {
+        found["g-targetval"] = "Enter the number you want to reach.";
+      } else if (target == null) {
+        found["g-targetval"] = "Enter a number, like 180.";
+      } else if (target <= 0) {
+        found["g-targetval"] = "Enter a number above zero.";
+      } else if (metric === "bodyfat" && (target < 1 || target > 75)) {
+        found["g-targetval"] = "Body fat is a percentage between 1 and 75.";
+      }
+      if (!isLift) {
+        const start = numOrNull(startValue);
+        if (!startValue.trim()) {
+          found["g-start"] = "Enter where you are today.";
+        } else if (start == null) {
+          found["g-start"] = "Enter a number, like 200.";
+        } else if (start <= 0) {
+          found["g-start"] = "Enter a number above zero.";
+        } else if (metric === "bodyfat" && (start < 1 || start > 75)) {
+          found["g-start"] = "Body fat is a percentage between 1 and 75.";
+        }
+      }
+      if (isEdit && isManual && currentValue.trim()) {
+        const now = numOrNull(currentValue);
+        if (now == null) {
+          found["g-current"] = "Enter a number.";
+        } else if (now <= 0) {
+          found["g-current"] = "Enter a number above zero.";
+        } else if (metric === "bodyfat" && (now < 1 || now > 75)) {
+          found["g-current"] = "Body fat is a percentage between 1 and 75.";
+        }
+      }
+    }
+    return found;
+  }
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!title.trim()) {
-      toast.error("Give your goal a title.");
+    const found = validate();
+    setErrors(found);
+    const firstError = Object.keys(found)[0];
+    if (firstError) {
+      const el = document.getElementById(firstError);
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      el?.focus({ preventScroll: true });
       return;
     }
-    if (isLift && !metricRef.trim()) {
-      toast.error("Name the lift to track (e.g. Back Squat).");
-      return;
-    }
+    const start = hasMetric && !isLift ? numOrNull(startValue) : null;
     const payload = {
       title: title.trim(),
       detail: detail.trim(),
       targetDate: targetDate.trim() || null,
       status,
       metric: hasMetric ? (metric as EditableGoal["metric"]) : null,
-      metricRef: isLift ? metricRef.trim() || null : null,
+      metricRef: needsRef ? metricRef.trim() || null : null,
       // A lift goal reads its start from the first logged e1RM, so Start is
       // hidden and left null.
-      startValue: hasMetric && !isLift ? numOrNull(startValue) : null,
+      startValue: start,
+      // Manual metrics carry the member-updated "now" value. On create it IS
+      // the start; on edit an empty field falls back to the start too.
+      currentValue:
+        hasMetric && isManual
+          ? (isEdit ? (numOrNull(currentValue) ?? start) : start)
+          : null,
       targetValue: hasMetric ? numOrNull(targetValue) : null,
-      unit: hasMetric ? unit.trim() || null : null,
+      unit: hasMetric ? (metric === "bodyfat" ? "%" : unit.trim() || null) : null,
     };
     startTransition(async () => {
       const result =
@@ -272,7 +443,7 @@ export function GoalForm({
           ? await updateGoalRecord({ id: goal.id, ...payload })
           : await saveGoalRecord(payload);
       if (result.ok) {
-        toast.success(isEdit ? "Goal updated." : "Goal saved.");
+        toast.success(isEdit ? "Goal updated." : "Goal created.");
         router.push("/goals");
         router.refresh();
       } else {
@@ -298,47 +469,68 @@ export function GoalForm({
   }
 
   return (
-    <form className="flex max-w-2xl flex-col gap-7" onSubmit={onSubmit}>
+    <form className="flex flex-col gap-5" noValidate onSubmit={onSubmit}>
       {/* 1 · The goal in your own words */}
-      <section className="flex flex-col gap-4">
-        <SectionHeading
-          icon={<Target className="size-4" />}
-          title="What are you chasing?"
-        />
+      <SectionCard
+        icon={<Target className="size-4" />}
+        subtitle="Say exactly what you want to achieve. Chad reads your goals in every chat and holds you to them."
+        title="Define your goal"
+      >
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="g-title">Goal</Label>
+          <Label htmlFor="g-title">Your goal</Label>
           <Input
+            aria-invalid={errors["g-title"] ? true : undefined}
             className="h-11"
             id="g-title"
             maxLength={120}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Lose 20 lb and see abs"
+            onChange={(e) => {
+              setTitle(e.target.value);
+              clearError("g-title");
+            }}
+            placeholder="e.g. Lose 20 lb and see my abs"
             value={title}
           />
+          <FieldError message={errors["g-title"]} />
+          <p className="text-muted-foreground text-xs">
+            One clear sentence works best. The full story goes below.
+          </p>
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="g-detail">Details (optional)</Label>
+          <Label htmlFor="g-detail">Details (recommended)</Label>
           <Textarea
-            className="min-h-24"
+            className="min-h-32"
             id="g-detail"
             maxLength={8000}
             onChange={(e) => setDetail(e.target.value)}
-            placeholder="The full picture: your why, what done looks like, how you'll measure it. Chad reads every word and holds you to it."
+            placeholder="Why this goal matters to you, what success looks like, and anything else Chad should know."
             value={detail}
           />
+          <p className="text-muted-foreground text-xs">
+            Be as detailed as you want. The more you write, the better Chad can
+            coach you: he reads every word.
+          </p>
         </div>
-      </section>
+      </SectionCard>
 
       {/* 2 · Pin a number to it */}
-      <section className="flex flex-col gap-4">
-        <SectionHeading
-          icon={<Scale className="size-4" />}
-          title="Track it with a number (recommended)"
-          subtitle="A goal with a number gets a live progress bar on your dashboard. One without stays words."
-        />
+      <SectionCard
+        icon={<Scale className="size-4" />}
+        subtitle={
+          <>
+            A goal with a specific number attached can be measured, and
+            measurable goals are far more likely to be reached: you can see
+            exactly how close you are at every step, and it shows as a live
+            progress bar on your dashboard. Some goals, like a sharper jawline
+            or rounder glutes, can't be measured with a number. Chad still sees
+            those and holds you to them: choose "No number" below.
+          </>
+        }
+        title="Track it with a number (recommended)"
+      >
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {METRIC_CHOICES.map((c) => (
             <button
+              aria-pressed={metric === c.value}
               className={cn(
                 "flex min-h-11 items-start gap-3 rounded-xl border px-3.5 py-3 text-left transition-colors",
                 metric === c.value
@@ -377,16 +569,21 @@ export function GoalForm({
         {isLift && (
           <div className="flex flex-col gap-3 rounded-xl border border-border bg-background/40 p-4">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="g-lift">Which lift?</Label>
+              <Label htmlFor="g-ref">Which lift?</Label>
               <Input
+                aria-invalid={errors["g-ref"] ? true : undefined}
                 autoComplete="off"
                 className="h-11"
-                id="g-lift"
+                id="g-ref"
                 list="g-lift-options"
-                onChange={(e) => setMetricRef(e.target.value)}
+                onChange={(e) => {
+                  setMetricRef(e.target.value);
+                  clearError("g-ref");
+                }}
                 placeholder="e.g. Back Squat"
                 value={metricRef}
               />
+              <FieldError message={errors["g-ref"]} />
               {exerciseNames.length > 0 && (
                 <datalist id="g-lift-options">
                   {exerciseNames.map((name) => (
@@ -394,115 +591,109 @@ export function GoalForm({
                   ))}
                 </datalist>
               )}
-              {liftBaseline != null ? (
+              {liftBaselineDisplay != null ? (
                 <p className="text-muted-foreground text-xs">
-                  Your current best est. 1RM for {metricRef.trim()}:{" "}
+                  Your current best estimated 1-rep max for {metricRef.trim()}:{" "}
                   <span className="font-medium text-foreground">
-                    {Math.round(liftBaseline)} lb
+                    {liftBaselineDisplay} {liftUnit}
                   </span>
                   . Progress starts from there.
                 </p>
               ) : (
                 <p className="text-muted-foreground text-xs">
-                  Chad reads your best est. 1RM for this lift from your logged
-                  sets and charts it against the target.
+                  Chad calculates your best estimated 1-rep max for this lift
+                  from your logged sets and charts it against the target.
                 </p>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="g-targetval">Target 1RM</Label>
-                <Input
-                  className="h-11"
-                  id="g-targetval"
-                  inputMode="decimal"
-                  onChange={(e) => setTargetValue(e.target.value)}
-                  placeholder="405"
-                  value={targetValue}
-                />
-              </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <NumberField
+                error={errors["g-targetval"]}
+                help="The 1-rep max you want to reach: the heaviest single rep you're aiming for."
+                id="g-targetval"
+                label="Goal 1-rep max"
+                onChange={(v) => {
+                  setTargetValue(v);
+                  clearError("g-targetval");
+                }}
+                placeholder="e.g. 405"
+                value={targetValue}
+              />
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="g-unit">Unit</Label>
-                <Input
-                  className="h-11"
-                  id="g-unit"
-                  maxLength={20}
-                  onChange={(e) => setUnit(e.target.value)}
-                  placeholder="lb"
-                  value={unit}
-                />
+                <Select onValueChange={setUnit} value={liftUnit}>
+                  <SelectTrigger className="min-h-11 w-full" id="g-unit">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lb">lb</SelectItem>
+                    <SelectItem value="kg">kg</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
         )}
 
-        {hasMetric && !isLift && (
+        {metric === "weight" && (
           <div className="flex flex-col gap-3 rounded-xl border border-border bg-background/40 p-4">
-            <div className="grid grid-cols-3 gap-3">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="g-start">Start</Label>
-                <Input
-                  className="h-11"
-                  id="g-start"
-                  inputMode="decimal"
-                  onChange={(e) => {
-                    setStartValue(e.target.value);
-                    clearStalePaceChip();
-                  }}
-                  placeholder={metric === "bodyfat" ? "26" : "200"}
-                  value={startValue}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="g-targetval">Target</Label>
-                <Input
-                  className="h-11"
-                  id="g-targetval"
-                  inputMode="decimal"
-                  onChange={(e) => {
-                    setTargetValue(e.target.value);
-                    clearStalePaceChip();
-                  }}
-                  placeholder={metric === "bodyfat" ? "15" : "180"}
-                  value={targetValue}
-                />
-              </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <NumberField
+                error={errors["g-start"]}
+                help={
+                  isEdit
+                    ? "The weight you started from when you set this goal. Progress is measured from here."
+                    : "Your weight today. Progress is measured from here."
+                }
+                id="g-start"
+                label={isEdit ? "Starting weight" : "Current weight"}
+                onChange={(v) => {
+                  setStartValue(v);
+                  clearError("g-start");
+                  clearStalePaceChip();
+                }}
+                placeholder="e.g. 200"
+                value={startValue}
+              />
+              <NumberField
+                error={errors["g-targetval"]}
+                help="The weight you want to reach. This is the number you're aiming for."
+                id="g-targetval"
+                label="Goal weight"
+                onChange={(v) => {
+                  setTargetValue(v);
+                  clearError("g-targetval");
+                  clearStalePaceChip();
+                }}
+                placeholder="e.g. 180"
+                value={targetValue}
+              />
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="g-unit">Unit</Label>
-                {metric === "weight" ? (
-                  <Select
-                    onValueChange={(v) => {
-                      setUnit(v);
-                      clearStalePaceChip();
-                    }}
-                    value={unit || defaultUnit}
-                  >
-                    <SelectTrigger className="h-11 w-full" id="g-unit">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="lb">lb</SelectItem>
-                      <SelectItem value="kg">kg</SelectItem>
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <Input
-                    className="h-11"
-                    id="g-unit"
-                    maxLength={20}
-                    onChange={(e) => setUnit(e.target.value)}
-                    placeholder={metric === "bodyfat" ? "%" : "in"}
-                    value={unit}
-                  />
-                )}
+                <Select
+                  onValueChange={(v) => {
+                    setUnit(v);
+                    clearStalePaceChip();
+                  }}
+                  value={unit || defaultUnit}
+                >
+                  <SelectTrigger className="min-h-11 w-full" id="g-unit">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lb">lb</SelectItem>
+                    <SelectItem value="kg">kg</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-            {metric === "weight" && currentWeight != null && (
+            {currentWeight != null && (
               <button
                 className="self-start rounded-md border border-border px-2.5 py-1.5 text-muted-foreground text-xs transition-colors hover:bg-accent hover:text-foreground"
                 onClick={() => {
                   setStartValue(String(currentWeight.value));
                   setUnit(currentWeight.unit);
+                  clearError("g-start");
                 }}
                 type="button"
               >
@@ -511,126 +702,317 @@ export function GoalForm({
             )}
           </div>
         )}
-      </section>
+
+        {metric === "bodyfat" && (
+          <div className="flex flex-col gap-3 rounded-xl border border-border bg-background/40 p-4">
+            <div
+              className={cn(
+                "grid grid-cols-1 gap-3",
+                isEdit ? "sm:grid-cols-3" : "sm:grid-cols-2"
+              )}
+            >
+              <NumberField
+                error={errors["g-start"]}
+                help={
+                  isEdit
+                    ? "The body fat percentage you started from when you set this goal."
+                    : "Your body fat percentage today. Progress is measured from here."
+                }
+                id="g-start"
+                label={isEdit ? "Start" : "Current body fat"}
+                onChange={(v) => {
+                  setStartValue(v);
+                  clearError("g-start");
+                }}
+                placeholder="e.g. 26"
+                suffix="%"
+                value={startValue}
+              />
+              {isEdit && (
+                <NumberField
+                  error={errors["g-current"]}
+                  help="Your body fat percentage right now. Update it whenever you get a new reading; your progress bar moves with it."
+                  id="g-current"
+                  label="Now"
+                  onChange={(v) => {
+                    setCurrentValue(v);
+                    clearError("g-current");
+                  }}
+                  placeholder={`e.g. ${startValue || "24"}`}
+                  suffix="%"
+                  value={currentValue}
+                />
+              )}
+              <NumberField
+                error={errors["g-targetval"]}
+                help="The body fat percentage you want to reach. This is the number you're aiming for."
+                id="g-targetval"
+                label={isEdit ? "Goal" : "Goal body fat"}
+                onChange={(v) => {
+                  setTargetValue(v);
+                  clearError("g-targetval");
+                }}
+                placeholder="e.g. 15"
+                suffix="%"
+                value={targetValue}
+              />
+            </div>
+            <p className="text-muted-foreground text-xs">
+              Body fat is always a percentage. Get readings from a smart scale,
+              calipers, or a scan, and use the same method each time so the
+              trend is honest.
+            </p>
+          </div>
+        )}
+
+        {(metric === "measurement" || metric === "custom") && (
+          <div className="flex flex-col gap-3 rounded-xl border border-border bg-background/40 p-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="g-ref">
+                {metric === "measurement"
+                  ? "What are you measuring?"
+                  : "What are you tracking?"}
+              </Label>
+              <Input
+                aria-invalid={errors["g-ref"] ? true : undefined}
+                autoComplete="off"
+                className="h-11"
+                id="g-ref"
+                maxLength={80}
+                onChange={(e) => {
+                  setMetricRef(e.target.value);
+                  clearError("g-ref");
+                }}
+                placeholder={
+                  metric === "measurement" ? "e.g. Waist" : "e.g. Push-ups in one set"
+                }
+                value={metricRef}
+              />
+              <FieldError message={errors["g-ref"]} />
+            </div>
+            <div
+              className={cn(
+                "grid grid-cols-1 gap-3",
+                isEdit ? "sm:grid-cols-4" : "sm:grid-cols-3"
+              )}
+            >
+              <NumberField
+                error={errors["g-start"]}
+                help={
+                  isEdit
+                    ? "The number you started from when you set this goal. Progress is measured from here."
+                    : "The number you're at today. Progress is measured from here."
+                }
+                id="g-start"
+                label={
+                  isEdit
+                    ? "Start"
+                    : metric === "measurement"
+                      ? "Current measurement"
+                      : "Current number"
+                }
+                onChange={(v) => {
+                  setStartValue(v);
+                  clearError("g-start");
+                }}
+                placeholder={metric === "measurement" ? "e.g. 38" : "e.g. 20"}
+                value={startValue}
+              />
+              {isEdit && (
+                <NumberField
+                  error={errors["g-current"]}
+                  help="The number right now. Update it as you make progress; your progress bar moves with it."
+                  id="g-current"
+                  label="Now"
+                  onChange={(v) => {
+                    setCurrentValue(v);
+                    clearError("g-current");
+                  }}
+                  placeholder={startValue ? `e.g. ${startValue}` : undefined}
+                  value={currentValue}
+                />
+              )}
+              <NumberField
+                error={errors["g-targetval"]}
+                help="The number you want to reach. This is the number you're aiming for."
+                id="g-targetval"
+                label={
+                  isEdit
+                    ? "Goal"
+                    : metric === "measurement"
+                      ? "Goal measurement"
+                      : "Goal number"
+                }
+                onChange={(v) => {
+                  setTargetValue(v);
+                  clearError("g-targetval");
+                }}
+                placeholder={metric === "measurement" ? "e.g. 34" : "e.g. 50"}
+                value={targetValue}
+              />
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-1">
+                  <Label htmlFor="g-unit">Unit</Label>
+                  {metric === "custom" && (
+                    <KpiHelp label="Unit">
+                      The word after the number, like reps, miles, or minutes.
+                      Leave it blank if there isn't one.
+                    </KpiHelp>
+                  )}
+                </div>
+                {metric === "measurement" ? (
+                  <Select onValueChange={setUnit} value={unit || "in"}>
+                    <SelectTrigger className="min-h-11 w-full" id="g-unit">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="in">inches</SelectItem>
+                      <SelectItem value="cm">cm</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    className="h-11"
+                    id="g-unit"
+                    maxLength={20}
+                    onChange={(e) => setUnit(e.target.value)}
+                    placeholder="e.g. reps"
+                    value={unit}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </SectionCard>
 
       {/* 3 · Goal date */}
-      <section className="flex flex-col gap-3">
-        <SectionHeading
-          icon={<CalendarClock className="size-4" />}
-          title="When do you want it done? (optional)"
-          subtitle="Your date sets the pace of the whole plan: training days, diet strictness, and your Future You forecast all follow it."
-        />
-        <div className="flex flex-col gap-2.5">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="g-target">Goal date</Label>
-            <Input
-              className="h-11 max-w-xs"
-              id="g-target"
-              min={todayInputValue()}
-              onChange={(e) => {
-                const picked = parseTargetDate(e.target.value);
-                setTargetDate(picked ? formatTargetDate(picked) : "");
-                setSelectedChip(null);
-              }}
-              type="date"
-              value={toDateInputValue(targetDate)}
-            />
-            {targetDate.trim() !== "" && !parseTargetDate(targetDate) && (
-              <p className="text-muted-foreground text-xs">
-                Currently saved as "{targetDate}". Pick a calendar date to turn
-                on the pace check.
-              </p>
-            )}
+      <SectionCard
+        icon={<CalendarClock className="size-4" />}
+        subtitle={
+          <>
+            Your target date sets the pace of your whole plan: training days,
+            diet strictness, and your{" "}
+            <Link
+              className="text-blood underline underline-offset-2 transition-colors hover:text-blood/80"
+              href="/future-you"
+            >
+              Future You
+            </Link>{" "}
+            forecast all follow it. Without a date, Chad can't tell you whether
+            you're on schedule.
+          </>
+        }
+        title="Set a target date (recommended)"
+      >
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="g-target">Target date</Label>
+          <Input
+            className="h-11 max-w-xs"
+            id="g-target"
+            min={todayInputValue()}
+            onChange={(e) => {
+              const picked = parseTargetDate(e.target.value);
+              setTargetDate(picked ? formatTargetDate(picked) : "");
+              setSelectedChip(null);
+            }}
+            type="date"
+            value={toDateInputValue(targetDate)}
+          />
+          {targetDate.trim() !== "" && !parseTargetDate(targetDate) && (
+            <p className="text-muted-foreground text-xs">
+              This goal's date is saved as "{targetDate}", which isn't a
+              calendar date. Pick one to turn on the pace check.
+            </p>
+          )}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <p className="text-muted-foreground text-xs">Or pick a time frame:</p>
+          <div className="flex flex-wrap gap-1.5">
+            {DEADLINE_CHIPS.map((chip) => (
+              <button
+                aria-pressed={selectedChip === `date:${chip.label}`}
+                className={cn(
+                  "h-11 rounded-full border px-4 text-xs transition-colors",
+                  selectedChip === `date:${chip.label}`
+                    ? "border-blood/40 bg-blood/10 font-medium text-blood"
+                    : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                )}
+                key={chip.label}
+                onClick={() => {
+                  setTargetDate(formatTargetDate(dateWeeksFromNow(chip.weeks)));
+                  setSelectedChip(`date:${chip.label}`);
+                }}
+                type="button"
+              >
+                {chip.label}
+              </button>
+            ))}
           </div>
+        </div>
+        {weightPace && (
           <div className="flex flex-col gap-1.5">
-            <p className="text-muted-foreground text-xs">Quick dates:</p>
+            <p className="text-muted-foreground text-xs">
+              Or pick a weekly pace and the target date is calculated for you:
+            </p>
             <div className="flex flex-wrap gap-1.5">
-              {DEADLINE_CHIPS.map((chip) => (
+              {PACE_CHIPS[paceUnit].map((rate) => (
                 <button
-                  aria-pressed={selectedChip === `date:${chip.label}`}
+                  aria-pressed={selectedChip === `pace:${rate}`}
                   className={cn(
                     "h-11 rounded-full border px-4 text-xs transition-colors",
-                    selectedChip === `date:${chip.label}`
+                    selectedChip === `pace:${rate}`
                       ? "border-blood/40 bg-blood/10 font-medium text-blood"
                       : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
                   )}
-                  key={chip.label}
+                  key={rate}
                   onClick={() => {
                     setTargetDate(
-                      formatTargetDate(dateWeeksFromNow(chip.weeks))
+                      formatTargetDate(
+                        dateWeeksFromNow(weightPace.totalChange / rate)
+                      )
                     );
-                    setSelectedChip(`date:${chip.label}`);
+                    setSelectedChip(`pace:${rate}`);
                   }}
                   type="button"
                 >
-                  {chip.label}
+                  {weightPace.direction === "lose" ? "Lose" : "Gain"} {rate}{" "}
+                  {paceUnit} a week
                 </button>
               ))}
             </div>
           </div>
-          {weightPace && (
-            <div className="flex flex-col gap-1.5">
-              <p className="text-muted-foreground text-xs">
-                Or pick your pace and the date fills itself:
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {PACE_CHIPS[paceUnit].map((rate) => (
-                  <button
-                    aria-pressed={selectedChip === `pace:${rate}`}
-                    className={cn(
-                      "h-11 rounded-full border px-4 text-xs transition-colors",
-                      selectedChip === `pace:${rate}`
-                        ? "border-blood/40 bg-blood/10 font-medium text-blood"
-                        : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
-                    )}
-                    key={rate}
-                    onClick={() => {
-                      setTargetDate(
-                        formatTargetDate(
-                          dateWeeksFromNow(weightPace.totalChange / rate)
-                        )
-                      );
-                      setSelectedChip(`pace:${rate}`);
-                    }}
-                    type="button"
-                  >
-                    {weightPace.direction === "lose" ? "Lose" : "Gain"} {rate}{" "}
-                    {paceUnit} a week
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
+        )}
+      </SectionCard>
 
       {/* 4 · The live pace check */}
       {feasibility?.kind === "weight" && feasibility.data && (
-        <WeightPaceCheck
-          data={feasibility.data}
-          unit={unit || defaultUnit}
-        />
+        <WeightPaceCheck data={feasibility.data} unit={unit || defaultUnit} />
       )}
       {feasibility?.kind === "lift" && feasibility.data && (
-        <LiftPaceCheck data={feasibility.data} unit={unit || "lb"} />
+        <LiftPaceCheck data={feasibility.data} unit={liftUnit} />
       )}
 
       {/* 5 · Status (edit only) */}
       {isEdit && (
-        <section className="flex flex-col gap-3">
-          <SectionHeading
-            icon={<Activity className="size-4" />}
-            title="Status"
-          />
-          <div className="grid grid-cols-3 gap-2">
+        <SectionCard
+          icon={<Activity className="size-4" />}
+          title="Status"
+        >
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             {(
               [
-                ["active", "Active", "You're working on it."],
-                ["achieved", "Achieved", "You did it."],
-                ["archived", "Archived", "Shelved, not deleted."],
+                ["active", "Active", "You're working toward it now."],
+                ["achieved", "Achieved", "You reached this goal."],
+                [
+                  "archived",
+                  "Archived",
+                  "Set aside for now. You can reopen it anytime.",
+                ],
               ] as const
             ).map(([value, label, hint]) => (
               <button
+                aria-pressed={status === value}
                 className={cn(
                   "flex min-h-11 flex-col items-start gap-0.5 rounded-xl border px-3 py-2.5 text-left transition-colors",
                   status === value
@@ -653,46 +1035,50 @@ export function GoalForm({
               </button>
             ))}
           </div>
-        </section>
+        </SectionCard>
       )}
 
       {/* Actions */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-border border-t pt-5">
         <div>
-          {isEdit &&
-            (confirmingDelete ? (
-              <div className="flex items-center gap-1.5">
+          {isEdit && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
                 <Button
-                  disabled={pending}
-                  onClick={destroy}
-                  size="sm"
-                  type="button"
-                  variant="destructive"
-                >
-                  {pending ? "Deleting…" : "Really delete"}
-                </Button>
-                <Button
-                  disabled={pending}
-                  onClick={() => setConfirmingDelete(false)}
+                  className="h-11 gap-1.5 text-muted-foreground"
                   size="sm"
                   type="button"
                   variant="ghost"
                 >
-                  Keep it
+                  <Trash2 className="size-3.5" />
+                  Delete goal
                 </Button>
-              </div>
-            ) : (
-              <Button
-                className="gap-1.5 text-muted-foreground"
-                onClick={() => setConfirmingDelete(true)}
-                size="sm"
-                type="button"
-                variant="ghost"
-              >
-                <Trash2 className="size-3.5" />
-                Delete goal
-              </Button>
-            ))}
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete this goal?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    "{goal?.title}" and its progress will be permanently
+                    deleted, and Chad will stop tracking it. If you just want
+                    it out of the way, set its status to Archived instead: you
+                    can reopen an archived goal anytime.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={pending}>
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    disabled={pending}
+                    onClick={destroy}
+                  >
+                    {pending ? "Deleting…" : "Delete goal"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -705,7 +1091,7 @@ export function GoalForm({
             Cancel
           </Button>
           <Button className="h-11 min-w-32" disabled={pending} type="submit">
-            {pending ? "Saving…" : isEdit ? "Save changes" : "Save goal"}
+            {pending ? "Saving…" : isEdit ? "Save changes" : "Create goal"}
           </Button>
         </div>
       </div>
@@ -713,26 +1099,92 @@ export function GoalForm({
   );
 }
 
-function SectionHeading({
+/** One clearly-titled section of the form: icon chip, plain-language title,
+ *  a real explanation, then the controls. */
+function SectionCard({
   icon,
   title,
   subtitle,
+  children,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   title: string;
-  subtitle?: string;
+  subtitle?: ReactNode;
+  children: ReactNode;
 }) {
   return (
-    <div>
-      <h2 className="flex items-center gap-2 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-        <span className="text-blood">{icon}</span>
-        {title}
-      </h2>
-      {subtitle && (
-        <p className="mt-1 text-muted-foreground text-xs">{subtitle}</p>
-      )}
+    <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-6">
+      <div className="flex flex-col gap-1.5">
+        <h2 className="flex items-center gap-2.5 font-semibold text-base">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-blood/10 text-blood">
+            {icon}
+          </span>
+          {title}
+        </h2>
+        {subtitle && (
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            {subtitle}
+          </p>
+        )}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** A labeled numeric input with a "?" explainer, optional unit suffix, and an
+ *  inline validation message. */
+function NumberField({
+  id,
+  label,
+  help,
+  value,
+  onChange,
+  placeholder,
+  suffix,
+  error,
+}: {
+  id: string;
+  label: string;
+  help: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  suffix?: string;
+  error?: string;
+}) {
+  return (
+    <div className="flex min-w-0 flex-col gap-1.5">
+      <div className="flex items-center gap-1">
+        <Label htmlFor={id}>{label}</Label>
+        <KpiHelp label={label}>{help}</KpiHelp>
+      </div>
+      <div className="relative">
+        <Input
+          aria-invalid={error ? true : undefined}
+          className={cn("h-11", suffix && "pr-8")}
+          id={id}
+          inputMode="decimal"
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          value={value}
+        />
+        {suffix && (
+          <span className="-translate-y-1/2 pointer-events-none absolute top-1/2 right-3 text-muted-foreground text-sm">
+            {suffix}
+          </span>
+        )}
+      </div>
+      <FieldError message={error} />
     </div>
   );
+}
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) {
+    return null;
+  }
+  return <p className="text-destructive text-xs">{message}</p>;
 }
 
 const BAND_STYLES: Record<RateBand, string> = {
@@ -740,6 +1192,33 @@ const BAND_STYLES: Record<RateBand, string> = {
   aggressive: "border-amber-500/30 bg-amber-500/5",
   extreme: "border-blood/30 bg-blood/5",
 };
+
+function PaceCheckCard({
+  band,
+  headline,
+  children,
+}: {
+  band: RateBand | null;
+  headline: string;
+  children: ReactNode;
+}) {
+  return (
+    <section
+      className={cn(
+        "rounded-2xl border p-4 sm:p-5",
+        band ? BAND_STYLES[band] : "border-border bg-card"
+      )}
+    >
+      <p className="mb-1 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+        Pace check
+      </p>
+      <h3 className="font-medium text-sm">{headline}</h3>
+      <p className="mt-1 text-muted-foreground text-sm leading-relaxed">
+        {children}
+      </p>
+    </section>
+  );
+}
 
 function WeightPaceCheck({
   data,
@@ -751,35 +1230,29 @@ function WeightPaceCheck({
   const verb = data.direction === "lose" ? "Lose" : "Gain";
   let message: string;
   if (data.band === "safe") {
-    message = `A sustainable pace. Lock it in: at ${data.ratePerWeek} ${unit}/week this is very doable.`;
+    message = `A sustainable pace. At ${data.ratePerWeek} ${unit} a week this is very doable.`;
   } else if (data.band === "aggressive") {
-    message = `An aggressive pace. Doable, but expect hard weeks. Most coaches would give this a little more time.`;
+    message = `An aggressive pace. It can be done, but expect hard weeks. Most coaches would give this a little more time.`;
   } else if (data.band === "extreme") {
     message =
       data.direction === "lose"
-        ? `At that pace you'd be losing muscle, not just fat. At a sustainable ${data.sustainableRate} ${unit}/week you'd land around ${formatTargetDate(data.sustainableDate)}. Consider moving the date.`
-        : `Gaining that fast is mostly fat, not muscle. At a lean ${data.sustainableRate} ${unit}/week you'd land around ${formatTargetDate(data.sustainableDate)}. Consider moving the date.`;
+        ? `At this pace you would lose muscle along with the fat. At a sustainable ${data.sustainableRate} ${unit} a week you would finish around ${formatTargetDate(data.sustainableDate)}. Consider moving your target date.`
+        : `Gaining this fast adds mostly fat rather than muscle. At a lean ${data.sustainableRate} ${unit} a week you would finish around ${formatTargetDate(data.sustainableDate)}. Consider moving your target date.`;
   } else {
-    message = `At a sustainable ${data.sustainableRate} ${unit}/week you'd land around ${formatTargetDate(data.sustainableDate)}. Pick a goal date above and this becomes a pace check.`;
+    message = `At a sustainable ${data.sustainableRate} ${unit} a week you would finish around ${formatTargetDate(data.sustainableDate)}. Set a target date above and this becomes a live pace check.`;
   }
 
   return (
-    <section
-      className={cn(
-        "rounded-xl border p-4",
-        data.band ? BAND_STYLES[data.band] : "border-border bg-card"
-      )}
+    <PaceCheckCard
+      band={data.band}
+      headline={`${verb} ${data.totalChange} ${unit}${
+        data.ratePerWeek != null && data.weeks != null
+          ? ` in ${data.weeks} weeks: that's ${data.ratePerWeek} ${unit} a week`
+          : ""
+      }`}
     >
-      <h3 className="font-medium text-sm">
-        {verb} {data.totalChange} {unit}
-        {data.ratePerWeek != null && data.weeks != null
-          ? ` in ${data.weeks} weeks: that's ${data.ratePerWeek} ${unit}/week`
-          : ""}
-      </h3>
-      <p className="mt-1 text-muted-foreground text-sm leading-relaxed">
-        {message}
-      </p>
-    </section>
+      {message}
+    </PaceCheckCard>
   );
 }
 
@@ -795,30 +1268,24 @@ function LiftPaceCheck({
     message = "Steady, earnable strength progress. A realistic target.";
   } else if (data.band === "aggressive") {
     message =
-      "A beginner-gains pace. Possible if you're new to this lift and eating for it; ambitious otherwise.";
+      "A very fast pace. Possible if you're new to this lift and eating enough; ambitious otherwise.";
   } else if (data.band === "extreme") {
     message =
-      "Strength doesn't move that fast. Give the date more room or pick a nearer target, then earn the rest.";
+      "Strength builds slower than this. Give the date more room, or pick a nearer target first and earn the rest.";
   } else {
     message =
-      "Pick a goal date above and this becomes a pace check against how fast strength actually builds.";
+      "Set a target date above and this becomes a pace check against how fast strength actually builds.";
   }
   return (
-    <section
-      className={cn(
-        "rounded-xl border p-4",
-        data.band ? BAND_STYLES[data.band] : "border-border bg-card"
-      )}
+    <PaceCheckCard
+      band={data.band}
+      headline={`+${data.gain} ${unit} on your est. 1RM${
+        data.ratePerWeek != null && data.weeks != null
+          ? ` in ${data.weeks} weeks: about ${data.ratePerWeek} ${unit} a week`
+          : ""
+      }`}
     >
-      <h3 className="font-medium text-sm">
-        +{data.gain} {unit} on your est. 1RM
-        {data.ratePerWeek != null && data.weeks != null
-          ? ` in ${data.weeks} weeks: about ${data.ratePerWeek} ${unit}/week`
-          : ""}
-      </h3>
-      <p className="mt-1 text-muted-foreground text-sm leading-relaxed">
-        {message}
-      </p>
-    </section>
+      {message}
+    </PaceCheckCard>
   );
 }

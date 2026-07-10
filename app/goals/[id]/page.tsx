@@ -118,6 +118,7 @@ async function GoalDocContent({
     metric: goal.metric,
     metricRef: goal.metricRef,
     startValue: goal.startValue,
+    currentValue: goal.currentValue,
     targetValue: goal.targetValue,
     unit: goal.unit,
     // Anchors relative deadlines like "8 weeks" on the page (LC-5).

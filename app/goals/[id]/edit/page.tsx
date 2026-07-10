@@ -37,17 +37,22 @@ export default function EditGoalPage({
         <StandaloneHeader active="/goals" />
       </Suspense>
 
-      <div className="mb-8">
-        <BackToDashboard href="/goals" label="Goals" />
-        <h1 className="font-semibold text-2xl tracking-tight">Edit goal</h1>
-        <p className="mt-1 text-muted-foreground text-sm">
-          Change anything: the wording, the numbers, the deadline, the status.
-        </p>
-      </div>
+      {/* A form reads best as one centered column (the standard pro-app form
+          layout), not content pinned to the left edge of a wide shell. */}
+      <div className="mx-auto w-full max-w-2xl">
+        <div className="mb-8">
+          <BackToDashboard href="/goals" label="Goals" />
+          <h1 className="font-semibold text-2xl tracking-tight">Edit goal</h1>
+          <p className="mt-1 text-muted-foreground text-sm">
+            Change anything: the wording, the numbers, the target date, the
+            status.
+          </p>
+        </div>
 
-      <Suspense fallback={<TodaySkeleton />}>
-        <EditGoalContent params={params} />
-      </Suspense>
+        <Suspense fallback={<TodaySkeleton />}>
+          <EditGoalContent params={params} />
+        </Suspense>
+      </div>
     </PageShell>
   );
 }
@@ -95,6 +100,7 @@ async function EditGoalContent({
         metric: record.metric,
         metricRef: record.metricRef,
         startValue: record.startValue,
+        currentValue: record.currentValue,
         targetValue: record.targetValue,
         unit: record.unit,
       }}

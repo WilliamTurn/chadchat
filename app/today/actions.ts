@@ -154,6 +154,7 @@ export async function saveGoalRecord(
     metric: d.metric ?? null,
     metricRef: d.metricRef ?? null,
     startValue: d.startValue ?? null,
+    currentValue: d.currentValue ?? null,
     targetValue: d.targetValue ?? null,
     unit: d.unit ?? null,
   });
@@ -186,6 +187,7 @@ export async function updateGoalRecord(
     metric: d.metric ?? null,
     metricRef: d.metricRef ?? null,
     startValue: d.startValue ?? null,
+    currentValue: d.currentValue ?? null,
     targetValue: d.targetValue ?? null,
     unit: d.unit ?? null,
   });

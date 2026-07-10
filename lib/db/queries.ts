@@ -1297,6 +1297,7 @@ export async function createGoal(entry: {
   metric: Goal["metric"];
   metricRef: string | null;
   startValue: number | null;
+  currentValue?: number | null;
   targetValue: number | null;
   unit: string | null;
 }): Promise<Goal> {
@@ -1383,6 +1384,7 @@ export async function updateGoal(entry: {
   metric: Goal["metric"];
   metricRef: string | null;
   startValue: number | null;
+  currentValue?: number | null;
   targetValue: number | null;
   unit: string | null;
 }): Promise<void> {
