@@ -1,0 +1,1 @@
+ALTER TABLE "User" ADD COLUMN "chadIntensity" varchar DEFAULT 'full' NOT NULL;

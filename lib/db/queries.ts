@@ -465,6 +465,24 @@ export async function setMemoryEnabled(userId: string, enabled: boolean) {
   }
 }
 
+/** Set how hard Chad goes on this member (full | medium | low). */
+export async function setChadIntensity(
+  userId: string,
+  intensity: "full" | "medium" | "low"
+) {
+  try {
+    return await db
+      .update(user)
+      .set({ chadIntensity: intensity, updatedAt: new Date() })
+      .where(eq(user.id, userId));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to update intensity setting"
+    );
+  }
+}
+
 /** Flip the sound / vibration logging-feedback preferences (DSH-54). Only the
  * keys passed are written, so each switch updates independently. */
 export async function setSensoryPrefs(

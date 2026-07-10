@@ -7,6 +7,7 @@ import {
   clearUserMemory,
   deleteAllUserData,
   getUserById,
+  setChadIntensity,
   setCheckInSettings,
   setMemoryEnabled,
   setQuitDateEnabled,
@@ -292,6 +293,21 @@ export async function saveQuitDateEnabled(enabled: boolean) {
   revalidatePath("/account");
   revalidatePath("/today");
   revalidatePath("/quit-date");
+}
+
+/** Set how hard Chad goes on the current member (full | medium | low). */
+export async function saveChadIntensity(intensity: "full" | "medium" | "low") {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  if (!["full", "medium", "low"].includes(intensity)) {
+    throw new Error("Invalid intensity setting");
+  }
+
+  await setChadIntensity(session.user.id, intensity);
+  revalidatePath("/account");
 }
 
 /** Turn Chad's cross-chat memory on or off for the current user. */

@@ -373,6 +373,7 @@ export async function POST(request: Request) {
           system: systemPrompt({
             requestHints,
             supportsTools,
+            intensity: dbUser.chadIntensity,
             profile: profileBlock,
             memory: memoryBlock,
             goals: goalsBlock,

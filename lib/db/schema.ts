@@ -165,6 +165,18 @@ export const user = pgTable("User", {
   // prompts, and skips the member in the resolution sweep and danger-window
   // escalation. Existing QuitPrediction rows are kept (the ledger survives).
   quitDateEnabled: boolean("quitDateEnabled").notNull().default(true),
+  // --- Chad intensity (harshness dial) ---
+  // How hard Chad goes on this member. "full" = his ruthless default
+  // (profanity, insults, savage shaming); "medium" = firm, far less profanity,
+  // no personal insults; "low" = still brutally honest and accountable, but no
+  // cursing, no insults, never harsh. Selects which intensity block is composed
+  // into his system prompt (lib/ai/prompts.ts). Default full — the recommended
+  // experience; members change it from /account.
+  chadIntensity: varchar("chadIntensity", {
+    enum: ["full", "medium", "low"],
+  })
+    .notNull()
+    .default("full"),
 });
 
 export type User = InferSelectModel<typeof user>;

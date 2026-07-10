@@ -16,6 +16,7 @@ import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { CheckInSettings } from "@/components/account/check-in-settings";
 import { DeleteDataButton } from "@/components/account/delete-data-button";
+import { IntensitySettings } from "@/components/account/intensity-settings";
 import { MemorySettings } from "@/components/account/memory-settings";
 import { QuitDateSettings } from "@/components/account/quit-date-settings";
 import { SensorySettings } from "@/components/account/sensory-settings";
@@ -236,6 +237,11 @@ async function AccountSettings() {
                 initialHaptics={user.hapticsEnabled}
                 initialSound={user.soundEnabled}
               />
+            </div>
+
+            {/* Chad's intensity dial — how harsh he is with this member. */}
+            <div className="mt-6 border-border border-t pt-6">
+              <IntensitySettings initialIntensity={user.chadIntensity} />
             </div>
 
             {/* Chad's memory (owner order, s157): the chat Settings popup has
