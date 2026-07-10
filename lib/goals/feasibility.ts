@@ -15,6 +15,13 @@ export function parseTargetDate(raw: string | null | undefined): Date | null {
   if (!v) {
     return null;
   }
+  // A date-only ISO string ("2026-09-30", what a native date input emits) is
+  // LOCAL midnight to the member; Date.parse would read it as UTC midnight
+  // and formatting could then show the previous day. Build it locally.
+  const iso = v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) {
+    return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+  }
   const t = Date.parse(v);
   if (Number.isNaN(t)) {
     return null;
@@ -152,6 +159,50 @@ export function liftFeasibility({
     ratePerWeek: ratePerWeek ? Math.round(ratePerWeek * 10) / 10 : null,
     band,
   };
+}
+
+/**
+ * One plain sentence describing the pace a weight goal demands, for Chad's
+ * system-prompt goal block: the required rate to hit the member's date and
+ * whether that pace is sustainable, aggressive, or beyond physiology (with
+ * the realistic landing date when it is). Null for non-weight goals or when
+ * the numbers aren't set. Start-value based, the same math the goal form
+ * shows the member.
+ */
+export function goalPaceLine(goal: {
+  metric?: string | null;
+  startValue?: number | null;
+  targetValue?: number | null;
+  unit?: string | null;
+  targetDate?: string | null;
+}): string | null {
+  if (
+    goal.metric !== "weight" ||
+    goal.startValue == null ||
+    goal.targetValue == null
+  ) {
+    return null;
+  }
+  const f = weightFeasibility({
+    start: goal.startValue,
+    target: goal.targetValue,
+    targetDate: goal.targetDate ?? null,
+  });
+  if (!f) {
+    return null;
+  }
+  const unit = goal.unit?.trim() || "lb";
+  if (f.ratePerWeek == null || f.band == null) {
+    return `No target date set yet; at a sustainable ${f.sustainableRate} ${unit}/week this goal lands around ${formatTargetDate(f.sustainableDate)}. Settle a date with the client.`;
+  }
+  const verb = f.direction === "lose" ? "losing" : "gaining";
+  if (f.band === "safe") {
+    return `Hitting their date requires ${verb} about ${f.ratePerWeek} ${unit}/week: a sustainable pace.`;
+  }
+  if (f.band === "aggressive") {
+    return `Hitting their date requires ${verb} about ${f.ratePerWeek} ${unit}/week: an aggressive pace that demands a strict plan and hard training frequency.`;
+  }
+  return `Hitting their date requires ${verb} about ${f.ratePerWeek} ${unit}/week: faster than a body can actually deliver. A sustainable ${f.sustainableRate} ${unit}/week lands around ${formatTargetDate(f.sustainableDate)}; renegotiate the date.`;
 }
 
 /** "Sep 30, 2026", the exact format the quick-deadline chips write, chosen

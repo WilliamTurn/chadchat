@@ -31,6 +31,7 @@ import {
   dateWeeksFromNow,
   formatTargetDate,
   liftFeasibility,
+  parseTargetDate,
   type RateBand,
   weightFeasibility,
 } from "@/lib/goals/feasibility";
@@ -91,6 +92,13 @@ const DEADLINE_CHIPS: { label: string; weeks: number }[] = [
   { label: "6 months", weeks: 26 },
 ];
 
+// Pace-first date picking (the Lose It / MyFitnessPal pattern): pick how fast
+// you want to move and the goal date fills itself from your numbers.
+const PACE_CHIPS: Record<"lb" | "kg", number[]> = {
+  lb: [0.5, 1, 1.5, 2],
+  kg: [0.25, 0.5, 0.75, 1],
+};
+
 function numOrNull(s: string): number | null {
   const t = s.trim();
   if (!t) {
@@ -98,6 +106,25 @@ function numOrNull(s: string): number | null {
   }
   const n = Number(t);
   return Number.isFinite(n) ? n : null;
+}
+
+/** The stored target-date string ("Sep 30, 2026") as a native date-input
+ *  value ("2026-09-30"); "" when the stored text isn't a parseable date. */
+function toDateInputValue(raw: string): string {
+  const d = parseTargetDate(raw);
+  if (!d) {
+    return "";
+  }
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+function todayInputValue(): string {
+  const d = new Date();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${m}-${day}`;
 }
 
 /**
@@ -132,6 +159,9 @@ export function GoalForm({
   const [title, setTitle] = useState(goal?.title ?? "");
   const [detail, setDetail] = useState(goal?.detail ?? "");
   const [targetDate, setTargetDate] = useState(goal?.targetDate ?? "");
+  // Which quick-date/pace chip filled the current date, so the picked chip
+  // stays visibly selected (cleared when the member edits the date directly).
+  const [selectedChip, setSelectedChip] = useState<string | null>(null);
   const [status, setStatus] = useState<EditableGoal["status"]>(
     goal?.status ?? "active"
   );
@@ -147,6 +177,19 @@ export function GoalForm({
 
   const isLift = metric === "lift";
   const hasMetric = metric !== NONE;
+
+  // A selected pace chip's claim ("Lose 1 lb a week") is only true for the
+  // numbers it was computed from; editing them makes it stale.
+  function clearStalePaceChip() {
+    setSelectedChip((chip) => (chip?.startsWith("pace:") ? null : chip));
+  }
+  // Unit space for the pace-first chips (kg members see kg paces).
+  const paceUnit: "lb" | "kg" = (unit || defaultUnit)
+    .trim()
+    .toLowerCase()
+    .startsWith("k")
+    ? "kg"
+    : "lb";
 
   function onMetricChange(value: string) {
     setMetric(value);
@@ -194,6 +237,11 @@ export function GoalForm({
     }
     return null;
   }, [metric, isLift, startValue, targetValue, targetDate, liftBaseline]);
+
+  // Narrowed weight-goal feasibility for the pace-first chips (TS can't carry
+  // the discriminated-union narrowing into the chip onClick closures).
+  const weightPace =
+    feasibility?.kind === "weight" ? feasibility.data : null;
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -397,7 +445,10 @@ export function GoalForm({
                   className="h-11"
                   id="g-start"
                   inputMode="decimal"
-                  onChange={(e) => setStartValue(e.target.value)}
+                  onChange={(e) => {
+                    setStartValue(e.target.value);
+                    clearStalePaceChip();
+                  }}
                   placeholder={metric === "bodyfat" ? "26" : "200"}
                   value={startValue}
                 />
@@ -408,7 +459,10 @@ export function GoalForm({
                   className="h-11"
                   id="g-targetval"
                   inputMode="decimal"
-                  onChange={(e) => setTargetValue(e.target.value)}
+                  onChange={(e) => {
+                    setTargetValue(e.target.value);
+                    clearStalePaceChip();
+                  }}
                   placeholder={metric === "bodyfat" ? "15" : "180"}
                   value={targetValue}
                 />
@@ -416,7 +470,13 @@ export function GoalForm({
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="g-unit">Unit</Label>
                 {metric === "weight" ? (
-                  <Select onValueChange={setUnit} value={unit || defaultUnit}>
+                  <Select
+                    onValueChange={(v) => {
+                      setUnit(v);
+                      clearStalePaceChip();
+                    }}
+                    value={unit || defaultUnit}
+                  >
                     <SelectTrigger className="h-11 w-full" id="g-unit">
                       <SelectValue />
                     </SelectTrigger>
@@ -453,36 +513,94 @@ export function GoalForm({
         )}
       </section>
 
-      {/* 3 · Deadline */}
+      {/* 3 · Goal date */}
       <section className="flex flex-col gap-3">
         <SectionHeading
           icon={<CalendarClock className="size-4" />}
-          title="Deadline (optional)"
-          subtitle="A date makes it real. Pick one and the pace check below tells you if it's realistic."
+          title="When do you want it done? (optional)"
+          subtitle="Your date sets the pace of the whole plan: training days, diet strictness, and your Future You forecast all follow it."
         />
-        <div className="flex flex-col gap-2">
-          <Input
-            className="h-11 max-w-xs"
-            id="g-target"
-            maxLength={60}
-            onChange={(e) => setTargetDate(e.target.value)}
-            placeholder='e.g. "Sep 30, 2026" or "by summer"'
-            value={targetDate}
-          />
-          <div className="flex flex-wrap gap-1.5">
-            {DEADLINE_CHIPS.map((chip) => (
-              <button
-                className="h-9 rounded-full border border-border px-3 text-muted-foreground text-xs transition-colors hover:bg-accent hover:text-foreground"
-                key={chip.label}
-                onClick={() =>
-                  setTargetDate(formatTargetDate(dateWeeksFromNow(chip.weeks)))
-                }
-                type="button"
-              >
-                {chip.label}
-              </button>
-            ))}
+        <div className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="g-target">Goal date</Label>
+            <Input
+              className="h-11 max-w-xs"
+              id="g-target"
+              min={todayInputValue()}
+              onChange={(e) => {
+                const picked = parseTargetDate(e.target.value);
+                setTargetDate(picked ? formatTargetDate(picked) : "");
+                setSelectedChip(null);
+              }}
+              type="date"
+              value={toDateInputValue(targetDate)}
+            />
+            {targetDate.trim() !== "" && !parseTargetDate(targetDate) && (
+              <p className="text-muted-foreground text-xs">
+                Currently saved as "{targetDate}". Pick a calendar date to turn
+                on the pace check.
+              </p>
+            )}
           </div>
+          <div className="flex flex-col gap-1.5">
+            <p className="text-muted-foreground text-xs">Quick dates:</p>
+            <div className="flex flex-wrap gap-1.5">
+              {DEADLINE_CHIPS.map((chip) => (
+                <button
+                  aria-pressed={selectedChip === `date:${chip.label}`}
+                  className={cn(
+                    "h-11 rounded-full border px-4 text-xs transition-colors",
+                    selectedChip === `date:${chip.label}`
+                      ? "border-blood/40 bg-blood/10 font-medium text-blood"
+                      : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                  )}
+                  key={chip.label}
+                  onClick={() => {
+                    setTargetDate(
+                      formatTargetDate(dateWeeksFromNow(chip.weeks))
+                    );
+                    setSelectedChip(`date:${chip.label}`);
+                  }}
+                  type="button"
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          {weightPace && (
+            <div className="flex flex-col gap-1.5">
+              <p className="text-muted-foreground text-xs">
+                Or pick your pace and the date fills itself:
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {PACE_CHIPS[paceUnit].map((rate) => (
+                  <button
+                    aria-pressed={selectedChip === `pace:${rate}`}
+                    className={cn(
+                      "h-11 rounded-full border px-4 text-xs transition-colors",
+                      selectedChip === `pace:${rate}`
+                        ? "border-blood/40 bg-blood/10 font-medium text-blood"
+                        : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                    )}
+                    key={rate}
+                    onClick={() => {
+                      setTargetDate(
+                        formatTargetDate(
+                          dateWeeksFromNow(weightPace.totalChange / rate)
+                        )
+                      );
+                      setSelectedChip(`pace:${rate}`);
+                    }}
+                    type="button"
+                  >
+                    {weightPace.direction === "lose" ? "Lose" : "Gain"} {rate}{" "}
+                    {paceUnit} a week
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -578,6 +696,7 @@ export function GoalForm({
         </div>
         <div className="flex items-center gap-2">
           <Button
+            className="h-11"
             disabled={pending}
             onClick={() => router.push("/goals")}
             type="button"
@@ -585,7 +704,7 @@ export function GoalForm({
           >
             Cancel
           </Button>
-          <Button className="min-w-32" disabled={pending} type="submit">
+          <Button className="h-11 min-w-32" disabled={pending} type="submit">
             {pending ? "Saving…" : isEdit ? "Save changes" : "Save goal"}
           </Button>
         </div>
@@ -641,7 +760,7 @@ function WeightPaceCheck({
         ? `At that pace you'd be losing muscle, not just fat. At a sustainable ${data.sustainableRate} ${unit}/week you'd land around ${formatTargetDate(data.sustainableDate)}. Consider moving the date.`
         : `Gaining that fast is mostly fat, not muscle. At a lean ${data.sustainableRate} ${unit}/week you'd land around ${formatTargetDate(data.sustainableDate)}. Consider moving the date.`;
   } else {
-    message = `At a sustainable ${data.sustainableRate} ${unit}/week you'd land around ${formatTargetDate(data.sustainableDate)}. Add a deadline above and this becomes a pace check.`;
+    message = `At a sustainable ${data.sustainableRate} ${unit}/week you'd land around ${formatTargetDate(data.sustainableDate)}. Pick a goal date above and this becomes a pace check.`;
   }
 
   return (
@@ -682,7 +801,7 @@ function LiftPaceCheck({
       "Strength doesn't move that fast. Give the date more room or pick a nearer target, then earn the rest.";
   } else {
     message =
-      "Add a deadline above and this becomes a pace check against how fast strength actually builds.";
+      "Pick a goal date above and this becomes a pace check against how fast strength actually builds.";
   }
   return (
     <section

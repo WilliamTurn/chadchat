@@ -11,6 +11,7 @@ import {
   goalsLabel,
   sexLabel,
 } from "@/lib/profile";
+import { goalPaceLine } from "@/lib/goals/feasibility";
 import { planDaysSchema } from "@/lib/validation/meal-plan";
 import {
   computePersonalRecords,
@@ -217,6 +218,30 @@ function truncateDetail(detail: string): string {
   return `${trimmed.slice(0, MAX_DETAIL_CHARS_IN_PROMPT)}…`;
 }
 
+/** The goal's measurable target as one compact sentence for Chad's prompt,
+ *  so he coaches to the actual numbers, not just the title. "" when the goal
+ *  has no metric set. */
+function describeGoalTracking(g: Goal): string {
+  if (!g.metric || g.targetValue == null) {
+    return "";
+  }
+  const unit = g.unit?.trim() ?? "";
+  const from = g.startValue != null ? `${g.startValue} to ` : "";
+  if (g.metric === "weight") {
+    return `Tracking: bodyweight ${from}${g.targetValue} ${unit || "lb"}.`;
+  }
+  if (g.metric === "lift") {
+    return `Tracking: ${g.metricRef ?? "a lift"} est. 1RM to ${g.targetValue} ${unit || "lb"}.`;
+  }
+  if (g.metric === "bodyfat") {
+    return `Tracking: body fat ${from}${g.targetValue}%.`;
+  }
+  if (g.metric === "measurement") {
+    return `Tracking: ${g.metricRef ?? "a body measurement"} ${from}${g.targetValue} ${unit}.`.replace(/\s+/g, " ");
+  }
+  return `Tracking: ${g.metricRef ?? "a custom number"} ${from}${g.targetValue} ${unit}.`.replace(/\s+/g, " ");
+}
+
 /**
  * Format the user's active goals and plans for injection into Chad's system
  * prompt. Unlike memory (a compressed summary), these are the explicit, full
@@ -239,9 +264,12 @@ export function formatGoalsForPrompt(goals: Goal[], plans: Plan[]): string {
 
   if (activeGoals.length > 0) {
     const lines = activeGoals.map((g) => {
-      const target = g.targetDate ? ` (target: ${g.targetDate})` : "";
+      const target = g.targetDate ? ` (target date: ${g.targetDate})` : "";
+      const meta = [describeGoalTracking(g), goalPaceLine(g)]
+        .filter(Boolean)
+        .join(" ");
       const detail = g.detail.trim() ? `\n${truncateDetail(g.detail)}` : "";
-      return `- ${g.title}${target}${detail}`;
+      return `- ${g.title}${target}${meta ? `\n  ${meta}` : ""}${detail}`;
     });
     sections.push(`THIS CLIENT'S GOALS:\n${lines.join("\n")}`);
   }
@@ -254,7 +282,7 @@ export function formatGoalsForPrompt(goals: Goal[], plans: Plan[]): string {
     sections.push(`THIS CLIENT'S CURRENT PLANS:\n${lines.join("\n")}`);
   }
 
-  return `GOALS & PLANS THIS CLIENT HAS SAVED IN THE APP (they set these deliberately — treat them as current and authoritative; reference and build on them, and don't re-ask for what's already here):
+  return `GOALS & PLANS THIS CLIENT HAS SAVED IN THE APP (they set these deliberately: treat them as current and authoritative; reference and build on them, and don't re-ask for what's already here). Where a goal shows a target date and required pace, coach to that pace: it decides training frequency and how strict the diet is. If the pace reads as faster than a body can deliver, tell the client straight and negotiate a realistic date. If a goal has no target date, get one settled: how fast they want it is a core coaching input.
 
 ${sections.join("\n\n")}`;
 }

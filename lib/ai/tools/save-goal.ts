@@ -17,7 +17,7 @@ type SaveGoalProps = {
 export const saveGoal = ({ session, chatId }: SaveGoalProps) =>
   tool({
     description:
-      "Save a fitness goal to the client's dashboard so it's tracked and visible to them. Use this when you and the client agree on a concrete goal. Put the full goal — what they're chasing, why, and how you'll measure it — in `detail`. If it's a measurable bodyweight goal, set metric:'weight' with startValue/targetValue/unit so the dashboard shows live progress. For a strength goal, set metric:'lift' with metricRef=the exact exercise name (e.g. 'Back Squat') and targetValue/unit=the target est. 1RM — the dashboard charts it against the client's logged PR data.",
+      "Save a fitness goal to the client's dashboard so it's tracked and visible to them. Use this when you and the client agree on a concrete goal. Put the full goal — what they're chasing, why, and how you'll measure it — in `detail`. Always settle the target date with the client before saving: how fast they want it decides how hard the plan is (an aggressive date means more training days and a stricter diet; a relaxed date means a moderate plan). If their date demands a physiologically impossible pace, say so and agree on a real one first. If it's a measurable bodyweight goal, set metric:'weight' with startValue/targetValue/unit so the dashboard shows live progress. For a strength goal, set metric:'lift' with metricRef=the exact exercise name (e.g. 'Back Squat') and targetValue/unit=the target est. 1RM — the dashboard charts it against the client's logged PR data.",
     inputSchema: z.object({
       title: z
         .string()
@@ -32,7 +32,9 @@ export const saveGoal = ({ session, chatId }: SaveGoalProps) =>
         .max(60)
         .nullable()
         .optional()
-        .describe("Free-text target, e.g. 'Aug 2026' or '12 weeks'."),
+        .describe(
+          "The real calendar date the client wants this done by, formatted like 'Sep 30, 2026' (a parseable date powers the pace math; never vague text like 'by summer'). Settle it with the client; only omit if they truly refuse a date."
+        ),
       metric: z
         .enum(GOAL_METRICS)
         .nullable()

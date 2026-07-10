@@ -1,33 +1,42 @@
 import type { Goal, User } from "@/lib/db/schema";
+import { parseTargetDate, weeksUntil } from "@/lib/goals/feasibility";
 
 /**
  * The checkpoint math behind a Future You forecast (FEAT-29): given the
- * member's active goal and stats, compute physiologically honest checkpoint
- * weeks and the expected weight at each one. Pure and React-free, the same
- * evidence-based rates a coach would use, so the projected images are anchored
- * to numbers that can actually happen, not fantasy timelines. This is what
- * separates the feature from a gimmick: if the goal says 12 weeks but the math
- * says 20, the forecast shows the honest dates.
+ * member's active goal and stats, compute the checkpoint weeks and the
+ * expected weight at each one. Pure and React-free.
+ *
+ * The member's own target date is the timeline anchor (owner direction s176):
+ * they told Chad how fast they want it, so the forecast lands on THEIR date,
+ * whether that's 8 weeks or 10 years. Physiology demotes from author to
+ * validator: when the chosen date demands a rate faster than a body can
+ * deliver, the timeline extends to the earliest defensible date and the plan
+ * says so (memberDateTooFast), so Chad can call it out instead of the math
+ * silently promising the impossible. Goals with no usable date fall back to
+ * the computed honest pace, exactly as before.
  *
  * Rates (per week):
  * - Fat loss: ~0.8% of current bodyweight, clamped to 1-3 lb (0.45-1.35 kg).
- *   Sustainable coaching pace: aggressive enough to show, safe enough to hold,
- *   with the higher ceiling honoring how fast very heavy members really lose.
+ *   Sustainable coaching pace, used when the member set no date. The fastest
+ *   defensible pace (validator ceiling) is 1.5% of bodyweight per week.
  * - Muscle gain, by training age: beginner 0.5 lb, intermediate 0.35 lb,
- *   advanced 0.25 lb. Lean-gain rates for someone actually doing the work.
- * - No usable numbers (custom/lift/measurement goals): a 12-week qualitative
- *   transformation window with 4/8/12 checkpoints; the prompt architect
- *   describes change qualitatively instead of via weight deltas.
+ *   advanced 0.25 lb. Lean-gain rates; the validator ceiling is 1% of
+ *   bodyweight per week (a hard bulk, scale weight not lean mass).
+ * - No usable numbers (custom/lift/measurement goals): the member's date when
+ *   set, else a 12-week qualitative transformation window; the prompt
+ *   architect describes change qualitatively instead of via weight deltas.
  */
 
 const LB_PER_KG = 2.204_62;
 
 const MIN_TOTAL_WEEKS = 6;
-// The final frame is ALWAYS the goal fully achieved (owner order s175), so
-// the ceiling exists only to keep a truly extreme goal's date sane: 3 years
-// covers even a 300 lb transformation at an honest pace. Never clamp a real
-// goal's end short of the goal itself.
+// Only applies when the member set NO date: keeps a computed extreme goal's
+// end sane (3 years covers a 300 lb transformation at an honest pace). A
+// member-chosen date is never clamped from above: their date is their date.
 const MAX_TOTAL_WEEKS = 156;
+// A member-chosen date can be as near as next week; anything under a week
+// rounds up so the math has one whole week to work with.
+const MIN_MEMBER_WEEKS = 1;
 const DEFAULT_TOTAL_WEEKS = 12;
 const FIRST_CHECKPOINT_WEEK = 4;
 
@@ -47,9 +56,21 @@ export type MilestonePlan = {
   targetWeight: number | null;
   /** Absolute per-week change in `unit`; null for qualitative plans. */
   weeklyRate: number | null;
-  /** Honest weeks to reach the target at the rate (clamped 6-156); the goal
-   *  week, so the final frame is always the goal achieved. */
+  /** Weeks to the goal frame: the member's chosen date when they set one
+   *  (raised to the earliest defensible date if theirs was too fast), else
+   *  the computed honest pace clamped 6-156. The final frame is always the
+   *  goal achieved. */
   totalWeeks: number;
+  /** Who authored the timeline: the member's own target date, or the
+   *  computed honest pace when no usable date was set. */
+  paceSource: "member-date" | "computed";
+  /** Training-intensity character of the required weekly rate, for the
+   *  architect and captions; null for qualitative plans. */
+  paceBand: "gentle" | "standard" | "aggressive" | null;
+  /** True when the member's chosen date demanded a physiologically
+   *  impossible rate and the timeline was extended to the earliest
+   *  defensible date; Chad should say so. */
+  memberDateTooFast: boolean;
   /** 2-3 dated work checkpoints, ascending; the last is the goal week. */
   checkpoints: Checkpoint[];
   /** The quit frame lands at the same date as the goal week. */
@@ -86,6 +107,71 @@ function gainRatePerWeek(
         ? 0.35
         : 0.5;
   return unit === "kg" ? lbRate / LB_PER_KG : lbRate;
+}
+
+/**
+ * The validator ceiling: the fastest defensible weekly change for this body.
+ * Faster than this and the date is fantasy (crash-diet muscle loss on the way
+ * down, mostly fat on the way up), so a member date demanding more gets
+ * extended to this pace's landing date.
+ */
+function fastestRatePerWeek({
+  direction,
+  startWeight,
+  unit,
+  experience,
+}: {
+  direction: "loss" | "gain";
+  startWeight: number;
+  unit: WeightUnit;
+  experience: User["experienceLevel"];
+}): number {
+  if (direction === "loss") {
+    // 1.5% of bodyweight per week, same floor as the sustainable rate so a
+    // light member's ceiling never drops below a real-world 1 lb week.
+    const pct = startWeight * 0.015;
+    return unit === "kg" ? Math.max(0.45, pct) : Math.max(1, pct);
+  }
+  // Gaining: 1% of bodyweight per week is a hard bulk (scale weight, not lean
+  // mass); never below the lean rate itself.
+  const pct = startWeight * 0.01;
+  return Math.max(gainRatePerWeek(experience, unit), pct);
+}
+
+/** Training-intensity character of the required pace, as % of start weight
+ *  per week. Drives how the architect and Chad talk about the plan. */
+function paceBandFor({
+  direction,
+  rate,
+  startWeight,
+}: {
+  direction: "loss" | "gain" | "recomp";
+  rate: number;
+  startWeight: number | null;
+}): "gentle" | "standard" | "aggressive" | null {
+  if (startWeight == null || startWeight <= 0 || direction === "recomp") {
+    return null;
+  }
+  const pct = (rate / startWeight) * 100;
+  if (direction === "loss") {
+    return pct <= 0.5 ? "gentle" : pct <= 1 ? "standard" : "aggressive";
+  }
+  return pct <= 0.25 ? "gentle" : pct <= 0.5 ? "standard" : "aggressive";
+}
+
+/** The member's own goal date as whole weeks from now; null when the goal has
+ *  no parseable date or the date already passed (stale, so the computed pace
+ *  takes over rather than forecasting into a week that's gone). */
+function memberWeeksFor(goal: Goal): number | null {
+  const date = parseTargetDate(goal.targetDate);
+  if (!date) {
+    return null;
+  }
+  const weeks = weeksUntil(date);
+  if (weeks <= 0) {
+    return null;
+  }
+  return Math.max(MIN_MEMBER_WEEKS, Math.ceil(weeks));
 }
 
 function directionFor(
@@ -149,10 +235,12 @@ export function buildMilestonePlan({
       ? round1(targetWeight - startWeight)
       : null;
   const direction = directionFor(user, delta);
+  const memberWeeks = memberWeeksFor(goal);
 
   if (delta == null || delta === 0) {
-    // Qualitative plan: 12 weeks of visible change, no weight math.
-    const totalWeeks = DEFAULT_TOTAL_WEEKS;
+    // Qualitative plan: the member's own window when they set a date, else
+    // 12 weeks of visible change. No weight math either way.
+    const totalWeeks = memberWeeks ?? DEFAULT_TOTAL_WEEKS;
     return {
       unit,
       direction,
@@ -160,6 +248,9 @@ export function buildMilestonePlan({
       targetWeight,
       weeklyRate: null,
       totalWeeks,
+      paceSource: memberWeeks != null ? "member-date" : "computed",
+      paceBand: null,
+      memberDateTooFast: false,
       checkpoints: checkpointWeeks(totalWeeks).map((weekOffset) => ({
         weekOffset,
         expectedWeight: null,
@@ -168,14 +259,50 @@ export function buildMilestonePlan({
     };
   }
 
-  const rate =
+  const anchorWeight = startWeight ?? Math.abs(delta);
+  const sustainableRate =
     direction === "loss"
-      ? lossRatePerWeek(startWeight ?? Math.abs(delta), unit)
+      ? lossRatePerWeek(anchorWeight, unit)
       : gainRatePerWeek(user.experienceLevel, unit);
-  const totalWeeks = Math.min(
-    MAX_TOTAL_WEEKS,
-    Math.max(MIN_TOTAL_WEEKS, Math.ceil(Math.abs(delta) / rate))
-  );
+
+  let totalWeeks: number;
+  let paceSource: MilestonePlan["paceSource"];
+  let memberDateTooFast = false;
+  if (memberWeeks != null) {
+    // The member told Chad how fast they want it: their date is the anchor.
+    // Physiology only steps in as a validator when the date demands a rate
+    // no body can deliver, extending to the earliest defensible date.
+    const fastestWeeks = Math.max(
+      MIN_MEMBER_WEEKS,
+      Math.ceil(
+        Math.abs(delta) /
+          fastestRatePerWeek({
+            direction: direction === "loss" ? "loss" : "gain",
+            startWeight: anchorWeight,
+            unit,
+            experience: user.experienceLevel,
+          })
+      )
+    );
+    paceSource = "member-date";
+    if (memberWeeks < fastestWeeks) {
+      totalWeeks = fastestWeeks;
+      memberDateTooFast = true;
+    } else {
+      totalWeeks = memberWeeks;
+    }
+  } else {
+    paceSource = "computed";
+    totalWeeks = Math.min(
+      MAX_TOTAL_WEEKS,
+      Math.max(MIN_TOTAL_WEEKS, Math.ceil(Math.abs(delta) / sustainableRate))
+    );
+  }
+
+  // The pace the timeline actually implies, so checkpoint weights walk evenly
+  // to the goal frame on the goal date (a 10-year goal projects a 10-year
+  // stroll, not a 20-week sprint followed by years of flatline).
+  const rate = Math.abs(delta) / totalWeeks;
   const signedRate = direction === "loss" ? -rate : rate;
 
   const checkpoints = checkpointWeeks(totalWeeks).map((weekOffset) => {
@@ -195,6 +322,9 @@ export function buildMilestonePlan({
     targetWeight,
     weeklyRate: round1(rate),
     totalWeeks,
+    paceSource,
+    paceBand: paceBandFor({ direction, rate, startWeight }),
+    memberDateTooFast,
     checkpoints,
     quitWeek: totalWeeks,
   };

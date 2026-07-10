@@ -104,6 +104,31 @@ function mediaTypeFor(url: string): string {
   return ext === "png" ? "image/png" : "image/jpeg";
 }
 
+/**
+ * How the timeline came to be and what pace it implies, so the architect
+ * writes frames and captions that match the actual training reality: a
+ * gentle 10-year stroll and a 12-week all-in cut are different lives, and
+ * the images and captions should show it (owner direction s176).
+ */
+function describePace(plan: MilestonePlan, goal: Goal): string {
+  const bandLine =
+    plan.paceBand === "aggressive"
+      ? "That required pace is AGGRESSIVE: this client is training 6-7 hard sessions a week on a strict diet, and the checkpoint bodies and captions should carry that intensity."
+      : plan.paceBand === "gentle"
+        ? "That required pace is GENTLE: a patient, sustainable schedule (3-4 solid sessions a week), steady visible change rather than dramatic jumps between checkpoints."
+        : plan.paceBand === "standard"
+          ? "That required pace is a STANDARD solid coaching pace: consistent training 4-5 days a week, honest week-over-week change."
+          : "";
+
+  if (plan.paceSource === "member-date" && plan.memberDateTooFast) {
+    return `TIMELINE: the client chose their own goal date ("${goal.targetDate}"), but hitting the target by then is physiologically impossible. The forecast instead runs ${plan.totalWeeks} weeks, the earliest defensible goal date. State this plainly in the verdict: the goal is real, their date was not, and this is the fastest an actual body gets there. ${bandLine}`.trim();
+  }
+  if (plan.paceSource === "member-date") {
+    return `TIMELINE: the client chose their own goal date ("${goal.targetDate}"), ${plan.totalWeeks} weeks out, and the checkpoint math paces the change to land exactly there. ${bandLine}`.trim();
+  }
+  return `TIMELINE: the client set no usable goal date, so the ${plan.totalWeeks}-week timeline is a sustainable coached pace. ${bandLine}`.trim();
+}
+
 function describeCheckpoints(plan: MilestonePlan): string {
   const lines = plan.checkpoints.map((c, i) => {
     const weight =
@@ -168,8 +193,9 @@ export async function draftForecast({
 
 GOAL: "${goal.title}"${goal.detail ? `\nGoal detail: ${goal.detail.slice(0, 800)}` : ""}
 Primary direction: ${direction}.
-${plan.weeklyRate != null ? `Computed honest pace: about ${plan.weeklyRate} ${plan.unit} per week.` : "No numeric pace computed; project honest visible change for consistent work."}
+${plan.weeklyRate != null ? `Required pace for this timeline: about ${plan.weeklyRate} ${plan.unit} per week.` : "No numeric pace computed; project honest visible change for consistent work."}
 ${plan.targetWeight != null ? `Target weight: ${plan.targetWeight} ${plan.unit}.` : ""}
+${describePace(plan, goal)}
 
 CHECKPOINT TABLE (already computed, do not change the weeks or weights):
 ${describeCheckpoints(plan)}
