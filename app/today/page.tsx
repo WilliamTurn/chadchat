@@ -13,14 +13,17 @@ import {
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
+import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
+import { RewardProvider } from "@/components/dashboard/reward";
 import { PageShell } from "@/components/nav/page-shell";
 import { MacroRings } from "@/components/nutrition/macro-rings";
 import { WeightChartInteractive } from "@/components/progress/weight-chart-interactive";
+import type { LiftProgress } from "@/components/today/goal-list";
 import { GoalList } from "@/components/today/goal-list";
+import { HeroCustomizer } from "@/components/today/hero-customizer";
 import {
   ModuleCard,
   ModuleFooter,
@@ -29,35 +32,16 @@ import {
 import { PlanList } from "@/components/today/plan-list";
 import { QuitDateCard } from "@/components/today/quit-date-card";
 import { SectionBand } from "@/components/today/section-band";
-import { StatPills } from "@/components/today/stat-pills";
 import { SleepTracker } from "@/components/today/sleep-tracker";
+import { StatPills } from "@/components/today/stat-pills";
 import { StreakStrip } from "@/components/today/streak-strip";
 import { TargetEditor } from "@/components/today/target-editor";
-import { RewardProvider } from "@/components/dashboard/reward";
 import { WaterTracker } from "@/components/today/water-tracker";
 import { WeekStrip } from "@/components/today/week-strip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
-import {
-  getActiveGoalsByUserId,
-  getActiveMealPlanByUserId,
-  getActivePlansByUserId,
-  getActivityDaysSince,
-  getInactiveGoalsByUserId,
-  getInactivePlansByUserId,
-  getLatestQuitPrediction,
-  getMealsSince,
-  getLatestSleepEntry,
-  getNutritionTarget,
-  getProgressEntriesByUserId,
-  getSleepDailyTotals,
-  getUserById,
-  getUserMemory,
-  getWaterDailyTotals,
-  getWaterMlSince,
-  getWorkoutsByUserId,
-} from "@/lib/db/queries";
+import { ema } from "@/lib/chart/trend";
 import {
   calendarDayAnchorInTz,
   formatCalendarDay,
@@ -67,8 +51,28 @@ import {
   todayAnchorInTz,
   todayStartInTz,
 } from "@/lib/date";
-import { ema } from "@/lib/chart/trend";
+import {
+  getActiveGoalsByUserId,
+  getActiveMealPlanByUserId,
+  getActivePlansByUserId,
+  getActivityDaysSince,
+  getInactiveGoalsByUserId,
+  getInactivePlansByUserId,
+  getLatestQuitPrediction,
+  getLatestSleepEntry,
+  getMealsSince,
+  getNutritionTarget,
+  getProgressEntriesByUserId,
+  getSleepDailyTotals,
+  getUserById,
+  getUserMemory,
+  getWaterDailyTotals,
+  getWaterMlSince,
+  getWorkoutsByUserId,
+} from "@/lib/db/queries";
 import type { ProgressEntry } from "@/lib/db/schema";
+import { findCalorieConflict, findOverlapIds } from "@/lib/goals/coherence";
+import { clientField } from "@/lib/memory/client-field";
 import { toPlanStatusSummary } from "@/lib/subscription";
 import { normalizeSex, resolveHero } from "@/lib/today/goal-diagram";
 import { DEFAULT_WATER_GOAL_ML } from "@/lib/today/water-units";
@@ -81,10 +85,7 @@ import {
   weekSlotDateLabel,
   weekSlotLabel,
 } from "@/lib/today/week";
-import { HeroCustomizer } from "@/components/today/hero-customizer";
-import type { LiftProgress } from "@/components/today/goal-list";
-import { findCalorieConflict, findOverlapIds } from "@/lib/goals/coherence";
-import { clientField } from "@/lib/memory/client-field";
+import { cn } from "@/lib/utils";
 import { toWorkoutData } from "@/lib/workouts/serialize";
 import { exercise1RMTrend, workoutVolumeLb } from "@/lib/workouts/stats";
 
@@ -145,7 +146,7 @@ function computeStreak(dates: Date[], timezone: string | null): number {
 
 export default function TodayPage() {
   return (
-    <PageShell active="/today">
+    <PageShell active="/today" className="max-w-[1500px]">
       <Toaster
         position="top-center"
         theme="system"
@@ -296,9 +297,7 @@ async function TodayContent() {
           (sum, ex) => sum + ex.sets.length,
           0
         ),
-        volumeLb: Math.round(
-          workoutVolumeLb(toWorkoutData(recentWorkouts[0]))
-        ),
+        volumeLb: Math.round(workoutVolumeLb(toWorkoutData(recentWorkouts[0]))),
       }
     : null;
 
@@ -436,7 +435,9 @@ async function TodayContent() {
   // runs on their local calendar days (00:00-UTC anchors).
   const streak = computeStreak(activityDays, timezone);
   const activeDayKeys = new Set(
-    activityDays.map((d) => toCalendarDayISO(calendarDayAnchorInTz(d, timezone)))
+    activityDays.map((d) =>
+      toCalendarDayISO(calendarDayAnchorInTz(d, timezone))
+    )
   );
   const { days: weekDays, todayMs } = weekAnchors(timezone);
   const week = weekDays.map((d) => ({
@@ -516,16 +517,16 @@ async function TodayContent() {
 
   return (
     <RewardProvider haptics={user.hapticsEnabled} sound={user.soundEnabled}>
-    <div className="flex flex-col gap-8">
-      {/* Header */}
-      {/* Same VF-18 elevation as ModuleCard: top-lit wash, 1px inner top
+      <div className="flex flex-col gap-8">
+        {/* Header */}
+        {/* Same VF-18 elevation as ModuleCard: top-lit wash, 1px inner top
           highlight, shared card shadow. */}
-      <header className="relative overflow-hidden rounded-2xl border border-border bg-card bg-gradient-to-b from-white/[0.04] via-white/[0.01] to-transparent p-6 shadow-[var(--shadow-card),inset_0_1px_0_0_rgba(255,255,255,0.06)] sm:p-8 lg:pr-64">
-        <div
-          aria-hidden
-          className="-right-16 -top-16 pointer-events-none absolute size-56 rounded-full bg-blood/25 blur-3xl"
-        />
-        {/* Brand hero figure (DSH-21/DSH-29) — decorative, confined to its own
+        <header className="relative overflow-hidden rounded-2xl border border-border bg-card bg-gradient-to-b from-white/[0.04] via-white/[0.01] to-transparent p-6 shadow-[var(--shadow-card),inset_0_1px_0_0_rgba(255,255,255,0.06)] sm:p-8 lg:pr-64">
+          <div
+            aria-hidden
+            className="-right-16 -top-16 pointer-events-none absolute size-56 rounded-full bg-blood/25 blur-3xl"
+          />
+          {/* Brand hero figure (DSH-21/DSH-29) — decorative, confined to its own
             clipped right column with a left-fading mask so it can never overlap
             the stat pills, streak strip, or CTA (the lg:pr-64 gutter above keeps
             the content clear of this column). A built-in silhouette bleeds up
@@ -537,222 +538,243 @@ async function TodayContent() {
             behind the right edge; at lg+ it gets its own gutter and full
             strength. A soft blood glow hugs the figure so it reads as lit,
             not pasted on. */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-y-0 right-0 hidden w-60 overflow-hidden lg:block"
-        >
           <div
             aria-hidden
-            className="absolute right-0 bottom-0 size-44 translate-x-1/4 translate-y-1/4 rounded-full bg-blood/20 blur-3xl"
-          />
-          {hero.kind === "custom" ? (
-            <img
-              alt=""
+            className="pointer-events-none absolute inset-y-0 right-0 hidden w-60 overflow-hidden lg:block"
+          >
+            <div
               aria-hidden
-              className="h-full w-full select-none object-cover opacity-80 [mask-image:linear-gradient(to_left,black_55%,transparent)]"
-              src={hero.src}
+              className="absolute right-0 bottom-0 size-44 translate-x-1/4 translate-y-1/4 rounded-full bg-blood/20 blur-3xl"
             />
-          ) : (
-            <img
-              alt=""
-              aria-hidden
-              // h-full, not an over-100% bleed: bleeding the figure above the
-              // container clipped its head off (DSH-37).
-              className="absolute right-0 bottom-0 h-full w-auto max-w-none select-none object-contain object-bottom opacity-90 [mask-image:linear-gradient(to_left,black_45%,transparent)]"
-              src={hero.src}
-            />
-          )}
-        </div>
-        {/* Below lg: the figure is the WHOLE silhouette, never a cropped
+            {hero.kind === "custom" ? (
+              <img
+                alt=""
+                aria-hidden
+                className="h-full w-full select-none object-cover opacity-80 [mask-image:linear-gradient(to_left,black_55%,transparent)]"
+                src={hero.src}
+              />
+            ) : (
+              <img
+                alt=""
+                aria-hidden
+                // h-full, not an over-100% bleed: bleeding the figure above the
+                // container clipped its head off (DSH-37).
+                className="absolute right-0 bottom-0 h-full w-auto max-w-none select-none object-contain object-bottom opacity-90 [mask-image:linear-gradient(to_left,black_45%,transparent)]"
+                src={hero.src}
+              />
+            )}
+          </div>
+          {/* Below lg: the figure is the WHOLE silhouette, never a cropped
             half-body (user report: "the hero image is cut off in half").
             It rides the header's right edge bottom-anchored and fits inside
             its column by width, with a left fade so the stacked content stays
             readable over it. */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-y-0 right-0 w-32 overflow-hidden sm:w-44 lg:hidden"
-        >
-          {hero.kind === "custom" ? (
-            <img
-              alt=""
-              aria-hidden
-              className="h-full w-full select-none object-cover opacity-30 [mask-image:linear-gradient(to_left,black_35%,transparent)]"
-              src={hero.src}
-            />
-          ) : (
-            <img
-              alt=""
-              aria-hidden
-              className="absolute right-0 bottom-0 w-full select-none object-contain object-bottom opacity-60 [mask-image:linear-gradient(to_left,black_35%,transparent)]"
-              src={hero.src}
-            />
-          )}
-        </div>
-        {/* Greeting (VF-12 + VF-13): three intentional tiers (date eyebrow,
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 right-0 w-32 overflow-hidden sm:w-44 lg:hidden"
+          >
+            {hero.kind === "custom" ? (
+              <img
+                alt=""
+                aria-hidden
+                className="h-full w-full select-none object-cover opacity-30 [mask-image:linear-gradient(to_left,black_35%,transparent)]"
+                src={hero.src}
+              />
+            ) : (
+              <img
+                alt=""
+                aria-hidden
+                className="absolute right-0 bottom-0 w-full select-none object-contain object-bottom opacity-60 [mask-image:linear-gradient(to_left,black_35%,transparent)]"
+                src={hero.src}
+              />
+            )}
+          </div>
+          {/* Greeting (VF-12 + VF-13): three intentional tiers (date eyebrow,
             "Welcome back, Name" hero line, coaching subtitle). On mobile the
             plan badge sits inline with the eyebrow and the CTA is a
             full-width, greeting-aligned row; at sm+ badge and CTA form the
             top-right column. Never a centered control island. */}
-        <div className="relative flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center justify-between gap-3">
-              <p className="font-medium text-muted-foreground text-xs uppercase tracking-[0.14em]">
-                {todayLabel}
+          <div className="relative flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-medium text-muted-foreground text-xs uppercase tracking-[0.14em]">
+                  {todayLabel}
+                </p>
+                <span className="sm:hidden">{planBadge}</span>
+              </div>
+              <h1 className="mt-1.5 font-display font-bold text-3xl tracking-tight sm:text-4xl">
+                {heroLine}
+              </h1>
+              <p className="mt-2 max-w-md text-muted-foreground text-sm">
+                {isReturning
+                  ? "Here's where you stand today. No excuses, just the numbers."
+                  : "One thing first: tell Chad about yourself. He'll set your targets and build your plan, and this page fills in as you log."}
               </p>
-              <span className="sm:hidden">{planBadge}</span>
-            </div>
-            <h1 className="mt-1.5 font-display font-bold text-3xl tracking-tight sm:text-4xl">
-              {heroLine}
-            </h1>
-            <p className="mt-2 max-w-md text-muted-foreground text-sm">
-              {isReturning
-                ? "Here's where you stand today. No excuses, just the numbers."
-                : "One thing first: tell Chad about yourself. He'll set your targets and build your plan, and this page fills in as you log."}
-            </p>
-            {/* First-run (P1-4): the page's ONE dominant action. Every other
+              {/* First-run (P1-4): the page's ONE dominant action. Every other
                 empty state below stays quiet so this is the obvious next step. */}
-            {firstRun && (
-              <Button asChild className="mt-4 gap-2" size="lg">
-                <Link
-                  href={`/?prompt=${encodeURIComponent(
-                    "I'm new here. Ask me what you need to know about me, then set up my targets and my plan."
-                  )}`}
+              {firstRun && (
+                <Button asChild className="mt-4 gap-2" size="lg">
+                  <Link
+                    href={`/?prompt=${encodeURIComponent(
+                      "I'm new here. Ask me what you need to know about me, then set up my targets and my plan."
+                    )}`}
+                  >
+                    <MessageSquare className="size-4" />
+                    Tell Chad about yourself
+                  </Link>
+                </Button>
+              )}
+              {/* Mobile CTA: full-width under the greeting stack (VF-12). */}
+              {!firstRun && (
+                <Button
+                  asChild
+                  className="mt-4 w-full gap-1.5 sm:hidden"
+                  size="sm"
                 >
-                  <MessageSquare className="size-4" />
-                  Tell Chad about yourself
-                </Link>
-              </Button>
-            )}
-            {/* Mobile CTA: full-width under the greeting stack (VF-12). */}
-            {!firstRun && (
-              <Button asChild className="mt-4 w-full gap-1.5 sm:hidden" size="sm">
-                <Link href="/">
-                  <MessageSquare className="size-3.5" />
-                  Talk to Chad
-                </Link>
-              </Button>
-            )}
+                  <Link href="/">
+                    <MessageSquare className="size-3.5" />
+                    Talk to Chad
+                  </Link>
+                </Button>
+              )}
+            </div>
+            <div className="hidden flex-col items-end gap-2 sm:flex">
+              {planBadge}
+              {/* Hidden on first-run: the hero's big CTA is the one action. */}
+              {!firstRun && (
+                <Button asChild className="gap-1.5" size="sm">
+                  <Link href="/">
+                    <MessageSquare className="size-3.5" />
+                    Talk to Chad
+                  </Link>
+                </Button>
+              )}
+            </div>
           </div>
-          <div className="hidden flex-col items-end gap-2 sm:flex">
-            {planBadge}
-            {/* Hidden on first-run: the hero's big CTA is the one action. */}
-            {!firstRun && (
-              <Button asChild className="gap-1.5" size="sm">
-                <Link href="/">
-                  <MessageSquare className="size-3.5" />
-                  Talk to Chad
-                </Link>
-              </Button>
-            )}
-          </div>
-        </div>
 
-        {/* KPI vital strip (Pro) — at-a-glance numbers the page already computes */}
-        {isPro && (
+          {/* KPI vital strip (Pro) — at-a-glance numbers the page already computes */}
+          {isPro && (
+            <div className="relative">
+              <StatPills
+                activeThisWeek={activeThisWeek}
+                calories={caloriesToday}
+                calorieTarget={target?.calories ?? null}
+                weightChange={weightChange}
+                weightUnit={displayUnit}
+              />
+            </div>
+          )}
+
+          {/* Streak strip */}
           <div className="relative">
-            <StatPills
-              activeThisWeek={activeThisWeek}
-              calorieTarget={target?.calories ?? null}
-              calories={caloriesToday}
-              weightChange={weightChange}
-              weightUnit={displayUnit}
-            />
+            <StreakStrip streak={streak} week={week} />
           </div>
-        )}
 
-        {/* Streak strip */}
-        <div className="relative">
-          <StreakStrip streak={streak} week={week} />
-        </div>
-
-        {/* Personalize the header figure. In-flow below the streak strip on
+          {/* Personalize the header figure. In-flow below the streak strip on
             phones (mobile members could never reach it while it was lg-only),
             floated bottom-right at lg+ where the full-strength figure lives. */}
-        <div className="relative mt-4 flex justify-end lg:absolute lg:right-4 lg:bottom-4 lg:z-10 lg:mt-0 lg:block">
-          <HeroCustomizer hero={hero} />
-        </div>
-      </header>
+          <div className="relative mt-4 flex justify-end lg:absolute lg:right-4 lg:bottom-4 lg:z-10 lg:mt-0 lg:block">
+            <HeroCustomizer hero={hero} />
+          </div>
+        </header>
 
-      {/* R2-13 + R2-14: the page's organizing model (STATUS → LOGGERS →
+        {/* R2-13 + R2-14: the page's organizing model (STATUS → LOGGERS →
           PLANS → REVIEW) is visible as labeled section bands, and the cards
           are regrouped by role. The Workout log joins the daily loggers
           (reworked from the passive "Last workout" readout into the logging
           entry point pro apps put on home), the plans band holds exactly the
           plans (goals, training plan, meal plan), and review is the weight
           trend finale. The hero above is STATUS and needs no band. */}
-      <SectionBand description="Record these every day." title="Today's log">
-        {/* Calorie Tracker (Pro): the daily centerpiece, full width. One name
-            everywhere (R2-6): nav label, page title, this card, and Chad's own
-            copy all say "Calorie Tracker". */}
-        {isPro ? (
-          <ModuleCard glow="amber">
-            <ModuleHeader
-              icon={<Utensils className="size-4" />}
-              title="Calorie Tracker"
-              tone="amber"
-              viewHref="/nutrition#history"
-            />
-            <div className="mt-2">
-              <MacroRings
-                caloriesConsumed={caloriesToday}
-                caloriesTarget={target?.calories ?? null}
-                carbsConsumed={carbsToday}
-                carbsTarget={target?.carbs ?? null}
-                emptyCta={
-                  // First-run keeps this quiet (P1-4): the hero owns the one
-                  // CTA and Chad sets targets from the intro chat anyway.
-                  firstRun ? undefined : (
-                    <TargetEditor
-                      calories={target?.calories ?? null}
-                      carbs={target?.carbs ?? null}
-                      fat={target?.fat ?? null}
-                      prominent
-                      protein={target?.protein ?? null}
-                    />
-                  )
+        {/* LAY-1 dashboard grid: phones AND 768-beside-the-expanded-sidebar
+          keep the one-column stacking order (pairing at md made 220px
+          columns that truncated card titles), lg pairs the cards, and xl
+          gets a real three-column desktop grid (Calorie Tracker beside
+          Hydration, then Sleep beside the Workout log). Explicit grid-cols-1
+          everywhere a grid is declared: the implicit grid column sizes to
+          max-content and silently clips phones under overflow-x: clip (s182
+          trap). Cards are min-w-0 flex columns, so rows stay equal-height
+          with aligned footers. */}
+        <SectionBand
+          contentClassName="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3"
+          description="Record these every day."
+          title="Today's log"
+        >
+          {/* Calorie Tracker (Pro): the daily centerpiece, leading the grid at
+            double width. One name everywhere (R2-6): nav label, page title,
+            this card, and Chad's own copy all say "Calorie Tracker". */}
+          {isPro ? (
+            <ModuleCard className="lg:col-span-2" glow="amber">
+              <ModuleHeader
+                icon={<Utensils className="size-4" />}
+                title="Calorie Tracker"
+                tone="amber"
+                viewHref="/nutrition#history"
+              />
+              {/* flex-1 + centering: beside the taller Hydration card at xl
+                  this card stretches, so the rings ride the vertical middle
+                  instead of leaving a dead band above the footer. */}
+              <div className="mt-2 flex flex-1 flex-col justify-center">
+                <MacroRings
+                  caloriesConsumed={caloriesToday}
+                  caloriesTarget={target?.calories ?? null}
+                  carbsConsumed={carbsToday}
+                  carbsTarget={target?.carbs ?? null}
+                  emptyCta={
+                    // First-run keeps this quiet (P1-4): the hero owns the one
+                    // CTA and Chad sets targets from the intro chat anyway.
+                    firstRun ? undefined : (
+                      <TargetEditor
+                        calories={target?.calories ?? null}
+                        carbs={target?.carbs ?? null}
+                        fat={target?.fat ?? null}
+                        prominent
+                        protein={target?.protein ?? null}
+                      />
+                    )
+                  }
+                  fatConsumed={fatToday}
+                  fatTarget={target?.fat ?? null}
+                  proteinConsumed={proteinToday}
+                  proteinTarget={target?.protein ?? null}
+                />
+              </div>
+              <ModuleFooter
+                askChad={
+                  <AskChadButton prompt="Look at what I've eaten today and how it stacks up against my calorie and macro targets. Am I on track, and what should I eat for the rest of the day?" />
                 }
-                fatConsumed={fatToday}
-                fatTarget={target?.fat ?? null}
-                proteinConsumed={proteinToday}
-                proteinTarget={target?.protein ?? null}
-              />
-            </div>
-            <ModuleFooter
-              askChad={
-                <AskChadButton prompt="Look at what I've eaten today and how it stacks up against my calorie and macro targets. Am I on track, and what should I eat for the rest of the day?" />
-              }
-              status={
-                todaysMeals.length > 0
-                  ? `${todaysMeals.length} meal${todaysMeals.length === 1 ? "" : "s"} logged today`
-                  : "No meals logged yet today."
-              }
-            >
-              <TargetEditor
-                calories={target?.calories ?? null}
-                carbs={target?.carbs ?? null}
-                fat={target?.fat ?? null}
-                protein={target?.protein ?? null}
-              />
-              <Button asChild className="gap-1.5" size="sm" variant="outline">
-                <Link href="/nutrition#log-meal">
-                  Log a meal
-                  <ArrowRight className="size-3.5" />
-                </Link>
-              </Button>
-            </ModuleFooter>
-          </ModuleCard>
-        ) : (
-          <LockedCard
-            icon={<Utensils className="size-4" />}
-            text="Snap a meal, fridge, or pantry and Chad grades the macros, then tracks your calories and protein against a daily target. Pro only."
-            title="Calorie Tracker"
-          />
-        )}
+                status={
+                  todaysMeals.length > 0
+                    ? `${todaysMeals.length} meal${todaysMeals.length === 1 ? "" : "s"} logged today`
+                    : "No meals logged yet today."
+                }
+              >
+                <TargetEditor
+                  calories={target?.calories ?? null}
+                  carbs={target?.carbs ?? null}
+                  fat={target?.fat ?? null}
+                  protein={target?.protein ?? null}
+                />
+                <Button asChild className="gap-1.5" size="sm" variant="outline">
+                  <Link href="/nutrition#log-meal">
+                    Log a meal
+                    <ArrowRight className="size-3.5" />
+                  </Link>
+                </Button>
+              </ModuleFooter>
+            </ModuleCard>
+          ) : (
+            <LockedCard
+              className="lg:col-span-2"
+              icon={<Utensils className="size-4" />}
+              text="Snap a meal, fridge, or pantry and Chad grades the macros, then tracks your calories and protein against a daily target. Pro only."
+              title="Calorie Tracker"
+            />
+          )}
 
-        {/* Hydration + Sleep (Pro): the other daily trackers, right under the
+          {/* Hydration + Sleep (Pro): the other daily trackers, right under the
             calorie tracker so "am I on track today?" is answerable from the
-            top of the page. */}
-        <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
+            top of the page. Direct grid children: Hydration completes the top
+            row at xl, Sleep opens the second. */}
           {isPro ? (
             <WaterTracker
               goalMl={waterGoalMl}
@@ -783,141 +805,145 @@ async function TodayContent() {
               title="Sleep"
             />
           )}
-        </div>
 
-        {/* Workout log (Pro), per R2-14: it was a passive "Last workout"
+          {/* Workout log (Pro), per R2-14: it was a passive "Last workout"
             readout stranded next to the meal plan. Mainstream apps (MFP,
             Fitbit, Hevy, Strong) all treat workouts as a loggable domain on
             home, so the card lives with the loggers, leads with the log
             action, and keeps the last session as context. */}
-        {isPro ? (
-          <ModuleCard glow="blood">
-            <ModuleHeader
-              icon={<Dumbbell className="size-4" />}
-              title="Workout log"
-              tone="blood"
-              viewHref="/workouts#history"
-            />
-            <div className="flex flex-1 flex-col gap-4">
-              <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
-                {lastWorkout ? (
-                  <div className="min-w-0">
-                    <div className="text-muted-foreground text-xs uppercase tracking-wide">
-                      Last session
+          {isPro ? (
+            <ModuleCard className="lg:col-span-2" glow="blood">
+              <ModuleHeader
+                icon={<Dumbbell className="size-4" />}
+                title="Workout log"
+                tone="blood"
+                viewHref="/workouts#history"
+              />
+              <div className="flex flex-1 flex-col gap-4">
+                <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
+                  {lastWorkout ? (
+                    <div className="min-w-0">
+                      <div className="text-muted-foreground text-xs uppercase tracking-wide">
+                        Last session
+                      </div>
+                      <div className="mt-1 font-display font-semibold text-lg leading-tight">
+                        {lastWorkout.title}
+                      </div>
+                      <div className="mt-0.5 text-muted-foreground text-sm">
+                        {relativeDay(lastWorkout.performedAt, timezone)}
+                      </div>
                     </div>
-                    <div className="mt-1 font-display font-semibold text-lg leading-tight">
-                      {lastWorkout.title}
-                    </div>
-                    <div className="mt-0.5 text-muted-foreground text-sm">
-                      {relativeDay(lastWorkout.performedAt, timezone)}
-                    </div>
-                  </div>
-                ) : (
-                  <p className="max-w-md text-muted-foreground text-sm">
-                    No workouts logged yet. Log your first session and Chad
-                    starts tracking your PRs and volume.
-                  </p>
-                )}
-                {/* Shared Sunday-start week-strip treatment (VF-10/VF-11),
+                  ) : (
+                    <p className="max-w-md text-muted-foreground text-sm">
+                      No workouts logged yet. Log your first session and Chad
+                      starts tracking your PRs and volume.
+                    </p>
+                  )}
+                  {/* Shared Sunday-start week-strip treatment (VF-10/VF-11),
                     workout tone. Always rendered (VF-16): an empty week of
                     hollow slots is the same honest readout the other loggers
                     show, and it keeps the card from collapsing to one line. */}
-                <div className="flex items-center gap-4 rounded-xl border border-border bg-background/40 px-4 py-2.5">
-                  <span className="text-muted-foreground text-xs">
-                    This week
-                  </span>
-                  <WeekStrip
-                    days={workoutWeek.map((day) => ({
-                      key: day.t,
-                      label: day.label,
-                      dateLabel: day.dateLabel,
-                      isToday: day.isToday,
-                      isFuture: day.isFuture,
-                      dotClassName: day.logged
-                        ? "bg-blood shadow-[0_0_8px_var(--color-blood)]"
-                        : "bg-border",
-                      value: day.logged
-                        ? `${day.count} workout${day.count === 1 ? "" : "s"}`
-                        : "No workout",
-                    }))}
-                  />
-                </div>
-              </div>
-              {/* Last-session numbers as a stat row (VF-16): the card's visual
-                  anchor, matching the KPI-tile grammar of the other cards. */}
-              {lastWorkout && (
-                <div className="flex flex-wrap gap-3">
-                  <WorkoutStat
-                    label={lastWorkout.setCount === 1 ? "set" : "sets"}
-                    value={String(lastWorkout.setCount)}
-                  />
-                  <WorkoutStat
-                    label={
-                      lastWorkout.exerciseCount === 1
-                        ? "exercise"
-                        : "exercises"
-                    }
-                    value={String(lastWorkout.exerciseCount)}
-                  />
-                  {lastWorkout.volumeLb > 0 && (
-                    <WorkoutStat
-                      label="lb moved"
-                      value={lastWorkout.volumeLb.toLocaleString()}
+                  <div className="flex items-center gap-4 rounded-xl border border-border bg-background/40 px-4 py-2.5">
+                    <span className="text-muted-foreground text-xs">
+                      This week
+                    </span>
+                    <WeekStrip
+                      days={workoutWeek.map((day) => ({
+                        key: day.t,
+                        label: day.label,
+                        dateLabel: day.dateLabel,
+                        isToday: day.isToday,
+                        isFuture: day.isFuture,
+                        dotClassName: day.logged
+                          ? "bg-blood shadow-[0_0_8px_var(--color-blood)]"
+                          : "bg-border",
+                        value: day.logged
+                          ? `${day.count} workout${day.count === 1 ? "" : "s"}`
+                          : "No workout",
+                      }))}
                     />
-                  )}
+                  </div>
                 </div>
-              )}
-            </div>
-            <ModuleFooter
-              askChad={
-                <AskChadButton prompt="Look at the workouts card on my dashboard: my last session and this week's training. What's working, what's lagging, and what should I hit next session?" />
-              }
-            >
-              <Button asChild className="gap-1.5" size="sm" variant="outline">
-                {/* Straight into the Workouts page to start a session. */}
-                <Link href="/workouts">
-                  Start a workout
-                  <ArrowRight className="size-3.5" />
-                </Link>
-              </Button>
-            </ModuleFooter>
+                {/* Last-session numbers as a stat row (VF-16): the card's visual
+                  anchor, matching the KPI-tile grammar of the other cards. */}
+                {lastWorkout && (
+                  <div className="flex flex-wrap gap-3">
+                    <WorkoutStat
+                      label={lastWorkout.setCount === 1 ? "set" : "sets"}
+                      value={String(lastWorkout.setCount)}
+                    />
+                    <WorkoutStat
+                      label={
+                        lastWorkout.exerciseCount === 1
+                          ? "exercise"
+                          : "exercises"
+                      }
+                      value={String(lastWorkout.exerciseCount)}
+                    />
+                    {lastWorkout.volumeLb > 0 && (
+                      <WorkoutStat
+                        label="lb moved"
+                        value={lastWorkout.volumeLb.toLocaleString()}
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+              <ModuleFooter
+                askChad={
+                  <AskChadButton prompt="Look at the workouts card on my dashboard: my last session and this week's training. What's working, what's lagging, and what should I hit next session?" />
+                }
+              >
+                <Button asChild className="gap-1.5" size="sm" variant="outline">
+                  {/* Straight into the Workouts page to start a session. */}
+                  <Link href="/workouts">
+                    Start a workout
+                    <ArrowRight className="size-3.5" />
+                  </Link>
+                </Button>
+              </ModuleFooter>
+            </ModuleCard>
+          ) : (
+            <LockedCard
+              className="lg:col-span-2"
+              icon={<Dumbbell className="size-4" />}
+              text="Log your workouts and Chad tracks your PRs, volume, and what to hit next session. Pro only."
+              title="Workout log"
+            />
+          )}
+        </SectionBand>
+
+        {/* Same LAY-1 grid as Today's log: the three plan cards (Goals,
+          Training plan, Meal Plan) sit in one equal-height row at xl; lg
+          keeps goals full width over the side-by-side plans; phones and 768
+          beside the expanded sidebar keep the original stack. */}
+        <SectionBand
+          contentClassName="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3"
+          description="Set once, update occasionally."
+          title="Your plans"
+        >
+          {/* Goals lead the band: full width at lg, first of the three equal
+            columns at xl. One consistent card treatment (DSH-30): the header
+            silhouette stays the page's single body-visualization style. */}
+          <ModuleCard className="lg:col-span-2 xl:col-span-1" glow="blood">
+            <GoalList
+              calorieConflict={calorieConflict}
+              currentWeight={trendWeight}
+              goals={goalItems}
+              liftProgress={liftProgress}
+              memoryGoalHint={goal}
+              overlapIds={overlapIds}
+              pastGoals={pastGoalItems}
+              quiet={firstRun}
+              viewHref="/goals"
+            />
           </ModuleCard>
-        ) : (
-          <LockedCard
-            icon={<Dumbbell className="size-4" />}
-            text="Log your workouts and Chad tracks your PRs, volume, and what to hit next session. Pro only."
-            title="Workout log"
-          />
-        )}
-      </SectionBand>
 
-      <SectionBand
-        description="Set once, update occasionally."
-        title="Your plans"
-      >
-        {/* Goals lead the band full width: the richest plan card (progress,
-            lift charts, past goals) gets the room it needs. One consistent
-            card treatment (DSH-30): the header silhouette stays the page's
-            single body-visualization style. */}
-        <ModuleCard glow="blood">
-          <GoalList
-            calorieConflict={calorieConflict}
-            currentWeight={trendWeight}
-            goals={goalItems}
-            liftProgress={liftProgress}
-            memoryGoalHint={goal}
-            overlapIds={overlapIds}
-            pastGoals={pastGoalItems}
-            quiet={firstRun}
-            viewHref="/goals"
-          />
-        </ModuleCard>
-
-        {/* Training plan + meal plan side by side: the two plan documents
-            (R2-14's regroup; the meal plan no longer shares a row with the
-            workout readout). Basic members get the same locked teaser as
-            every other Pro module (P2-7: one gating rule). */}
-        <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
+          {/* Training plan + meal plan: side by side at lg, completing the
+            three-card row at xl (R2-14's regroup; the meal plan no longer
+            shares a row with the workout readout). Basic members get the
+            same locked teaser as every other Pro module (P2-7: one gating
+            rule). */}
           <ModuleCard glow="blood">
             <PlanList
               memoryPlanHint={workoutPlan}
@@ -956,7 +982,7 @@ async function TodayContent() {
                     </div>
                   </div>
                   {/* Daily targets as labeled chips (VF-16): fills the card
-                      with the plan's real numbers instead of dead space. */}
+                    with the plan's real numbers instead of dead space. */}
                   {mealPlanSummary.targets && (
                     <div className="flex flex-wrap gap-2">
                       {mealPlanSummary.targets.map((t) => (
@@ -992,12 +1018,7 @@ async function TodayContent() {
                   />
                 }
               >
-                <Button
-                  asChild
-                  className="gap-1.5"
-                  size="sm"
-                  variant="outline"
-                >
+                <Button asChild className="gap-1.5" size="sm" variant="outline">
                   <Link href="/meal-plan">
                     {mealPlanSummary ? "Open plan" : "Build a meal plan"}
                     <ArrowRight className="size-3.5" />
@@ -1012,84 +1033,83 @@ async function TodayContent() {
               title="Meal Plan"
             />
           )}
-        </div>
-      </SectionBand>
+        </SectionBand>
 
-      <SectionBand
-        description="What your daily logging adds up to over time."
-        title="Results"
-      >
-        {/* Weight trend (Pro): the REVIEW finale; the slow metric the
+        <SectionBand
+          description="What your daily logging adds up to over time."
+          title="Results"
+        >
+          {/* Weight trend (Pro): the REVIEW finale; the slow metric the
             product's promise hangs on gets the page's one full-width chart. */}
-        {isPro ? (
-          <ModuleCard glow="violet">
-            <ModuleHeader
-              icon={<LineChart className="size-4" />}
-              title="Weight trend"
-              tone="violet"
-              viewHref="/progress"
-            />
-            {trendWeight != null && (
-              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <span className="font-display font-semibold text-lg leading-none">
-                  {trendWeight} {displayUnit}
-                </span>
-                <span className="text-muted-foreground text-xs">
-                  trend weight
-                  {lastWeighIn != null && lastWeighIn !== trendWeight
-                    ? ` · weighed in ${lastWeighIn} ${displayUnit}`
-                    : ""}
-                  {weightChange != null &&
-                    ` · ${weightChange > 0 ? "+" : ""}${weightChange} ${displayUnit} since your first weigh-in`}
-                </span>
-              </div>
-            )}
-            <div className="mt-2">
-              {points.length > 0 ? (
-                <WeightChartInteractive
-                  goalWeight={goalWeight}
-                  points={points}
-                  unit={displayUnit}
-                  variant="compact"
-                />
-              ) : (
-                <p className="text-muted-foreground text-sm">
-                  No weigh-ins yet. Log your weight to see the trend.
-                </p>
+          {isPro ? (
+            <ModuleCard glow="violet">
+              <ModuleHeader
+                icon={<LineChart className="size-4" />}
+                title="Weight trend"
+                tone="violet"
+                viewHref="/progress"
+              />
+              {trendWeight != null && (
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                  <span className="font-display font-semibold text-lg leading-none">
+                    {trendWeight} {displayUnit}
+                  </span>
+                  <span className="text-muted-foreground text-xs">
+                    trend weight
+                    {lastWeighIn != null && lastWeighIn !== trendWeight
+                      ? ` · weighed in ${lastWeighIn} ${displayUnit}`
+                      : ""}
+                    {weightChange != null &&
+                      ` · ${weightChange > 0 ? "+" : ""}${weightChange} ${displayUnit} since your first weigh-in`}
+                  </span>
+                </div>
               )}
-            </div>
-            <ModuleFooter
-              askChad={
-                <AskChadButton prompt="Look at the weight card on my dashboard: my latest weigh-in and the recent trend toward my goal weight. Am I moving in the right direction, and should I change anything?" />
-              }
-            >
-              <Button asChild className="gap-1.5" size="sm" variant="outline">
-                <Link href="/progress#log-entry">
-                  Log weight
-                  <ArrowRight className="size-3.5" />
-                </Link>
-              </Button>
-            </ModuleFooter>
-          </ModuleCard>
-        ) : (
-          <LockedCard
-            icon={<LineChart className="size-4" />}
-            text="Track your weight and progress photos over time. Pro only."
-            title="Weight trend"
-          />
-        )}
-      </SectionBand>
+              <div className="mt-2">
+                {points.length > 0 ? (
+                  <WeightChartInteractive
+                    goalWeight={goalWeight}
+                    points={points}
+                    unit={displayUnit}
+                    variant="compact"
+                  />
+                ) : (
+                  <p className="text-muted-foreground text-sm">
+                    No weigh-ins yet. Log your weight to see the trend.
+                  </p>
+                )}
+              </div>
+              <ModuleFooter
+                askChad={
+                  <AskChadButton prompt="Look at the weight card on my dashboard: my latest weigh-in and the recent trend toward my goal weight. Am I moving in the right direction, and should I change anything?" />
+                }
+              >
+                <Button asChild className="gap-1.5" size="sm" variant="outline">
+                  <Link href="/progress#log-entry">
+                    Log weight
+                    <ArrowRight className="size-3.5" />
+                  </Link>
+                </Button>
+              </ModuleFooter>
+            </ModuleCard>
+          ) : (
+            <LockedCard
+              icon={<LineChart className="size-4" />}
+              text="Track your weight and progress photos over time. Pro only."
+              title="Weight trend"
+            />
+          )}
+        </SectionBand>
 
-      {/* The Quit Test (FEAT-21/25/26): at the BOTTOM of the dashboard,
+        {/* The Quit Test (FEAT-21/25/26): at the BOTTOM of the dashboard,
           under Results (owner order, s157). Full width, every member —
           unless they switched the feature off on /account (FEAT-25). */}
-      {user.quitDateEnabled && (
-        <QuitDateCard prediction={latestQuitPrediction} timezone={timezone} />
-      )}
+        {user.quitDateEnabled && (
+          <QuitDateCard prediction={latestQuitPrediction} timezone={timezone} />
+        )}
 
-      {/* No quick-actions row (P2-8): it duplicated the top nav incompletely,
+        {/* No quick-actions row (P2-8): it duplicated the top nav incompletely,
           and the mobile sheet nav already covers reach. */}
-    </div>
+      </div>
     </RewardProvider>
   );
 }
@@ -1110,13 +1130,22 @@ function LockedCard({
   icon,
   title,
   text,
+  className,
 }: {
   icon: React.ReactNode;
   title: string;
   text: string;
+  /** Grid placement (LAY-1): the locked teaser sits in the same dashboard
+   *  cell as the module it stands in for. */
+  className?: string;
 }) {
   return (
-    <section className="flex min-w-0 flex-col rounded-2xl border border-border border-dashed bg-card p-6">
+    <section
+      className={cn(
+        "flex min-w-0 flex-col rounded-2xl border border-border border-dashed bg-card p-6",
+        className
+      )}
+    >
       <h2 className="mb-3 flex items-center gap-2.5 font-medium text-muted-foreground text-sm uppercase tracking-wide">
         <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
           {icon}
@@ -1133,4 +1162,3 @@ function LockedCard({
     </section>
   );
 }
-

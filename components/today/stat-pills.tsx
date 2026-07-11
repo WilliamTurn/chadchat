@@ -60,7 +60,7 @@ function StatPill({
 }) {
   const t = TONE[tone];
   return (
-    <div className="relative flex-1 overflow-hidden rounded-xl border border-border bg-background/40 p-3 sm:p-4">
+    <div className="relative flex-1 overflow-hidden rounded-xl border border-border bg-background/40 p-3 @[36rem]:p-4">
       <div
         aria-hidden
         className={cn(
@@ -71,15 +71,16 @@ function StatPill({
       <div className="relative flex items-center gap-3">
         <span
           className={cn(
-            "flex size-8 shrink-0 items-center justify-center rounded-lg sm:size-9",
+            "flex size-8 shrink-0 items-center justify-center rounded-lg @[36rem]:size-9",
             t.chip
           )}
         >
           {icon}
         </span>
-        {/* Mobile: one row, label left / number right. sm+: number over label. */}
-        <div className="flex min-w-0 flex-1 items-center justify-between gap-3 sm:flex-col sm:items-start sm:justify-start sm:gap-0">
-          <div className="flex min-w-0 items-center gap-1 text-muted-foreground text-xs sm:order-2 sm:mt-1">
+        {/* Narrow: one row, label left / number right. Wide: number over
+            label. */}
+        <div className="flex min-w-0 flex-1 items-center justify-between gap-3 @[36rem]:flex-col @[36rem]:items-start @[36rem]:justify-start @[36rem]:gap-0">
+          <div className="flex min-w-0 items-center gap-1 text-muted-foreground text-xs @[36rem]:order-2 @[36rem]:mt-1">
             <span>
               {label}
               {sub && (
@@ -88,7 +89,7 @@ function StatPill({
             </span>
             {help && <KpiHelp label={label}>{help}</KpiHelp>}
           </div>
-          <div className="shrink-0 whitespace-nowrap font-bold font-display text-base leading-none tabular-nums sm:order-1 sm:text-xl">
+          <div className="shrink-0 whitespace-nowrap font-bold font-display text-base leading-none tabular-nums @[36rem]:order-1 @[36rem]:text-xl">
             <CountUp value={value} />
           </div>
         </div>
@@ -123,34 +124,44 @@ export function StatPills({
           : "Change since first weigh-in";
 
   return (
-    <div className="mt-4 grid gap-2 sm:mt-6 sm:flex sm:gap-3">
-      <StatPill
-        icon={<Flame className="size-5" strokeWidth={2.5} />}
-        label="Calories eaten today"
-        sub={calorieTarget ? `of ${calorieTarget.toLocaleString()}` : undefined}
-        tone="amber"
-        value={`${calories.toLocaleString()} cal`}
-      />
-      <StatPill
-        help="Your trend weight (the smoothed number the charts draw) compared to your very first weigh-in — the same all-time change the Progress page shows. Log weigh-ins on the Progress page to keep it current."
-        icon={
-          (weightChange ?? 0) <= 0 ? (
-            <TrendingDown className="size-5" strokeWidth={2.5} />
-          ) : (
-            <TrendingUp className="size-5" strokeWidth={2.5} />
-          )
-        }
-        label={weightLabel}
-        tone="violet"
-        value={weightValue}
-      />
-      <StatPill
-        help="Days this week (Sunday through Saturday) where you logged anything: a meal, water, sleep, a workout, or a weigh-in. Different from your streak, which counts consecutive days."
-        icon={<Activity className="size-5" strokeWidth={2.5} />}
-        label="Days active this week"
-        tone="emerald"
-        value={`${activeThisWeek} of 7`}
-      />
+    // Row/stack switches on the CONTAINER, not the viewport (LAY-1, the
+    // MacroRings pattern): three-across pills have a ~480px min-content
+    // floor, and at 768px the expanded sidebar leaves the header less than
+    // that, which forced the whole /today content column past the viewport
+    // (silently clipped under overflow-x: clip). Below 36rem of actual
+    // header width the pills stack as full-width rows instead.
+    <div className="@container mt-4 sm:mt-6">
+      <div className="grid gap-2 @[36rem]:flex @[36rem]:gap-3">
+        <StatPill
+          icon={<Flame className="size-5" strokeWidth={2.5} />}
+          label="Calories eaten today"
+          sub={
+            calorieTarget ? `of ${calorieTarget.toLocaleString()}` : undefined
+          }
+          tone="amber"
+          value={`${calories.toLocaleString()} cal`}
+        />
+        <StatPill
+          help="Your trend weight (the smoothed number the charts draw) compared to your very first weigh-in — the same all-time change the Progress page shows. Log weigh-ins on the Progress page to keep it current."
+          icon={
+            (weightChange ?? 0) <= 0 ? (
+              <TrendingDown className="size-5" strokeWidth={2.5} />
+            ) : (
+              <TrendingUp className="size-5" strokeWidth={2.5} />
+            )
+          }
+          label={weightLabel}
+          tone="violet"
+          value={weightValue}
+        />
+        <StatPill
+          help="Days this week (Sunday through Saturday) where you logged anything: a meal, water, sleep, a workout, or a weigh-in. Different from your streak, which counts consecutive days."
+          icon={<Activity className="size-5" strokeWidth={2.5} />}
+          label="Days active this week"
+          tone="emerald"
+          value={`${activeThisWeek} of 7`}
+        />
+      </div>
     </div>
   );
 }
