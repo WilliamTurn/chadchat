@@ -4,14 +4,12 @@ import {
   Activity,
   CalendarClock,
   Dumbbell,
-  MessageSquare,
   Percent,
   Ruler,
   Scale,
   Sparkles,
   Target,
   Trash2,
-  TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -470,26 +468,8 @@ export function GoalForm({
     });
   }
 
-  // The live pace check, rendered in two places for the two layouts (LAY-1):
-  // in-flow under the date card on phones/tablets, and in the sticky desktop
-  // rail. It carries no input ids, so the double render is safe.
-  const paceCheck =
-    feasibility?.kind === "weight" && feasibility.data ? (
-      <WeightPaceCheck data={feasibility.data} unit={unit || defaultUnit} />
-    ) : feasibility?.kind === "lift" && feasibility.data ? (
-      <LiftPaceCheck data={feasibility.data} unit={liftUnit} />
-    ) : null;
-
   return (
-    // Full-width desktop layout (LAY-1): the form fills the left column and a
-    // sticky rail keeps the live pace check and the "what happens when you
-    // save" summary in view while you scroll. Phones keep the single column.
-    <form
-      className="flex flex-col gap-5 lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-6"
-      noValidate
-      onSubmit={onSubmit}
-    >
-      <div className="flex min-w-0 flex-col gap-5">
+    <form className="flex flex-col gap-5" noValidate onSubmit={onSubmit}>
       {/* 1 · The goal in your own words */}
       <SectionCard
         icon={<Target className="size-4" />}
@@ -1005,9 +985,15 @@ export function GoalForm({
         )}
       </SectionCard>
 
-      {/* 4 · The live pace check (in-flow on phones; the desktop rail holds it
-          at lg+) */}
-      {paceCheck && <div className="lg:hidden">{paceCheck}</div>}
+      {/* 4 · The live pace check: inline feedback on the numbers and date just
+          entered, directly under the fields it reacts to (the MyFitnessPal /
+          Lose It placement), at every screen width. */}
+      {feasibility?.kind === "weight" && feasibility.data && (
+        <WeightPaceCheck data={feasibility.data} unit={unit || defaultUnit} />
+      )}
+      {feasibility?.kind === "lift" && feasibility.data && (
+        <LiftPaceCheck data={feasibility.data} unit={liftUnit} />
+      )}
 
       {/* 5 · Status (edit only) */}
       {isEdit && (
@@ -1111,50 +1097,7 @@ export function GoalForm({
           </Button>
         </div>
       </div>
-      </div>
-
-      {/* The desktop rail (LAY-1): the live pace check plus what saving does,
-          sticky so the coaching stays in view while you fill the form. */}
-      <aside className="hidden lg:sticky lg:top-6 lg:flex lg:flex-col lg:gap-5">
-        {paceCheck ?? (
-          <PaceCheckCard band={null} headline="Your pace check runs live">
-            Pick a metric, enter your numbers, and set a target date. Chad
-            checks the pace here as you type: sustainable, aggressive, or too
-            fast to keep your muscle.
-          </PaceCheckCard>
-        )}
-        <WhatSavingDoes />
-      </aside>
     </form>
-  );
-}
-
-/** The rail summary of what a saved goal actually does (LAY-1): the concrete
- *  payoff for filling the form, in view the whole time on desktop. */
-function WhatSavingDoes() {
-  return (
-    <section className="rounded-2xl border border-border bg-card p-5">
-      <h3 className="font-medium text-sm">What happens when you save</h3>
-      <ul className="mt-3 flex flex-col gap-3 text-muted-foreground text-sm leading-relaxed">
-        <li className="flex items-start gap-2.5">
-          <MessageSquare className="mt-0.5 size-4 shrink-0 text-blood" />
-          Chad reads this goal in every chat and coaches you toward it.
-        </li>
-        <li className="flex items-start gap-2.5">
-          <TrendingUp className="mt-0.5 size-4 shrink-0 text-blood" />
-          A goal with a number shows a live progress bar on your dashboard.
-        </li>
-        <li className="flex items-start gap-2.5">
-          <CalendarClock className="mt-0.5 size-4 shrink-0 text-blood" />
-          Your target date sets the required pace, and Chad tells you the
-          moment you fall behind it.
-        </li>
-        <li className="flex items-start gap-2.5">
-          <Sparkles className="mt-0.5 size-4 shrink-0 text-blood" />
-          Your Future You forecast follows this goal's timeline.
-        </li>
-      </ul>
-    </section>
   );
 }
 

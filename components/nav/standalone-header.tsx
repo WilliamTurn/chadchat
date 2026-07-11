@@ -33,6 +33,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { headerLinks } from "@/lib/nav-links";
 import { cn } from "@/lib/utils";
 
@@ -194,63 +195,17 @@ export function StandaloneHeader({ active }: { active?: string }) {
 
   return (
     <nav className="mb-8 flex items-center gap-4 border-border border-b pb-3">
-      {/* Left zone. flex-1 mirrors the right zone's width so the center icon bar
-          sits truly page-centered, not shoved between two unequal-width ends. */}
-      <div className="flex flex-1 items-center">
-        <Wordmark />
+      {/* Left zone: the sidebar collapse toggle (the section links live in the
+          left nav panel now, LAY-2) plus the wordmark on phones, where the
+          sidebar doesn't render and the brand would otherwise vanish. */}
+      <div className="flex flex-1 items-center gap-2">
+        <SidebarTrigger className="hidden size-11 sm:inline-flex" />
+        <div className="md:hidden">
+          <Wordmark />
+        </div>
       </div>
 
-      {/* Desktop / tablet: a single, non-wrapping icon bar, centered at the top
-          (NAV-29). Inactive sections are icon-only (with a native tooltip +
-          aria-label); the active section expands to icon + label inside the
-          shared-layout pill that slides between sections (ACC-11). Icon-forward
-          keeps every section on one line at the page's narrow max-width instead
-          of wrapping into a ragged second row. */}
-      <div className="hidden items-center justify-center gap-0.5 sm:flex">
-        {headerLinks.map((link) => {
-          const Icon = link.icon;
-          const activeLink = isActive(link.href);
-          return (
-            <Link
-              aria-label={link.label}
-              className={cn(
-                "relative flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium text-sm transition-colors",
-                activeLink
-                  ? "text-foreground"
-                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-              )}
-              href={link.href}
-              key={link.href}
-              title={link.label}
-            >
-              {activeLink && (
-                <motion.span
-                  aria-hidden
-                  className="absolute inset-0 rounded-lg bg-accent"
-                  layoutId="standalone-nav-active"
-                  transition={
-                    reduce
-                      ? { duration: 0 }
-                      : { damping: 32, stiffness: 380, type: "spring" }
-                  }
-                />
-              )}
-              <Icon
-                className={cn(
-                  "relative z-10 size-4",
-                  activeLink && "text-blood"
-                )}
-              />
-              {activeLink && (
-                <span className="relative z-10">{link.label}</span>
-              )}
-            </Link>
-          );
-        })}
-      </div>
-
-      {/* Right zone: account menu (desktop) + hamburger (mobile). flex-1 +
-          justify-end balances the left zone so the center bar stays centered. */}
+      {/* Right zone: account menu (desktop) + hamburger (mobile). */}
       <div className="flex flex-1 items-center justify-end gap-2">
         <div className="hidden sm:block">
           <AccountMenu />

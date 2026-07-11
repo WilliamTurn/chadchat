@@ -102,8 +102,6 @@ export function GoalDoc({
     });
   }
 
-  // "Needs a look" renders twice for the two layouts (LAY-1): in-flow on
-  // phones, in the desktop rail at lg+. Static content, so that's safe.
   const coherenceCard =
     coherence?.calorie || (coherence?.overlapTitles.length ?? 0) > 0 ? (
       <section className="rounded-2xl border border-amber-500/25 bg-amber-500/[0.05] p-5">
@@ -151,11 +149,7 @@ export function GoalDoc({
     isManual && goal.status === "active" && goal.targetValue != null;
 
   return (
-    // Full-width desktop layout (LAY-1): the document fills the left column
-    // and a sticky rail holds the actions, the progress updater, and any
-    // coherence warning. Phones keep the single column.
-    <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
-      <div className="flex min-w-0 flex-col gap-6">
+    <div className="flex flex-col gap-6">
       <section className="rounded-2xl border border-border bg-card p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
@@ -189,18 +183,48 @@ export function GoalDoc({
               </p>
             )}
           </div>
-          {/* The dedicated edit page (MOB-19), not a dialog. */}
-          <Button
-            asChild
-            className="h-11 gap-1.5 px-4"
-            size="sm"
-            variant="outline"
-          >
-            <Link href={`/goals/${goal.id}/edit`}>
-              <Pencil className="size-3.5" />
-              Edit
-            </Link>
-          </Button>
+          {/* The page's actions live in the header, the standard document
+              toolbar (owner ruling s178: no side rails). Phones keep the
+              bottom action row instead. */}
+          <div className="hidden flex-wrap items-center gap-2 sm:flex">
+            <DeleteGoalDialog
+              className="h-11 gap-1.5 text-muted-foreground"
+              onDelete={onDelete}
+              pending={pending}
+              title={goal.title}
+            />
+            <Button
+              className="h-11 gap-1.5 px-4"
+              onClick={() => {
+                downloadGoalPdf(goal).catch(() =>
+                  toast.error("Couldn't generate the PDF.")
+                );
+              }}
+              size="sm"
+              variant="outline"
+            >
+              <Download className="size-3.5" />
+              PDF
+            </Button>
+            {/* The dedicated edit page (MOB-19), not a dialog. */}
+            <Button
+              asChild
+              className="h-11 gap-1.5 px-4"
+              size="sm"
+              variant="outline"
+            >
+              <Link href={`/goals/${goal.id}/edit`}>
+                <Pencil className="size-3.5" />
+                Edit
+              </Link>
+            </Button>
+            <Button asChild className="h-11 gap-1.5 px-4" size="sm">
+              <Link href={`/?prompt=${encodeURIComponent(discussPrompt)}`}>
+                <MessageSquare className="size-3.5" />
+                Discuss with Chad
+              </Link>
+            </Button>
+          </div>
         </div>
 
         <GoalProgress current={current} firstValue={liftData?.first} goal={goal} />
@@ -216,15 +240,10 @@ export function GoalDoc({
         )}
 
         {/* Metrics with no automatic data source (body fat, measurements,
-            custom numbers) get their update control right here on phones,
-            where the progress bar lives — the table-stakes "log progress"
-            affordance every real goal tracker has. At lg+ it lives in the
-            rail instead. */}
-        {showUpdateProgress && (
-          <div className="lg:hidden">
-            <UpdateProgress goal={goal} />
-          </div>
-        )}
+            custom numbers) get their update control right here, where the
+            progress bar lives — the table-stakes "log progress" affordance
+            every real goal tracker has. */}
+        {showUpdateProgress && <UpdateProgress goal={goal} />}
       </section>
 
       {/* The weight trend re-plotted against this goal's line, with the
@@ -239,7 +258,7 @@ export function GoalDoc({
         />
       )}
 
-      {coherenceCard && <div className="lg:hidden">{coherenceCard}</div>}
+      {coherenceCard}
 
       <section className="rounded-2xl border border-border bg-card p-6">
         <h3 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
@@ -257,8 +276,8 @@ export function GoalDoc({
         )}
       </section>
 
-      {/* Phone action row; at lg+ the rail's actions card takes over. */}
-      <div className="flex flex-wrap items-center justify-between gap-3 lg:hidden">
+      {/* Phone action row; at sm+ the header toolbar carries these. */}
+      <div className="flex flex-wrap items-center justify-between gap-3 sm:hidden">
         <DeleteGoalDialog
           className="h-11 gap-1.5 text-muted-foreground"
           onDelete={onDelete}
@@ -279,6 +298,17 @@ export function GoalDoc({
             <Download className="size-3.5" />
             PDF
           </Button>
+          <Button
+            asChild
+            className="h-11 gap-1.5 px-4"
+            size="sm"
+            variant="outline"
+          >
+            <Link href={`/goals/${goal.id}/edit`}>
+              <Pencil className="size-3.5" />
+              Edit
+            </Link>
+          </Button>
           <Button asChild className="h-11 gap-1.5 px-4" size="sm">
             <Link href={`/?prompt=${encodeURIComponent(discussPrompt)}`}>
               <MessageSquare className="size-3.5" />
@@ -287,58 +317,6 @@ export function GoalDoc({
           </Button>
         </div>
       </div>
-      </div>
-
-      {/* The desktop rail (LAY-1): everything you can do with this goal, plus
-          the progress updater and any coherence warning, sticky in view. */}
-      <aside className="hidden lg:sticky lg:top-6 lg:flex lg:flex-col lg:gap-6">
-        <section className="rounded-2xl border border-border bg-card p-5">
-          <h3 className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
-            Actions
-          </h3>
-          <div className="mt-3 flex flex-col gap-2">
-            <Button asChild className="h-11 w-full gap-1.5" size="sm">
-              <Link href={`/?prompt=${encodeURIComponent(discussPrompt)}`}>
-                <MessageSquare className="size-3.5" />
-                Discuss with Chad
-              </Link>
-            </Button>
-            <Button
-              asChild
-              className="h-11 w-full gap-1.5"
-              size="sm"
-              variant="outline"
-            >
-              <Link href={`/goals/${goal.id}/edit`}>
-                <Pencil className="size-3.5" />
-                Edit goal
-              </Link>
-            </Button>
-            <Button
-              className="h-11 w-full gap-1.5"
-              onClick={() => {
-                downloadGoalPdf(goal).catch(() =>
-                  toast.error("Couldn't generate the PDF.")
-                );
-              }}
-              size="sm"
-              variant="outline"
-            >
-              <Download className="size-3.5" />
-              Download as PDF
-            </Button>
-            <DeleteGoalDialog
-              className="h-11 w-full gap-1.5 text-muted-foreground"
-              label="Delete goal"
-              onDelete={onDelete}
-              pending={pending}
-              title={goal.title}
-            />
-          </div>
-        </section>
-        {showUpdateProgress && <UpdateProgress goal={goal} surface="card" />}
-        {coherenceCard}
-      </aside>
     </div>
   );
 }
@@ -394,15 +372,7 @@ function DeleteGoalDialog({
  * latest number, save, and the progress bar above moves. Weight and lift goals
  * never render this — their numbers flow in from weigh-ins and logged sets.
  */
-function UpdateProgress({
-  goal,
-  surface = "inset",
-}: {
-  goal: EditableGoal;
-  /** "inset" = inside the progress section card (phone); "card" = a
-   *  standalone card on the page background (the desktop rail). */
-  surface?: "inset" | "card";
-}) {
+function UpdateProgress({ goal }: { goal: EditableGoal }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   // Rendered once per layout (phone in-card + desktop rail), so the input id
@@ -443,13 +413,7 @@ function UpdateProgress({
         : "number";
 
   return (
-    <div
-      className={
-        surface === "card"
-          ? "rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]"
-          : "mt-4 rounded-xl border border-border bg-background/40 p-3.5"
-      }
-    >
+    <div className="mt-4 rounded-xl border border-border bg-background/40 p-3.5">
       <Label className="text-sm" htmlFor={inputId}>
         Update your progress
       </Label>
