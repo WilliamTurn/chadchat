@@ -66,6 +66,15 @@ type Action =
       prs?: PRKind[];
       now: number;
     }
+  | {
+      // Bulk check-off (owner s181): every remaining set at once, per exercise
+      // or session-wide. PRs are detected by the caller (a UI concern); the
+      // rest timer is deliberately NOT started — this is an after-the-fact
+      // logging action, not a live set.
+      type: "complete-all-sets";
+      wexId?: string;
+      prsBySetId: Record<string, PRKind[]>;
+    }
   | { type: "add-set"; wexId: string; setType: SetType }
   | { type: "set-set-type"; wexId: string; setId: string; setType: SetType }
   | { type: "set-set-rpe"; wexId: string; setId: string; rpe: number | null }
@@ -220,6 +229,27 @@ function reducer(state: State, action: Action): State {
       }
       return { ...state, session, restTimer };
     }
+
+    case "complete-all-sets":
+      return withSession(state, (s) => ({
+        ...s,
+        exercises: s.exercises.map((ex) =>
+          action.wexId && ex.id !== action.wexId
+            ? ex
+            : {
+                ...ex,
+                sets: ex.sets.map((set) =>
+                  set.completed
+                    ? set
+                    : {
+                        ...set,
+                        completed: true,
+                        prs: action.prsBySetId[set.id],
+                      }
+                ),
+              }
+        ),
+      }));
 
     case "add-set":
       return withSession(state, (s) =>
@@ -439,6 +469,11 @@ interface WorkoutsStore {
     completed: boolean,
     prs?: PRKind[]
   ) => void;
+  /** Check off every remaining set at once — one exercise, or all of them. */
+  completeAllSets: (
+    prsBySetId: Record<string, PRKind[]>,
+    wexId?: string
+  ) => void;
   addSet: (wexId: string, setType: SetType) => void;
   setSetType: (wexId: string, setId: string, setType: SetType) => void;
   setSetRpe: (wexId: string, setId: string, rpe: number | null) => void;
@@ -520,6 +555,8 @@ export function WorkoutsProvider({ children }: { children: ReactNode }) {
           prs,
           now: Date.now(),
         }),
+      completeAllSets: (prsBySetId, wexId) =>
+        dispatch({ type: "complete-all-sets", wexId, prsBySetId }),
       addSet: (wexId, setType) => dispatch({ type: "add-set", wexId, setType }),
       setSetType: (wexId, setId, setType) =>
         dispatch({ type: "set-set-type", wexId, setId, setType }),

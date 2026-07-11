@@ -1,4 +1,3 @@
-import { ChefHat } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -6,6 +5,7 @@ import { MealPlanSkeleton } from "@/components/dashboard/page-skeletons";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { GenerateForm } from "@/components/meal-plan/generate-form";
+import { NewPlanSection } from "@/components/meal-plan/new-plan-section";
 import {
   MealPlanView,
   type MealPlanViewData,
@@ -199,17 +199,9 @@ async function PlanArea({ user }: { user: User }) {
     <div className="flex flex-col gap-8">
       <MealPlanView plan={data} />
 
-      <details className="rounded-2xl border border-border bg-card/60 p-5">
-        <summary className="flex cursor-pointer list-none items-center gap-2 font-medium text-sm">
-          <ChefHat className="size-4 text-blood" />
-          Build a new plan
-        </summary>
-        <p className="mt-3 mb-4 text-muted-foreground text-sm">
-          Generating a new plan replaces the one above. Your current plan is
-          archived, not deleted.
-        </p>
+      <NewPlanSection>
         <GenerateForm compact readinessHints={readinessHints} />
-      </details>
+      </NewPlanSection>
     </div>
   );
 }

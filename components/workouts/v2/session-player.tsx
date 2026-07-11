@@ -17,6 +17,7 @@ import {
   ArrowDown,
   ArrowUp,
   Check,
+  CheckCheck,
   ChevronLeft,
   Gauge,
   Info,
@@ -54,7 +55,7 @@ import {
 import { detectPRs, serializeSession } from "./session-factory";
 import { ActionSheet, type SheetAction } from "./sheet";
 import { useWorkouts } from "./store";
-import type { SessionExercise, SessionSet } from "./types";
+import type { PRKind, SessionExercise, SessionSet } from "./types";
 import { REST_OPTIONS, RPE_OPTIONS, SET_TYPE_META } from "./types";
 import { WButton, WCard } from "./ui";
 
@@ -120,6 +121,27 @@ function NumberField({
       value={text}
     />
   );
+}
+
+/** PRs for every not-yet-completed set, keyed by set id — feeds the bulk
+ *  check-off so records still get their trophy when sets land all at once. */
+function collectRemainingPRs(
+  exercises: SessionExercise[],
+  prBaseline: Record<string, PrBaseline>,
+  unit: "lb" | "kg"
+): Record<string, PRKind[]> {
+  const map: Record<string, PRKind[]> = {};
+  for (const ex of exercises) {
+    for (const set of ex.sets) {
+      if (!set.completed) {
+        const prs = detectPRs(prBaseline, ex, set, unit);
+        if (prs.length > 0) {
+          map[set.id] = prs;
+        }
+      }
+    }
+  }
+  return map;
 }
 
 // ---------------------------------------------------------------------------
@@ -380,6 +402,7 @@ function ExerciseCard({
 }) {
   const {
     addSet,
+    completeAllSets,
     moveSessionExercise,
     removeSessionExercise,
     setExerciseRest,
@@ -417,6 +440,20 @@ function ExerciseCard({
       icon: <Info aria-hidden className="size-[18px]" />,
       onSelect: () => router.push(`/workouts/exercises/${exerciseSlug(wex.name)}`),
     },
+    ...(wex.sets.some((s) => !s.completed)
+      ? [
+          {
+            label: "Mark all sets done",
+            hint: "Checks off every remaining set with the numbers shown",
+            icon: <CheckCheck aria-hidden className="size-[18px]" />,
+            onSelect: () =>
+              completeAllSets(
+                collectRemainingPRs([wex], prBaseline, unit),
+                wex.id
+              ),
+          } satisfies SheetAction,
+        ]
+      : []),
     {
       label: "Add a warm-up set",
       hint: "Goes above your working sets, not counted in totals",
@@ -656,6 +693,7 @@ export function SessionPlayer({
   const [nameDraft, setNameDraft] = useState("");
   const [finishing, setFinishing] = useState(false);
   const [alsoUpdateTemplate, setAlsoUpdateTemplate] = useState(false);
+  const [completeRemaining, setCompleteRemaining] = useState(false);
   const [saving, setSaving] = useState(false);
   const [discarding, setDiscarding] = useState(false);
   const [prToast, setPrToast] = useState<string | null>(null);
@@ -776,9 +814,25 @@ export function SessionPlayer({
     if (!session || saving) {
       return;
     }
-    const payload = serializeSession(session, elapsed);
+    // "Mark all unchecked sets as done" (owner s181): a lifter who did the
+    // work without tapping each checkmark saves everything in one go. Applied
+    // to a local copy so the payload is built from the completed state.
+    const sessionForSave = completeRemaining
+      ? {
+          ...session,
+          exercises: session.exercises.map((ex) => ({
+            ...ex,
+            sets: ex.sets.map((set) =>
+              set.completed ? set : { ...set, completed: true }
+            ),
+          })),
+        }
+      : session;
+    const payload = serializeSession(sessionForSave, elapsed);
     if (!payload) {
-      setFinishing(false);
+      toast.error(
+        "Nothing is checked off yet. Check your sets, or tick “Mark all unchecked sets as done”."
+      );
       return;
     }
     setSaving(true);
@@ -788,7 +842,7 @@ export function SessionPlayer({
       await saveTemplate({
         id: sourceTemplate.id,
         name: sourceTemplate.name,
-        exercises: session.exercises
+        exercises: sessionForSave.exercises
           .filter((ex) => ex.sets.some((s) => s.completed))
           .map((ex) => {
             const existing = sourceTemplate.exercises.find(
@@ -884,9 +938,12 @@ export function SessionPlayer({
 
           <WButton
             className="min-h-[44px] px-4"
-            disabled={doneSets === 0}
+            disabled={totalSets === 0}
             onClick={() => {
               setAlsoUpdateTemplate(false);
+              // Nothing checked yet? Ticking "mark all done" is the only way
+              // this save works, so it starts ticked; otherwise opt-in.
+              setCompleteRemaining(doneSets === 0);
               setFinishing(true);
             }}
             size="sm"
@@ -1054,7 +1111,9 @@ export function SessionPlayer({
           (volume > 0 ? ` and moved ${formatVolume(volume)} lb total` : "") +
           "." +
           (uncheckedSets > 0
-            ? ` ${uncheckedSets} unchecked ${uncheckedSets === 1 ? "set" : "sets"} won't be saved.`
+            ? completeRemaining
+              ? ` Your ${uncheckedSets} unchecked ${uncheckedSets === 1 ? "set" : "sets"} will be marked done and saved too.`
+              : ` ${uncheckedSets} unchecked ${uncheckedSets === 1 ? "set" : "sets"} won't be saved.`
             : "")
         }
         busy={saving}
@@ -1077,6 +1136,26 @@ export function SessionPlayer({
             value={session.notes}
           />
         </label>
+        {uncheckedSets > 0 && (
+          <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-background p-3.5">
+            <input
+              checked={completeRemaining}
+              className="mt-0.5 size-5 accent-[#a4161a]"
+              onChange={(e) => setCompleteRemaining(e.target.checked)}
+              type="checkbox"
+            />
+            <span>
+              <span className="block font-semibold text-[14px] text-foreground">
+                Mark all {uncheckedSets} unchecked{" "}
+                {uncheckedSets === 1 ? "set" : "sets"} as done
+              </span>
+              <span className="mt-0.5 block text-[12.5px] text-muted-foreground leading-relaxed">
+                Did the work but didn't tap every checkmark? This saves every
+                remaining set with the weights and reps already shown.
+              </span>
+            </span>
+          </label>
+        )}
         {structureChanged && sourceTemplate && (
           <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-background p-3.5">
             <input

@@ -19,6 +19,7 @@ import {
   useState,
   useTransition,
 } from "react";
+import { Bar, BarChart, Cell, ReferenceLine, XAxis } from "recharts";
 import { toast } from "sonner";
 import { useReward } from "@/components/dashboard/reward";
 import {
@@ -33,12 +34,19 @@ import {
   ModuleHeader,
 } from "@/components/today/module-card";
 import { Button } from "@/components/ui/button";
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+} from "@/components/ui/chart";
 import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useMountReveal } from "@/hooks/use-mount-reveal";
+import { DOMAIN } from "@/lib/chart/palette";
 import {
   DEFAULT_WATER_GOAL_ML,
   formatOz,
@@ -47,7 +55,6 @@ import {
   ozToMl,
 } from "@/lib/today/water-units";
 import type { WaterDay } from "@/lib/today/week";
-import { WeekStrip } from "@/components/today/week-strip";
 
 // One-shot entries go up to a whole gallon (DSH-48): an end-of-night member
 // logging the day's jug shouldn't have to tap small increments repeatedly.
@@ -429,32 +436,13 @@ export function WaterTracker({
         </Popover>
       </div>
 
-      {/* This week's strip — the compact in-card readout (the full history
-          chart lives on the detail page, one surface per domain). Full dot =
-          goal hit, faded dot = some water logged, hollow = nothing. Shared
-          Sunday-start WeekStrip treatment (VF-10/VF-11): two-letter labels,
-          structural today ring, real dates on hover. */}
+      {/* This week's bar chart — the same 7-day Recharts treatment the Sleep
+          card carries (owner s181: every logger card gets a real visual, not a
+          dot strip). Full-strength bar = goal hit, faded = partial, dashed
+          line = the daily goal. The full trend history stays on /hydration. */}
       {week?.some((d) => d.logged) ? (
-        <div className="mt-4 flex items-center justify-between rounded-xl border border-border bg-background/40 px-4 py-2.5">
-          <span className="text-muted-foreground text-xs">This week</span>
-          <WeekStrip
-            days={week.map((day) => ({
-              key: day.t,
-              label: day.label,
-              dateLabel: day.dateLabel,
-              isToday: day.isToday,
-              isFuture: day.isFuture,
-              dotClassName:
-                day.logged && day.ml >= safeGoal
-                  ? "bg-sky-400 shadow-[0_0_8px_var(--color-sky-400)]"
-                  : day.logged
-                    ? "bg-sky-400/40"
-                    : "bg-border",
-              value: day.logged ? formatOz(day.ml) : "Not logged",
-              status:
-                day.logged && day.ml >= safeGoal ? "Goal hit" : undefined,
-            }))}
-          />
+        <div className="mt-4">
+          <WaterWeekChart goalMl={safeGoal} week={week} />
         </div>
       ) : null}
 
@@ -487,6 +475,138 @@ export function WaterTracker({
         />
       </ModuleFooter>
     </ModuleCard>
+  );
+}
+
+const WEEK_CHART_COLOR = DOMAIN.hydration;
+
+const weekChartConfig = {
+  ml: { label: "Water", color: WEEK_CHART_COLOR },
+} satisfies ChartConfig;
+
+/**
+ * The 7-day in-card bar chart — the hydration twin of the Sleep card's week
+ * chart (same axis grammar: bold today label, dimmed upcoming days, dashed
+ * goal line, full-strength bars on goal-hit days).
+ */
+function WaterWeekChart({
+  week,
+  goalMl,
+}: {
+  week: WaterDay[];
+  goalMl: number;
+}) {
+  const reveal = useMountReveal();
+  return (
+    <ChartContainer className="h-[120px] w-full" config={weekChartConfig}>
+      <BarChart
+        barCategoryGap="28%"
+        data={week}
+        margin={{ top: 6, right: 4, bottom: 0, left: 4 }}
+      >
+        <XAxis
+          axisLine={false}
+          dataKey="label"
+          tick={(props: {
+            x?: number | string;
+            y?: number | string;
+            index?: number;
+            payload?: { value?: unknown };
+          }) => {
+            const day = props.index == null ? undefined : week[props.index];
+            return (
+              <text
+                fill={
+                  day?.isToday
+                    ? "var(--foreground)"
+                    : "var(--muted-foreground)"
+                }
+                fillOpacity={day?.isFuture ? 0.5 : 1}
+                fontSize={12}
+                fontWeight={day?.isToday ? 600 : 400}
+                textAnchor="middle"
+                x={props.x}
+                y={Number(props.y ?? 0) + 10}
+              >
+                {String(props.payload?.value ?? "")}
+              </text>
+            );
+          }}
+          tickLine={false}
+          tickMargin={6}
+        />
+        <ChartTooltip
+          content={<WaterWeekTooltip goalMl={goalMl} />}
+          cursor={false}
+        />
+        <ReferenceLine
+          stroke={WEEK_CHART_COLOR}
+          strokeDasharray="4 4"
+          strokeOpacity={0.5}
+          y={goalMl}
+        />
+        <Bar
+          animationDuration={750}
+          animationEasing="ease-out"
+          dataKey="ml"
+          isAnimationActive={reveal}
+          radius={[3, 3, 0, 0]}
+        >
+          {week.map((d) => (
+            <Cell
+              fill={WEEK_CHART_COLOR}
+              fillOpacity={d.logged ? (d.ml >= goalMl ? 0.9 : 0.4) : 0}
+              key={d.t}
+            />
+          ))}
+        </Bar>
+      </BarChart>
+    </ChartContainer>
+  );
+}
+
+function WaterWeekTooltip({
+  active,
+  payload,
+  goalMl,
+}: {
+  active?: boolean;
+  payload?: { payload?: WaterDay }[];
+  goalMl: number;
+}) {
+  if (!active || !payload?.length) {
+    return null;
+  }
+  const row = payload[0]?.payload;
+  if (!row) {
+    return null;
+  }
+  const hit = row.logged && row.ml >= goalMl;
+  return (
+    <div className="min-w-[10rem] rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
+      <div className="mb-1.5 flex items-center justify-between gap-4">
+        <span className="font-medium">{row.dateLabel}</span>
+        <span className="font-medium text-foreground tabular-nums">
+          {row.logged ? formatOz(row.ml) : "—"}
+        </span>
+      </div>
+      {row.logged ? (
+        <div className="flex items-center justify-between gap-4 text-muted-foreground">
+          <span>
+            {goalMl > 0 ? Math.round((row.ml / goalMl) * 100) : 0}% of goal
+          </span>
+          <span className={hit ? "font-medium text-emerald-500" : ""}>
+            {hit
+              ? "Goal hit"
+              : `${formatOz(Math.max(0, goalMl - row.ml))} short`}
+          </span>
+        </div>
+      ) : (
+        <div className="text-muted-foreground">
+          {row.isFuture ? "Upcoming" : "Not logged"}
+        </div>
+      )}
+    </div>
   );
 }
 
