@@ -31,11 +31,15 @@ import { SLEEP_GOAL_MINUTES } from "@/lib/validation/sleep";
  * (audit rule 3: compact readout on /today, the full chart + history here).
  * Tracker card + full nightly trend + an editable History list, so any logged
  * night can be corrected or deleted (audit P1-3).
+ *
+ * Full-width desktop layout (LAY-1): the wide frame, with the tracker/logger
+ * card beside the nightly trend chart at xl and the history rows gridding up
+ * below; phones keep the stacked order unchanged.
  */
 
 export default function SleepPage() {
   return (
-    <PageShell active="/sleep">
+    <PageShell active="/sleep" className="max-w-[1500px]">
       <Toaster
         position="top-center"
         theme="system"
@@ -126,18 +130,41 @@ async function SleepContent() {
 
   return (
     <RewardProvider haptics={user.hapticsEnabled} sound={user.soundEnabled}>
-      <div className="flex flex-col gap-6">
-        <SleepTracker
-          goalMinutes={goalMinutes}
-          last={lastNight}
-          week={sleepWeek}
-          weekChart={!showTrend}
-        />
-        {showTrend && (
-          <SleepTrendChart days={sleepDaily} goalMinutes={goalMinutes} />
-        )}
-        <SleepHistory entries={history} goalMinutes={goalMinutes} />
-      </div>
+      {showTrend ? (
+        <div className="flex flex-col gap-6">
+          {/* Desktop (LAY-1): the tracker/logger beside the full trend chart;
+              a single column below xl in the unchanged phone order. Explicit
+              grid-cols-1 + min-w-0 children: without them the implicit column
+              sizes to max-content and phones/tablets get silently clipped by
+              overflow-x: clip (s182 gotcha). */}
+          <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
+            <div className="min-w-0">
+              <SleepTracker
+                goalMinutes={goalMinutes}
+                last={lastNight}
+                week={sleepWeek}
+                weekChart={false}
+              />
+            </div>
+            <div className="min-w-0">
+              <SleepTrendChart days={sleepDaily} goalMinutes={goalMinutes} />
+            </div>
+          </div>
+          <SleepHistory entries={history} goalMinutes={goalMinutes} />
+        </div>
+      ) : (
+        // Sparse data (fewer than 2 nights): no trend chart yet, so the
+        // tracker (with its in-card week chart) and the at-most-one history
+        // row sit in a centered column instead of stranding on the wide frame.
+        <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
+          <SleepTracker
+            goalMinutes={goalMinutes}
+            last={lastNight}
+            week={sleepWeek}
+          />
+          <SleepHistory entries={history} goalMinutes={goalMinutes} />
+        </div>
+      )}
     </RewardProvider>
   );
 }

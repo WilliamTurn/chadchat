@@ -29,13 +29,17 @@ export function WaterHistory({
       <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
         History · last 30 days
       </h2>
-      <div className="flex flex-col gap-2">
+      {/* Desktop (LAY-1): day rows grid 2-across at xl so 30 days don't run a
+          single narrow column down a wide frame. Explicit grid-cols-1 +
+          min-w-0 children (s182 gotcha: implicit columns size to max-content
+          and overflow-x: clip hides the damage from scrollWidth checks). */}
+      <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
         {rows.map((d) => {
           const hitGoal = d.ml >= goalMl;
           const pct = goalMl > 0 ? Math.min(d.ml / goalMl, 1) * 100 : 0;
           return (
             <div
-              className="flex items-center gap-4 rounded-xl border border-border bg-card px-4 py-3"
+              className="flex min-w-0 items-center gap-4 rounded-xl border border-border bg-card px-4 py-3"
               key={d.t}
             >
               <span className="w-24 shrink-0 text-muted-foreground text-xs">

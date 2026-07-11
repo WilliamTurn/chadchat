@@ -31,7 +31,7 @@ function DeleteEntryButton({ id }: { id: string }) {
   const [pending, startTransition] = useTransition();
   return (
     <Button
-      className="text-muted-foreground"
+      className="min-h-11 text-muted-foreground"
       disabled={pending}
       onClick={() =>
         startTransition(async () => {

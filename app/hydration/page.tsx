@@ -7,6 +7,7 @@ import { Kpi } from "@/components/dashboard/kpi";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
+import { WaterBackfill } from "@/components/today/water-backfill";
 import { WaterHistory } from "@/components/today/water-history";
 import { WaterTodayLog } from "@/components/today/water-today-log";
 import { RewardProvider } from "@/components/dashboard/reward";
@@ -28,14 +29,17 @@ import { buildWaterWeek } from "@/lib/today/week";
 /**
  * The dedicated Hydration page, water's ONE deep surface (audit rule 3 /
  * DSH-33: the /today card keeps the compact vessel + week strip; the deep
- * stats live here). Built to the /workouts template (VF-6): streak stat tiles,
- * the daily trend chart, and a day-by-day history, on the narrow tool-page
- * frame so the quick-add controls stop stretching.
+ * stats live here). Streak stat tiles, the daily trend chart, a day-by-day
+ * history, and the "Log a past day" backfill card (DSH-57).
+ *
+ * Full-width desktop layout (LAY-1): the wide frame, with the logger column
+ * (tracker + backfill) beside the day's data (today's itemized log + the
+ * trend chart) at xl; phones keep the stacked order unchanged.
  */
 
 export default function HydrationPage() {
   return (
-    <PageShell active="/hydration">
+    <PageShell active="/hydration" className="max-w-[1500px]">
       <Toaster
         position="top-center"
         theme="system"
@@ -109,12 +113,24 @@ async function HydrationContent() {
   const waterGoalMl = user.waterGoalMl ?? DEFAULT_WATER_GOAL_ML;
   const showTrend = waterDaily.length >= 2;
   const stats = computeWaterStats(waterDaily, waterGoalMl, timezone);
+  // Anything for the data column? Without it the 2-col grid would strand a
+  // dead band beside the logger (pro-app parity gate: no empty shells).
+  const hasDataColumn = showTrend || todayLog.length > 0;
 
   return (
     <RewardProvider haptics={user.hapticsEnabled} sound={user.soundEnabled}>
     <div className="flex flex-col gap-6">
+      {/* Stacked below sm like the /workouts stat tiles (house pattern); when
+          the logger column below is centered (no data column yet), center the
+          tiles with it so the page doesn't read as two different widths. */}
       {waterDaily.length > 0 && (
-        <div className="grid grid-cols-3 gap-3">
+        <div
+          className={
+            hasDataColumn
+              ? "grid grid-cols-1 gap-3 sm:grid-cols-3"
+              : "mx-auto grid w-full max-w-xl grid-cols-1 gap-3 sm:grid-cols-3"
+          }
+        >
           <StatCard>
             <Kpi
               label="Goal streak"
@@ -136,25 +152,41 @@ async function HydrationContent() {
           </StatCard>
         </div>
       )}
-      {/* One chart per page: the tracker's week strip only shows while there
-          isn't enough history for the full trend chart below (the same call
-          /sleep made in s123). Tracker + today's itemized log share a 2-up row
-          at the standard page width (DSH-49) so neither stretches sparse. */}
+      {/* Desktop (LAY-1): the logger column (tracker + past-day backfill)
+          beside the day's data (today's itemized log + the trend chart); a
+          single column below xl in the unchanged phone order. Explicit
+          grid-cols-1 + min-w-0 children: without them the implicit column
+          sizes to max-content and phones/tablets get silently clipped by
+          overflow-x: clip (s182 gotcha).
+
+          One CHART per page (VF-2): once the full trend chart renders, the
+          tracker drops its in-card 7-day chart via weekChart, but its streak
+          dot strip always stays (owner law s181, streak-strips-never-removed). */}
       <div
         className={
-          todayLog.length > 0
-            ? "grid gap-6 md:grid-cols-2 md:items-start"
-            : undefined
+          hasDataColumn
+            ? "grid grid-cols-1 items-start gap-6 xl:grid-cols-[420px_minmax(0,1fr)]"
+            : "mx-auto flex w-full max-w-xl flex-col gap-6"
         }
       >
-        <WaterTracker
-          goalMl={waterGoalMl}
-          totalMl={waterMl}
-          week={showTrend ? undefined : buildWaterWeek(waterDaily, timezone)}
-        />
-        <WaterTodayLog entries={todayLog} />
+        <div className="flex min-w-0 flex-col gap-6">
+          <WaterTracker
+            goalMl={waterGoalMl}
+            totalMl={waterMl}
+            week={buildWaterWeek(waterDaily, timezone)}
+            weekChart={!showTrend}
+          />
+          <WaterBackfill />
+        </div>
+        {hasDataColumn && (
+          <div className="flex min-w-0 flex-col gap-6">
+            <WaterTodayLog entries={todayLog} />
+            {showTrend && (
+              <WaterTrendChart days={waterDaily} goalMl={waterGoalMl} />
+            )}
+          </div>
+        )}
       </div>
-      {showTrend && <WaterTrendChart days={waterDaily} goalMl={waterGoalMl} />}
       <WaterHistory days={waterDaily} goalMl={waterGoalMl} />
     </div>
     </RewardProvider>

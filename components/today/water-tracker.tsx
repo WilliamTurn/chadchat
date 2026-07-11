@@ -100,6 +100,7 @@ export function WaterTracker({
   goalMl = DEFAULT_WATER_GOAL_ML,
   week,
   viewHref,
+  weekChart = true,
 }: {
   totalMl: number;
   goalMl?: number;
@@ -107,6 +108,10 @@ export function WaterTracker({
   week?: WaterDay[];
   /** The detail page ("View all →" /hydration) — omit when already on it. */
   viewHref?: string;
+  /** /hydration hides this in-card 7-day chart once the page's full trend
+   *  chart renders below (one chart per page, VF-2); the streak dot strip
+   *  stays either way (owner law s181, `streak-strips-never-removed`). */
+  weekChart?: boolean;
 }) {
   const reduceMotion = useReducedMotion();
   const reward = useReward();
@@ -162,7 +167,7 @@ export function WaterTracker({
     }
     if (oz > MAX_CUSTOM_OZ) {
       toast.error(
-        `That's more than a gallon — log up to ${MAX_CUSTOM_OZ} oz at a time.`
+        `That's more than a gallon. Log up to ${MAX_CUSTOM_OZ} oz at a time.`
       );
       return;
     }
@@ -466,9 +471,11 @@ export function WaterTracker({
               }))}
             />
           </div>
-          <div className="mt-3">
-            <WaterWeekChart goalMl={safeGoal} week={week} />
-          </div>
+          {weekChart && (
+            <div className="mt-3">
+              <WaterWeekChart goalMl={safeGoal} week={week} />
+            </div>
+          )}
         </>
       ) : null}
 

@@ -2276,13 +2276,19 @@ export async function getActivityDaysSince(
 export async function addWaterLog(entry: {
   userId: string;
   amountMl: number;
-}): Promise<void> {
+  /** Backfill instant (DSH-57); omitted means "now". */
+  recordedAt?: Date;
+}): Promise<string> {
   try {
-    await db.insert(waterLog).values({
-      userId: entry.userId,
-      amountMl: entry.amountMl,
-      recordedAt: new Date(),
-    });
+    const [created] = await db
+      .insert(waterLog)
+      .values({
+        userId: entry.userId,
+        amountMl: entry.amountMl,
+        recordedAt: entry.recordedAt ?? new Date(),
+      })
+      .returning({ id: waterLog.id });
+    return created.id;
   } catch (_error) {
     throw new ChatbotError("bad_request:database", "Failed to log water");
   }

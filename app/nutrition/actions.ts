@@ -7,7 +7,13 @@ import {
   analyzeFoodPhoto,
   analyzeNutritionLabel,
 } from "@/lib/ai/meal-analysis";
-import { parseCalendarDay, todayStartInTz } from "@/lib/date";
+import {
+  calendarRangeWindowInTz,
+  parseCalendarDay,
+  startOfDayUTC,
+  todayAnchorInTz,
+  todayStartInTz,
+} from "@/lib/date";
 import {
   addWaterLog,
   createMealAnalysis,
@@ -410,6 +416,58 @@ export async function logWaterAmount(
   revalidatePath("/today");
   revalidatePath("/hydration");
   return { ok: true };
+}
+
+/**
+ * Backfill water onto a past calendar day (DSH-57 / excellence-standards §12:
+ * every logger lets the member log past dates). The entry is stamped at noon
+ * on the member's wall clock for the picked day, so the tz-day bucketing in
+ * `getWaterDailyTotals` lands it on that day; picking today just logs "now"
+ * (identical to a quick-add, so it shows in Today's log with a real time).
+ * Returns the created entry id so the caller's toast can offer a one-tap Undo
+ * (the same `removeWaterEntry` the itemized Today's-log delete uses).
+ */
+export async function logWaterForDay(input: {
+  /** Calendar-day ISO ("2026-07-10") from the date picker. */
+  day: string;
+  amountMl: number;
+}): Promise<NutritionActionState & { id?: string }> {
+  const user = await requirePro();
+  if (!user) {
+    return { ok: false, error: "Not authorized." };
+  }
+  if (!Number.isFinite(input.amountMl) || input.amountMl <= 0) {
+    return { ok: false, error: "Enter how much you drank." };
+  }
+  const picked = parseCalendarDay(input.day);
+  if (!picked) {
+    return { ok: false, error: "Pick a day." };
+  }
+  const pickedAnchor = startOfDayUTC(picked).getTime();
+  const todayAnchor = todayAnchorInTz(user.timezone).getTime();
+  if (pickedAnchor > todayAnchor) {
+    return { ok: false, error: "That day hasn't happened yet." };
+  }
+  const clamped = Math.min(Math.round(input.amountMl), MAX_WATER_ML);
+  const recordedAt =
+    pickedAnchor === todayAnchor
+      ? new Date()
+      : new Date(
+          calendarRangeWindowInTz(
+            input.day,
+            input.day,
+            user.timezone
+          ).start.getTime() +
+            12 * 60 * 60 * 1000
+        );
+  const id = await addWaterLog({
+    userId: user.id,
+    amountMl: clamped,
+    recordedAt,
+  });
+  revalidatePath("/today");
+  revalidatePath("/hydration");
+  return { ok: true, id };
 }
 
 // Sane bounds for a daily hydration goal, in ml: a single glass up to two

@@ -41,7 +41,12 @@ function EditNightButton({ entry }: { entry: SleepHistoryEntry }) {
   return (
     <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger asChild>
-        <Button className="text-muted-foreground" size="sm" variant="ghost">
+        {/* min-h-11: 44px touch targets on the row actions (mobile gate). */}
+        <Button
+          className="min-h-11 text-muted-foreground"
+          size="sm"
+          variant="ghost"
+        >
           Edit
         </Button>
       </PopoverTrigger>
@@ -63,7 +68,7 @@ function DeleteNightButton({ id }: { id: string }) {
   const [pending, startTransition] = useTransition();
   return (
     <Button
-      className="text-muted-foreground"
+      className="min-h-11 text-muted-foreground"
       disabled={pending}
       onClick={() =>
         startTransition(async () => {
@@ -97,16 +102,18 @@ export function SleepHistory({
   return (
     <section>
       <h2 className="mb-4 font-medium text-lg">History</h2>
-      <div className="overflow-hidden rounded-2xl border border-border">
-        {entries.map((e, i) => {
+      {/* Desktop (LAY-1): night rows grid up (2-across from sm, 3 at xl) so
+          weeks of history don't run one narrow column down the wide frame.
+          Explicit grid-cols-1 + min-w-0 children (s182 gotcha: implicit
+          columns size to max-content and overflow-x: clip hides the damage
+          from scrollWidth checks). */}
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+        {entries.map((e) => {
           const hit = e.minutes >= goalMinutes;
           const quality = e.quality;
           return (
             <div
-              className={cn(
-                "flex items-center justify-between gap-4 bg-card px-5 py-3.5",
-                i > 0 && "border-border border-t"
-              )}
+              className="flex min-w-0 items-center justify-between gap-4 rounded-xl border border-border bg-card px-4 py-3"
               key={e.id}
             >
               <div className="min-w-0">
@@ -140,7 +147,9 @@ export function SleepHistory({
                   </span>
                 )}
               </div>
-              <div className="flex shrink-0 items-center gap-1">
+              {/* gap-2: keep the destructive Delete a full 8px clear of Edit
+                  so a thumb aiming for one can't land on the other. */}
+              <div className="flex shrink-0 items-center gap-2">
                 <EditNightButton entry={e} />
                 <DeleteNightButton id={e.id} />
               </div>
