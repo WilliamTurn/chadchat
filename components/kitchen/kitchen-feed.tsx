@@ -22,19 +22,23 @@ export function KitchenFeed({
   const [analyzing, setAnalyzing] = useState(false);
 
   return (
-    <div className="flex flex-col gap-8">
-      <section className="rounded-2xl border border-border bg-card p-6">
+    // Full-width desktop layout (LAY-1): photo form (left) and History
+    // (right) side by side at xl, matching /nutrition's form + diary shape;
+    // phones keep the stacked order. Explicit grid-cols-1 so the single
+    // narrow column sizes to the container, not the cards' max-content.
+    <div className="grid grid-cols-1 items-start gap-8 xl:grid-cols-2">
+      <section className="min-w-0 rounded-2xl border border-border bg-card p-6">
         <KitchenForm onAnalyzingChange={setAnalyzing} />
       </section>
 
       {analyzing || hasEntries ? (
-        <section className="flex flex-col gap-4">
+        <section className="flex min-w-0 flex-col gap-4">
           <h2 className="font-medium text-lg">History</h2>
           {analyzing && <KitchenAnalysisSkeleton />}
           {history}
         </section>
       ) : (
-        <div className="flex flex-col items-center gap-3 py-10 text-center">
+        <div className="flex min-w-0 flex-col items-center gap-3 py-10 text-center">
           <div className="flex size-16 items-center justify-center rounded-full bg-blood/10">
             <Refrigerator className="size-7 text-blood" />
           </div>

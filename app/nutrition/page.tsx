@@ -55,7 +55,9 @@ export default function NutritionPage({
   searchParams: Promise<{ day?: string }>;
 }) {
   return (
-    <PageShell active="/nutrition">
+    // Full-width desktop layout (LAY-1): the wide frame, filled with the log
+    // form + day totals side by side and multi-column meal grids.
+    <PageShell active="/nutrition" className="max-w-[1500px]">
       <Toaster
         position="top-center"
         theme="system"
@@ -242,34 +244,54 @@ async function Feed({
   return (
     <div className="flex flex-col gap-8">
       <ScrollToHash />
-      <section
-        className="rounded-2xl border border-border bg-card p-6"
-        id="log-meal"
-      >
-        {/* Keyed by day so browsing to a past day re-arms the form's date to
-            that day: logging from a day view lands ON that day, visibly. */}
-        <AnalyzeForm
-          initialDate={viewingToday ? undefined : dayISO}
-          key={dayISO}
-          recentFoods={recentFoods}
-        />
-      </section>
-
-      <DaySection
-        dayNav={
-          <DayNav
-            dayISO={dayISO}
-            nextISO={nextISO}
-            prevISO={prevISO}
-            todayISO={todayISO}
+      {/* Full-width desktop layout (LAY-1): the log form and the day's totals
+          sit side by side on desktop (the "form + summary" pattern); phones
+          keep the existing stacked order. */}
+      {/* Explicit grid-cols-1 (minmax(0,1fr)) below xl: without it the
+          implicit column sizes to the cards' max-content and overflows
+          phones/tablets (clipped invisibly by overflow-x: clip). */}
+      <div className="grid grid-cols-1 items-start gap-8 xl:grid-cols-2">
+        <section
+          className="min-w-0 rounded-2xl border border-border bg-card p-6"
+          id="log-meal"
+        >
+          {/* Keyed by day so browsing to a past day re-arms the form's date to
+              that day: logging from a day view lands ON that day, visibly. */}
+          <AnalyzeForm
+            initialDate={viewingToday ? undefined : dayISO}
+            key={dayISO}
+            recentFoods={recentFoods}
           />
-        }
-        firstEver={meals.length === 0 && viewingToday}
-        heading={heading}
-        meals={dayMeals}
-        target={target}
-        viewingToday={viewingToday}
-      />
+        </section>
+
+        {/* The diary column: day summary + that day's meals. Keeping the
+            meals INSIDE the column (not full-width below) fills the space
+            under the summary on desktop instead of stranding a dead band
+            beside the taller log form; on phones the stacked order is
+            unchanged. */}
+        <div className="flex min-w-0 flex-col gap-4">
+          <DaySummary
+            dayNav={
+              <DayNav
+                dayISO={dayISO}
+                nextISO={nextISO}
+                prevISO={prevISO}
+                todayISO={todayISO}
+              />
+            }
+            heading={heading}
+            meals={dayMeals}
+            target={target}
+            viewingToday={viewingToday}
+          />
+
+          <DayMealList
+            firstEver={meals.length === 0 && viewingToday}
+            meals={dayMeals}
+            viewingToday={viewingToday}
+          />
+        </div>
+      </div>
 
       {recalibration?.kind === "recommend" && (
         <RecalibrationCard rec={recalibration} />
@@ -296,52 +318,24 @@ async function Feed({
   );
 }
 
-function DaySection({
+function DaySummary({
   meals,
   target,
-  firstEver,
   heading,
   viewingToday,
   dayNav,
 }: {
   meals: MealAnalysis[];
   target: NutritionTarget | undefined;
-  firstEver: boolean;
   heading: string;
   viewingToday: boolean;
   dayNav: ReactNode;
 }) {
-  const grouped: { label: string; items: MealAnalysis[] }[] = [];
-  for (const cat of MEAL_CATEGORIES) {
-    if (cat === "other") {
-      continue;
-    }
-    const items = meals.filter((m) => m.meal === cat);
-    if (items.length > 0) {
-      grouped.push({ label: MEAL_LABEL[cat], items });
-    }
-  }
-  // Custom slots ("other") group under the member's own name, so a
-  // "Post-workout shake" reads as its own section like the standard meals.
-  // Unnamed customs and pre-category rows share a plain "Other" bucket.
-  const custom = new Map<string, MealAnalysis[]>();
-  for (const m of meals) {
-    if (m.meal === "other" || !m.meal) {
-      const label =
-        (m.meal === "other" && m.mealLabel?.trim()) || MEAL_LABEL.other;
-      const bucket = custom.get(label) ?? [];
-      bucket.push(m);
-      custom.set(label, bucket);
-    }
-  }
-  for (const [label, items] of custom) {
-    grouped.push({ label, items });
-  }
-
   return (
     // id="history": where the dashboard card's "View all" link lands (R2-5) --
-    // the day's logged meals, with Earlier right below, not the log form.
-    <section className="flex flex-col gap-4" id="history">
+    // the day heading + totals, with the day's meals right below, not the
+    // log form.
+    <section className="flex min-w-0 flex-col gap-4" id="history">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <div className="flex items-baseline gap-3">
           <h2 className="font-medium text-lg">{heading}</h2>
@@ -349,7 +343,10 @@ function DaySection({
             {meals.length} meal{meals.length === 1 ? "" : "s"}
           </span>
         </div>
-        <div className="ml-auto flex shrink-0 items-center gap-1">
+        {/* Wraps (never shrink-0 nowrap): on a 390 phone the three controls
+            can't fit one line, and clipping "Ask Chad" off-screen is worse
+            than a second right-aligned line. */}
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-1">
           {dayNav}
           <TargetEditor
             calories={target?.calories ?? null}
@@ -380,29 +377,72 @@ function DaySection({
           proteinTarget={target?.protein ?? null}
         />
       </div>
+    </section>
+  );
+}
 
-      {meals.length === 0 ? (
-        firstEver ? (
-          <NutritionEmptyState />
-        ) : (
-          <p className="text-muted-foreground text-sm">
-            {viewingToday
-              ? "No meals logged today. Add your first above."
-              : "No meals logged this day. Log one above and it lands here."}
-          </p>
-        )
-      ) : (
-        grouped.map((group) => (
-          <div className="flex flex-col gap-3" key={group.label}>
-            <h3 className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
-              {group.label}
-            </h3>
-            {group.items.map((entry) => (
-              <AnalysisCard entry={entry} key={entry.id} />
-            ))}
-          </div>
-        ))
-      )}
+function DayMealList({
+  meals,
+  firstEver,
+  viewingToday,
+}: {
+  meals: MealAnalysis[];
+  firstEver: boolean;
+  viewingToday: boolean;
+}) {
+  if (meals.length === 0) {
+    return firstEver ? (
+      <NutritionEmptyState />
+    ) : (
+      <p className="text-muted-foreground text-sm">
+        {viewingToday
+          ? "No meals logged today. Add your first above."
+          : "No meals logged this day. Log one above and it lands here."}
+      </p>
+    );
+  }
+
+  const grouped: { label: string; items: MealAnalysis[] }[] = [];
+  for (const cat of MEAL_CATEGORIES) {
+    if (cat === "other") {
+      continue;
+    }
+    const items = meals.filter((m) => m.meal === cat);
+    if (items.length > 0) {
+      grouped.push({ label: MEAL_LABEL[cat], items });
+    }
+  }
+  // Custom slots ("other") group under the member's own name, so a
+  // "Post-workout shake" reads as its own section like the standard meals.
+  // Unnamed customs and pre-category rows share a plain "Other" bucket.
+  const custom = new Map<string, MealAnalysis[]>();
+  for (const m of meals) {
+    if (m.meal === "other" || !m.meal) {
+      const label =
+        (m.meal === "other" && m.mealLabel?.trim()) || MEAL_LABEL.other;
+      const bucket = custom.get(label) ?? [];
+      bucket.push(m);
+      custom.set(label, bucket);
+    }
+  }
+  for (const [label, items] of custom) {
+    grouped.push({ label, items });
+  }
+
+  return (
+    // Lives inside the diary column (right half at desktop), so groups stack
+    // at every width — the column itself is what fills the desktop layout.
+    <section className="flex min-w-0 flex-col gap-4">
+      {grouped.map((group) => (
+        <div className="flex min-w-0 flex-col gap-3" key={group.label}>
+          <h3 className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
+            {group.label}
+          </h3>
+          {group.items.map((entry) => (
+            <AnalysisCard entry={entry} key={entry.id} />
+          ))}
+        </div>
+      ))}
     </section>
   );
 }
@@ -462,7 +502,9 @@ function HistorySection({ meals }: { meals: MealAnalysis[] }) {
                 Open day
               </Link>
             </summary>
-            <div className="flex flex-col gap-3">
+            {/* Two meal cards across on desktop (LAY-1); grid-cols-1 keeps the
+                phone column container-sized (max-content overflows). */}
+            <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
               {day.items.map((entry) => (
                 <AnalysisCard entry={entry} key={entry.id} />
               ))}

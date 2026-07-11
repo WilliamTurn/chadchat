@@ -554,9 +554,15 @@ export function MacroRings({
   const noTarget = caloriesTarget == null || caloriesTarget <= 0;
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-8">
-        <div className="flex shrink-0 justify-center sm:justify-start">
+    // Container query, not viewport breakpoints: this summary renders inside
+    // containers of very different widths (a half-column at desktop, a full
+    // row on /meal-plan, ~420px at a 768 viewport beside the expanded
+    // sidebar). Going dial-beside-bars by VIEWPORT width overflowed narrow
+    // containers on wide-enough screens; the row now forms only when the
+    // container itself is >= 30rem.
+    <div className="@container flex flex-col gap-5">
+      <div className="flex flex-col gap-6 @[30rem]:flex-row @[30rem]:items-center @[30rem]:gap-8">
+        <div className="flex shrink-0 justify-center @[30rem]:justify-start">
           <CalorieDial
             consumed={caloriesConsumed}
             consumedLabel={consumedLabel}
@@ -582,7 +588,7 @@ export function MacroRings({
             barColor="bg-amber-400"
             consumed={carbsConsumed}
             consumedLabel={consumedLabel}
-            label="Carb"
+            label="Carbs"
             reduced={reduced}
             target={carbsTarget}
             textColor="text-amber-400"

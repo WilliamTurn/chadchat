@@ -42,7 +42,7 @@ export function NewPlanSection({ children }: { children: ReactNode }) {
           </p>
           {children}
           <Button
-            className="mt-3 w-full text-muted-foreground"
+            className="mt-3 w-full text-muted-foreground sm:w-auto"
             onClick={() => setOpen(false)}
             type="button"
             variant="ghost"

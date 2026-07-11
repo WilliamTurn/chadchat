@@ -16,7 +16,9 @@ import { getKitchenAnalysesByUserId, getUserById } from "@/lib/db/queries";
 
 export default function KitchenPage() {
   return (
-    <PageShell active="/kitchen">
+    // Full-width desktop layout (LAY-1): the wide frame, photo form and
+    // history side by side on desktop (matches its sibling /nutrition).
+    <PageShell active="/kitchen" className="max-w-[1500px]">
       <Toaster
         position="top-center"
         theme="system"

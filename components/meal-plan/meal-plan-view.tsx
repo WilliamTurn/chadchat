@@ -470,18 +470,22 @@ export function MealPlanView({ plan }: { plan: MealPlanViewData }) {
             />
           </div>
 
-          {day.meals.map((meal, mealIdx) => (
-            <MealCard
-              editing={editing}
-              key={`${meal.slot}-${mealIdx}`}
-              meal={meal}
-              onPatchFood={(foodIdx, patch) =>
-                patchFood(mealIdx, foodIdx, patch)
-              }
-              onPatchTitle={(value) => patchMealTitle(mealIdx, value)}
-              onRemoveFood={(foodIdx) => removeFood(mealIdx, foodIdx)}
-            />
-          ))}
+          {/* Two meal cards across on desktop (LAY-1); grid-cols-1 keeps the
+              phone column container-sized (max-content overflows). */}
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+            {day.meals.map((meal, mealIdx) => (
+              <MealCard
+                editing={editing}
+                key={`${meal.slot}-${mealIdx}`}
+                meal={meal}
+                onPatchFood={(foodIdx, patch) =>
+                  patchFood(mealIdx, foodIdx, patch)
+                }
+                onPatchTitle={(value) => patchMealTitle(mealIdx, value)}
+                onRemoveFood={(foodIdx) => removeFood(mealIdx, foodIdx)}
+              />
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -566,7 +570,9 @@ function DaySwitchCard({
   return (
     <button
       className={cn(
-        "flex w-28 shrink-0 snap-start flex-col gap-1.5 rounded-xl border p-3 text-left transition-colors",
+        // Fixed-width swipe cards on phones; on desktop the 7 cards grow to
+        // fill the full row (LAY-1).
+        "flex w-28 shrink-0 snap-start flex-col gap-1.5 rounded-xl border p-3 text-left transition-colors lg:w-auto lg:min-w-28 lg:flex-1",
         active
           ? "border-blood/60 bg-card ring-1 ring-blood/30"
           : "border-border bg-card/60 hover:bg-card"
@@ -641,7 +647,9 @@ function MealCard({
   return (
     <div
       className={cn(
-        "rounded-2xl border bg-card p-5 transition-shadow hover:shadow-[var(--shadow-float)]",
+        // flex-col so grid-equalized cards pin "Log as eaten" to the bottom;
+        // min-w-0 so the card shrinks to its grid track on phones.
+        "flex min-w-0 flex-col rounded-2xl border bg-card p-5 transition-shadow hover:shadow-[var(--shadow-float)]",
         logged ? "border-emerald-500/40 ring-1 ring-emerald-500/30" : "border-border"
       )}
     >
@@ -673,7 +681,10 @@ function MealCard({
           const noMatch = !food.per100g;
           return (
             <li
-              className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0"
+              // flex-wrap + the name's min-width: on narrow phones the macro
+              // line drops to its own right-aligned second line instead of
+              // squeezing the food name down to single letters.
+              className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5 first:pt-0 last:pb-0"
               key={`${food.name}-${foodIdx}`}
             >
               {!editing && (
@@ -711,7 +722,7 @@ function MealCard({
                 </span>
               )}
 
-              <div className="min-w-0 flex-1">
+              <div className="min-w-36 flex-1">
                 {editing ? (
                   <Input
                     aria-label="Food name"
@@ -743,7 +754,7 @@ function MealCard({
                 {!(editing || noMatch) && <MacroMicroBar m={m} />}
               </div>
 
-              <span className="shrink-0 text-right text-muted-foreground text-xs tabular-nums">
+              <span className="ml-auto shrink-0 text-right text-muted-foreground text-xs tabular-nums">
                 {noMatch ? "—" : macroLine(m)}
               </span>
 
@@ -765,7 +776,7 @@ function MealCard({
       </ul>
 
       {!editing && (
-        <div className="mt-4 flex justify-end">
+        <div className="mt-auto flex justify-end pt-4">
           <Button
             className={cn(
               "gap-1.5",

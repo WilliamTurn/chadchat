@@ -170,12 +170,13 @@ export function MacroTrendChart({
       range={control}
       title="Nutrition trend"
     >
-      {/* Metric switch */}
+      {/* Metric switch — min-h-9 keeps each chip a real touch target on
+          phones (the 25px-tall chips were easy to mis-tap). */}
       <div className="mb-4 inline-flex items-center gap-0.5 rounded-lg border border-border bg-muted/40 p-0.5">
         {METRIC_ORDER.map((key) => (
           <button
             className={cn(
-              "rounded-md px-2.5 py-1 font-medium text-xs transition-colors",
+              "min-h-9 rounded-md px-3 py-1.5 font-medium text-xs transition-colors",
               metric === key
                 ? "bg-card text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"

@@ -32,7 +32,9 @@ export const maxDuration = 300;
 
 export default function MealPlanPage() {
   return (
-    <PageShell active="/meal-plan">
+    // Full-width desktop layout (LAY-1): the wide frame, filled with the
+    // plan's multi-column meal grid and full-row day switcher.
+    <PageShell active="/meal-plan" className="max-w-[1500px]">
       <Toaster
         position="top-center"
         theme="system"

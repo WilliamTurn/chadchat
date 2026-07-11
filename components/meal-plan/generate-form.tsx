@@ -184,7 +184,7 @@ export function GenerateForm({
         <Label>Eating style</Label>
         <SegmentedPicker
           ariaLabel="Eating style"
-          className="grid-cols-1 min-[480px]:grid-cols-2"
+          className="grid-cols-1 min-[480px]:grid-cols-2 xl:grid-cols-3"
           onChange={(v) => setDietStyle(v as DietStyle)}
           options={DIET_OPTIONS}
           value={dietStyle}
@@ -315,7 +315,14 @@ export function GenerateForm({
         </span>
       </div>
 
-      <Button className="w-full" disabled={pending} size="lg" type="submit">
+      {/* Full-width tap target on phones; anchored to the form's left edge on
+          wider screens (the s180 form-button ruling), never a screen-wide bar. */}
+      <Button
+        className="w-full sm:w-auto sm:self-start sm:px-8"
+        disabled={pending}
+        size="lg"
+        type="submit"
+      >
         {pending ? (
           <>
             <Loader2 className="size-4 animate-spin" />
