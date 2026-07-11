@@ -678,6 +678,7 @@ export function SessionPlayer({
   const {
     session,
     ready,
+    completeAllSets,
     renameSession,
     setSessionNotes,
     timerPlay,
@@ -1026,6 +1027,27 @@ export function SessionPlayer({
           )}
         </div>
       </div>
+
+      {/* Session-wide bulk check-off, visible at the top (owner order s181:
+          not only inside the per-exercise Options menu). One tap marks every
+          remaining set of every exercise as done. */}
+      {uncheckedSets > 0 && (
+        <div className="mb-3 flex justify-end">
+          <WButton
+            aria-label="Mark every set in this workout as done"
+            className="gap-1.5"
+            onClick={() =>
+              completeAllSets(
+                collectRemainingPRs(session.exercises, prBaseline, session.unit)
+              )
+            }
+            size="sm"
+          >
+            <CheckCheck aria-hidden className="size-4" />
+            Mark all sets done
+          </WButton>
+        </div>
+      )}
 
       {/* Exercise list */}
       {session.exercises.length === 0 ? (
