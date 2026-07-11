@@ -12,7 +12,7 @@ export function DeleteEntryButton({ id }: { id: string }) {
 
   return (
     <Button
-      className="text-muted-foreground"
+      className="min-h-11 text-muted-foreground"
       disabled={pending}
       onClick={() =>
         startTransition(async () => {

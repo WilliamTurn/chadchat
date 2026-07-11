@@ -4,11 +4,11 @@ import { ArrowDownRight, ArrowUpRight, Ruler, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { useReward } from "@/components/dashboard/reward";
 import {
   addBodyMeasurement,
   removeBodyMeasurement,
 } from "@/app/progress/actions";
+import { useReward } from "@/components/dashboard/reward";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
@@ -106,8 +106,7 @@ export function MeasurementsSection({
   const reward = useReward();
   const [pending, startTransition] = useTransition();
   const [date, setDate] = useState(todayISO);
-  const [kind, setKind] =
-    useState<(typeof MEASUREMENT_KINDS)[number]>("waist");
+  const [kind, setKind] = useState<(typeof MEASUREMENT_KINDS)[number]>("waist");
   const [value, setValue] = useState("");
   const [unit, setUnit] = useState<"in" | "cm">("in");
 
@@ -162,8 +161,8 @@ export function MeasurementsSection({
       </div>
       <p className="mb-4 text-muted-foreground text-sm">
         The scale lies on a cut or a bulk — the tape doesn't. A shrinking waist
-        with a steady scale means you're losing fat and holding muscle. Track the
-        spots that matter and watch them move.
+        with a steady scale means you're losing fat and holding muscle. Track
+        the spots that matter and watch them move.
       </p>
 
       <form className="flex flex-wrap items-end gap-3" onSubmit={onSubmit}>
@@ -231,7 +230,7 @@ export function MeasurementsSection({
       </form>
 
       {byKind.size > 0 ? (
-        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {[...byKind.entries()].map(([k, list]) => {
             const latest = list.at(-1);
             const firstVal = list[0]?.value;
@@ -257,13 +256,15 @@ export function MeasurementsSection({
                   </div>
                   <div className="font-display font-semibold text-lg">
                     {latest?.value}
-                    <span className="ml-0.5 text-muted-foreground text-sm">
+                    <span className="ml-1 text-muted-foreground text-sm">
                       {latest?.unit}
                     </span>
                     {change != null && change !== 0 && (
                       <span
                         className={`ml-2 inline-flex items-center gap-0.5 text-xs ${
-                          isProgress ? "text-emerald-500" : "text-muted-foreground"
+                          isProgress
+                            ? "text-emerald-500"
+                            : "text-muted-foreground"
                         }`}
                         title={`${change > 0 ? "+" : ""}${change} ${latest?.unit} since your first reading`}
                       >

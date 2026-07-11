@@ -81,7 +81,9 @@ export function MontageCard({
 
       {content && (
         <>
-          <div className="mt-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {/* xl: the card sits in a half-page column (LAY-1), so the strip
+              drops back to 2-up there. */}
+          <div className="mt-5 grid grid-cols-2 gap-4 lg:grid-cols-4 xl:grid-cols-2">
             {content.frames.map((frame) => (
               <figure key={frame.photoUrl} className="min-w-0">
                 {/* biome-ignore lint/performance/noImgElement: user-uploaded blob images, sizes vary */}

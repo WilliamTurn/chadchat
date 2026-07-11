@@ -75,13 +75,15 @@ export function EditEntryButton({
   return (
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
+        {/* 44px touch target: the row's edit sits next to Delete, so an
+            undersized pencil is a mis-tap trap on phones. */}
         <Button
           aria-label="Edit entry"
-          className="size-7 text-muted-foreground"
+          className="size-11 text-muted-foreground"
           size="icon"
           variant="ghost"
         >
-          <Pencil className="size-3.5" />
+          <Pencil className="size-4" />
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -92,11 +94,7 @@ export function EditEntryButton({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor="e-date">Date</Label>
-              <DatePicker
-                id="e-date"
-                onChange={setDate}
-                value={date}
-              />
+              <DatePicker id="e-date" onChange={setDate} value={date} />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="e-weight">Weight</Label>
@@ -108,10 +106,7 @@ export function EditEntryButton({
                   placeholder="e.g. 184.5"
                   value={w}
                 />
-                <Select
-                  onValueChange={(v) => setU(v as "lb" | "kg")}
-                  value={u}
-                >
+                <Select onValueChange={(v) => setU(v as "lb" | "kg")} value={u}>
                   <SelectTrigger
                     aria-label="Weight unit"
                     className="h-9 shrink-0 rounded-lg"
@@ -137,6 +132,14 @@ export function EditEntryButton({
             />
           </div>
           <DialogFooter>
+            {/* A visible way out on touch devices (no Escape key there). */}
+            <Button
+              onClick={() => setOpen(false)}
+              type="button"
+              variant="outline"
+            >
+              Cancel
+            </Button>
             <Button disabled={pending} type="submit">
               {pending ? "Saving…" : "Save changes"}
             </Button>

@@ -29,7 +29,9 @@ export const maxDuration = 800;
 
 export default function FutureYouPage() {
   return (
-    <PageShell active="/future-you">
+    // Full-width desktop layout (LAY-1): the wide frame; the experience fills
+    // it with a two-column intake and a checkpoint gallery grid.
+    <PageShell active="/future-you" className="max-w-[1500px]">
       <Toaster
         position="top-center"
         theme="system"
@@ -39,18 +41,18 @@ export default function FutureYouPage() {
         }}
       />
 
-
-      <div className="mb-8 max-w-2xl">
+      <div className="mb-8">
         <BackToDashboard />
         <div className="flex items-center gap-3">
           <h1 className="font-semibold text-2xl tracking-tight">Future You</h1>
           <Badge variant="secondary">Pro feature</Badge>
         </div>
-        <p className="mt-1 text-muted-foreground text-sm">
+        {/* Text keeps a readable measure WITHIN the full-width frame. */}
+        <p className="mt-1 max-w-2xl text-muted-foreground text-sm">
           Send Chad clear photos of yourself today. From deep analysis of your
-          photos, your goal, and your calculated pace, he shows you exactly
-          what you&apos;ll look like at each dated checkpoint on the way to
-          your goal, and where you land if you quit.
+          photos, your goal, and your calculated pace, he shows you exactly what
+          you&apos;ll look like at each dated checkpoint on the way to your
+          goal, and where you land if you quit.
         </p>
       </div>
 
@@ -97,19 +99,17 @@ async function FutureYouContent() {
   const forecast = await getLatestForecast();
 
   return (
-    <div className="max-w-2xl">
-      <FutureYouExperience
-        goalId={goal.id}
-        goalTitle={goal.title}
-        initial={forecast}
-      />
-    </div>
+    <FutureYouExperience
+      goalId={goal.id}
+      goalTitle={goal.title}
+      initial={forecast}
+    />
   );
 }
 
 function UpgradePrompt() {
   return (
-    <div className="max-w-2xl rounded-2xl border border-border bg-card p-8 text-center">
+    <div className="rounded-2xl border border-border bg-card p-8 text-center">
       <h2 className="font-medium text-lg">Future You is a Chad Pro feature</h2>
       <p className="mx-auto mt-2 max-w-md text-muted-foreground text-sm">
         Upgrade to Pro and see yourself at your goal before you get there:
@@ -125,9 +125,9 @@ function UpgradePrompt() {
 
 function GoalGate() {
   return (
-    <div className="max-w-2xl rounded-2xl border border-border bg-card p-8">
+    <div className="rounded-2xl border border-border bg-card p-8">
       <h2 className="font-medium text-lg">First, Chad needs your goal</h2>
-      <p className="mt-2 text-muted-foreground text-sm">
+      <p className="mt-2 max-w-2xl text-muted-foreground text-sm">
         The forecast is computed from your goal: the target, the honest pace,
         and the dates. Without one, Chad has nothing real to project. Set your
         goal, then come back here with your photos.

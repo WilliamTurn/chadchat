@@ -21,7 +21,7 @@ export function PhotoCompare({ photos }: { photos: Photo[] }) {
   const after = photos[afterIdx];
 
   return (
-    <section>
+    <section className="rounded-2xl border border-border bg-card p-6">
       <h2 className="mb-1 font-medium text-lg">Before / after</h2>
       <p className="mb-4 text-muted-foreground text-sm">
         Pick two dates and see the change side by side.
@@ -75,7 +75,7 @@ function PickedPhoto({
       <figcaption className="px-3 py-2">
         <select
           aria-label={`${label} photo`}
-          className="w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          className="h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           onChange={(e) => onChange(Number(e.target.value))}
           value={selectedIdx}
         >

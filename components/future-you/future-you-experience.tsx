@@ -193,117 +193,126 @@ function IntakePanel({
         </Link>
       </p>
 
-      <ul className="mt-5 space-y-2 text-sm">
-        <ChecklistItem>
-          {MIN_PHOTOS} to {MAX_PHOTOS} photos, JPEG or PNG, from different
-          angles.
-        </ChecklistItem>
-        <ChecklistItem>
-          Your face fully visible in every photo: no sunglasses, no phone in
-          front of your face, no heavy shadows.
-        </ChecklistItem>
-        <ChecklistItem>
-          At least one full-body photo, head to feet.
-        </ChecklistItem>
-        <ChecklistItem>
-          Sharp focus, good light, fitted clothing that shows your build.
-        </ChecklistItem>
-      </ul>
+      {/* Desktop (LAY-1): requirements beside the upload grid; stacked below
+          lg. Explicit grid-cols-1 + min-w-0 children so the implicit column
+          never sizes to max-content and clips phones/tablets. */}
+      <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+        <div className="min-w-0">
+          <ul className="space-y-2 text-sm">
+            <ChecklistItem>
+              {MIN_PHOTOS} to {MAX_PHOTOS} photos, JPEG or PNG, from different
+              angles.
+            </ChecklistItem>
+            <ChecklistItem>
+              Your face fully visible in every photo: no sunglasses, no phone in
+              front of your face, no heavy shadows.
+            </ChecklistItem>
+            <ChecklistItem>
+              At least one full-body photo, head to feet.
+            </ChecklistItem>
+            <ChecklistItem>
+              Sharp focus, good light, fitted clothing that shows your build.
+            </ChecklistItem>
+          </ul>
 
-      {failedNote && !rejectNote ? (
-        <Note title="THE LAST RUN DIDN'T FINISH" tone="destructive">
-          {failedNote}
-        </Note>
-      ) : null}
+          {failedNote && !rejectNote ? (
+            <Note title="THE LAST RUN DIDN'T FINISH" tone="destructive">
+              {failedNote}
+            </Note>
+          ) : null}
 
-      {rejectNote ? (
-        <Note title="CHAD'S PHOTO CHECK" tone="destructive">
-          {rejectNote}
-        </Note>
-      ) : null}
+          {rejectNote ? (
+            <Note title="CHAD'S PHOTO CHECK" tone="destructive">
+              {rejectNote}
+            </Note>
+          ) : null}
+        </div>
 
-      <div className="mt-6 grid grid-cols-3 gap-2 sm:grid-cols-4">
-        {photos.map((photo, i) => (
-          <div
-            className="relative aspect-square overflow-hidden rounded-lg border border-border"
-            key={photo.url}
-          >
-            {/* biome-ignore lint/performance/noImgElement: user Blob photo, same treatment as /progress */}
-            <img
-              alt={`Your upload ${i + 1}`}
-              className="size-full object-cover"
-              src={photo.url}
-            />
-            <button
-              aria-label={`Remove photo ${i + 1}`}
-              className="absolute top-1 right-1 flex size-8 items-center justify-center rounded-full bg-black/70 text-white transition-colors hover:bg-black/90"
-              onClick={() =>
-                setPhotos((prev) => prev.filter((p) => p.url !== photo.url))
-              }
-              type="button"
+        <div className="min-w-0">
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+            {photos.map((photo, i) => (
+              <div
+                className="relative aspect-square overflow-hidden rounded-lg border border-border"
+                key={photo.url}
+              >
+                {/* biome-ignore lint/performance/noImgElement: user Blob photo, same treatment as /progress */}
+                <img
+                  alt={`Your upload ${i + 1}`}
+                  className="size-full object-cover"
+                  src={photo.url}
+                />
+                <button
+                  aria-label={`Remove photo ${i + 1}`}
+                  className="absolute top-1 right-1 flex size-8 items-center justify-center rounded-full bg-black/70 text-white transition-colors hover:bg-black/90"
+                  onClick={() =>
+                    setPhotos((prev) => prev.filter((p) => p.url !== photo.url))
+                  }
+                  type="button"
+                >
+                  <X aria-hidden className="size-4" />
+                </button>
+              </div>
+            ))}
+            {uploading ? (
+              <div className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border border-border border-dashed text-muted-foreground">
+                <Loader2 aria-hidden className="size-5 animate-spin" />
+                <span aria-live="polite" className="text-xs">
+                  Uploading {uploadingCount}...
+                </span>
+              </div>
+            ) : null}
+            {photos.length + uploadingCount < MAX_PHOTOS ? (
+              <button
+                className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border border-border border-dashed text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
+                onClick={() => fileInputRef.current?.click()}
+                type="button"
+              >
+                <ImagePlus aria-hidden className="size-5" />
+                <span className="text-xs">Add photo</span>
+              </button>
+            ) : null}
+          </div>
+          <input
+            accept="image/jpeg,image/png"
+            className="hidden"
+            multiple
+            onChange={(e) => {
+              handleFiles(e.target.files);
+              e.target.value = "";
+            }}
+            ref={fileInputRef}
+            type="file"
+          />
+
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-muted-foreground text-xs">
+              Your photos stay in your account and are used only to build your
+              forecast.
+            </p>
+            <Button
+              className="min-h-11 w-full sm:w-auto"
+              disabled={!ready || isPending}
+              onClick={handleGenerate}
             >
-              <X aria-hidden className="size-4" />
-            </button>
+              {isPending ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Chad is checking your photos...
+                </>
+              ) : (
+                "Generate my forecast"
+              )}
+            </Button>
           </div>
-        ))}
-        {uploading ? (
-          <div className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border border-border border-dashed text-muted-foreground">
-            <Loader2 aria-hidden className="size-5 animate-spin" />
-            <span aria-live="polite" className="text-xs">
-              Uploading {uploadingCount}...
-            </span>
-          </div>
-        ) : null}
-        {photos.length + uploadingCount < MAX_PHOTOS ? (
-          <button
-            className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border border-border border-dashed text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
-            onClick={() => fileInputRef.current?.click()}
-            type="button"
-          >
-            <ImagePlus aria-hidden className="size-5" />
-            <span className="text-xs">Add photo</span>
-          </button>
-        ) : null}
+          {photos.length < MIN_PHOTOS ? (
+            <p className="mt-2 text-muted-foreground text-xs">
+              {photos.length === 0
+                ? `Add at least ${MIN_PHOTOS} photos to unlock your forecast.`
+                : `${MIN_PHOTOS - photos.length} more photo${MIN_PHOTOS - photos.length === 1 ? "" : "s"} to go.`}
+            </p>
+          ) : null}
+        </div>
       </div>
-      <input
-        accept="image/jpeg,image/png"
-        className="hidden"
-        multiple
-        onChange={(e) => {
-          handleFiles(e.target.files);
-          e.target.value = "";
-        }}
-        ref={fileInputRef}
-        type="file"
-      />
-
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-muted-foreground text-xs">
-          Your photos stay in your account and are used only to build your
-          forecast.
-        </p>
-        <Button
-          className="min-h-11 w-full sm:w-auto"
-          disabled={!ready || isPending}
-          onClick={handleGenerate}
-        >
-          {isPending ? (
-            <>
-              <Loader2 className="size-4 animate-spin" />
-              Chad is checking your photos...
-            </>
-          ) : (
-            "Generate my forecast"
-          )}
-        </Button>
-      </div>
-      {photos.length < MIN_PHOTOS ? (
-        <p className="mt-2 text-muted-foreground text-xs">
-          {photos.length === 0
-            ? `Add at least ${MIN_PHOTOS} photos to unlock your forecast.`
-            : `${MIN_PHOTOS - photos.length} more photo${MIN_PHOTOS - photos.length === 1 ? "" : "s"} to go.`}
-        </p>
-      ) : null}
     </section>
   );
 }
@@ -416,7 +425,7 @@ function RevealPanel({
           goal, and your calculated rate of progress.
         </p>
 
-        <div className="mt-5 rounded-xl border border-border bg-background/40 p-4">
+        <div className="mt-5 max-w-3xl rounded-xl border border-border bg-background/40 p-4">
           <p className="font-semibold text-muted-foreground text-xs tracking-[0.12em]">
             WHERE YOU START
           </p>
@@ -425,7 +434,8 @@ function RevealPanel({
           </p>
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-2">
+        {/* A segmented control sizes to its content, not the wide frame. */}
+        <div className="mt-5 grid grid-cols-2 gap-2 sm:max-w-md">
           <PathButton
             active={path === "work"}
             label="If you do the work"
@@ -439,19 +449,32 @@ function RevealPanel({
         </div>
       </section>
 
-      {path === "work" ? (
-        work.map((frame, i) => (
-          <FrameCard frame={frame} key={frame.imageUrl} lazy={i > 0} />
-        ))
-      ) : quit ? (
-        <FrameCard frame={quit} lazy={false} />
-      ) : null}
+      {/* Desktop (LAY-1): the checkpoint cards as a gallery grid; one column
+          on phones. Explicit grid-cols-1 + min-w-0 cards (the FrameCard
+          section carries min-w-0) so nothing clips at 390/768. The single
+          quit frame gets a centered hero card instead; stranding it in the
+          first track of the 3-column grid left a desktop dead band. */}
+      {path === "work"
+        ? work.length > 0 && (
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+              {work.map((frame, i) => (
+                <FrameCard frame={frame} key={frame.imageUrl} lazy={i > 0} />
+              ))}
+            </div>
+          )
+        : quit && (
+            <div className="mx-auto w-full max-w-xl">
+              <FrameCard frame={quit} lazy={false} />
+            </div>
+          )}
 
       <section className="rounded-2xl border border-border bg-card p-6 sm:p-8">
         <p className="font-semibold text-destructive text-xs tracking-[0.12em]">
           CHAD'S VERDICT
         </p>
-        <p className="mt-2 text-sm leading-relaxed">{content.verdict}</p>
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed">
+          {content.verdict}
+        </p>
         <div className="mt-5 flex flex-wrap items-center gap-2">
           <AskChadButton
             className="min-h-11"
@@ -515,7 +538,7 @@ function FrameCard({ frame, lazy }: { frame: FutureYouFrame; lazy: boolean }) {
   }
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-border bg-card">
+    <section className="min-w-0 overflow-hidden rounded-2xl border border-border bg-card">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 px-6 pt-5 sm:px-8">
         <h3
           className={cn(
@@ -530,7 +553,8 @@ function FrameCard({ frame, lazy }: { frame: FutureYouFrame; lazy: boolean }) {
           {frame.expectedWeightLabel ? ` · ${frame.expectedWeightLabel}` : ""}
         </p>
       </div>
-      <div className="relative mt-4 aspect-[2/3] w-full">
+      {/* bg-muted: a visible placeholder surface while the image loads. */}
+      <div className="relative mt-4 aspect-[2/3] w-full bg-muted">
         {/* biome-ignore lint/performance/noImgElement: generated Blob image, same treatment as /progress photos */}
         <img
           alt={

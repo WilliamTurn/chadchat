@@ -55,7 +55,9 @@ function round1(n: number): number {
 
 /** The active weight goal, if any (metric "weight" with a target set). */
 function activeWeightGoal(goals: Goal[]): Goal | null {
-  return goals.find((g) => g.metric === "weight" && g.targetValue != null) ?? null;
+  return (
+    goals.find((g) => g.metric === "weight" && g.targetValue != null) ?? null
+  );
 }
 
 /** Convert a goal-native weight value into `displayUnit`. */
@@ -64,7 +66,10 @@ function toDisplayWeight(
   goalUnit: string | null,
   displayUnit: "lb" | "kg"
 ): number {
-  const from: "lb" | "kg" = (goalUnit ?? "").trim().toLowerCase().startsWith("k")
+  const from: "lb" | "kg" = (goalUnit ?? "")
+    .trim()
+    .toLowerCase()
+    .startsWith("k")
     ? "kg"
     : "lb";
   return round1(convert(value, from, displayUnit));
@@ -100,11 +105,12 @@ function weightGoalStart(
 
 export default function ProgressPage() {
   return (
-    <PageShell active="/progress">
+    // Full-width desktop layout (LAY-1): the wide frame, filled with a real
+    // dashboard grid (chart + log form side by side, paired photo panels).
+    <PageShell active="/progress" className="max-w-[1500px]">
       {/* richColors: success → green, error → red (the "Logged." confirmation
           reads as a clear success instead of a neutral gray toast). */}
       <Toaster position="top-center" richColors theme="system" />
-
 
       <div className="mb-8">
         <BackToDashboard />
@@ -209,28 +215,39 @@ async function Dashboard({
   return (
     <div className="flex flex-col gap-8">
       <ScrollToHash />
-      {/* Weight trend — the chart owns its card chrome, KPI strip and toggle. */}
-      {points.length > 0 ? (
-        <WeightChartInteractive
-          goalStartWeight={goalStartWeight}
-          goalWeight={goalWeight}
-          points={points}
-          unit={displayUnit}
-        />
-      ) : (
-        <section className="rounded-2xl border border-border bg-card p-6">
-          <h2 className="mb-2 font-medium text-lg">Weight trend</h2>
-          <p className="text-muted-foreground text-sm">
-            Log a weight below and your trend shows up here.
-          </p>
-        </section>
-      )}
+      {/* Desktop (LAY-1): the trend chart with the log form beside it; a single
+          column below xl. Explicit grid-cols-1 + min-w-0 children: without
+          them the implicit column sizes to max-content and phones/tablets get
+          silently clipped by overflow-x: clip. */}
+      <div className="grid grid-cols-1 items-start gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
+        {/* Weight trend: the chart owns its card chrome, KPI strip and toggle. */}
+        <div className="min-w-0">
+          {points.length > 0 ? (
+            <WeightChartInteractive
+              goalStartWeight={goalStartWeight}
+              goalWeight={goalWeight}
+              points={points}
+              unit={displayUnit}
+            />
+          ) : (
+            <section className="rounded-2xl border border-border bg-card p-6">
+              <h2 className="mb-2 font-medium text-lg">Weight trend</h2>
+              <p className="text-muted-foreground text-sm">
+                Log a weight below and your trend shows up here.
+              </p>
+            </section>
+          )}
+        </div>
 
-      {/* Log a new entry. id: the dashboard card's "Log weight" landing spot (R2-5). */}
-      <section className="rounded-2xl border border-border bg-card p-6" id="log-entry">
-        <h2 className="mb-4 font-medium text-lg">Log an entry</h2>
-        <LogEntryForm defaultUnit={displayUnit} />
-      </section>
+        {/* Log a new entry. id: the dashboard card's "Log weight" landing spot (R2-5). */}
+        <section
+          className="min-w-0 rounded-2xl border border-border bg-card p-6"
+          id="log-entry"
+        >
+          <h2 className="mb-4 font-medium text-lg">Log an entry</h2>
+          <LogEntryForm defaultUnit={displayUnit} />
+        </section>
+      </div>
 
       {/* Body measurements */}
       <MeasurementsSection
@@ -243,37 +260,38 @@ async function Dashboard({
         }))}
       />
 
-      {/* Before / after compare */}
+      {/* Before/after compare + Chad's montage (FEAT-18): both need 2+ photos,
+          so they pair into one desktop row; stacked below xl. */}
       {photos.length >= 2 && (
-        <PhotoCompare
-          photos={[...photos]
-            .reverse()
-            .map((e) => ({
-              url: e.photoUrl ?? "",
-              date: displayDate(e.recordedAt),
-            }))}
-        />
-      )}
-
-      {/* Chad's montage (FEAT-18): timeline strip + his verdict. */}
-      {photos.length >= 2 && (
-        <MontageCard
-          generatedAtLabel={
-            latestMontage ? displayDate(latestMontage.createdAt) : null
-          }
-          initial={
-            latestMontage
-              ? parseProgressMontageContent(latestMontage.content)
-              : null
-          }
-        />
+        <div className="grid grid-cols-1 items-start gap-8 xl:grid-cols-2">
+          <div className="min-w-0">
+            <PhotoCompare
+              photos={[...photos].reverse().map((e) => ({
+                url: e.photoUrl ?? "",
+                date: displayDate(e.recordedAt),
+              }))}
+            />
+          </div>
+          <div className="min-w-0">
+            <MontageCard
+              generatedAtLabel={
+                latestMontage ? displayDate(latestMontage.createdAt) : null
+              }
+              initial={
+                latestMontage
+                  ? parseProgressMontageContent(latestMontage.content)
+                  : null
+              }
+            />
+          </div>
+        </div>
       )}
 
       {/* Progress photos */}
       {photos.length > 0 && (
         <section>
           <h2 className="mb-4 font-medium text-lg">Progress photos</h2>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
             {photos.map((e) => (
               <figure
                 className="overflow-hidden rounded-xl border border-border bg-card"
@@ -321,7 +339,7 @@ async function Dashboard({
                     </p>
                   )}
                 </div>
-                <div className="flex shrink-0 items-center gap-1">
+                <div className="flex shrink-0 items-center gap-2">
                   <EditEntryButton
                     id={e.id}
                     note={e.note}
