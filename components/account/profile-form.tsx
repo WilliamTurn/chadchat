@@ -250,10 +250,13 @@ export function ProfileForm({
           )}
         </div>
 
-        <div className="flex flex-col gap-2">
+        {/* Container query, not a viewport breakpoint: this cell is half the
+            card, and the card's width now varies with the LAY-1 page column.
+            Below ~21rem the three labels can't fit on one row, so stack. */}
+        <div className="@container flex flex-col gap-2">
           <Label>Training experience</Label>
           <LabeledSegmented
-            columns="grid-cols-1 min-[420px]:grid-cols-3"
+            columns="grid-cols-1 @[21rem]:grid-cols-3"
             options={EXPERIENCE_OPTIONS}
             onChange={setExperience}
             value={experience}

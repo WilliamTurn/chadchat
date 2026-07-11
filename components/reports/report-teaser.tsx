@@ -102,7 +102,9 @@ export function ReportTeaser() {
 
   if (phase === "idle") {
     return (
-      <div className="rounded-2xl border border-border bg-card p-8 text-center sm:p-10">
+      // Centered hero card on the wide LAY-1 frame (the locked-feature
+      // pattern), instead of one stranded full-width band.
+      <div className="mx-auto w-full max-w-2xl rounded-2xl border border-border bg-card p-8 text-center sm:p-10">
         <p className="font-semibold text-blood text-xs uppercase tracking-[0.2em]">
           Weekly report · Elite
         </p>
@@ -125,7 +127,7 @@ export function ReportTeaser() {
 
   if (phase === "working") {
     return (
-      <div className="rounded-2xl border border-border bg-card p-8 sm:p-10">
+      <div className="mx-auto w-full max-w-2xl rounded-2xl border border-border bg-card p-8 sm:p-10">
         <div className="mx-auto flex max-w-md flex-col items-center text-center">
           <div className="flex size-12 items-center justify-center rounded-full bg-blood/10">
             <Loader2 className="size-6 animate-spin text-blood" />
@@ -189,7 +191,7 @@ export function ReportTeaser() {
         }
         transition={{ duration: 0.35, ease: "easeOut" }}
       >
-        <div className="relative max-h-[560px] overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="relative mx-auto max-h-[560px] w-full max-w-3xl overflow-hidden rounded-2xl border border-border bg-card">
           {/* The blurred sample report behind the prompt: decorative only. */}
           <div
             aria-hidden="true"

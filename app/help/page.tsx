@@ -556,7 +556,11 @@ function SectionHeading({
 
 export default function HelpPage() {
   return (
-    <PageShell active="/help">
+    // Full-width desktop layout (LAY-1): the help-center card-grid shape —
+    // features, plans, troubleshooting, and FAQs lay out as card grids on the
+    // wide frame instead of one long single column. Breakpoints are lg/xl
+    // (not md) because the LAY-2 sidebar eats ~256px of a tablet viewport.
+    <PageShell active="/help" className="max-w-[1500px]">
 
       <div className="mb-8">
         <h1 className="font-display font-bold text-3xl tracking-tight">
@@ -588,7 +592,7 @@ export default function HelpPage() {
           title="Getting started"
         />
         <div className="rounded-2xl border border-border bg-card p-6">
-          <ol className="flex flex-col gap-4">
+          <ol className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4">
             {[
               {
                 title: "Tell Chad about yourself",
@@ -607,7 +611,7 @@ export default function HelpPage() {
                 body: "The Dashboard shows where today stands, and Chad reviews everything you log. Hit your numbers and he says so. Miss them and he says that too.",
               },
             ].map((step, i) => (
-              <li className="flex gap-4" key={step.title}>
+              <li className="flex min-w-0 gap-4" key={step.title}>
                 <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-blood/10 font-semibold text-blood text-sm">
                   {i + 1}
                 </span>
@@ -638,12 +642,12 @@ export default function HelpPage() {
           </Link>
           .
         </p>
-        <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
           {FEATURES.map((feature) => {
             const Icon = feature.icon;
             return (
               <section
-                className="rounded-2xl border border-border bg-card p-6"
+                className="min-w-0 rounded-2xl border border-border bg-card p-6"
                 key={feature.title}
               >
                 <h3 className="mb-2 flex items-center gap-2 font-medium text-lg">
@@ -671,22 +675,24 @@ export default function HelpPage() {
       <section className="mb-10">
         <SectionHeading icon={CreditCard} id="plans" title="Plans & billing" />
         <div className="flex flex-col gap-4">
-          {PLAN_ROWS.map((plan) => (
-            <div
-              className="rounded-2xl border border-border bg-card p-6"
-              key={plan.name}
-            >
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <h3 className="font-medium text-lg">{plan.name}</h3>
-                <span className="text-muted-foreground text-sm">
-                  {plan.price}
-                </span>
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+            {PLAN_ROWS.map((plan) => (
+              <div
+                className="min-w-0 rounded-2xl border border-border bg-card p-6"
+                key={plan.name}
+              >
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <h3 className="font-medium text-lg">{plan.name}</h3>
+                  <span className="text-muted-foreground text-sm">
+                    {plan.price}
+                  </span>
+                </div>
+                <p className="mt-2 text-muted-foreground text-sm leading-relaxed">
+                  {plan.summary}
+                </p>
               </div>
-              <p className="mt-2 text-muted-foreground text-sm leading-relaxed">
-                {plan.summary}
-              </p>
-            </div>
-          ))}
+            ))}
+          </div>
           <div className="rounded-2xl border border-border bg-card p-6">
             <h3 className="font-medium text-lg">Managing your membership</h3>
             <p className="mt-2 text-muted-foreground text-sm leading-relaxed">
@@ -718,8 +724,8 @@ export default function HelpPage() {
       <section className="mb-10">
         <SectionHeading icon={Download} id="data" title="Your data & privacy" />
         <div className="rounded-2xl border border-border bg-card p-6">
-          <div className="flex flex-col gap-3 text-muted-foreground text-sm leading-relaxed">
-            <p>
+          <div className="grid grid-cols-1 gap-3 text-muted-foreground text-sm leading-relaxed lg:grid-cols-2 lg:gap-8">
+            <p className="min-w-0">
               Your logged data is yours. Download it as CSV from the{" "}
               <Link
                 className="text-foreground underline underline-offset-4"
@@ -729,7 +735,7 @@ export default function HelpPage() {
               </Link>{" "}
               and take it anywhere.
             </p>
-            <p>
+            <p className="min-w-0">
               What Chad remembers about you from your chats is used only to
               coach you, and you can switch memory off (or wipe it) in
               Settings, in the menu under your name in the chat sidebar.
@@ -747,10 +753,10 @@ export default function HelpPage() {
           id="troubleshooting"
           title="Troubleshooting"
         />
-        <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
           {TROUBLESHOOTING.map((row) => (
             <div
-              className="rounded-2xl border border-border bg-card p-6"
+              className="min-w-0 rounded-2xl border border-border bg-card p-6"
               key={row.problem}
             >
               <h3 className="font-medium text-sm">{row.problem}</h3>
@@ -765,10 +771,11 @@ export default function HelpPage() {
       {/* FAQ */}
       <section className="mb-10">
         <SectionHeading icon={HelpCircle} id="faq" title="FAQ" />
-        <div className="flex flex-col gap-3">
+        {/* items-start: opening one answer must not stretch its neighbor. */}
+        <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2">
           {FAQS.map((faq) => (
             <details
-              className="group rounded-2xl border border-border bg-card"
+              className="group min-w-0 rounded-2xl border border-border bg-card"
               key={faq.q}
             >
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 font-medium text-sm [&::-webkit-details-marker]:hidden">

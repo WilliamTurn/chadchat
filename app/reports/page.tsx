@@ -14,6 +14,7 @@ import { formatCalendarDay } from "@/lib/date";
 import { getUserById, getWeeklyReportsByUserId } from "@/lib/db/queries";
 import { parseWeeklyReportContent } from "@/lib/reports/content";
 import { formatReportHour, reportDayLabel } from "@/lib/reports/schedule";
+import { cn } from "@/lib/utils";
 
 /**
  * Weekly reports (FEAT-12, Elite): every coach's report Chad has written for
@@ -25,7 +26,10 @@ import { formatReportHour, reportDayLabel } from "@/lib/reports/schedule";
 
 export default function ReportsPage() {
   return (
-    <PageShell active="/reports">
+    // Full-width desktop layout (LAY-1): the report list fills the wide frame
+    // as a reading column + "Earlier weeks" archive column at xl; single-report
+    // and empty states render as a centered document/hero card instead.
+    <PageShell active="/reports" className="max-w-[1500px]">
       <Toaster
         position="top-center"
         theme="system"
@@ -120,7 +124,7 @@ function ReportsList({
 }) {
   if (rendered.length === 0) {
     return (
-      <div className="rounded-2xl border border-border bg-card p-8 text-center">
+      <div className="mx-auto w-full max-w-2xl rounded-2xl border border-border bg-card p-8 text-center">
         <h2 className="font-medium text-lg">Your first report is coming</h2>
         <p className="mx-auto mt-2 max-w-md text-muted-foreground text-sm">
           Chad writes it every {reportDayLabel(user.weeklyReportDay)} around{" "}
@@ -140,10 +144,18 @@ function ReportsList({
   }
 
   const [latest, ...older] = rendered;
+  const hasOlder = older.length > 0;
 
   return (
     <div className="flex flex-col gap-6">
-      <p className="text-muted-foreground text-sm">
+      {/* With a single centered report, the schedule line shares its axis
+          instead of stranding at the frame's left edge. */}
+      <p
+        className={cn(
+          "text-muted-foreground text-sm",
+          !hasOlder && "mx-auto w-full max-w-3xl"
+        )}
+      >
         Lands every {reportDayLabel(user.weeklyReportDay)} around{" "}
         {formatReportHour(user.weeklyReportHour)} your time. Change the day and
         time on{" "}
@@ -155,60 +167,77 @@ function ReportsList({
         </Link>
         .
       </p>
-      <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
-        <ReportView content={latest.content} dateLabel={latest.dateLabel} />
-        <div className="mt-6 border-border border-t pt-5">
-          <ReportActions
-            content={latest.content}
-            dateLabel={latest.dateLabel}
-          />
+      {/* Latest report reads beside the "Earlier weeks" archive at xl; with
+          nothing older yet, the single report centers as a document card. */}
+      <div
+        className={cn(
+          "grid grid-cols-1 items-start gap-6",
+          hasOlder && "xl:grid-cols-[minmax(0,1fr)_400px]"
+        )}
+      >
+        <div
+          className={cn(
+            "min-w-0 rounded-2xl border border-border bg-card p-6 sm:p-8",
+            !hasOlder && "mx-auto w-full max-w-3xl"
+          )}
+        >
+          {/* Report prose keeps a readable measure inside the wide card. */}
+          <div className="mx-auto w-full max-w-3xl">
+            <ReportView content={latest.content} dateLabel={latest.dateLabel} />
+            <div className="mt-6 border-border border-t pt-5">
+              <ReportActions
+                content={latest.content}
+                dateLabel={latest.dateLabel}
+              />
+            </div>
+          </div>
         </div>
-      </div>
 
-      {older.length > 0 && (
-        <section>
-          <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-            Earlier weeks
-          </h2>
-          <div className="flex flex-col gap-3">
-            {older.map((report) => (
-              <details
-                className="group rounded-2xl border border-border bg-card"
-                key={report.id}
-              >
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 [&::-webkit-details-marker]:hidden">
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-sm">
-                      {report.content.headline}
-                    </p>
-                    <p className="mt-0.5 text-muted-foreground text-xs">
-                      {report.dateLabel}
-                    </p>
-                  </div>
-                  <span className="text-muted-foreground text-xs group-open:hidden">
-                    Read
-                  </span>
-                  <span className="hidden text-muted-foreground text-xs group-open:inline">
-                    Close
-                  </span>
-                </summary>
-                <div className="border-border border-t p-6 sm:p-8">
-                  <ReportView
-                    content={report.content}
-                    dateLabel={report.dateLabel}
-                  />
-                  <div className="mt-6 border-border border-t pt-5">
-                    <ReportActions
+        {hasOlder && (
+          <section className="min-w-0">
+            <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
+              Earlier weeks
+            </h2>
+            <div className="flex flex-col gap-3">
+              {older.map((report) => (
+                <details
+                  className="group rounded-2xl border border-border bg-card"
+                  key={report.id}
+                >
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 [&::-webkit-details-marker]:hidden">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-sm">
+                        {report.content.headline}
+                      </p>
+                      <p className="mt-0.5 text-muted-foreground text-xs">
+                        {report.dateLabel}
+                      </p>
+                    </div>
+                    <span className="text-muted-foreground text-xs group-open:hidden">
+                      Read
+                    </span>
+                    <span className="hidden text-muted-foreground text-xs group-open:inline">
+                      Close
+                    </span>
+                  </summary>
+                  <div className="border-border border-t p-6 sm:p-8">
+                    <ReportView
                       content={report.content}
                       dateLabel={report.dateLabel}
                     />
+                    <div className="mt-6 border-border border-t pt-5">
+                      <ReportActions
+                        content={report.content}
+                        dateLabel={report.dateLabel}
+                      />
+                    </div>
                   </div>
-                </div>
-              </details>
-            ))}
-          </div>
-        </section>
-      )}
+                </details>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
     </div>
   );
 }

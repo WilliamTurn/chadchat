@@ -111,7 +111,12 @@ function formatDate(date: Date | null): string {
 
 export default function AccountPage() {
   return (
-    <PageShell active="/account">
+    // Full-width desktop layout (LAY-1): two independently packed columns —
+    // Membership, Profile, and the Elite email settings down the left;
+    // Preferences and Your data down the right — so the page fills the wide
+    // frame with no dead bands (a row-aligned grid left the short Membership
+    // cell stranded above a tall Profile card). Phones stack in that order.
+    <PageShell active="/account" className="max-w-[1500px]">
       <Toaster position="top-center" richColors theme="system" />
 
       <div className="mb-8">
@@ -121,34 +126,112 @@ export default function AccountPage() {
         </p>
       </div>
 
-      <div className="flex flex-col gap-8">
-        <section>
-          <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-            Membership
-          </h2>
-          <Suspense fallback={<MembershipCardSkeleton />}>
-            <MembershipCard />
+      {/* items-start (ACC-22): columns keep their natural height instead of
+          the shorter one stretching to match the taller one. */}
+      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-8">
+          <section className="min-w-0">
+            <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
+              Membership
+            </h2>
+            <Suspense fallback={<MembershipCardSkeleton />}>
+              <MembershipCard />
+            </Suspense>
+            {/* "cancel anytime" is a real one-click promise (ACC-21): the
+                phrase itself opens the Stripe billing portal. */}
+            <form action={openBillingPortal}>
+              <p className="mt-4 text-muted-foreground text-xs">
+                Billing is handled securely by Stripe. Update your card, switch
+                plans, or <CancelAnytimeButton /> from the billing page.
+              </p>
+            </form>
+          </section>
+
+          <Suspense fallback={null}>
+            <ProfileAndEmailSettings />
           </Suspense>
-          {/* "cancel anytime" is a real one-click promise (ACC-21): the phrase
-              itself opens the Stripe billing portal. */}
-          <form action={openBillingPortal}>
-            <p className="mt-4 text-muted-foreground text-xs">
-              Billing is handled securely by Stripe. Update your card, switch
-              plans, or <CancelAnytimeButton /> from the billing page.
-            </p>
-          </form>
-        </section>
+        </div>
 
         <Suspense fallback={null}>
-          <AccountSettings />
+          <PreferencesAndDataSettings />
         </Suspense>
       </div>
     </PageShell>
   );
 }
 
-/** Preferences + data export — the account table stakes beyond billing (ACC-13). */
-async function AccountSettings() {
+/**
+ * The rest of the left column (LAY-1): Profile, then the Elite email settings
+ * under it so the two page columns stay roughly balanced for both tiers.
+ */
+async function ProfileAndEmailSettings() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+  const user = await getUserById(session.user.id);
+  if (!user) {
+    redirect("/login");
+  }
+
+  return (
+    <>
+      {/* Profile / stats (ONB-2) — the trusted source of truth Chad reads. */}
+      <section className="min-w-0">
+        <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
+          Profile
+        </h2>
+        <ProfileForm
+          initial={{
+            sex: user.sex,
+            age: user.age,
+            heightCm: user.heightCm,
+            experienceLevel: user.experienceLevel,
+            primaryGoal: user.primaryGoal,
+            primaryGoals: user.primaryGoals,
+            trainingDaysPerWeek: user.trainingDaysPerWeek,
+            primaryGoalDetail: user.primaryGoalDetail,
+            trainingDescription: user.trainingDescription,
+          }}
+          weightUnit={user.weightUnit}
+        />
+      </section>
+
+      {/* Proactive check-ins (FEAT-11) + the weekly report (FEAT-12) —
+          Elite only, so members who don't have the features never see a
+          dead control. */}
+      {canAccessEliteFeatures(user) && (
+        <section className="min-w-0">
+          <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
+            Emails from Chad
+          </h2>
+          <div className="rounded-2xl border border-border bg-card p-6">
+            <CheckInSettings
+              initialDays={sanitizeCheckInDays(user.checkInDays)}
+              initialEnabled={user.checkInsEnabled}
+              initialEveningHour={user.checkInEveningHour}
+              initialFrequency={user.checkInFrequency}
+              initialMorningHour={user.checkInMorningHour}
+            />
+            <div className="mt-6 border-border border-t pt-6">
+              <WeeklyReportSettings
+                initialDay={user.weeklyReportDay}
+                initialEnabled={user.weeklyReportsEnabled}
+                initialHour={user.weeklyReportHour}
+              />
+            </div>
+          </div>
+        </section>
+      )}
+    </>
+  );
+}
+
+/**
+ * The right column (LAY-1): Preferences + data export — the account table
+ * stakes beyond billing (ACC-13).
+ */
+async function PreferencesAndDataSettings() {
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login");
@@ -171,165 +254,106 @@ async function AccountSettings() {
   ];
 
   return (
-    <>
-      {/* Profile / stats (ONB-2) — the trusted source of truth Chad reads. */}
-      <section>
+    <div className="flex min-w-0 flex-col gap-8">
+      {/* Preferences */}
+      <section className="min-w-0">
         <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-          Profile
+          Preferences
         </h2>
-        <ProfileForm
-          initial={{
-            sex: user.sex,
-            age: user.age,
-            heightCm: user.heightCm,
-            experienceLevel: user.experienceLevel,
-            primaryGoal: user.primaryGoal,
-            primaryGoals: user.primaryGoals,
-            trainingDaysPerWeek: user.trainingDaysPerWeek,
-            primaryGoalDetail: user.primaryGoalDetail,
-            trainingDescription: user.trainingDescription,
-          }}
-          weightUnit={user.weightUnit}
-        />
+        <div className="rounded-2xl border border-border bg-card p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h3 className="font-medium text-sm">Units</h3>
+              <p className="mt-1 text-muted-foreground text-sm">
+                How your body weight shows across the app and the default for
+                new weigh-ins.
+              </p>
+            </div>
+            <UnitPreference initialUnit={user.weightUnit} />
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-border border-t pt-6">
+            <div>
+              <h3 className="font-medium text-sm">Time zone</h3>
+              <p className="mt-1 text-muted-foreground text-sm">
+                Detected automatically from your browser. It decides when
+                your day rolls over — streaks, today's log, and when Chad's
+                emails land.
+              </p>
+            </div>
+            <TimezonePreference initialTimezone={user.timezone} />
+          </div>
+
+          {/* Logging feedback (DSH-54): the success chime + phone vibration. */}
+          <div className="mt-6 border-border border-t pt-6">
+            <SensorySettings
+              initialHaptics={user.hapticsEnabled}
+              initialSound={user.soundEnabled}
+            />
+          </div>
+
+          {/* Chad's intensity dial — how harsh he is with this member. */}
+          <div className="mt-6 border-border border-t pt-6">
+            <IntensitySettings initialIntensity={user.chadIntensity} />
+          </div>
+
+          {/* Chad's memory (owner order, s157): the chat Settings popup has
+              the same switch; members expect it here too. */}
+          <div className="mt-6 border-border border-t pt-6">
+            <MemorySettings initialEnabled={user.memoryEnabled} />
+          </div>
+
+          {/* The Quit Date on/off switch (FEAT-25, all members). */}
+          <div className="mt-6 border-border border-t pt-6">
+            <QuitDateSettings initialEnabled={user.quitDateEnabled} />
+          </div>
+        </div>
       </section>
 
-      {/* Preferences + Your data sit side-by-side on wide screens so the page
-          fills the standardized width instead of stranding a lonely column.
-          items-start + no h-full (ACC-22): cards keep their natural height
-          instead of the shorter one stretching to match the taller column;
-          the Elite email settings live in the right column so the two columns
-          stay roughly balanced. */}
-      <div className="grid items-start gap-8 lg:grid-cols-2">
-        {/* Preferences */}
-        <section>
-          <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-            Preferences
-          </h2>
-          <div className="rounded-2xl border border-border bg-card p-6">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <h3 className="font-medium text-sm">Units</h3>
-                <p className="mt-1 text-muted-foreground text-sm">
-                  How your body weight shows across the app and the default for
-                  new weigh-ins.
-                </p>
-              </div>
-              <UnitPreference initialUnit={user.weightUnit} />
-            </div>
+      {/* Your data */}
+      <section className="min-w-0">
+        <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
+          Your data
+        </h2>
+        <div className="rounded-2xl border border-border bg-card p-6">
+          <h3 className="font-medium text-sm">Export</h3>
+          <p className="mt-1 text-muted-foreground text-sm">
+            Download your logged data as CSV — it's yours, take it anywhere.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {exports.map(({ dataset, label, icon: Icon }) => (
+              <a
+                className={cn(
+                  buttonVariants({ variant: "outline" }),
+                  "gap-2"
+                )}
+                download
+                href={`${basePath}/api/me/export?dataset=${dataset}`}
+                key={dataset}
+              >
+                <Icon className="size-4" />
+                {label}
+              </a>
+            ))}
+          </div>
 
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-border border-t pt-6">
-              <div>
-                <h3 className="font-medium text-sm">Time zone</h3>
-                <p className="mt-1 text-muted-foreground text-sm">
-                  Detected automatically from your browser. It decides when
-                  your day rolls over — streaks, today's log, and when Chad's
-                  emails land.
-                </p>
-              </div>
-              <TimezonePreference initialTimezone={user.timezone} />
-            </div>
-
-            {/* Logging feedback (DSH-54): the success chime + phone vibration. */}
-            <div className="mt-6 border-border border-t pt-6">
-              <SensorySettings
-                initialHaptics={user.hapticsEnabled}
-                initialSound={user.soundEnabled}
-              />
-            </div>
-
-            {/* Chad's intensity dial — how harsh he is with this member. */}
-            <div className="mt-6 border-border border-t pt-6">
-              <IntensitySettings initialIntensity={user.chadIntensity} />
-            </div>
-
-            {/* Chad's memory (owner order, s157): the chat Settings popup has
-                the same switch; members expect it here too. */}
-            <div className="mt-6 border-border border-t pt-6">
-              <MemorySettings initialEnabled={user.memoryEnabled} />
-            </div>
-
-            {/* The Quit Date on/off switch (FEAT-25, all members). */}
-            <div className="mt-6 border-border border-t pt-6">
-              <QuitDateSettings initialEnabled={user.quitDateEnabled} />
+          {/* Delete everything (owner ask, s157): the member's one-button
+              wipe — every log, chat, and Chad's whole file, keeping the
+              account + membership. */}
+          <div className="mt-6 border-border border-t pt-6">
+            <h3 className="font-medium text-sm">Delete</h3>
+            <p className="mt-1 text-muted-foreground text-sm">
+              Permanently delete all of your data — chats, logs, photos,
+              and everything Chad knows about you. Your account and
+              membership stay.
+            </p>
+            <div className="mt-4">
+              <DeleteDataButton />
             </div>
           </div>
-        </section>
-
-        {/* Right column: Elite email settings (when they apply) + Your data. */}
-        <div className="flex flex-col gap-8">
-          {/* Proactive check-ins (FEAT-11) + the weekly report (FEAT-12) —
-              Elite only, so members who don't have the features never see a
-              dead control. */}
-          {canAccessEliteFeatures(user) && (
-            <section>
-              <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-                Emails from Chad
-              </h2>
-              <div className="rounded-2xl border border-border bg-card p-6">
-                <CheckInSettings
-                  initialDays={sanitizeCheckInDays(user.checkInDays)}
-                  initialEnabled={user.checkInsEnabled}
-                  initialEveningHour={user.checkInEveningHour}
-                  initialFrequency={user.checkInFrequency}
-                  initialMorningHour={user.checkInMorningHour}
-                />
-                <div className="mt-6 border-border border-t pt-6">
-                  <WeeklyReportSettings
-                    initialDay={user.weeklyReportDay}
-                    initialEnabled={user.weeklyReportsEnabled}
-                    initialHour={user.weeklyReportHour}
-                  />
-                </div>
-              </div>
-            </section>
-          )}
-
-          {/* Your data */}
-          <section>
-            <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-              Your data
-            </h2>
-            <div className="rounded-2xl border border-border bg-card p-6">
-              <h3 className="font-medium text-sm">Export</h3>
-              <p className="mt-1 text-muted-foreground text-sm">
-                Download your logged data as CSV — it's yours, take it anywhere.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {exports.map(({ dataset, label, icon: Icon }) => (
-                  <a
-                    className={cn(
-                      buttonVariants({ variant: "outline" }),
-                      "gap-2"
-                    )}
-                    download
-                    href={`${basePath}/api/me/export?dataset=${dataset}`}
-                    key={dataset}
-                  >
-                    <Icon className="size-4" />
-                    {label}
-                  </a>
-                ))}
-              </div>
-
-              {/* Delete everything (owner ask, s157): the member's one-button
-                  wipe — every log, chat, and Chad's whole file, keeping the
-                  account + membership. */}
-              <div className="mt-6 border-border border-t pt-6">
-                <h3 className="font-medium text-sm">Delete</h3>
-                <p className="mt-1 text-muted-foreground text-sm">
-                  Permanently delete all of your data — chats, logs, photos,
-                  and everything Chad knows about you. Your account and
-                  membership stay.
-                </p>
-                <div className="mt-4">
-                  <DeleteDataButton />
-                </div>
-              </div>
-            </div>
-          </section>
         </div>
-      </div>
-    </>
+      </section>
+    </div>
   );
 }
 
