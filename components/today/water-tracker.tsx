@@ -55,6 +55,7 @@ import {
   ozToMl,
 } from "@/lib/today/water-units";
 import type { WaterDay } from "@/lib/today/week";
+import { WeekStrip } from "@/components/today/week-strip";
 
 // One-shot entries go up to a whole gallon (DSH-48): an end-of-night member
 // logging the day's jug shouldn't have to tap small increments repeatedly.
@@ -436,14 +437,39 @@ export function WaterTracker({
         </Popover>
       </div>
 
-      {/* This week's bar chart — the same 7-day Recharts treatment the Sleep
-          card carries (owner s181: every logger card gets a real visual, not a
-          dot strip). Full-strength bar = goal hit, faded = partial, dashed
-          line = the daily goal. The full trend history stays on /hydration. */}
+      {/* This week's streak strip + bar chart — BOTH, per owner order s181:
+          the dot strip is the at-a-glance habit-streak reward (full dot =
+          goal hit, faded = some water, hollow = nothing) and must never be
+          removed; the chart is the visual (full-strength bar = goal hit,
+          dashed line = the daily goal). Full trend history stays on
+          /hydration. */}
       {week?.some((d) => d.logged) ? (
-        <div className="mt-4">
-          <WaterWeekChart goalMl={safeGoal} week={week} />
-        </div>
+        <>
+          <div className="mt-4 flex items-center justify-between rounded-xl border border-border bg-background/40 px-4 py-2.5">
+            <span className="text-muted-foreground text-xs">This week</span>
+            <WeekStrip
+              days={week.map((day) => ({
+                key: day.t,
+                label: day.label,
+                dateLabel: day.dateLabel,
+                isToday: day.isToday,
+                isFuture: day.isFuture,
+                dotClassName:
+                  day.logged && day.ml >= safeGoal
+                    ? "bg-sky-400 shadow-[0_0_8px_var(--color-sky-400)]"
+                    : day.logged
+                      ? "bg-sky-400/40"
+                      : "bg-border",
+                value: day.logged ? formatOz(day.ml) : "Not logged",
+                status:
+                  day.logged && day.ml >= safeGoal ? "Goal hit" : undefined,
+              }))}
+            />
+          </div>
+          <div className="mt-3">
+            <WaterWeekChart goalMl={safeGoal} week={week} />
+          </div>
+        </>
       ) : null}
 
       <ModuleFooter
