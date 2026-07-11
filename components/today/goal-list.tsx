@@ -9,6 +9,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { removeGoal, updateGoalRecord } from "@/app/today/actions";
 import { computeGoalProgress } from "@/lib/goals/progress";
+import { cn } from "@/lib/utils";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -151,9 +152,12 @@ function metricNoun(goal: EditableGoal): string {
 function CoherenceNotice({
   calorieConflict,
   overlapNouns,
+  page = false,
 }: {
   calorieConflict: { goalTitle: string; mentioned: number; target: number } | null;
   overlapNouns: string[];
+  /** Page-grid styling (LAY-1): a solid card on the page background. */
+  page?: boolean;
 }) {
   const lines: string[] = [];
   const promptParts: string[] = [];
@@ -179,7 +183,12 @@ function CoherenceNotice({
   return (
     // Stacked on phones: side-by-side squeezed the warning copy into a skinny
     // half-width column at 390px. The button rides the row only at sm+.
-    <div className="mb-3 flex flex-col gap-2 rounded-xl border border-border bg-background/40 px-3 py-2.5 sm:flex-row sm:items-start sm:justify-between sm:gap-x-3">
+    <div
+      className={cn(
+        "mb-3 flex flex-col gap-2 rounded-xl border border-border bg-background/40 px-3 py-2.5 sm:flex-row sm:items-start sm:justify-between sm:gap-x-3",
+        page && "mb-0 rounded-2xl bg-card px-4 py-3 shadow-[var(--shadow-card)]"
+      )}
+    >
       <div className="flex min-w-0 flex-1 items-start gap-2">
         <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-amber-500" />
         <div className="flex min-w-0 flex-col gap-1 text-muted-foreground text-xs leading-relaxed">
@@ -188,8 +197,10 @@ function CoherenceNotice({
           ))}
         </div>
       </div>
+      {/* Full 44px tap height: this is the same control class as the page's
+          other buttons, so it gets the same target size. */}
       <AskChadButton
-        className="h-7 shrink-0 self-start text-xs sm:self-auto"
+        className="h-11 shrink-0 self-start text-xs sm:self-auto"
         prompt={promptParts.join(" ")}
       />
     </div>
@@ -200,10 +211,14 @@ function GoalItem({
   goal,
   currentWeight,
   lift,
+  page = false,
 }: {
   goal: EditableGoal;
   currentWeight: number | null;
   lift: LiftProgress | undefined;
+  /** Page-grid styling (LAY-1): a standalone card on the page background,
+   *  full-height so action rows line up across a row of goal cards. */
+  page?: boolean;
 }) {
   const isLift = goal.metric === "lift";
   // Est.-1RM history in the goal's own unit (kg lift goals convert from lb).
@@ -221,7 +236,13 @@ function GoalItem({
   const liftAwaitingData =
     isLift && current == null && goal.targetValue != null;
   return (
-    <div className="rounded-xl border border-border bg-background/40 p-3">
+    <div
+      className={
+        page
+          ? "flex h-full min-w-0 flex-col rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]"
+          : "rounded-xl border border-border bg-background/40 p-3"
+      }
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="font-medium leading-snug">{goal.title}</p>
@@ -274,8 +295,9 @@ function GoalItem({
         </div>
       )}
       {/* 44px touch targets with real gaps: Edit and the destructive Delete
-          were 30px icons 4px apart, a guaranteed phone mis-tap. */}
-      <div className="mt-1 flex items-center gap-1.5">
+          were 30px icons 4px apart, a guaranteed phone mis-tap. In the page
+          grid the row is mt-auto so actions line up across equal-height cards. */}
+      <div className={page ? "mt-auto flex items-center gap-1.5 pt-2" : "mt-1 flex items-center gap-1.5"}>
         {/* The goal's full-page document (R2-9), not a cramped dialog. */}
         <Button
           asChild
@@ -363,7 +385,13 @@ function RowDeleteGoal({ id }: { id: string }) {
 }
 
 /** One achieved/archived goal: status badge, View, and a one-click Reopen. */
-function PastGoalItem({ goal }: { goal: EditableGoal }) {
+function PastGoalItem({
+  goal,
+  page = false,
+}: {
+  goal: EditableGoal;
+  page?: boolean;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -380,7 +408,15 @@ function PastGoalItem({ goal }: { goal: EditableGoal }) {
   }
 
   return (
-    <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-background/40 px-3 py-2">
+    <div
+      className={
+        page
+          ? // Stacks on narrow phones so the title never truncates down to
+            // nothing to make room for the inline controls.
+            "flex min-w-0 flex-col items-start gap-1 rounded-2xl border border-border bg-card px-4 py-2.5 shadow-[var(--shadow-card)] sm:flex-row sm:items-center sm:justify-between sm:gap-2"
+          : "flex items-center justify-between gap-2 rounded-xl border border-border bg-background/40 px-3 py-2"
+      }
+    >
       <div className="flex min-w-0 items-center gap-2">
         <p className="truncate text-sm">{goal.title}</p>
         <Badge variant="secondary">{goal.status}</Badge>
@@ -426,6 +462,7 @@ export function GoalList({
   calorieConflict = null,
   overlapIds = [],
   viewHref,
+  layout = "card",
 }: {
   goals: EditableGoal[];
   currentWeight: number | null;
@@ -447,7 +484,100 @@ export function GoalList({
   overlapIds?: string[];
   /** The goals deep page ("View all →" /goals). Omit when already on it. */
   viewHref?: string;
+  /** "card" = the /today module body (default). "page" = the /goals page body
+   *  (LAY-1): toolbar up top, goal cards in a responsive multi-column grid,
+   *  past goals in a two-column grid — a real desktop layout, not a column. */
+  layout?: "card" | "page";
 }) {
+  const overlapNouns = [
+    ...new Set(goals.filter((g) => overlapIds.includes(g.id)).map(metricNoun)),
+  ];
+
+  if (layout === "page") {
+    return (
+      <div className="flex flex-col gap-6">
+        {/* Toolbar: the page's actions live up top, like every desktop app. */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-muted-foreground text-sm">
+            {goals.length > 0
+              ? `${goals.length} active ${goals.length === 1 ? "goal" : "goals"}`
+              : "No active goals yet"}
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <AskChadButton
+              className="h-11"
+              prompt="Look at my goals and my progress toward them. Am I on track, and what should I focus on this week?"
+            />
+            <Button asChild className="h-11 gap-1.5 px-4" size="sm">
+              <Link href="/goals/new">
+                <Plus className="size-3.5" />
+                Add goal
+              </Link>
+            </Button>
+          </div>
+        </div>
+
+        <CoherenceNotice
+          calorieConflict={calorieConflict}
+          overlapNouns={overlapNouns}
+          page
+        />
+
+        {goals.length > 0 ? (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {goals.map((g) => (
+              <GoalItem
+                currentWeight={currentWeight}
+                goal={g}
+                key={g.id}
+                lift={liftProgress[g.id]}
+                page
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-border border-dashed bg-card p-8 text-center sm:p-12">
+            <div className="mx-auto flex max-w-md flex-col items-center gap-3">
+              {memoryGoalHint ? (
+                <>
+                  <p className="font-medium leading-snug">{memoryGoalHint}</p>
+                  <p className="text-muted-foreground text-sm">
+                    Pulled from your chats. Save it as a goal to track it and
+                    export it.
+                  </p>
+                </>
+              ) : (
+                <p className="text-muted-foreground text-sm">
+                  No goal set yet. Set it here, or tell Chad in chat and he'll
+                  build the plan around it.
+                </p>
+              )}
+              <Button asChild className="h-11 gap-1.5 px-5" size="sm">
+                <Link href="/goals/new">
+                  <Plus className="size-3.5" />
+                  Set your goal
+                </Link>
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {pastGoals.length > 0 && (
+          <section>
+            <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
+              Past goals ({pastGoals.length})
+            </h2>
+            <div className="grid gap-3 md:grid-cols-2">
+              {pastGoals.map((g) => (
+                <PastGoalItem goal={g} key={g.id} page />
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+    );
+  }
+
   return (
     <>
       <ModuleHeader
@@ -459,11 +589,7 @@ export function GoalList({
 
       <CoherenceNotice
         calorieConflict={calorieConflict}
-        overlapNouns={[
-          ...new Set(
-            goals.filter((g) => overlapIds.includes(g.id)).map(metricNoun)
-          ),
-        ]}
+        overlapNouns={overlapNouns}
       />
 
       {goals.length > 0 ? (

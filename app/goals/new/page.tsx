@@ -18,7 +18,9 @@ import { loadGoalFormData } from "@/lib/goals/form-data";
  */
 export default function NewGoalPage() {
   return (
-    <PageShell>
+    // Full-width desktop layout (LAY-1): form column + sticky summary rail
+    // (the two-column split lives inside GoalForm).
+    <PageShell className="max-w-[1500px]">
       <Toaster
         position="top-center"
         theme="system"
@@ -29,22 +31,18 @@ export default function NewGoalPage() {
       />
       <StandaloneHeader active="/goals" />
 
-      {/* A form reads best as one centered column (the standard pro-app form
-          layout), not content pinned to the left edge of a wide shell. */}
-      <div className="mx-auto w-full max-w-2xl">
-        <div className="mb-8">
-          <BackToDashboard href="/goals" label="Goals" />
-          <h1 className="font-semibold text-2xl tracking-tight">New goal</h1>
-          <p className="mt-1 text-muted-foreground text-sm">
-            Set exactly what you want to achieve and by when. Chad reads this
-            in every chat and holds you to it.
-          </p>
-        </div>
-
-        <Suspense fallback={<TodaySkeleton />}>
-          <NewGoalContent />
-        </Suspense>
+      <div className="mb-8">
+        <BackToDashboard href="/goals" label="Goals" />
+        <h1 className="font-semibold text-2xl tracking-tight">New goal</h1>
+        <p className="mt-1 text-muted-foreground text-sm">
+          Set exactly what you want to achieve and by when. Chad reads this
+          in every chat and holds you to it.
+        </p>
       </div>
+
+      <Suspense fallback={<TodaySkeleton />}>
+        <NewGoalContent />
+      </Suspense>
     </PageShell>
   );
 }

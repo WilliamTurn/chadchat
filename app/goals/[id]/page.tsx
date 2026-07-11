@@ -49,7 +49,9 @@ export default function GoalDocPage({
   params: Promise<{ id: string }>;
 }) {
   return (
-    <PageShell>
+    // Full-width desktop layout (LAY-1): document column + sticky actions
+    // rail (the two-column split lives inside GoalDoc).
+    <PageShell className="max-w-[1500px]">
       <Toaster
         position="top-center"
         theme="system"

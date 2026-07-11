@@ -7,7 +7,6 @@ import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { GoalList, type LiftProgress } from "@/components/today/goal-list";
-import { ModuleCard } from "@/components/today/module-card";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import {
   getActiveGoalsByUserId,
@@ -38,7 +37,9 @@ const GOALS_WORKOUT_LIMIT = 60;
 
 export default function GoalsPage() {
   return (
-    <PageShell>
+    // Full-width desktop layout (LAY-1): the wide frame, filled with a real
+    // multi-column goal grid instead of one centered card column.
+    <PageShell className="max-w-[1500px]">
       <Toaster
         position="top-center"
         theme="system"
@@ -140,16 +141,15 @@ async function GoalsContent() {
   const memoryGoalHint = clientField(memory?.profile ?? null, "Primary goal");
 
   return (
-    <ModuleCard>
-      <GoalList
-        calorieConflict={calorieConflict}
-        currentWeight={currentWeight}
-        goals={goalItems}
-        liftProgress={liftProgress}
-        memoryGoalHint={memoryGoalHint}
-        overlapIds={overlapIds}
-        pastGoals={pastGoalItems}
-      />
-    </ModuleCard>
+    <GoalList
+      calorieConflict={calorieConflict}
+      currentWeight={currentWeight}
+      goals={goalItems}
+      layout="page"
+      liftProgress={liftProgress}
+      memoryGoalHint={memoryGoalHint}
+      overlapIds={overlapIds}
+      pastGoals={pastGoalItems}
+    />
   );
 }
