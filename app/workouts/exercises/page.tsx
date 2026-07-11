@@ -11,7 +11,9 @@ export const metadata = { title: "Exercises" };
  * records and progress. */
 export default function ExercisesPage() {
   return (
-    <PageShell active="/workouts">
+    // Full-width desktop layout (LAY-1): the catalog renders as a
+    // multi-column card grid instead of one stacked list.
+    <PageShell active="/workouts" className="max-w-[1500px]">
       <WorkoutPageHeader
         back={{ href: "/workouts", label: "Workouts" }}
         subtitle="Tap any exercise for how-to, your records, and your progress. Create your own for anything we don't have."

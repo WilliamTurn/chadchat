@@ -21,7 +21,9 @@ export default function PickExercisesPage({
   searchParams: Promise<{ target?: string; wex?: string }>;
 }) {
   return (
-    <PageShell active="/workouts">
+    // Full-width desktop layout (LAY-1): the picker results render as a
+    // multi-column card grid instead of one stacked list.
+    <PageShell active="/workouts" className="max-w-[1500px]">
       <Suspense fallback={<WorkoutsPageLoading />}>
         <Content searchParams={searchParams} />
       </Suspense>

@@ -51,7 +51,9 @@ import { MAX_WORKOUTS } from "./data";
 
 export default function WorkoutsPage() {
   return (
-    <PageShell active="/workouts">
+    // Full-width desktop layout (LAY-1): the wide frame, filled with
+    // multi-column workout/plan card grids and a paired analytics row.
+    <PageShell active="/workouts" className="max-w-[1500px]">
       <Toaster
         position="top-center"
         theme="system"
@@ -218,25 +220,41 @@ async function Home({ user }: { user: User }) {
 
       {workouts.length > 0 && (
         <>
-          {/* Volume trend */}
-          {trend.length >= 2 && <VolumeChart points={trend} />}
+          {/* Volume trend + personal records, paired side by side on desktop
+              (LAY-1). Explicit grid-cols-1 + min-w-0 children: without them
+              the implicit column sizes to max-content and phones/tablets get
+              silently clipped under overflow-x: clip. */}
+          {(trend.length >= 2 || records.length > 0) && (
+            <div
+              className={`grid grid-cols-1 items-start gap-8 ${
+                trend.length >= 2 && records.length > 0 ? "xl:grid-cols-2" : ""
+              }`}
+            >
+              {/* Volume trend */}
+              {trend.length >= 2 && (
+                <div className="min-w-0">
+                  <VolumeChart points={trend} />
+                </div>
+              )}
 
-          {/* Personal records */}
-          {records.length > 0 && (
-            <section>
-              <h2 className="mb-3 flex items-center gap-2 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-                <Trophy className="size-4 text-amber-500" />
-                Personal records
-                <KpiHelp label="Personal records">
-                  Your best performance on each lift. "est. 1RM" is your
-                  estimated one-rep max: the heaviest single rep you could
-                  likely manage, calculated from a set's weight and reps. It
-                  lets a 225 x 5 day and a 245 x 2 day be compared on one
-                  scale. Tap a lift to see its strength trend over time.
-                </KpiHelp>
-              </h2>
-              <PersonalRecords records={records} />
-            </section>
+              {/* Personal records */}
+              {records.length > 0 && (
+                <section className="min-w-0">
+                  <h2 className="mb-3 flex items-center gap-2 font-medium text-muted-foreground text-sm uppercase tracking-wide">
+                    <Trophy className="size-4 text-amber-500" />
+                    Personal records
+                    <KpiHelp label="Personal records">
+                      Your best performance on each lift. "est. 1RM" is your
+                      estimated one-rep max: the heaviest single rep you could
+                      likely manage, calculated from a set's weight and reps. It
+                      lets a 225 x 5 day and a 245 x 2 day be compared on one
+                      scale. Tap a lift to see its strength trend over time.
+                    </KpiHelp>
+                  </h2>
+                  <PersonalRecords records={records} />
+                </section>
+              )}
+            </div>
           )}
 
           {/* Recent history + the full log. id: dashboard "View all" target. */}
@@ -249,13 +267,15 @@ async function Home({ user }: { user: User }) {
                 <AskChadButton prompt="Review my Workouts page: my logged sessions, weekly volume, training plan, and PRs. How is my training progressing overall, and what should I focus on next?" />
               </div>
             </div>
-            <div className="flex flex-col gap-3">
+            {/* Two-across on desktop (LAY-1); explicit grid-cols-1 + min-w-0
+                so the implicit column never sizes to max-content. Columns
+                start at lg: at 768 the sidebar leaves ~512px of content and
+                half-width cards clip their best-set line. */}
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
               {workouts.slice(0, 5).map((w) => (
-                <HistoryCard
-                  key={w.id}
-                  prCount={prCounts[w.id] ?? 0}
-                  workout={w}
-                />
+                <div className="min-w-0" key={w.id}>
+                  <HistoryCard prCount={prCounts[w.id] ?? 0} workout={w} />
+                </div>
               ))}
             </div>
             <Link

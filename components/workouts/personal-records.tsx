@@ -70,7 +70,7 @@ export function PersonalRecords({
                     ? `Top set ${r.bestWeight}${r.bestWeightUnit}${r.bestWeightReps != null ? ` × ${r.bestWeightReps}` : ""}`
                     : r.bestReps != null
                       ? `Best ${r.bestReps} reps`
-                      : "Logged"}
+                      : "No weights entered yet"}
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-2.5 text-right">

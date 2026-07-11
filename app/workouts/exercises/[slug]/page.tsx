@@ -81,7 +81,9 @@ export default function ExerciseDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   return (
-    <PageShell active="/workouts">
+    // Full-width desktop layout (LAY-1): how-to/records/progress beside the
+    // past-session log on desktop, stacked on phones.
+    <PageShell active="/workouts" className="max-w-[1500px]">
       <Suspense fallback={<WorkoutsPageLoading />}>
         <Content params={params} />
       </Suspense>
@@ -151,160 +153,177 @@ async function Content({ params }: { params: Promise<{ slug: string }> }) {
         {entry?.custom && <Pill tone="blood">Your exercise</Pill>}
       </div>
 
-      {/* How to */}
-      {(cue || custom?.notes) && (
-        <WCard className="p-4">
-          <h2 className="font-black text-[13px] text-muted-foreground/80 uppercase tracking-[0.14em]">
-            {custom?.notes ? "Your setup notes" : "How to do it"}
-          </h2>
-          <p className="mt-1.5 text-[14.5px] text-foreground leading-relaxed">
-            {custom?.notes ?? cue}
-          </p>
-        </WCard>
-      )}
+      {/* Full-width desktop layout (LAY-1): the info column (how-to, records,
+          progress) sits beside the past-session log at xl; phones keep the
+          stacked order. Explicit grid-cols-1 + min-w-0 columns (the implicit
+          column would size to max-content and clip phones under
+          overflow-x: clip); [&>:first-child]:mt-0 aligns both column tops. */}
+      <div
+        className={`grid grid-cols-1 items-start gap-8 pb-24 ${
+          cue || custom?.notes || !timed ? "xl:grid-cols-2" : ""
+        }`}
+      >
+        {(cue || custom?.notes || !timed) && (
+          <div className="min-w-0 [&>:first-child]:mt-0">
+            {/* How to */}
+            {(cue || custom?.notes) && (
+              <WCard className="p-4">
+                <h2 className="font-black text-[13px] text-muted-foreground/80 uppercase tracking-[0.14em]">
+                  {custom?.notes ? "Your setup notes" : "How to do it"}
+                </h2>
+                <p className="mt-1.5 text-[14.5px] text-foreground leading-relaxed">
+                  {custom?.notes ?? cue}
+                </p>
+              </WCard>
+            )}
 
-      {/* Records */}
-      {!timed && (
-        <>
+            {/* Records */}
+            {!timed && (
+              <>
+                <h2 className="mt-7 mb-2.5 font-black font-display text-[13px] text-muted-foreground/80 uppercase tracking-[0.14em]">
+                  Your records
+                </h2>
+                {!best || best.bestWeightLb === 0 ? (
+                  <WCard className="p-6 text-center">
+                    <p className="font-semibold text-[15px] text-foreground">
+                      No records yet
+                    </p>
+                    <p className="mx-auto mt-1 max-w-[300px] text-[13.5px] text-muted-foreground">
+                      Log this exercise in a workout and your best lifts will show up
+                      here.
+                    </p>
+                  </WCard>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    <WCard className="p-4">
+                      <div className="flex items-center gap-1.5">
+                        <Trophy
+                          aria-hidden
+                          className="size-3.5 text-amber-500 dark:text-amber-300"
+                        />
+                        <span className="font-bold text-[11.5px] text-muted-foreground uppercase tracking-wide">
+                          Heaviest weight
+                        </span>
+                      </div>
+                      <div className="mt-2 font-bold font-mono text-[26px] text-foreground leading-none tabular-nums">
+                        {formatWeight(best.bestWeightLb)}{" "}
+                        <span className="text-[15px] text-muted-foreground">lb</span>
+                      </div>
+                      <p className="mt-1.5 text-[12px] text-muted-foreground leading-snug">
+                        The most weight you&apos;ve ever lifted for at least one rep.
+                      </p>
+                    </WCard>
+                    <WCard className="p-4">
+                      <div className="flex items-center gap-1.5">
+                        <Trophy
+                          aria-hidden
+                          className="size-3.5 text-amber-500 dark:text-amber-300"
+                        />
+                        <span className="font-bold text-[11.5px] text-muted-foreground uppercase tracking-wide">
+                          Estimated strength
+                        </span>
+                      </div>
+                      <div className="mt-2 font-bold font-mono text-[26px] text-foreground leading-none tabular-nums">
+                        {formatWeight(Math.round(best.bestE1RMLb))}{" "}
+                        <span className="text-[15px] text-muted-foreground">lb</span>
+                      </div>
+                      <p className="mt-1.5 text-[12px] text-muted-foreground leading-snug">
+                        The most we estimate you could lift once, based on your best
+                        set.
+                      </p>
+                    </WCard>
+                  </div>
+                )}
+
+                {/* Progress */}
+                <h2 className="mt-7 mb-2.5 font-black font-display text-[13px] text-muted-foreground/80 uppercase tracking-[0.14em]">
+                  Your progress
+                </h2>
+                <WCard className="p-4">
+                  <p className="mb-3 text-[12.5px] text-muted-foreground leading-snug">
+                    Each dot is one workout, plotted by estimated strength that day.
+                    Light days dip the line. The direction over weeks is what
+                    matters.
+                  </p>
+                  <ProgressChart points={series} />
+                </WCard>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Past sessions */}
+        <div className="min-w-0 [&>:first-child]:mt-0">
           <h2 className="mt-7 mb-2.5 font-black font-display text-[13px] text-muted-foreground/80 uppercase tracking-[0.14em]">
-            Your records
+            Every time you&apos;ve done it
           </h2>
-          {!best || best.bestWeightLb === 0 ? (
+          {loggedHere.length === 0 ? (
             <WCard className="p-6 text-center">
-              <p className="font-semibold text-[15px] text-foreground">
-                No records yet
-              </p>
-              <p className="mx-auto mt-1 max-w-[300px] text-[13.5px] text-muted-foreground">
-                Log this exercise in a workout and your best lifts will show up
-                here.
+              <p className="text-[13.5px] text-muted-foreground">
+                Nothing logged yet.
               </p>
             </WCard>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
-              <WCard className="p-4">
-                <div className="flex items-center gap-1.5">
-                  <Trophy
-                    aria-hidden
-                    className="size-3.5 text-amber-500 dark:text-amber-300"
-                  />
-                  <span className="font-bold text-[11.5px] text-muted-foreground uppercase tracking-wide">
-                    Heaviest weight
-                  </span>
-                </div>
-                <div className="mt-2 font-bold font-mono text-[26px] text-foreground leading-none tabular-nums">
-                  {formatWeight(best.bestWeightLb)}{" "}
-                  <span className="text-[15px] text-muted-foreground">lb</span>
-                </div>
-                <p className="mt-1.5 text-[12px] text-muted-foreground leading-snug">
-                  The most weight you&apos;ve ever lifted for at least one rep.
-                </p>
-              </WCard>
-              <WCard className="p-4">
-                <div className="flex items-center gap-1.5">
-                  <Trophy
-                    aria-hidden
-                    className="size-3.5 text-amber-500 dark:text-amber-300"
-                  />
-                  <span className="font-bold text-[11.5px] text-muted-foreground uppercase tracking-wide">
-                    Estimated strength
-                  </span>
-                </div>
-                <div className="mt-2 font-bold font-mono text-[26px] text-foreground leading-none tabular-nums">
-                  {formatWeight(Math.round(best.bestE1RMLb))}{" "}
-                  <span className="text-[15px] text-muted-foreground">lb</span>
-                </div>
-                <p className="mt-1.5 text-[12px] text-muted-foreground leading-snug">
-                  The most we estimate you could lift once, based on your best
-                  set.
-                </p>
-              </WCard>
+            <div className="flex flex-col gap-3">
+              {loggedHere.map(({ workout, exercise }) => {
+                let workingIndex = 0;
+                return (
+                  <WCard className="p-4" key={workout.id}>
+                    <Link
+                      className="flex min-h-[44px] items-center justify-between gap-2"
+                      href={`/workouts/history/${workout.id}`}
+                    >
+                      <span className="truncate font-bold text-[14.5px] text-foreground hover:underline">
+                        {workout.title}
+                      </span>
+                      <span className="shrink-0 text-[12.5px] text-muted-foreground/80">
+                        {formatDay(new Date(workout.performedAt).getTime())}
+                      </span>
+                    </Link>
+                    <div className="mt-2 flex flex-col gap-1">
+                      {exercise.sets
+                        .filter((s) => s.completed)
+                        .map((set, i) => {
+                          if (set.setType !== "warmup") {
+                            workingIndex++;
+                          }
+                          return (
+                            <div
+                              className="flex items-center gap-3 px-1"
+                              key={`${workout.id}-${i}`}
+                            >
+                              <span className="w-6 text-center font-bold font-mono text-[12.5px] text-muted-foreground/80">
+                                {set.setType === "warmup" ? "W" : workingIndex}
+                              </span>
+                              <span className="font-mono text-[14px] text-foreground tabular-nums">
+                                {(() => {
+                                  if (timed) {
+                                    return set.reps == null
+                                      ? "Done"
+                                      : `${set.reps}s`;
+                                  }
+                                  if (set.weight == null && set.reps == null) {
+                                    return "Done (no numbers entered)";
+                                  }
+                                  return `${set.weight ?? 0} ${set.unit} × ${set.reps ?? 0}`;
+                                })()}
+                              </span>
+                              {set.rpe != null && (
+                                <span className="text-[11.5px] text-muted-foreground">
+                                  RPE {set.rpe}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </WCard>
+                );
+              })}
             </div>
           )}
-
-          {/* Progress */}
-          <h2 className="mt-7 mb-2.5 font-black font-display text-[13px] text-muted-foreground/80 uppercase tracking-[0.14em]">
-            Your progress
-          </h2>
-          <WCard className="p-4">
-            <p className="mb-3 text-[12.5px] text-muted-foreground leading-snug">
-              Each dot is one workout, plotted by estimated strength that day.
-              Light days dip the line. The direction over weeks is what
-              matters.
-            </p>
-            <ProgressChart points={series} />
-          </WCard>
-        </>
-      )}
-
-      {/* Past sessions */}
-      <h2 className="mt-7 mb-2.5 font-black font-display text-[13px] text-muted-foreground/80 uppercase tracking-[0.14em]">
-        Every time you&apos;ve done it
-      </h2>
-      {loggedHere.length === 0 ? (
-        <WCard className="p-6 text-center">
-          <p className="text-[13.5px] text-muted-foreground">
-            Nothing logged yet.
-          </p>
-        </WCard>
-      ) : (
-        <div className="flex flex-col gap-3 pb-24">
-          {loggedHere.map(({ workout, exercise }) => {
-            let workingIndex = 0;
-            return (
-              <WCard className="p-4" key={workout.id}>
-                <Link
-                  className="flex min-h-[44px] items-center justify-between gap-2"
-                  href={`/workouts/history/${workout.id}`}
-                >
-                  <span className="truncate font-bold text-[14.5px] text-foreground hover:underline">
-                    {workout.title}
-                  </span>
-                  <span className="shrink-0 text-[12.5px] text-muted-foreground/80">
-                    {formatDay(new Date(workout.performedAt).getTime())}
-                  </span>
-                </Link>
-                <div className="mt-2 flex flex-col gap-1">
-                  {exercise.sets
-                    .filter((s) => s.completed)
-                    .map((set, i) => {
-                      if (set.setType !== "warmup") {
-                        workingIndex++;
-                      }
-                      return (
-                        <div
-                          className="flex items-center gap-3 px-1"
-                          key={`${workout.id}-${i}`}
-                        >
-                          <span className="w-6 text-center font-bold font-mono text-[12.5px] text-muted-foreground/80">
-                            {set.setType === "warmup" ? "W" : workingIndex}
-                          </span>
-                          <span className="font-mono text-[14px] text-foreground tabular-nums">
-                            {(() => {
-                              if (timed) {
-                                return set.reps == null
-                                  ? "Done"
-                                  : `${set.reps}s`;
-                              }
-                              if (set.weight == null && set.reps == null) {
-                                return "Done (no numbers entered)";
-                              }
-                              return `${set.weight ?? 0} ${set.unit} × ${set.reps ?? 0}`;
-                            })()}
-                          </span>
-                          {set.rpe != null && (
-                            <span className="text-[11.5px] text-muted-foreground">
-                              RPE {set.rpe}
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
-                </div>
-              </WCard>
-            );
-          })}
         </div>
-      )}
+      </div>
     </>
   );
 }

@@ -90,9 +90,11 @@ export function IntroCard() {
         <X aria-hidden className="size-5" />
       </button>
       <Eyebrow>How this works</Eyebrow>
-      <ol className="mt-4 flex flex-col gap-4">
+      {/* Steps go three-across on desktop (LAY-1); explicit grid-cols-1 +
+          min-w-0 children so nothing sizes to max-content on phones. */}
+      <ol className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
         {steps.map((step, i) => (
-          <li className="flex gap-3.5" key={step.title}>
+          <li className="flex min-w-0 gap-3.5" key={step.title}>
             <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-blood-dim font-bold font-mono text-[13px] text-blood">
               {i + 1}
             </span>
@@ -168,7 +170,9 @@ function TemplateCard({
       : lastDone;
 
   return (
-    <WCard className="p-5">
+    // h-full + flex-col so cards fill their grid row and the Start button
+    // bottoms out at a consistent line across the row (LAY-1 card grid).
+    <WCard className="flex h-full min-w-0 flex-col p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="truncate font-bold text-[18px] text-foreground">
@@ -207,19 +211,23 @@ function TemplateCard({
         </p>
       )}
 
-      <WButton
-        className="mt-4 w-full"
-        disabled={busy}
-        onClick={() => {
-          startSession(sessionFromTemplate(template, lastSets, unit));
-          router.push("/workouts/session");
-        }}
-        size="lg"
-        variant="primary"
-      >
-        <Play aria-hidden className="size-5 fill-current" />
-        {busy ? "Finish your current workout first" : `Start ${template.name}`}
-      </WButton>
+      <div className="mt-auto pt-4">
+        <WButton
+          className="w-full"
+          disabled={busy}
+          onClick={() => {
+            startSession(sessionFromTemplate(template, lastSets, unit));
+            router.push("/workouts/session");
+          }}
+          size="lg"
+          variant="primary"
+        >
+          <Play aria-hidden className="size-5 fill-current" />
+          {busy
+            ? "Finish your current workout first"
+            : `Start ${template.name}`}
+        </WButton>
+      </div>
 
       <ConfirmDialog
         body="The workout (your plan) will be deleted. Sessions you already logged with it stay in your history."
@@ -295,7 +303,11 @@ export function MyWorkoutsSection({
           </WButton>
         </WCard>
       ) : (
-        <div className="flex flex-col gap-3">
+        /* Multi-column workout-card grid on desktop (LAY-1); explicit
+           grid-cols-1 so the implicit column never sizes to max-content.
+           Columns start at lg, not md: at 768 the sidebar leaves ~512px of
+           content and half-width cards wrap the Start button + clip text. */
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
           {templates.map((template) => (
             <TemplateCard
               key={template.id}
@@ -304,6 +316,16 @@ export function MyWorkoutsSection({
               unit={unit}
             />
           ))}
+          {/* Dashed ghost tile (the Linear/Notion pattern) so a short row
+              never strands empty grid columns on desktop. */}
+          <button
+            className="hidden min-h-[180px] cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-border border-dashed text-muted-foreground transition hover:border-input hover:bg-muted/30 hover:text-foreground lg:flex"
+            onClick={() => router.push("/workouts/new")}
+            type="button"
+          >
+            <Plus aria-hidden className="size-6" />
+            <span className="font-semibold text-[15px]">New workout</span>
+          </button>
         </div>
       )}
     </section>
@@ -365,9 +387,12 @@ export function ChadPlanSection({
       </div>
 
       {days ? (
-        <div className="flex flex-col gap-3">
+        /* Plan days go multi-column on desktop, same card grid as My
+           Workouts (LAY-1); explicit grid-cols-1 + min-w-0 cards. Columns
+           start at lg (768 content is too narrow beside the sidebar). */
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
           {days.map((day) => (
-            <WCard className="p-5" key={day.name}>
+            <WCard className="flex h-full min-w-0 flex-col p-5" key={day.name}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h3 className="truncate font-bold text-[16.5px] text-foreground">
@@ -382,15 +407,19 @@ export function ChadPlanSection({
                   {day.exercises.length === 1 ? "exercise" : "exercises"}
                 </Pill>
               </div>
-              <WButton
-                className="mt-4 w-full"
-                disabled={busy}
-                onClick={() => startDay(day)}
-                size="lg"
-              >
-                <Play aria-hidden className="size-5" />
-                {busy ? "Finish your current workout first" : `Start ${day.name}`}
-              </WButton>
+              <div className="mt-auto pt-4">
+                <WButton
+                  className="w-full"
+                  disabled={busy}
+                  onClick={() => startDay(day)}
+                  size="lg"
+                >
+                  <Play aria-hidden className="size-5" />
+                  {busy
+                    ? "Finish your current workout first"
+                    : `Start ${day.name}`}
+                </WButton>
+              </div>
             </WCard>
           ))}
         </div>
@@ -439,27 +468,35 @@ export function StartEmptySection({ unit }: { unit: WeightUnit }) {
   const busy = Boolean(session);
   return (
     <section aria-labelledby="freestyle-heading" className="mt-8">
-      <h2
-        className="mb-1 font-black font-display text-[17px] text-foreground uppercase tracking-wide"
-        id="freestyle-heading"
-      >
-        No plan today?
-      </h2>
-      <p className="mb-3 text-[12.5px] text-muted-foreground/80">
-        Start with a blank workout and add exercises as you go.
-      </p>
-      <WButton
-        className="w-full"
-        disabled={busy}
-        onClick={() => {
-          startSession(emptySession(unit));
-          router.push("/workouts/session");
-        }}
-        size="lg"
-      >
-        <Play aria-hidden className="size-5" />
-        {busy ? "Finish your current workout first" : "Start an empty workout"}
-      </WButton>
+      {/* One panel, text beside the action on desktop: a bare heading +
+          lone button reads as a dead band on the wide frame (LAY-1). */}
+      <WCard className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2
+            className="font-black font-display text-[17px] text-foreground uppercase tracking-wide"
+            id="freestyle-heading"
+          >
+            No plan today?
+          </h2>
+          <p className="mt-1 text-[12.5px] text-muted-foreground/80">
+            Start with a blank workout and add exercises as you go.
+          </p>
+        </div>
+        <WButton
+          className="w-full shrink-0 sm:w-auto"
+          disabled={busy}
+          onClick={() => {
+            startSession(emptySession(unit));
+            router.push("/workouts/session");
+          }}
+          size="lg"
+        >
+          <Play aria-hidden className="size-5" />
+          {busy
+            ? "Finish your current workout first"
+            : "Start an empty workout"}
+        </WButton>
+      </WCard>
     </section>
   );
 }

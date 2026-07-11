@@ -4,6 +4,7 @@
 // confirmations; every real feature gets a full page.
 
 import { useEffect, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { WButton } from "./ui";
 
 export function ConfirmDialog({
@@ -41,14 +42,24 @@ export function ConfirmDialog({
       }
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    // Scroll-lock while open, so the page can't scroll away underneath.
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
   }, [open, onCancel]);
 
   if (!open) {
     return null;
   }
 
-  return (
+  // Portaled to <body>: the app shell's <main> carries a transform, which
+  // makes it the containing block for position:fixed. Rendered inline, this
+  // overlay would anchor to the DOCUMENT (opening off-viewport on scrolled
+  // pages) and its z-index would be trapped below the floating docks.
+  return createPortal(
     <div
       className="fixed inset-0 z-[80] flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center"
       onClick={(e) => {
@@ -84,6 +95,7 @@ export function ConfirmDialog({
           </WButton>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

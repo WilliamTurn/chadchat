@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { saveTemplate } from "@/app/workouts/actions";
 import type { TemplateExercise } from "@/lib/validation/workout-templates";
@@ -128,7 +129,7 @@ function ExerciseRow({
   onMove: (direction: -1 | 1) => void;
 }) {
   return (
-    <WCard className="p-4">
+    <WCard className="min-w-0 p-4">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -348,8 +349,9 @@ export function WorkoutEditor({
         </p>
       </header>
 
-      {/* Name */}
-      <label className="block">
+      {/* Name. Inputs keep a sane width within the full desktop layout
+          (LAY-1): a 1460px-wide text field is not a pro-app pattern. */}
+      <label className="block max-w-2xl">
         <Eyebrow className="mb-1.5">Workout name</Eyebrow>
         <input
           className="h-[56px] w-full rounded-xl border border-input bg-card px-4 font-semibold text-[17px] text-foreground placeholder:text-muted-foreground/60 focus:border-blood/60 focus:outline-none"
@@ -382,6 +384,9 @@ export function WorkoutEditor({
             </p>
           </WCard>
         ) : (
+          /* One exercise per row at every width: the order IS the workout,
+             and the up/down reorder arrows must stay honest. Each wide row
+             uses the desktop width with its inline controls (LAY-1). */
           <div className="flex flex-col gap-3">
             {exercises.map((rex, i) => (
               <ExerciseRow
@@ -397,8 +402,10 @@ export function WorkoutEditor({
           </div>
         )}
 
+        {/* Full-width on phones, left-anchored auto width on desktop (the
+            s180 form-button ruling). */}
         <WButton
-          className="mt-3 w-full"
+          className="mt-3 w-full sm:w-auto"
           onClick={() => router.push("/workouts/exercises/pick?target=draft")}
           size="lg"
         >
@@ -407,29 +414,35 @@ export function WorkoutEditor({
         </WButton>
       </div>
 
-      {/* Sticky save bar */}
-      <div
-        className="fixed inset-x-0 bottom-0 z-50 border-border border-t bg-background/95 px-4 py-3 backdrop-blur-xl"
-        style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}
-      >
-        <div className="mx-auto w-full max-w-[560px]">
-          {saveHint && (
-            <p className="mb-2 text-center text-[12.5px] text-muted-foreground">
-              {saveHint}
-            </p>
-          )}
-          <WButton
-            className="w-full"
-            disabled={!canSave}
-            loading={saving}
-            onClick={handleSave}
-            size="lg"
-            variant="primary"
-          >
-            Save workout
-          </WButton>
-        </div>
-      </div>
+      {/* Pinned save bar. Portaled to <body>: the shell's <main> carries a
+          transform that would otherwise anchor this "fixed" bar to the
+          document floor instead of the viewport. (Renders only after
+          `ready`, i.e. post-mount, so document exists.) */}
+      {createPortal(
+        <div
+          className="fixed inset-x-0 bottom-0 z-50 border-border border-t bg-background/95 px-4 py-3 backdrop-blur-xl"
+          style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}
+        >
+          <div className="mx-auto w-full max-w-[560px]">
+            {saveHint && (
+              <p className="mb-2 text-center text-[12.5px] text-muted-foreground">
+                {saveHint}
+              </p>
+            )}
+            <WButton
+              className="w-full"
+              disabled={!canSave}
+              loading={saving}
+              onClick={handleSave}
+              size="lg"
+              variant="primary"
+            >
+              Save workout
+            </WButton>
+          </div>
+        </div>,
+        document.body
+      )}
 
       <ConfirmDialog
         body={

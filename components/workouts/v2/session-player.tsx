@@ -510,7 +510,7 @@ function ExerciseCard({
   ];
 
   return (
-    <WCard className={`p-4 transition-opacity ${allDone ? "opacity-75" : ""}`}>
+    <WCard className={`min-w-0 p-4 transition-opacity ${allDone ? "opacity-75" : ""}`}>
       {/* Card header */}
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
@@ -1069,7 +1069,10 @@ export function SessionPlayer({
           </WButton>
         </WCard>
       ) : (
-        <div className="flex flex-col gap-3">
+        /* Two-across on desktop (LAY-1); items-start so a card only grows
+           with its own sets. Explicit grid-cols-1 + min-w-0 cards so the
+           implicit column never sizes to max-content on phones. */
+        <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-2">
           {session.exercises.map((wex, i) => (
             <ExerciseCard
               count={session.exercises.length}
@@ -1087,8 +1090,10 @@ export function SessionPlayer({
       )}
 
       {session.exercises.length > 0 && (
+        /* Full-width on phones, left-anchored auto width on desktop (the
+           s180 form-button ruling). */
         <WButton
-          className="mt-3 w-full"
+          className="mt-3 w-full sm:w-auto"
           onClick={() => router.push("/workouts/exercises/pick?target=session")}
           size="lg"
         >
@@ -1100,14 +1105,14 @@ export function SessionPlayer({
       {/* Discard, clearly separated from Finish */}
       <div className="mt-10 border-border border-t pt-6 pb-24">
         <WButton
-          className="w-full"
+          className="w-full sm:w-auto"
           onClick={() => setDiscarding(true)}
           variant="danger"
         >
           <Trash2 aria-hidden className="size-4" />
           Discard workout
         </WButton>
-        <p className="mt-2 text-center text-[12px] text-muted-foreground/80">
+        <p className="mt-2 text-center text-[12px] text-muted-foreground/80 sm:text-left">
           Deletes this session without saving. Your saved workouts and history
           are untouched.
         </p>

@@ -37,8 +37,17 @@ function SessionMiniBar() {
   const { session, ready } = useWorkouts();
   const pathname = usePathname();
   const now = useNowTick();
-  // Hidden on the player itself; shown everywhere else while a session runs.
-  if (!(ready && session) || pathname.startsWith("/workouts/session")) {
+  // Hidden on the player itself, and on every page with its own fixed
+  // bottom action bar (picker confirm, builder/custom-exercise save): the
+  // shell's stacking context paints this dock above those bars, so it would
+  // cover their primary button and hijack the tap.
+  const pageHasOwnBottomBar =
+    pathname.startsWith("/workouts/session") ||
+    pathname.startsWith("/workouts/exercises/pick") ||
+    pathname.startsWith("/workouts/exercises/new") ||
+    pathname.startsWith("/workouts/new") ||
+    pathname.endsWith("/edit");
+  if (!(ready && session) || pageHasOwnBottomBar) {
     return null;
   }
   const done = sessionCompletedSets(session.exercises);

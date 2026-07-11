@@ -25,8 +25,9 @@ export function HistoryCard({
   const duration = formatDuration(workout.durationSeconds);
   const best = bestSetOfWorkout(workout);
   return (
-    <Link className="block" href={`/workouts/history/${workout.id}`}>
-      <WCard className="p-5 transition hover:border-input hover:bg-muted/30">
+    // h-full so cards fill their row when rendered in a grid (LAY-1).
+    <Link className="block h-full" href={`/workouts/history/${workout.id}`}>
+      <WCard className="h-full p-5 transition hover:border-input hover:bg-muted/30">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h3 className="truncate font-bold text-[16.5px] text-foreground">

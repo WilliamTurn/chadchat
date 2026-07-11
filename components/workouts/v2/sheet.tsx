@@ -5,6 +5,7 @@
 
 import { X } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 export interface SheetAction {
   label: string;
@@ -42,14 +43,24 @@ export function ActionSheet({
       }
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    // Scroll-lock while open, so the page can't scroll away underneath.
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
   }, [open, onClose]);
 
   if (!open) {
     return null;
   }
 
-  return (
+  // Portaled to <body>: the app shell's <main> carries a transform, which
+  // makes it the containing block for position:fixed. Rendered inline, this
+  // sheet would anchor to the DOCUMENT bottom (off-viewport on scrolled
+  // pages, the WKT-9 bug) instead of the viewport bottom.
+  return createPortal(
     <div
       className="fixed inset-0 z-[75] flex items-end justify-center bg-black/70 backdrop-blur-sm"
       onClick={(e) => {
@@ -130,6 +141,7 @@ export function ActionSheet({
         </div>
         {footer}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

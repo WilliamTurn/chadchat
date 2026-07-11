@@ -4,7 +4,8 @@
 // Every field explains itself; nothing is auto-focused.
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import {
   addCustomExercise,
@@ -54,6 +55,9 @@ export function CustomExerciseForm({
   const [saving, setSaving] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  // This form is server-rendered, so the portaled save bar mounts client-side.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const canSave = name.trim().length > 0;
 
@@ -100,138 +104,152 @@ export function CustomExerciseForm({
   }
 
   return (
-    <div className="flex flex-col gap-6 pb-32">
-      {/* Name */}
-      <label className="block">
-        <Eyebrow className="mb-1.5">Exercise name</Eyebrow>
-        <input
-          className="h-[56px] w-full rounded-xl border border-input bg-card px-4 font-semibold text-[17px] text-foreground placeholder:text-muted-foreground/60 focus:border-blood/60 focus:outline-none"
-          maxLength={120}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Incline Hammer Press (Machine)"
-          type="text"
-          value={name}
-        />
-      </label>
-
-      {/* Muscle group + equipment */}
-      <div className="grid gap-4 sm:grid-cols-2">
+    // Full-width desktop layout (LAY-1): the basics sit beside the
+    // logging-kind picker + notes at lg; phones keep the stacked order.
+    // Explicit grid-cols-1 + min-w-0 columns (the implicit column would
+    // size to max-content and clip phones under overflow-x: clip).
+    <div className="grid grid-cols-1 items-start gap-6 pb-32 lg:grid-cols-2 lg:gap-8">
+      <div className="flex min-w-0 flex-col gap-6">
+        {/* Name */}
         <label className="block">
-          <Eyebrow className="mb-1.5">Main muscle worked</Eyebrow>
-          <select
-            className={selectClass}
-            onChange={(e) => setMuscleGroup(e.target.value as MuscleGroup)}
-            value={muscleGroup}
-          >
-            {MUSCLE_GROUPS.map((m) => (
-              <option key={m} value={m}>
-                {MUSCLE_GROUP_LABELS[m]}
-              </option>
-            ))}
-          </select>
+          <Eyebrow className="mb-1.5">Exercise name</Eyebrow>
+          <input
+            className="h-[56px] w-full rounded-xl border border-input bg-card px-4 font-semibold text-[17px] text-foreground placeholder:text-muted-foreground/60 focus:border-blood/60 focus:outline-none"
+            maxLength={120}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Incline Hammer Press (Machine)"
+            type="text"
+            value={name}
+          />
         </label>
-        <label className="block">
-          <Eyebrow className="mb-1.5">Equipment</Eyebrow>
-          <select
-            className={selectClass}
-            onChange={(e) => setEquipment(e.target.value as Equipment)}
-            value={equipment}
-          >
-            {EQUIPMENT.map((eq) => (
-              <option key={eq} value={eq}>
-                {EQUIPMENT_LABELS[eq]}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
 
-      {/* Logging kind */}
-      <div>
-        <Eyebrow className="mb-1.5">How you&apos;ll log it</Eyebrow>
-        <div className="flex flex-col gap-2">
-          {EXERCISE_KINDS.map((k) => (
-            <button
-              aria-pressed={kind === k}
-              className={`flex min-h-[56px] w-full cursor-pointer items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                kind === k
-                  ? "border-blood/60 bg-blood-dim"
-                  : "border-input bg-card hover:bg-muted/50"
-              }`}
-              key={k}
-              onClick={() => setKind(k)}
-              type="button"
+        {/* Muscle group + equipment */}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block">
+            <Eyebrow className="mb-1.5">Main muscle worked</Eyebrow>
+            <select
+              className={selectClass}
+              onChange={(e) => setMuscleGroup(e.target.value as MuscleGroup)}
+              value={muscleGroup}
             >
-              <span>
-                <span className="block font-semibold text-[15px] text-foreground">
-                  {EXERCISE_KIND_LABELS[k]}
-                </span>
-                <span className="block text-[13px] text-muted-foreground">
-                  {EXERCISE_KIND_HELP[k]}
-                </span>
-              </span>
-              <span
-                aria-hidden
-                className={`size-5 shrink-0 rounded-full border-2 ${
-                  kind === k ? "border-blood bg-blood" : "border-input"
+              {MUSCLE_GROUPS.map((m) => (
+                <option key={m} value={m}>
+                  {MUSCLE_GROUP_LABELS[m]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block">
+            <Eyebrow className="mb-1.5">Equipment</Eyebrow>
+            <select
+              className={selectClass}
+              onChange={(e) => setEquipment(e.target.value as Equipment)}
+              value={equipment}
+            >
+              {EQUIPMENT.map((eq) => (
+                <option key={eq} value={eq}>
+                  {EQUIPMENT_LABELS[eq]}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div className="flex min-w-0 flex-col gap-6">
+        {/* Logging kind */}
+        <div>
+          <Eyebrow className="mb-1.5">How you&apos;ll log it</Eyebrow>
+          <div className="flex flex-col gap-2">
+            {EXERCISE_KINDS.map((k) => (
+              <button
+                aria-pressed={kind === k}
+                className={`flex min-h-[56px] w-full cursor-pointer items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left transition ${
+                  kind === k
+                    ? "border-blood/60 bg-blood-dim"
+                    : "border-input bg-card hover:bg-muted/50"
                 }`}
-              />
-            </button>
-          ))}
+                key={k}
+                onClick={() => setKind(k)}
+                type="button"
+              >
+                <span>
+                  <span className="block font-semibold text-[15px] text-foreground">
+                    {EXERCISE_KIND_LABELS[k]}
+                  </span>
+                  <span className="block text-[13px] text-muted-foreground">
+                    {EXERCISE_KIND_HELP[k]}
+                  </span>
+                </span>
+                <span
+                  aria-hidden
+                  className={`size-5 shrink-0 rounded-full border-2 ${
+                    kind === k ? "border-blood bg-blood" : "border-input"
+                  }`}
+                />
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Notes */}
-      <label className="block">
-        <Eyebrow className="mb-1.5">Setup notes (optional)</Eyebrow>
-        <textarea
-          className="min-h-[88px] w-full rounded-xl border border-input bg-card px-4 py-3 text-[15px] text-foreground placeholder:text-muted-foreground/60 focus:border-blood/60 focus:outline-none"
-          maxLength={500}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="e.g. Seat at 4, slow negative"
-          value={notes}
-        />
-      </label>
+        {/* Notes */}
+        <label className="block">
+          <Eyebrow className="mb-1.5">Setup notes (optional)</Eyebrow>
+          <textarea
+            className="min-h-[88px] w-full rounded-xl border border-input bg-card px-4 py-3 text-[15px] text-foreground placeholder:text-muted-foreground/60 focus:border-blood/60 focus:outline-none"
+            maxLength={500}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="e.g. Seat at 4, slow negative"
+            value={notes}
+          />
+        </label>
 
-      {existing && (
-        <WCard className="p-4">
-          <p className="text-[13px] text-muted-foreground leading-relaxed">
-            Deleting this exercise removes it from your picker only. Workouts
-            you already logged with it stay in your history.
-          </p>
-          <WButton
-            className="mt-3"
-            onClick={() => setConfirmingDelete(true)}
-            variant="danger"
-          >
-            Delete this exercise
-          </WButton>
-        </WCard>
-      )}
-
-      {/* Sticky save bar */}
-      <div
-        className="fixed inset-x-0 bottom-0 z-50 border-border border-t bg-background/95 px-4 py-3 backdrop-blur-xl"
-        style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}
-      >
-        <div className="mx-auto w-full max-w-[560px]">
-          {!canSave && (
-            <p className="mb-2 text-center text-[12.5px] text-muted-foreground">
-              Name the exercise to save it
+        {existing && (
+          <WCard className="p-4">
+            <p className="text-[13px] text-muted-foreground leading-relaxed">
+              Deleting this exercise removes it from your picker only. Workouts
+              you already logged with it stay in your history.
             </p>
-          )}
-          <WButton
-            className="w-full"
-            disabled={!canSave}
-            loading={saving}
-            onClick={handleSave}
-            size="lg"
-            variant="primary"
-          >
-            {existing ? "Save changes" : "Save exercise"}
-          </WButton>
+            <WButton
+              className="mt-3"
+              onClick={() => setConfirmingDelete(true)}
+              variant="danger"
+            >
+              Delete this exercise
+            </WButton>
+          </WCard>
+        )}
         </div>
-      </div>
+
+      {/* Pinned save bar. Portaled to <body>: the shell's <main> carries a
+          transform that would otherwise anchor this "fixed" bar to the
+          document floor instead of the viewport. */}
+      {mounted &&
+        createPortal(
+          <div
+            className="fixed inset-x-0 bottom-0 z-50 border-border border-t bg-background/95 px-4 py-3 backdrop-blur-xl"
+            style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}
+          >
+            <div className="mx-auto w-full max-w-[560px]">
+              {!canSave && (
+                <p className="mb-2 text-center text-[12.5px] text-muted-foreground">
+                  Name the exercise to save it
+                </p>
+              )}
+              <WButton
+                className="w-full"
+                disabled={!canSave}
+                loading={saving}
+                onClick={handleSave}
+                size="lg"
+                variant="primary"
+              >
+                {existing ? "Save changes" : "Save exercise"}
+              </WButton>
+            </div>
+          </div>,
+          document.body
+        )}
 
       <ConfirmDialog
         body="It will no longer appear in your exercise picker. Workouts you already logged with it stay in your history."

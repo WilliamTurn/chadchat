@@ -17,7 +17,8 @@ export default function EditWorkoutPage({
   params: Promise<{ id: string }>;
 }) {
   return (
-    <PageShell active="/workouts">
+    // Full-width desktop frame (LAY-1); the editor lays itself out inside it.
+    <PageShell active="/workouts" className="max-w-[1500px]">
       <Toaster position="top-center" theme="system" />
       <Suspense fallback={<WorkoutsPageLoading />}>
         <Content params={params} />

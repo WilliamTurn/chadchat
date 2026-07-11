@@ -10,7 +10,8 @@ export const metadata = { title: "New Workout" };
 /** Build a new workout (a reusable plan). Nothing is logged from here. */
 export default function NewWorkoutPage() {
   return (
-    <PageShell active="/workouts">
+    // Full-width desktop frame (LAY-1); the editor lays itself out inside it.
+    <PageShell active="/workouts" className="max-w-[1500px]">
       <Toaster position="top-center" theme="system" />
       <Suspense fallback={<WorkoutsPageLoading />}>
         <Content />

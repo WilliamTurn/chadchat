@@ -14,7 +14,9 @@ export const metadata = { title: "Workout History" };
 /** The permanent log of finished workouts, grouped by month. */
 export default function HistoryPage() {
   return (
-    <PageShell active="/workouts">
+    // Full-width desktop layout (LAY-1): month groups render their workout
+    // cards in a multi-column grid instead of one stacked column.
+    <PageShell active="/workouts" className="max-w-[1500px]">
       <Suspense fallback={<WorkoutsPageLoading />}>
         <Content />
       </Suspense>
@@ -73,13 +75,18 @@ async function Content() {
               <h2 className="mb-2.5 font-black font-display text-[13px] text-muted-foreground/80 uppercase tracking-[0.14em]">
                 {group.key}
               </h2>
-              <div className="flex flex-col gap-3">
+              {/* Explicit grid-cols-1 + min-w-0 children (LAY-1 gotcha): the
+                  implicit column would size to max-content and clip phones.
+                  Columns start at lg (768 content is too narrow beside the
+                  sidebar for half-width cards). */}
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
                 {group.items.map((workout) => (
-                  <HistoryCard
-                    key={workout.id}
-                    prCount={prCounts[workout.id] ?? 0}
-                    workout={workout}
-                  />
+                  <div className="min-w-0" key={workout.id}>
+                    <HistoryCard
+                      prCount={prCounts[workout.id] ?? 0}
+                      workout={workout}
+                    />
+                  </div>
                 ))}
               </div>
             </section>

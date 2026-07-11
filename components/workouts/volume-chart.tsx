@@ -127,7 +127,7 @@ export function VolumeChart({ points }: { points: Point[] }) {
           <>
             <Kpi
               help="One day's training volume: weight times reps, added up across every set you logged that day. Bigger over time means you're doing more total work."
-              label="Latest session"
+              label="Latest day"
               size="lg"
               value={`${stats.latest.toLocaleString()} lb`}
             />

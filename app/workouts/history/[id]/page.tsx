@@ -71,7 +71,9 @@ export default function WorkoutDetailPage({
   searchParams: Promise<{ new?: string }>;
 }) {
   return (
-    <PageShell active="/workouts">
+    // Full-width desktop layout (LAY-1): the per-exercise breakdown renders
+    // two-across on desktop instead of one stacked column.
+    <PageShell active="/workouts" className="max-w-[1500px]">
       <Toaster position="top-center" theme="system" />
       <Suspense fallback={<WorkoutsPageLoading />}>
         <Content params={params} searchParams={searchParams} />
@@ -170,12 +172,14 @@ async function Content({
       <h2 className="mt-7 mb-2.5 font-black font-display text-[13px] text-muted-foreground/80 uppercase tracking-[0.14em]">
         What you did
       </h2>
-      <div className="flex flex-col gap-3">
+      {/* Two-across on desktop (LAY-1); explicit grid-cols-1 + min-w-0 cards
+          so the implicit column never sizes to max-content on phones. */}
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
         {workout.exercises.map((ex, exIndex) => {
           let workingIndex = 0;
           const timed = ex.kind === "timed";
           return (
-            <WCard className="p-4" key={`${ex.name}-${exIndex}`}>
+            <WCard className="min-w-0 p-4" key={`${ex.name}-${exIndex}`}>
               <Link
                 className="group flex min-h-[44px] items-center justify-between gap-2"
                 href={`/workouts/exercises/${exerciseSlug(ex.name)}`}
@@ -254,22 +258,25 @@ async function Content({
         })}
       </div>
 
-      {/* Footer actions */}
-      <div className="mt-8 flex flex-col gap-3 pb-24">
+      {/* Footer actions: stacked on phones; on desktop the primary Repeat
+          sits left with the destructive Delete separated to the right (the
+          s180 goals-edit ruling). */}
+      <div className="mt-8 pb-24">
         {isNew ? (
-          <DoneButton />
+          /* The celebration view is centered, so its action centers too. */
+          <div className="flex sm:justify-center">
+            <DoneButton />
+          </div>
         ) : (
-          <>
+          <div className="flex flex-col gap-3 border-border border-t pt-5 sm:flex-row sm:items-center sm:justify-between">
             <RepeatWorkoutButton
               customExercises={context.customExercises}
               lastSets={context.lastSets}
               unit={context.unit}
               workout={workout}
             />
-            <div className="border-border border-t pt-4">
-              <DeleteWorkoutButton workoutId={workout.id} />
-            </div>
-          </>
+            <DeleteWorkoutButton workoutId={workout.id} />
+          </div>
         )}
       </div>
     </>

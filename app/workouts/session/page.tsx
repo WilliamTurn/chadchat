@@ -15,7 +15,9 @@ export const metadata = { title: "Workout in Progress" };
  * checkbox on Finish. */
 export default function SessionPage() {
   return (
-    <PageShell active="/workouts">
+    // Full-width desktop layout (LAY-1): the live exercise cards render
+    // two-across on desktop instead of one stacked column.
+    <PageShell active="/workouts" className="max-w-[1500px]">
       <Toaster position="top-center" theme="system" />
       <Suspense fallback={<WorkoutsPageLoading />}>
         <Content />

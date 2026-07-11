@@ -8,6 +8,7 @@
 import { Check, ChevronRight, Plus, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import type { LastExerciseLog, PrBaseline } from "@/lib/workouts/stats";
 import { MUSCLE_GROUPS, MUSCLE_GROUP_LABELS } from "@/lib/workouts/exercise-library";
 import {
@@ -160,10 +161,12 @@ export function ExercisePickerPage({
         />
       </label>
 
-      {/* Muscle filter chips, a padded, scrollable row that never clips. */}
+      {/* Muscle filter chips: scrollable full-bleed row on phones; from md
+          (where the LAY-2 sidebar engages and full-bleed math breaks) it
+          wraps in place. */}
       <div
         aria-label="Filter by muscle group"
-        className="scrollbar-none -mx-4 mt-3 flex gap-1.5 overflow-x-auto px-4 py-1 sm:-mx-6 sm:px-6"
+        className="scrollbar-none -mx-4 mt-3 flex gap-1.5 overflow-x-auto px-4 py-1 sm:-mx-6 sm:px-6 md:mx-0 md:flex-wrap md:overflow-visible md:px-0"
         role="tablist"
       >
         {[
@@ -232,22 +235,26 @@ export function ExercisePickerPage({
             </p>
           </div>
         ) : (
-          <ul>
+          /* Multi-column card grid on desktop (LAY-1); explicit grid-cols-1 +
+             min-w-0 so the implicit column never sizes to max-content.
+             Columns start at lg (768 content is too narrow beside the
+             sidebar for half-width cards). */
+          <ul className="grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-3">
             {results.map((exercise) => {
               const key = exercise.name.trim().toLowerCase();
               const inList = excluded.has(key);
               const isSelected = selected.includes(exercise.name);
               const best = prBaseline[key];
               return (
-                <li key={exercise.name}>
+                <li className="min-w-0" key={exercise.name}>
                   <button
                     aria-pressed={single ? undefined : isSelected}
-                    className={`flex min-h-[64px] w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${
+                    className={`flex h-full min-h-[64px] w-full cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${
                       inList
-                        ? "opacity-40"
+                        ? "border-border bg-card opacity-40"
                         : isSelected
-                          ? "bg-blood-dim"
-                          : "hover:bg-muted/50"
+                          ? "border-blood/60 bg-blood-dim"
+                          : "border-border bg-card hover:border-input hover:bg-muted/30"
                     }`}
                     disabled={inList}
                     onClick={() => toggle(exercise)}
@@ -268,13 +275,15 @@ export function ExercisePickerPage({
                         {exercise.name}
                       </span>
                       <span className="block text-[13px] text-muted-foreground">
+                        {/* Unset "Other" facets add no information; drop
+                            them instead of printing "Other · Other". */}
                         {[
                           muscleLabel(exercise.muscleGroup),
                           equipmentLabel(exercise.equipment),
-                          exercise.custom ? "Your exercise" : null,
-                          inList ? "Already added" : null,
                         ]
-                          .filter(Boolean)
+                          .filter((label) => label && label !== "Other")
+                          .concat(exercise.custom ? ["Your exercise"] : [])
+                          .concat(inList ? ["Already added"] : [])
                           .join(" · ")}
                       </span>
                     </span>
@@ -296,34 +305,39 @@ export function ExercisePickerPage({
         )}
       </div>
 
-      {/* Multi-select confirm bar */}
-      {!single && (
-        <div
-          className="fixed inset-x-0 bottom-0 z-50 border-border border-t bg-background/95 px-4 py-3 backdrop-blur-xl"
-          style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}
-        >
-          <div className="mx-auto w-full max-w-[560px]">
-            <WButton
-              className="w-full"
-              disabled={selected.length === 0}
-              onClick={() => {
-                const refs = selected
-                  .map((name) => catalog.find((e) => e.name === name))
-                  .filter((e): e is ExerciseRef => Boolean(e));
-                applyRefs(refs);
-              }}
-              size="lg"
-              variant="primary"
-            >
-              {selected.length === 0
-                ? "Select exercises to add"
-                : `Add ${selected.length} ${
-                    selected.length === 1 ? "exercise" : "exercises"
-                  } to ${returnLabel}`}
-            </WButton>
-          </div>
-        </div>
-      )}
+      {/* Multi-select confirm bar. Portaled to <body>: the shell's <main>
+          carries a transform that would otherwise anchor this "fixed" bar to
+          the document floor instead of pinning it to the viewport. (This
+          renders only after `ready`, i.e. post-mount, so document exists.) */}
+      {!single &&
+        createPortal(
+          <div
+            className="fixed inset-x-0 bottom-0 z-50 border-border border-t bg-background/95 px-4 py-3 backdrop-blur-xl"
+            style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}
+          >
+            <div className="mx-auto w-full max-w-[560px]">
+              <WButton
+                className="w-full"
+                disabled={selected.length === 0}
+                onClick={() => {
+                  const refs = selected
+                    .map((name) => catalog.find((e) => e.name === name))
+                    .filter((e): e is ExerciseRef => Boolean(e));
+                  applyRefs(refs);
+                }}
+                size="lg"
+                variant="primary"
+              >
+                {selected.length === 0
+                  ? "Select exercises to add"
+                  : `Add ${selected.length} ${
+                      selected.length === 1 ? "exercise" : "exercises"
+                    } to ${returnLabel}`}
+              </WButton>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

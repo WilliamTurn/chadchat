@@ -67,9 +67,11 @@ export function ExerciseLibrary({
         />
       </label>
 
+      {/* Scrollable full-bleed chip row on phones; from md (where the LAY-2
+          sidebar engages and full-bleed math breaks) it wraps in place. */}
       <div
         aria-label="Filter by muscle group"
-        className="scrollbar-none -mx-4 mt-3 flex gap-1.5 overflow-x-auto px-4 py-1 sm:-mx-6 sm:px-6"
+        className="scrollbar-none -mx-4 mt-3 flex gap-1.5 overflow-x-auto px-4 py-1 sm:-mx-6 sm:px-6 md:mx-0 md:flex-wrap md:overflow-visible md:px-0"
         role="tablist"
       >
         {[
@@ -133,13 +135,17 @@ export function ExerciseLibrary({
             </p>
           </div>
         ) : (
-          <ul className="flex flex-col">
+          /* Multi-column card grid on desktop (LAY-1); explicit grid-cols-1 +
+             min-w-0 so the implicit column never sizes to max-content.
+             Columns start at lg (768 content is too narrow beside the
+             sidebar for half-width cards). */
+          <ul className="grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-3">
             {results.map((exercise) => {
               const best = prBaseline[exercise.name.trim().toLowerCase()];
               return (
-                <li key={exercise.name}>
+                <li className="min-w-0" key={exercise.name}>
                   <Link
-                    className="flex min-h-[64px] items-center gap-3 rounded-xl px-3 py-2.5 transition hover:bg-muted/50"
+                    className="flex h-full min-h-[64px] items-center gap-3 rounded-xl border border-border bg-card px-3 py-2.5 transition hover:border-input hover:bg-muted/30"
                     href={`/workouts/exercises/${exerciseSlug(exercise.name)}`}
                   >
                     <span className="min-w-0 flex-1">
@@ -147,12 +153,14 @@ export function ExerciseLibrary({
                         {exercise.name}
                       </span>
                       <span className="block text-[13px] text-muted-foreground">
+                        {/* Unset "Other" facets add no information; drop
+                            them instead of printing "Other · Other". */}
                         {[
                           muscleLabel(exercise.muscleGroup),
                           equipmentLabel(exercise.equipment),
-                          exercise.custom ? "Your exercise" : null,
                         ]
-                          .filter(Boolean)
+                          .filter((label) => label && label !== "Other")
+                          .concat(exercise.custom ? ["Your exercise"] : [])
                           .join(" · ")}
                       </span>
                     </span>

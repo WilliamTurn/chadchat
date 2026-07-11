@@ -32,7 +32,7 @@ export function RepeatWorkoutButton({
   const catalog = mergeCatalog(customExercises);
   return (
     <WButton
-      className="w-full"
+      className="w-full sm:w-auto"
       disabled={busy}
       onClick={() => {
         startSession(
@@ -61,7 +61,7 @@ export function DeleteWorkoutButton({ workoutId }: { workoutId: string }) {
   return (
     <>
       <WButton
-        className="w-full"
+        className="w-full sm:w-auto"
         onClick={() => setConfirming(true)}
         variant="danger"
       >
@@ -97,7 +97,7 @@ export function DoneButton() {
   const router = useRouter();
   return (
     <WButton
-      className="w-full"
+      className="w-full sm:w-auto"
       onClick={() => {
         router.push("/workouts");
         router.refresh();

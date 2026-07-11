@@ -16,7 +16,8 @@ export default function NewCustomExercisePage({
   searchParams: Promise<{ from?: string; target?: string; wex?: string }>;
 }) {
   return (
-    <PageShell active="/workouts">
+    // Full-width desktop frame (LAY-1); the form lays itself out inside it.
+    <PageShell active="/workouts" className="max-w-[1500px]">
       <Toaster position="top-center" theme="system" />
       <Suspense fallback={<WorkoutsPageLoading />}>
         <Content searchParams={searchParams} />
