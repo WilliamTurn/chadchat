@@ -379,6 +379,17 @@ export const document = pgTable(
     userId: uuid("userId")
       .notNull()
       .references(() => user.id),
+    // --- Files page (FEAT-45) ---
+    // One-line member-facing summary shown on the /files card, written by
+    // Chad at creation. Null on documents created before the Files page.
+    description: text("description"),
+    // Coarse bucket for /files filtering. Null = uncategorized (pre-FEAT-45).
+    category: varchar("category", {
+      enum: ["training", "nutrition", "recovery", "progress", "other"],
+    }),
+    // The chat the document was created in, for "Open source chat" on /files.
+    // Null on documents created before the Files page.
+    chatId: uuid("chatId"),
   },
   (table) => ({
     pk: primaryKey({ columns: [table.id, table.createdAt] }),
@@ -386,6 +397,26 @@ export const document = pgTable(
 );
 
 export type Document = InferSelectModel<typeof document>;
+
+// A file the member uploaded in chat (photos sent to Chad). Written by the
+// upload route on every upload; historic rows backfilled once from message
+// attachments (scripts/backfill-user-uploads.ts). Powers the /files page.
+export const userUpload = pgTable("UserUpload", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  // Vercel Blob URL (unique per upload thanks to addRandomSuffix).
+  url: text("url").notNull(),
+  // Original filename as the member uploaded it.
+  name: text("name").notNull(),
+  contentType: varchar("contentType", { length: 128 }).notNull(),
+  // Bytes. Null on backfilled rows (message attachments don't store size).
+  size: integer("size"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type UserUpload = InferSelectModel<typeof userUpload>;
 
 export const suggestion = pgTable(
   "Suggestion",

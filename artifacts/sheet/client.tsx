@@ -3,12 +3,14 @@ import { toast } from "sonner";
 import { Artifact } from "@/components/chat/create-artifact";
 import {
   CopyIcon,
+  DownloadIcon,
   LineChartIcon,
   RedoIcon,
   SparklesIcon,
   UndoIcon,
 } from "@/components/chat/icons";
 import { SpreadsheetEditor } from "@/components/chat/sheet-editor";
+import { downloadTextFile, safeFileName } from "@/lib/files/download";
 
 type Metadata = Record<string, never>;
 
@@ -80,6 +82,17 @@ export const sheetArtifact = new Artifact<"sheet", Metadata>({
 
         navigator.clipboard.writeText(cleanedCsv);
         toast.success("Copied csv to clipboard!");
+      },
+    },
+    {
+      icon: <DownloadIcon />,
+      description: "Download as .csv",
+      onClick: ({ content, title }) => {
+        downloadTextFile({
+          filename: `${safeFileName(title || "spreadsheet")}.csv`,
+          content,
+          mime: "text/csv",
+        });
       },
     },
   ],

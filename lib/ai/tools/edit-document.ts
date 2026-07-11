@@ -27,8 +27,14 @@ export const editDocument = ({ session, dataStream }: EditDocumentProps) =>
         .describe(
           "Replace all occurrences instead of just the first (default false)"
         ),
+      new_title: z
+        .string()
+        .optional()
+        .describe(
+          "Set ONLY when the user asked to rename the document: the new document title."
+        ),
     }),
-    execute: async ({ id, old_string, new_string, replace_all }) => {
+    execute: async ({ id, old_string, new_string, replace_all, new_title }) => {
       const document = await getDocumentById({ id });
 
       if (!document) {
@@ -51,12 +57,40 @@ export const editDocument = ({ session, dataStream }: EditDocumentProps) =>
         ? document.content.replaceAll(old_string, new_string)
         : document.content.replace(old_string, new_string);
 
+      const title = new_title?.trim() || document.title;
+
       await saveDocument({
         id: document.id,
-        title: document.title,
+        title,
         kind: document.kind,
         content: updated,
         userId: document.userId,
+        // Carry the Files-page metadata onto the new version row so the
+        // latest version (which /files reads) never loses it.
+        description: document.description ?? undefined,
+        category: document.category ?? undefined,
+        chatId: document.chatId ?? undefined,
+      });
+
+      // Point the artifact panel at THIS document before streaming the new
+      // content, so the edit opens/refreshes the viewer even when the panel
+      // was closed or showing a different document.
+      dataStream.write({
+        type: "data-kind",
+        data: document.kind,
+        transient: true,
+      });
+
+      dataStream.write({
+        type: "data-id",
+        data: document.id,
+        transient: true,
+      });
+
+      dataStream.write({
+        type: "data-title",
+        data: title,
+        transient: true,
       });
 
       dataStream.write({
@@ -89,7 +123,7 @@ export const editDocument = ({ session, dataStream }: EditDocumentProps) =>
 
       return {
         id,
-        title: document.title,
+        title,
         kind: document.kind,
         content:
           document.kind === "code"

@@ -12,12 +12,14 @@ type CreateDocumentProps = {
   session: Session;
   dataStream: UIMessageStreamWriter<ChatMessage>;
   modelId: string;
+  chatId: string;
 };
 
 export const createDocument = ({
   session,
   dataStream,
   modelId,
+  chatId,
 }: CreateDocumentProps) =>
   tool({
     description:
@@ -29,8 +31,23 @@ export const createDocument = ({
         .describe(
           "REQUIRED. 'code' for programming/algorithms, 'text' for essays/writing, 'sheet' for spreadsheets"
         ),
+      brief: z
+        .string()
+        .describe(
+          "REQUIRED. The complete brief for the writer, who sees ONLY this brief and the title (never the conversation). Restate the member's exact request plus EVERY relevant detail from the conversation and their profile: goals, stats, experience level, schedule, equipment, injuries, preferences, and any specifics they gave. A thin brief produces a thin document."
+        ),
+      description: z
+        .string()
+        .describe(
+          "REQUIRED. One plain sentence saying what this document is and who it is for, shown under the title on the member's Files page."
+        ),
+      category: z
+        .enum(["training", "nutrition", "recovery", "progress", "other"])
+        .describe(
+          "REQUIRED. Which part of the member's fitness life this belongs to, used to organize their Files page."
+        ),
     }),
-    execute: async ({ title, kind }) => {
+    execute: async ({ title, kind, brief, description, category }) => {
       const id = generateUUID();
 
       dataStream.write({
@@ -69,6 +86,10 @@ export const createDocument = ({
       await documentHandler.onCreateDocument({
         id,
         title,
+        brief,
+        description,
+        category,
+        chatId,
         dataStream,
         session,
         modelId,

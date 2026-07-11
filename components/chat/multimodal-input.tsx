@@ -99,10 +99,15 @@ function PureMultimodalInput({
 
   useEffect(() => {
     // Seed the composer with the URL prompt once, taking precedence over any
-    // saved draft.
-    if (promptParam && !didPrefillFromUrl.current) {
-      didPrefillFromUrl.current = true;
-      setInput(promptParam);
+    // saved draft. While a prompt param is present, NEVER fall through to the
+    // draft-restore branch below: on client-side navigations it re-ran after
+    // the seed (stale DOM value + already-hydrated draft) and clobbered the
+    // seeded prompt back to empty/an old draft.
+    if (promptParam) {
+      if (!didPrefillFromUrl.current) {
+        didPrefillFromUrl.current = true;
+        setInput(promptParam);
+      }
       return;
     }
     if (textareaRef.current) {

@@ -419,6 +419,7 @@ export async function POST(request: Request) {
               session,
               dataStream,
               modelId: chatModel,
+              chatId: id,
             }),
             editDocument: editDocument({ dataStream, session }),
             updateDocument: updateDocument({

@@ -233,3 +233,35 @@ export function KitchenSkeleton() {
     </div>
   );
 }
+
+// ── /files ──────────────────────────────────────────────────────────────────
+export function FilesSkeleton() {
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Toolbar: filter chips + search box */}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-8 w-20 rounded-full" />
+          <Skeleton className="h-8 w-36 rounded-full" />
+          <Skeleton className="h-8 w-28 rounded-full" />
+        </div>
+        <Skeleton className="h-9 w-full rounded-md lg:w-72" />
+      </div>
+
+      {/* File-card grid */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <SkelCard className="p-4" key={i}>
+            <div className="flex items-center gap-2">
+              <Skeleton className="size-9 rounded-lg" />
+              <Skeleton className="h-5 w-20 rounded-full" />
+            </div>
+            <Skeleton className="mt-3 h-5 w-3/4" />
+            <Skeleton className="mt-2 h-4 w-full" />
+            <Skeleton className="mt-3 h-3.5 w-40" />
+          </SkelCard>
+        ))}
+      </div>
+    </div>
+  );
+}

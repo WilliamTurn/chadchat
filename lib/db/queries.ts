@@ -36,6 +36,7 @@ import {
   checkIn,
   customExercise,
   type DBMessage,
+  type Document,
   document,
   emailVerificationToken,
   type FutureYouForecast,
@@ -67,6 +68,7 @@ import {
   type UserMemory,
   user,
   userMemory,
+  userUpload,
   vote,
   type WeeklyReport,
   type Workout,
@@ -2762,12 +2764,18 @@ export async function saveDocument({
   kind,
   content,
   userId,
+  description,
+  category,
+  chatId,
 }: {
   id: string;
   title: string;
   kind: ArtifactKind;
   content: string;
   userId: string;
+  description?: string;
+  category?: string;
+  chatId?: string;
 }) {
   try {
     return await db
@@ -2779,6 +2787,9 @@ export async function saveDocument({
         content,
         userId,
         createdAt: new Date(),
+        description: description ?? null,
+        category: (category ?? null) as Document["category"],
+        chatId: chatId ?? null,
       })
       .returning();
   } catch (_error) {
@@ -2882,6 +2893,173 @@ export async function deleteDocumentsByIdAfterTimestamp({
       "bad_request:database",
       "Failed to delete documents by id after timestamp"
     );
+  }
+}
+
+// ─── Files page (FEAT-45) ────────────────────────────────────────────────
+
+// One entry per document (documents are versioned as multiple rows sharing an
+// id): the latest version row, plus the version count and original creation
+// date for the /files card.
+export type UserFileDocument = {
+  latest: Document;
+  versionCount: number;
+  firstCreatedAt: Date;
+};
+
+export async function getUserFileDocuments({
+  userId,
+}: {
+  userId: string;
+}): Promise<UserFileDocument[]> {
+  try {
+    const rows = await db
+      .select()
+      .from(document)
+      .where(eq(document.userId, userId))
+      .orderBy(desc(document.createdAt));
+
+    const byId = new Map<string, UserFileDocument>();
+    for (const row of rows) {
+      const entry = byId.get(row.id);
+      if (entry) {
+        entry.versionCount += 1;
+        // Rows arrive newest-first, so the last one seen is the original.
+        entry.firstCreatedAt = row.createdAt;
+      } else {
+        byId.set(row.id, {
+          latest: row,
+          versionCount: 1,
+          firstCreatedAt: row.createdAt,
+        });
+      }
+    }
+
+    return [...byId.values()];
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get file documents by user id"
+    );
+  }
+}
+
+export async function deleteDocumentFully({
+  id,
+  userId,
+}: {
+  id: string;
+  userId: string;
+}) {
+  try {
+    await db.delete(suggestion).where(eq(suggestion.documentId, id));
+
+    return await db
+      .delete(document)
+      .where(and(eq(document.id, id), eq(document.userId, userId)))
+      .returning();
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to delete document");
+  }
+}
+
+export async function renameDocument({
+  id,
+  userId,
+  title,
+}: {
+  id: string;
+  userId: string;
+  title: string;
+}) {
+  try {
+    return await db
+      .update(document)
+      .set({ title })
+      .where(and(eq(document.id, id), eq(document.userId, userId)))
+      .returning();
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to rename document");
+  }
+}
+
+export async function saveUserUpload({
+  userId,
+  url,
+  name,
+  contentType,
+  size,
+  createdAt,
+}: {
+  userId: string;
+  url: string;
+  name: string;
+  contentType: string;
+  size?: number;
+  createdAt?: Date;
+}) {
+  try {
+    return await db
+      .insert(userUpload)
+      .values({
+        userId,
+        url,
+        name,
+        contentType,
+        size: size ?? null,
+        ...(createdAt ? { createdAt } : {}),
+      })
+      .returning();
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to save upload");
+  }
+}
+
+export async function getUserUploads({ userId }: { userId: string }) {
+  try {
+    return await db
+      .select()
+      .from(userUpload)
+      .where(eq(userUpload.userId, userId))
+      .orderBy(desc(userUpload.createdAt));
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get uploads");
+  }
+}
+
+export async function getUserUploadByUrl({
+  userId,
+  url,
+}: {
+  userId: string;
+  url: string;
+}) {
+  try {
+    const [row] = await db
+      .select()
+      .from(userUpload)
+      .where(and(eq(userUpload.userId, userId), eq(userUpload.url, url)))
+      .limit(1);
+    return row ?? null;
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to get upload");
+  }
+}
+
+export async function deleteUserUpload({
+  id,
+  userId,
+}: {
+  id: string;
+  userId: string;
+}) {
+  try {
+    return await db
+      .delete(userUpload)
+      .where(and(eq(userUpload.id, id), eq(userUpload.userId, userId)))
+      .returning();
+  } catch (_error) {
+    throw new ChatbotError("bad_request:database", "Failed to delete upload");
   }
 }
 

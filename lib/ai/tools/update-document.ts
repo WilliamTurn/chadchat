@@ -39,6 +39,27 @@ export const updateDocument = ({
         return { error: "Forbidden" };
       }
 
+      // Point the artifact panel at THIS document before streaming the
+      // rewrite, so it opens/refreshes the viewer even when the panel was
+      // closed or showing a different document.
+      dataStream.write({
+        type: "data-kind",
+        data: document.kind,
+        transient: true,
+      });
+
+      dataStream.write({
+        type: "data-id",
+        data: document.id,
+        transient: true,
+      });
+
+      dataStream.write({
+        type: "data-title",
+        data: document.title,
+        transient: true,
+      });
+
       dataStream.write({
         type: "data-clear",
         data: null,

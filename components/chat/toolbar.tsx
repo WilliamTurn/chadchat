@@ -85,6 +85,7 @@ const Tool = ({
       <TooltipTrigger asChild>
         <motion.div
           animate={{ opacity: 1, transition: { delay: 0.1 } }}
+          aria-label={description}
           className={cx("rounded-full p-3", {
             "bg-primary text-primary-foreground!": selectedTool === description,
           })}
@@ -97,6 +98,8 @@ const Tool = ({
           onClick={() => {
             handleSelect();
           }}
+          role="button"
+          tabIndex={0}
           onHoverEnd={() => {
             if (selectedTool !== description) {
               setIsHovered(false);
@@ -385,7 +388,7 @@ const PureToolbar = ({
     <TooltipProvider delayDuration={0}>
       <motion.div
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        className="fixed right-6 bottom-6 z-50 flex cursor-pointer flex-col items-center rounded-3xl border bg-background py-1 shadow-lg"
+        className="fixed right-6 bottom-6 z-50 flex cursor-pointer flex-col items-center gap-1 rounded-3xl border bg-background py-1 shadow-lg"
         exit={{ opacity: 0, y: -20, transition: { duration: 0.1 } }}
         initial={{ opacity: 0, y: -20, scale: 1 }}
         onAnimationComplete={() => {
@@ -415,9 +418,12 @@ const PureToolbar = ({
         {onClose && (
           <motion.div
             animate={{ opacity: 1 }}
+            aria-label="Close document"
             className="p-3 text-muted-foreground transition-colors hover:text-foreground"
             initial={{ opacity: 0 }}
             onClick={onClose}
+            role="button"
+            tabIndex={0}
           >
             <XIcon className="size-4" />
           </motion.div>

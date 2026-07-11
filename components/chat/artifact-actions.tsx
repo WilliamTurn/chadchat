@@ -36,6 +36,7 @@ function PureArtifactActions({
 
   const actionContext: ArtifactActionContext = {
     content: artifact.content,
+    title: artifact.title,
     handleVersionChange,
     currentVersionIndex,
     isCurrentVersion,
@@ -45,7 +46,7 @@ function PureArtifactActions({
   };
 
   return (
-    <div className="flex flex-col items-center gap-0.5">
+    <div className="flex flex-col items-center gap-1">
       {artifactDefinition.actions.map((action) => {
         const disabled =
           isLoading || artifact.status === "streaming"
@@ -58,6 +59,7 @@ function PureArtifactActions({
           <Tooltip key={action.description}>
             <TooltipTrigger asChild>
               <button
+                aria-label={action.description}
                 className={cn(
                   "flex items-center justify-center rounded-full p-3 text-muted-foreground transition-all duration-150",
                   "hover:text-foreground",

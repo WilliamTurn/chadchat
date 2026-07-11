@@ -80,12 +80,10 @@ export const codeArtifact = new Artifact<"code", Metadata>({
       setArtifact((draftArtifact) => ({
         ...draftArtifact,
         content: streamPart.data,
+        // Any streamed content opens the panel (see text/client.tsx: the old
+        // char-window hack never fired for single-delta editDocument writes).
         isVisible:
-          draftArtifact.status === "streaming" &&
-          draftArtifact.content.length > 300 &&
-          draftArtifact.content.length < 310
-            ? true
-            : draftArtifact.isVisible,
+          draftArtifact.status === "streaming" || draftArtifact.isVisible,
         status: "streaming",
       }));
     }

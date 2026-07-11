@@ -191,6 +191,9 @@ importers:
       redis:
         specifier: ^5.0.0
         version: 5.9.0
+      remark-gfm:
+        specifier: 4.0.1
+        version: 4.0.1
       resend:
         specifier: ^6.14.0
         version: 6.14.0

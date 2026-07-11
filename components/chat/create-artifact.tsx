@@ -7,6 +7,8 @@ import type { UIArtifact } from "./artifact";
 
 export type ArtifactActionContext<M = any> = {
   content: string;
+  // The document title, for actions that save a file (download names).
+  title: string;
   handleVersionChange: (type: "next" | "prev" | "toggle" | "latest") => void;
   currentVersionIndex: number;
   isCurrentVersion: boolean;

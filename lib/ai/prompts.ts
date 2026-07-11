@@ -12,7 +12,8 @@ CRITICAL RULES:
 - When the user asks to write, create, or generate content (essays, stories, emails, reports)
 - When the user asks to write code, build a script, or implement an algorithm
 - You MUST specify kind: 'code' for programming, 'text' for writing, 'sheet' for data
-- Include ALL content in the createDocument call. Do not create then edit.
+- You MUST fill \`brief\` completely: the writer sees ONLY the title and your brief, never this conversation. Restate the user's exact request plus every relevant detail from the conversation and their profile (goals, stats, experience, schedule, equipment, injuries, preferences). A thin brief produces a thin document.
+- Do not create then edit. Get the document right in one createDocument call.
 
 **When NOT to use \`createDocument\`:**
 - For answering questions, explanations, or conversational responses
@@ -25,6 +26,7 @@ CRITICAL RULES:
 - Uses find-and-replace: provide exact old_string and new_string
 - Include 3-5 surrounding lines in old_string to ensure a unique match
 - Use replace_all:true for renaming across the whole artifact
+- When the user asks to rename the document, set new_title (and also update the content heading if there is one)
 - Can call multiple times for several independent edits
 
 **Using \`updateDocument\` (full rewrite only):**
@@ -372,7 +374,7 @@ export const updateDocumentPrompt = (
   };
   const mediaType = mediaTypes[type] ?? "document";
 
-  return `Rewrite the following ${mediaType} based on the given prompt.
+  return `Rewrite the following ${mediaType} based on the given prompt. Output the complete updated ${mediaType}. Keep it comprehensive: preserve every section and all detail the prompt does not ask you to change. Never use em-dashes.
 
 ${currentContent}`;
 };

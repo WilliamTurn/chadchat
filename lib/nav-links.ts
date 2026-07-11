@@ -4,6 +4,7 @@ import {
   Droplets,
   Dumbbell,
   FileText,
+  FolderOpen,
   HelpCircle,
   LayoutDashboard,
   LineChart,
@@ -121,6 +122,14 @@ export const NAV_LINKS: NavLink[] = [
     href: "/reports",
     label: "Weekly Report",
     icon: FileText,
+    surfaces: ["header", "sidebar"],
+  },
+  {
+    // Files (FEAT-45): the member's library — every document Chad generated
+    // in chat plus every photo they've uploaded, searchable and organized.
+    href: "/files",
+    label: "Files",
+    icon: FolderOpen,
     surfaces: ["header", "sidebar"],
   },
   {

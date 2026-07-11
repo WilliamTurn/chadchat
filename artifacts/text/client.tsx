@@ -5,6 +5,7 @@ import { DocumentSkeleton } from "@/components/chat/document-skeleton";
 import {
   ClockRewind,
   CopyIcon,
+  DownloadIcon,
   MessageIcon,
   PenIcon,
   RedoIcon,
@@ -12,6 +13,7 @@ import {
 } from "@/components/chat/icons";
 import { Editor } from "@/components/chat/text-editor";
 import type { Suggestion } from "@/lib/db/schema";
+import { downloadTextFile, safeFileName } from "@/lib/files/download";
 import { getSuggestions } from "../actions";
 
 type TextArtifactMetadata = {
@@ -42,12 +44,12 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
         return {
           ...draftArtifact,
           content: draftArtifact.content + streamPart.data,
+          // Any streamed content opens the panel (Claude/Gemini behavior).
+          // The old 400-450 char window never fired for editDocument, which
+          // delivers the whole document as ONE delta, so edits with the panel
+          // closed appeared to do nothing.
           isVisible:
-            draftArtifact.status === "streaming" &&
-            draftArtifact.content.length > 400 &&
-            draftArtifact.content.length < 450
-              ? true
-              : draftArtifact.isVisible,
+            draftArtifact.status === "streaming" || draftArtifact.isVisible,
           status: "streaming",
         };
       });
@@ -83,7 +85,10 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
     }
 
     return (
-      <div className="flex flex-row px-4 py-8 md:px-16 md:py-12 lg:px-20">
+      // pr-16 keeps the floating action rail (fixed right-6, ~40px wide) from
+      // overlapping the text on phones; it floats over the content's right
+      // edge below md.
+      <div className="flex flex-row py-8 pr-16 pl-4 md:px-16 md:py-12 lg:px-20">
         <Editor
           content={content}
           currentVersionIndex={currentVersionIndex}
@@ -148,6 +153,17 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
       onClick: ({ content }) => {
         navigator.clipboard.writeText(content);
         toast.success("Copied to clipboard!");
+      },
+    },
+    {
+      icon: <DownloadIcon size={18} />,
+      description: "Download",
+      onClick: ({ content, title }) => {
+        downloadTextFile({
+          filename: `${safeFileName(title || "document")}.md`,
+          content,
+          mime: "text/markdown",
+        });
       },
     },
   ],

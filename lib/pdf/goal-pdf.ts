@@ -134,6 +134,19 @@ export async function downloadGoalPdf(g: {
   doc.save(`chad-goal-${safeFileName(g.title)}.pdf`);
 }
 
+export async function downloadDocumentPdf(d: {
+  title: string;
+  content: string;
+}): Promise<void> {
+  const doc = buildPdf(await newDoc(), {
+    heading: "Chad — Document",
+    title: d.title,
+    meta: [`Generated: ${formatDate(new Date())}`],
+    body: d.content,
+  });
+  doc.save(`chad-${safeFileName(d.title)}.pdf`);
+}
+
 export async function downloadPlanPdf(p: {
   title: string;
   detail: string;

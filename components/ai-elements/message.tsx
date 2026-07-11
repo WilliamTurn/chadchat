@@ -29,6 +29,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import remarkGfm from "remark-gfm";
 import { Streamdown } from "streamdown";
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
@@ -389,7 +390,10 @@ export const MessageResponse = memo(
         className
       )}
       plugins={streamdownPlugins}
-      remarkPlugins={[remarkChadRed, ...(remarkPlugins ?? [])]}
+      // Passing remarkPlugins REPLACES Streamdown's default list (which is
+      // just remark-gfm) — without re-adding gfm here, markdown tables in
+      // Chad's replies render as raw pipe text.
+      remarkPlugins={[remarkGfm, remarkChadRed, ...(remarkPlugins ?? [])]}
       // App-palette code theme: github-dark-default's near-black bg (#0d1117)
       // matches Chad's dark surfaces (card #0b0f17) instead of streamdown's
       // default grey github-dark (#24292e).

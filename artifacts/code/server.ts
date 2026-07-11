@@ -12,13 +12,13 @@ function stripFences(code: string): string {
 
 export const codeDocumentHandler = createDocumentHandler<"code">({
   kind: "code",
-  onCreateDocument: async ({ title, dataStream, modelId }) => {
+  onCreateDocument: async ({ title, brief, dataStream, modelId }) => {
     let draftContent = "";
 
     const { fullStream } = streamText({
       model: getLanguageModel(modelId),
       system: `${codePrompt}\n\nOutput ONLY the code. No explanations, no markdown fences, no wrapping.`,
-      prompt: title,
+      prompt: brief ? `${title}\n\n${brief}` : title,
     });
 
     for await (const delta of fullStream) {

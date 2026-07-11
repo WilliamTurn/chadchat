@@ -14,7 +14,7 @@ import {
 } from "../ai-elements/tool";
 import { useDataStream } from "./data-stream-provider";
 import { DocumentToolResult } from "./document";
-import { DocumentPreview } from "./document-preview";
+import { DocumentCard } from "./document-card";
 import { Dumbbell } from "lucide-react";
 import { MessageActions } from "./message-actions";
 import { MessageReasoning } from "./message-reasoning";
@@ -161,16 +161,23 @@ const PurePreviewMessage = ({
         );
       }
 
+      const output = part.output && !("error" in part.output) ? part.output : undefined;
+
       return (
-        <DocumentPreview
-          isReadonly={isReadonly}
+        <DocumentCard
+          id={output?.id}
+          isStreaming={!output}
           key={toolCallId}
-          result={part.output}
+          kind={output?.kind ?? part.input?.kind}
+          title={output?.title ?? part.input?.title}
         />
       );
     }
 
-    if (type === "tool-updateDocument") {
+    // Edits and rewrites both point back at the SAME document: one compact
+    // "Updated" card, never a second full-size preview stacked under the
+    // original (the owner-reported duplicate-cards bug).
+    if (type === "tool-editDocument" || type === "tool-updateDocument") {
       const { toolCallId } = part;
 
       if (part.output && "error" in part.output) {
@@ -184,14 +191,17 @@ const PurePreviewMessage = ({
         );
       }
 
+      const output = part.output && !("error" in part.output) ? part.output : undefined;
+
       return (
-        <div className="relative" key={toolCallId}>
-          <DocumentPreview
-            args={{ ...part.output, isUpdate: true }}
-            isReadonly={isReadonly}
-            result={part.output}
-          />
-        </div>
+        <DocumentCard
+          action="updated"
+          id={output?.id}
+          isStreaming={!output}
+          key={toolCallId}
+          kind={output?.kind}
+          title={output?.title}
+        />
       );
     }
 

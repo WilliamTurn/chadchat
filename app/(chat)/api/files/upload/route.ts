@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { auth } from "@/app/(auth)/auth";
 import { canAccessProFeatures } from "@/lib/admin";
-import { getUserById } from "@/lib/db/queries";
+import { getUserById, saveUserUpload } from "@/lib/db/queries";
 
 const FileSchema = z.object({
   file: z
@@ -86,6 +86,20 @@ export async function POST(request: Request) {
         // it under us.)
         addRandomSuffix: true,
       });
+
+      // Record the upload so it shows on the member's Files page. Never fail
+      // the upload itself over a bookkeeping insert.
+      try {
+        await saveUserUpload({
+          userId: session.user.id,
+          url: data.url,
+          name: filename,
+          contentType: file.type,
+          size: file.size,
+        });
+      } catch (error) {
+        console.error("[files/upload] Failed to record upload:", error);
+      }
 
       return NextResponse.json(data);
     } catch (error) {

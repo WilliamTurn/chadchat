@@ -19,6 +19,14 @@ export type SaveDocumentProps = {
 export type CreateDocumentCallbackProps = {
   id: string;
   title: string;
+  // Full context brief authored by the chat model. The writer model never sees
+  // the conversation, so this is its only window into what the member asked
+  // for — handlers must prefer it over the bare title.
+  brief?: string;
+  // Files-page metadata (FEAT-45), written on the first version row.
+  description?: string;
+  category?: string;
+  chatId?: string;
   dataStream: UIMessageStreamWriter<ChatMessage>;
   session: Session;
   modelId: string;
@@ -49,6 +57,7 @@ export function createDocumentHandler<T extends ArtifactKind>(config: {
       const draftContent = await config.onCreateDocument({
         id: args.id,
         title: args.title,
+        brief: args.brief,
         dataStream: args.dataStream,
         session: args.session,
         modelId: args.modelId,
@@ -61,6 +70,9 @@ export function createDocumentHandler<T extends ArtifactKind>(config: {
           content: draftContent,
           kind: config.kind,
           userId: args.session.user.id,
+          description: args.description,
+          category: args.category,
+          chatId: args.chatId,
         });
       }
 
@@ -82,6 +94,11 @@ export function createDocumentHandler<T extends ArtifactKind>(config: {
           content: draftContent,
           kind: config.kind,
           userId: args.session.user.id,
+          // Carry the Files-page metadata onto the new version row so the
+          // latest version (which /files reads) never loses it.
+          description: args.document.description ?? undefined,
+          category: args.document.category ?? undefined,
+          chatId: args.document.chatId ?? undefined,
         });
       }
 
