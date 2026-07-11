@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { WorkoutsPageLoading } from "@/components/workouts/v2/loading";
 import { PageShell } from "@/components/nav/page-shell";
 import {
@@ -22,8 +21,7 @@ export default function PickExercisesPage({
   searchParams: Promise<{ target?: string; wex?: string }>;
 }) {
   return (
-    <PageShell>
-      <StandaloneHeader active="/workouts" />
+    <PageShell active="/workouts">
       <Suspense fallback={<WorkoutsPageLoading />}>
         <Content searchParams={searchParams} />
       </Suspense>

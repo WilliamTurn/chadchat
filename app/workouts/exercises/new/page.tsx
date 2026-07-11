@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { WorkoutsPageLoading } from "@/components/workouts/v2/loading";
 import { PageShell } from "@/components/nav/page-shell";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { CustomExerciseForm } from "@/components/workouts/v2/custom-exercise-form";
 import { WorkoutPageHeader } from "@/components/workouts/v2/page-header";
 import { requireWorkoutsUser } from "../../data";
@@ -17,9 +16,8 @@ export default function NewCustomExercisePage({
   searchParams: Promise<{ from?: string; target?: string; wex?: string }>;
 }) {
   return (
-    <PageShell>
+    <PageShell active="/workouts">
       <Toaster position="top-center" theme="system" />
-      <StandaloneHeader active="/workouts" />
       <Suspense fallback={<WorkoutsPageLoading />}>
         <Content searchParams={searchParams} />
       </Suspense>

@@ -7,7 +7,6 @@ import { Kpi } from "@/components/dashboard/kpi";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { WaterHistory } from "@/components/today/water-history";
 import { WaterTodayLog } from "@/components/today/water-today-log";
 import { RewardProvider } from "@/components/dashboard/reward";
@@ -36,7 +35,7 @@ import { buildWaterWeek } from "@/lib/today/week";
 
 export default function HydrationPage() {
   return (
-    <PageShell>
+    <PageShell active="/hydration">
       <Toaster
         position="top-center"
         theme="system"
@@ -46,7 +45,6 @@ export default function HydrationPage() {
         }}
       />
 
-      <StandaloneHeader active="/hydration" />
 
       <div className="mb-8">
         <BackToDashboard />

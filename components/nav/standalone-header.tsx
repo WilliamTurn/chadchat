@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ChevronDown,
   CreditCard,
   Dumbbell,
   Loader2,
@@ -9,14 +10,13 @@ import {
   Moon,
   Sparkles,
   Sun,
+  UserRound,
 } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
-import { useState } from "react";
-import { useSignOut } from "@/hooks/use-sign-out";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -33,23 +33,19 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useSignOut } from "@/hooks/use-sign-out";
 import { headerLinks } from "@/lib/nav-links";
 import { cn } from "@/lib/utils";
 
 /**
- * Shared top navigation for the standalone (non-chat) pages — /today,
- * /nutrition, /progress, /account, /help. These pages live outside the chat
- * route group so they don't get the sidebar; without this they're islands you
- * can only leave by bouncing through the chat. The bar gives every standalone
- * page the same wordmark + cross-nav, with the current section highlighted.
+ * The app's top bar for the standalone (non-chat) pages: a compact, sticky,
+ * full-bleed strip flush with the top of the content area (the GitHub/Stripe
+ * shell pattern), rendered once by `PageShell`, never by pages themselves.
  *
- * The link set comes from the shared `headerLinks` list (`lib/nav-links.ts`) so
- * it stays in lockstep with the chat sidebar (NAV-3).
- *
- * Desktop renders every item in a wrapping row (never a horizontal scrollbar,
- * regardless of how narrow the host page's max-width is). Mobile collapses the
- * links into a hamburger sheet so they're never pushed off-screen.
+ * Desktop/tablet (md+): current section name on the left (section links live
+ * in the left nav panel, LAY-2), account menu on the right. Phones (<md,
+ * where the sidebar doesn't render): wordmark on the left, hamburger sheet
+ * with the full link set on the right.
  */
 
 function emailToHue(email: string): number {
@@ -72,13 +68,21 @@ function AccountMenu() {
   const { handleSignOut, signingOut } = useSignOut();
   const email = data?.user?.email ?? "";
   const hue = emailToHue(email);
+  // The member's initial inside the avatar circle (the Google-style letter
+  // avatar): a bare colored dot reads as decoration, not as "your account".
   const avatar = (
     <span
-      className="size-6 shrink-0 rounded-full ring-1 ring-border/50"
+      className="flex size-7 shrink-0 items-center justify-center rounded-full font-semibold text-[11px] text-white ring-1 ring-border/60"
       style={{
         background: `linear-gradient(135deg, oklch(0.35 0.08 ${hue}), oklch(0.25 0.05 ${hue + 40}))`,
       }}
-    />
+    >
+      {email ? (
+        email[0].toUpperCase()
+      ) : (
+        <UserRound className="size-3.5" strokeWidth={2.5} />
+      )}
+    </span>
   );
 
   return (
@@ -86,11 +90,12 @@ function AccountMenu() {
       <DropdownMenuTrigger asChild>
         <Button
           aria-label="Account menu"
-          className="size-9 shrink-0 rounded-full p-0"
-          size="icon"
+          className="h-9 shrink-0 gap-1 rounded-full px-1.5"
+          title="Account menu"
           variant="ghost"
         >
           {avatar}
+          <ChevronDown className="size-3.5 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
@@ -116,9 +121,7 @@ function AccountMenu() {
         </DropdownMenuItem>
         <DropdownMenuItem
           className="cursor-pointer"
-          onSelect={() =>
-            setTheme(resolvedTheme === "dark" ? "light" : "dark")
-          }
+          onSelect={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
         >
           {resolvedTheme === "dark" ? (
             <Sun className="size-4" />
@@ -153,7 +156,7 @@ function AccountMenu() {
 function Wordmark() {
   return (
     <Link
-      aria-label="Chad — dashboard"
+      aria-label="Chad dashboard"
       className="flex shrink-0 items-center gap-2"
       href="/today"
     >
@@ -168,14 +171,23 @@ function Wordmark() {
 }
 
 export function StandaloneHeader({ active }: { active?: string }) {
-  const pathname = usePathname();
+  // Current path, read after mount (the Cache Components precedent: a
+  // usePathname call here sits outside the pages' Suspense boundaries).
+  // Only a fallback for pages that don't pass `active`.
+  const [path, setPath] = useState<string | null>(null);
+  useEffect(() => {
+    setPath(window.location.pathname);
+  }, []);
+  const current = active ?? path;
+  const section = headerLinks.find((link) => link.href === current) ?? null;
+  const SectionIcon = section?.icon;
+
   const [open, setOpen] = useState(false);
   const reduce = useReducedMotion();
   const { setTheme, resolvedTheme } = useTheme();
   const { handleSignOut, signingOut } = useSignOut();
 
-  const isActive = (href: string) =>
-    active ? active === href : pathname === href;
+  const isActive = (href: string) => (active ? active === href : path === href);
 
   // Mobile-sheet entrance: links slide in one after another when the sheet
   // opens (reduced-motion → instant). Variants live on the wrapper so they
@@ -194,26 +206,29 @@ export function StandaloneHeader({ active }: { active?: string }) {
     : { hidden: { opacity: 0, x: 12 }, show: { opacity: 1, x: 0 } };
 
   return (
-    <nav className="mb-8 flex items-center gap-4 border-border border-b pb-3">
-      {/* Left zone: the sidebar collapse toggle (the section links live in the
-          left nav panel now, LAY-2) plus the wordmark on phones, where the
-          sidebar doesn't render and the brand would otherwise vanish. */}
-      <div className="flex flex-1 items-center gap-2">
-        <SidebarTrigger className="hidden size-11 sm:inline-flex" />
-        <div className="md:hidden">
-          <Wordmark />
-        </div>
+    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-border border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-6">
+      {/* Phones: the sidebar doesn't render, so the brand lives here. */}
+      <div className="md:hidden">
+        <Wordmark />
       </div>
 
-      {/* Right zone: account menu (desktop) + hamburger (mobile). */}
-      <div className="flex flex-1 items-center justify-end gap-2">
-        <div className="hidden sm:block">
+      {/* Desktop/tablet: the current section, so the bar always says where
+          you are (the brand is in the sidebar). */}
+      {section && SectionIcon && (
+        <div className="hidden min-w-0 items-center gap-2 md:flex">
+          <SectionIcon className="size-4 shrink-0 text-muted-foreground" />
+          <span className="truncate font-medium text-sm">{section.label}</span>
+        </div>
+      )}
+
+      <div className="ml-auto flex items-center gap-2">
+        <div className="hidden md:block">
           <AccountMenu />
         </div>
 
-        {/* Mobile: hamburger → full-height sheet with the same links, stacked. */}
+        {/* Phones: hamburger → full-height sheet with the same links, stacked. */}
         <Sheet onOpenChange={setOpen} open={open}>
-          <SheetTrigger asChild className="sm:hidden">
+          <SheetTrigger asChild className="md:hidden">
             <Button
               aria-label="Open menu"
               className="shrink-0"
@@ -326,6 +341,6 @@ export function StandaloneHeader({ active }: { active?: string }) {
           </SheetContent>
         </Sheet>
       </div>
-    </nav>
+    </header>
   );
 }

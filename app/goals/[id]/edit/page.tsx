@@ -6,7 +6,6 @@ import { GoalForm } from "@/components/goals/goal-form";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { canAccessChad } from "@/lib/admin";
 import { getGoalById, getUserById } from "@/lib/db/queries";
 import { loadGoalFormData } from "@/lib/goals/form-data";
@@ -24,7 +23,7 @@ export default function EditGoalPage({
   return (
     // Full-width desktop layout (LAY-1): form column + sticky summary rail
     // (the two-column split lives inside GoalForm).
-    <PageShell className="max-w-[1500px]">
+    <PageShell active="/goals" className="max-w-[1500px]">
       <Toaster
         position="top-center"
         theme="system"
@@ -36,7 +35,6 @@ export default function EditGoalPage({
       {/* usePathname inside the header is runtime data on a dynamic route, so
           it needs its own Suspense boundary under Cache Components. */}
       <Suspense fallback={null}>
-        <StandaloneHeader active="/goals" />
       </Suspense>
 
       <div className="mb-8">

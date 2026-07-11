@@ -4,7 +4,6 @@ import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { PageShell } from "@/components/nav/page-shell";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { RoastComposer } from "@/components/share/roast-composer";
 import { canAccessChad } from "@/lib/admin";
 import { getLatestCheckIn, getUserById } from "@/lib/db/queries";
@@ -25,7 +24,6 @@ export default function RoastPage({
   return (
     <PageShell>
       <Toaster position="top-center" richColors theme="system" />
-      <StandaloneHeader />
 
       <div className="mb-8 max-w-2xl">
         <h1 className="font-semibold text-2xl tracking-tight">

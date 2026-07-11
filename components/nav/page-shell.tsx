@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { StandaloneShell } from "@/components/nav/standalone-shell";
 import { cn } from "@/lib/utils";
 
@@ -18,27 +19,33 @@ import { cn } from "@/lib/utils";
  * strand on a wide frame. When the sweep finishes, the wide frame becomes the
  * default here.
  *
- * Every page also gets the collapsible left navigation panel (LAY-2, owner
- * order s178) via `StandaloneShell`: labeled nav down the left on desktop and
- * tablet, collapsible to an icon rail so the member can focus on the page.
- * Phones keep the hamburger sheet in `StandaloneHeader`.
- *
- * Pages render their own `<StandaloneHeader>` (and any Toaster) as the first
- * children, exactly as before; this only owns the outer frame.
+ * The shell around the frame (both owned HERE, never by pages):
+ * - the collapsible left navigation panel (LAY-2, owner order s178) via
+ *   `StandaloneShell`: labeled nav down the left on desktop and tablet,
+ *   collapsible to an icon rail; the collapse toggle lives on the panel.
+ * - the sticky top bar (`StandaloneHeader`): full-bleed and flush with the
+ *   top of the content area, current section + account menu on desktop,
+ *   wordmark + hamburger sheet on phones. Pages pass their section href via
+ *   `active` and never render the header themselves.
  */
 export function PageShell({
   children,
   className,
+  active,
 }: {
   children: ReactNode;
   className?: string;
+  /** The nav section this page belongs to (e.g. "/goals"), shown in the top
+   *  bar and highlighted in the phone sheet. */
+  active?: string;
 }) {
   return (
     <StandaloneShell>
+      <StandaloneHeader active={active} />
       {/* SidebarInset is the page's <main>, so this frame is a plain div. */}
       <div
         className={cn(
-          "mx-auto flex min-h-dvh w-full max-w-5xl flex-col px-4 py-10 sm:px-6 sm:py-12",
+          "mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pt-6 pb-10 sm:px-6 sm:pt-8 sm:pb-12",
           className
         )}
       >

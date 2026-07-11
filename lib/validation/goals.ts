@@ -31,7 +31,9 @@ const measurableTarget = {
 
 /** Create a goal (user-authored on the dashboard, or Chad via a tool). */
 export const createGoalSchema = z.object({
-  title: z.string().trim().min(1).max(120),
+  // 200 is roomy for a one-line goal; the form shows a live counter near the
+  // limit instead of silently swallowing keystrokes.
+  title: z.string().trim().min(1).max(200),
   detail: z.string().trim().max(8000).default(""),
   targetDate: z.string().trim().max(60).nullable().optional(),
   status: z.enum(GOAL_STATUSES).default("active"),

@@ -12,7 +12,6 @@ import {
 } from "@/components/meal-plan/meal-plan-view";
 import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
@@ -33,7 +32,7 @@ export const maxDuration = 300;
 
 export default function MealPlanPage() {
   return (
-    <PageShell>
+    <PageShell active="/meal-plan">
       <Toaster
         position="top-center"
         theme="system"
@@ -43,7 +42,6 @@ export default function MealPlanPage() {
         }}
       />
 
-      <StandaloneHeader active="/meal-plan" />
 
       <div className="mb-8">
         <BackToDashboard />

@@ -14,6 +14,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { headerLinks } from "@/lib/nav-links";
 
@@ -34,24 +36,42 @@ export function StandaloneSidebar() {
   useEffect(() => {
     setPath(window.location.pathname);
   }, []);
+  const { state } = useSidebar();
+  const collapsed = state === "collapsed";
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar className="border-sidebar-border border-r" collapsible="icon">
       <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild className="h-11" tooltip="Dashboard">
-              <Link aria-label="Chad — dashboard" href="/today">
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted/60 ring-1 ring-border/50">
-                  <Dumbbell className="text-blood" size={13} strokeWidth={2.5} />
-                </span>
-                <span className="font-bold font-display text-[15px] tracking-[0.14em]">
-                  CHAD
-                </span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        {/* Brand + the collapse toggle, side by side (the standard pro-app
+            placement: the control that collapses the panel lives ON the
+            panel). In the collapsed icon rail the pair stacks vertically and
+            the toggle becomes the expand button, so it is always reachable
+            and, because the sidebar is fixed, never scrolls away. */}
+        <div className="flex items-center gap-1 group-data-[collapsible=icon]:flex-col">
+          <SidebarMenu className="min-w-0 flex-1 group-data-[collapsible=icon]:flex-none">
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild className="h-11" tooltip="Dashboard">
+                <Link aria-label="Chad dashboard" href="/today">
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted/60 ring-1 ring-border/50">
+                    <Dumbbell
+                      className="text-blood"
+                      size={13}
+                      strokeWidth={2.5}
+                    />
+                  </span>
+                  <span className="font-bold font-display text-[15px] tracking-[0.14em]">
+                    CHAD
+                  </span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+          <SidebarTrigger
+            aria-label={collapsed ? "Expand menu" : "Collapse menu"}
+            className="size-8 shrink-0 text-muted-foreground hover:text-foreground"
+            title={collapsed ? "Expand menu" : "Collapse menu"}
+          />
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>

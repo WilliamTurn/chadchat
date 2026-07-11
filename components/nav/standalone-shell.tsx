@@ -34,7 +34,9 @@ export function StandaloneShell({ children }: { children: ReactNode }) {
     <SidebarProvider>
       <RestoreSidebarState />
       <StandaloneSidebar />
-      <SidebarInset>{children}</SidebarInset>
+      {/* bg-background (not the primitive's bg-sidebar) so the content area
+          and the nav panel are visibly distinct surfaces. */}
+      <SidebarInset className="bg-background">{children}</SidebarInset>
     </SidebarProvider>
   );
 }

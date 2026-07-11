@@ -9,7 +9,6 @@ import { AnalysisCard } from "@/components/nutrition/analysis-card";
 import { RewardProvider } from "@/components/dashboard/reward";
 import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
@@ -17,7 +16,7 @@ import { getKitchenAnalysesByUserId, getUserById } from "@/lib/db/queries";
 
 export default function KitchenPage() {
   return (
-    <PageShell>
+    <PageShell active="/kitchen">
       <Toaster
         position="top-center"
         theme="system"
@@ -27,7 +26,6 @@ export default function KitchenPage() {
         }}
       />
 
-      <StandaloneHeader active="/kitchen" />
 
       <div className="mb-8">
         <BackToDashboard />

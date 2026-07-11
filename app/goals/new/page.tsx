@@ -6,7 +6,6 @@ import { GoalForm } from "@/components/goals/goal-form";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { canAccessChad } from "@/lib/admin";
 import { getUserById } from "@/lib/db/queries";
 import { loadGoalFormData } from "@/lib/goals/form-data";
@@ -18,9 +17,8 @@ import { loadGoalFormData } from "@/lib/goals/form-data";
  */
 export default function NewGoalPage() {
   return (
-    // Full-width desktop layout (LAY-1): form column + sticky summary rail
-    // (the two-column split lives inside GoalForm).
-    <PageShell className="max-w-[1500px]">
+    // Full-width desktop frame (LAY-1); the form lays itself out inside it.
+    <PageShell active="/goals" className="max-w-[1500px]">
       <Toaster
         position="top-center"
         theme="system"
@@ -29,7 +27,6 @@ export default function NewGoalPage() {
             "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
         }}
       />
-      <StandaloneHeader active="/goals" />
 
       <div className="mb-8">
         <BackToDashboard href="/goals" label="Goals" />

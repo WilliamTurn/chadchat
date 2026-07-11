@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { PageShell } from "@/components/nav/page-shell";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -557,8 +556,7 @@ function SectionHeading({
 
 export default function HelpPage() {
   return (
-    <PageShell>
-      <StandaloneHeader active="/help" />
+    <PageShell active="/help">
 
       <div className="mb-8">
         <h1 className="font-display font-bold text-3xl tracking-tight">

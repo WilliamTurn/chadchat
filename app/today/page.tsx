@@ -18,7 +18,6 @@ import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { PageShell } from "@/components/nav/page-shell";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { MacroRings } from "@/components/nutrition/macro-rings";
 import { WeightChartInteractive } from "@/components/progress/weight-chart-interactive";
 import { GoalList } from "@/components/today/goal-list";
@@ -146,7 +145,7 @@ function computeStreak(dates: Date[], timezone: string | null): number {
 
 export default function TodayPage() {
   return (
-    <PageShell>
+    <PageShell active="/today">
       <Toaster
         position="top-center"
         theme="system"
@@ -155,7 +154,6 @@ export default function TodayPage() {
             "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
         }}
       />
-      <StandaloneHeader active="/today" />
       <Suspense fallback={<TodaySkeleton />}>
         <TodayContent />
       </Suspense>
@@ -608,7 +606,7 @@ async function TodayContent() {
             </h1>
             <p className="mt-2 max-w-md text-muted-foreground text-sm">
               {isReturning
-                ? "Here's where you stand today. No excuses — just the numbers."
+                ? "Here's where you stand today. No excuses, just the numbers."
                 : "One thing first: tell Chad about yourself. He'll set your targets and build your plan, and this page fills in as you log."}
             </p>
             {/* First-run (P1-4): the page's ONE dominant action. Every other

@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { WorkoutsPageLoading } from "@/components/workouts/v2/loading";
 import { PageShell } from "@/components/nav/page-shell";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { SessionPlayer } from "@/components/workouts/v2/session-player";
 import { getWorkoutTemplatesByUserId } from "@/lib/db/queries";
 import { parseTemplateExercises } from "@/lib/validation/workout-templates";
@@ -16,9 +15,8 @@ export const metadata = { title: "Workout in Progress" };
  * checkbox on Finish. */
 export default function SessionPage() {
   return (
-    <PageShell>
+    <PageShell active="/workouts">
       <Toaster position="top-center" theme="system" />
-      <StandaloneHeader active="/workouts" />
       <Suspense fallback={<WorkoutsPageLoading />}>
         <Content />
       </Suspense>

@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { WorkoutsPageLoading } from "@/components/workouts/v2/loading";
 import { PageShell } from "@/components/nav/page-shell";
 import { HistoryCard } from "@/components/workouts/v2/history-card";
@@ -15,8 +14,7 @@ export const metadata = { title: "Workout History" };
 /** The permanent log of finished workouts, grouped by month. */
 export default function HistoryPage() {
   return (
-    <PageShell>
-      <StandaloneHeader active="/workouts" />
+    <PageShell active="/workouts">
       <Suspense fallback={<WorkoutsPageLoading />}>
         <Content />
       </Suspense>

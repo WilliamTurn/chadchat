@@ -15,7 +15,6 @@ import { WeightChartInteractive } from "@/components/progress/weight-chart-inter
 import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
 import { ScrollToHash } from "@/components/nav/scroll-to-hash";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
@@ -101,12 +100,11 @@ function weightGoalStart(
 
 export default function ProgressPage() {
   return (
-    <PageShell>
+    <PageShell active="/progress">
       {/* richColors: success → green, error → red (the "Logged." confirmation
           reads as a clear success instead of a neutral gray toast). */}
       <Toaster position="top-center" richColors theme="system" />
 
-      <StandaloneHeader active="/progress" />
 
       <div className="mb-8">
         <BackToDashboard />

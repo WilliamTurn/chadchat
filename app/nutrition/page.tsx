@@ -9,7 +9,6 @@ import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
 import { ScrollToHash } from "@/components/nav/scroll-to-hash";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { AnalysisCard } from "@/components/nutrition/analysis-card";
 import { AnalyzeForm } from "@/components/nutrition/analyze-form";
 import { DayNav } from "@/components/nutrition/day-nav";
@@ -56,7 +55,7 @@ export default function NutritionPage({
   searchParams: Promise<{ day?: string }>;
 }) {
   return (
-    <PageShell>
+    <PageShell active="/nutrition">
       <Toaster
         position="top-center"
         theme="system"
@@ -66,7 +65,6 @@ export default function NutritionPage({
         }}
       />
 
-      <StandaloneHeader active="/nutrition" />
 
       <div className="mb-8">
         <BackToDashboard />

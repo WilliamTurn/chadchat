@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import { ChevronRight, PartyPopper, Trophy } from "lucide-react";
 import Link from "next/link";
 import { Toaster } from "sonner";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { WorkoutsPageLoading } from "@/components/workouts/v2/loading";
 import { PageShell } from "@/components/nav/page-shell";
 import { exerciseSlug } from "@/components/workouts/v2/catalog";
@@ -72,9 +71,8 @@ export default function WorkoutDetailPage({
   searchParams: Promise<{ new?: string }>;
 }) {
   return (
-    <PageShell>
+    <PageShell active="/workouts">
       <Toaster position="top-center" theme="system" />
-      <StandaloneHeader active="/workouts" />
       <Suspense fallback={<WorkoutsPageLoading />}>
         <Content params={params} searchParams={searchParams} />
       </Suspense>

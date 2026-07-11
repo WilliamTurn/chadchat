@@ -8,7 +8,6 @@ import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { FutureYouExperience } from "@/components/future-you/future-you-experience";
 import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
@@ -30,7 +29,7 @@ export const maxDuration = 800;
 
 export default function FutureYouPage() {
   return (
-    <PageShell>
+    <PageShell active="/future-you">
       <Toaster
         position="top-center"
         theme="system"
@@ -40,7 +39,6 @@ export default function FutureYouPage() {
         }}
       />
 
-      <StandaloneHeader active="/future-you" />
 
       <div className="mb-8 max-w-2xl">
         <BackToDashboard />

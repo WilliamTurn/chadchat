@@ -3,7 +3,6 @@ import Link from "next/link";
 import { Toaster } from "sonner";
 import { WorkoutsPageLoading } from "@/components/workouts/v2/loading";
 import { PageShell } from "@/components/nav/page-shell";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { toCustomExerciseData } from "@/components/workouts/v2/catalog";
 import { CustomExerciseForm } from "@/components/workouts/v2/custom-exercise-form";
 import { WorkoutPageHeader } from "@/components/workouts/v2/page-header";
@@ -19,9 +18,8 @@ export default function EditCustomExercisePage({
   params: Promise<{ slug: string }>;
 }) {
   return (
-    <PageShell>
+    <PageShell active="/workouts">
       <Toaster position="top-center" theme="system" />
-      <StandaloneHeader active="/workouts" />
       <Suspense fallback={<WorkoutsPageLoading />}>
         <Content params={params} />
       </Suspense>

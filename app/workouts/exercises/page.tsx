@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { WorkoutsPageLoading } from "@/components/workouts/v2/loading";
 import { PageShell } from "@/components/nav/page-shell";
 import { ExerciseLibrary } from "@/components/workouts/v2/exercise-library-page";
@@ -12,8 +11,7 @@ export const metadata = { title: "Exercises" };
  * records and progress. */
 export default function ExercisesPage() {
   return (
-    <PageShell>
-      <StandaloneHeader active="/workouts" />
+    <PageShell active="/workouts">
       <WorkoutPageHeader
         back={{ href: "/workouts", label: "Workouts" }}
         subtitle="Tap any exercise for how-to, your records, and your progress. Create your own for anything we don't have."

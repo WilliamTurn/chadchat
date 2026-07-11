@@ -6,7 +6,6 @@ import { auth } from "@/app/(auth)/auth";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { QuitDateExperience } from "@/components/quit/quit-date-experience";
 import { canAccessChad } from "@/lib/admin";
 import { formatCalendarDay, todayAnchorInTz } from "@/lib/date";
@@ -40,7 +39,6 @@ export default function QuitDatePage() {
         }}
       />
 
-      <StandaloneHeader />
 
       {/* The page header lives inside the async content (s157, owner order):
           pre-test it sells the TEST ("outsmart Chad") and never names the

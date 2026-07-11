@@ -5,7 +5,6 @@ import { auth } from "@/app/(auth)/auth";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { GoalList, type LiftProgress } from "@/components/today/goal-list";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import {
@@ -39,7 +38,7 @@ export default function GoalsPage() {
   return (
     // Full-width desktop layout (LAY-1): the wide frame, filled with a real
     // multi-column goal grid instead of one centered card column.
-    <PageShell className="max-w-[1500px]">
+    <PageShell active="/goals" className="max-w-[1500px]">
       <Toaster
         position="top-center"
         theme="system"
@@ -49,7 +48,6 @@ export default function GoalsPage() {
         }}
       />
 
-      <StandaloneHeader active="/goals" />
 
       <div className="mb-8">
         <BackToDashboard />

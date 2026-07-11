@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { Pencil, Trophy } from "lucide-react";
 import Link from "next/link";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { WorkoutsPageLoading } from "@/components/workouts/v2/loading";
 import { PageShell } from "@/components/nav/page-shell";
 import {
@@ -82,8 +81,7 @@ export default function ExerciseDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   return (
-    <PageShell>
-      <StandaloneHeader active="/workouts" />
+    <PageShell active="/workouts">
       <Suspense fallback={<WorkoutsPageLoading />}>
         <Content params={params} />
       </Suspense>

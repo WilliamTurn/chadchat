@@ -25,7 +25,6 @@ import { ProfileForm } from "@/components/account/profile-form";
 import { TimezonePreference } from "@/components/account/timezone-preference";
 import { UnitPreference } from "@/components/account/unit-preference";
 import { PageShell } from "@/components/nav/page-shell";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { canAccessEliteFeatures } from "@/lib/admin";
@@ -112,9 +111,8 @@ function formatDate(date: Date | null): string {
 
 export default function AccountPage() {
   return (
-    <PageShell>
+    <PageShell active="/account">
       <Toaster position="top-center" richColors theme="system" />
-      <StandaloneHeader active="/account" />
 
       <div className="mb-8">
         <h1 className="font-semibold text-2xl tracking-tight">Account</h1>

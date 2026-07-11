@@ -5,7 +5,6 @@ import { auth } from "@/app/(auth)/auth";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { PlanDoc } from "@/components/today/plan-doc";
 import { canAccessChad } from "@/lib/admin";
 import { getPlanById, getUserById } from "@/lib/db/queries";
@@ -22,7 +21,7 @@ export default function PlanDocPage({
   params: Promise<{ id: string }>;
 }) {
   return (
-    <PageShell>
+    <PageShell active="/today">
       <Toaster
         position="top-center"
         theme="system"
@@ -35,7 +34,6 @@ export default function PlanDocPage({
       {/* usePathname inside the header is runtime data on a dynamic route, so
           it needs its own Suspense boundary under Cache Components. */}
       <Suspense fallback={null}>
-        <StandaloneHeader active="/today" />
       </Suspense>
 
       <div className="mb-8">

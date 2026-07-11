@@ -5,7 +5,6 @@ import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { PageShell } from "@/components/nav/page-shell";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { ReportActions } from "@/components/reports/report-actions";
 import { ReportTeaser } from "@/components/reports/report-teaser";
 import { ReportView } from "@/components/reports/report-view";
@@ -26,7 +25,7 @@ import { formatReportHour, reportDayLabel } from "@/lib/reports/schedule";
 
 export default function ReportsPage() {
   return (
-    <PageShell>
+    <PageShell active="/reports">
       <Toaster
         position="top-center"
         theme="system"
@@ -36,7 +35,6 @@ export default function ReportsPage() {
         }}
       />
 
-      <StandaloneHeader />
 
       <div className="mb-8">
         <div className="flex items-center gap-3">

@@ -3,7 +3,6 @@ import Link from "next/link";
 import { Toaster } from "sonner";
 import { WorkoutsPageLoading } from "@/components/workouts/v2/loading";
 import { PageShell } from "@/components/nav/page-shell";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { WButton } from "@/components/workouts/v2/ui";
 import { WorkoutEditor } from "@/components/workouts/v2/workout-editor";
 import { getWorkoutTemplateById } from "@/lib/db/queries";
@@ -18,9 +17,8 @@ export default function EditWorkoutPage({
   params: Promise<{ id: string }>;
 }) {
   return (
-    <PageShell>
+    <PageShell active="/workouts">
       <Toaster position="top-center" theme="system" />
-      <StandaloneHeader active="/workouts" />
       <Suspense fallback={<WorkoutsPageLoading />}>
         <Content params={params} />
       </Suspense>

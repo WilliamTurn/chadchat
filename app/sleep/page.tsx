@@ -7,7 +7,6 @@ import { auth } from "@/app/(auth)/auth";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
-import { StandaloneHeader } from "@/components/nav/standalone-header";
 import {
   SleepHistory,
   type SleepHistoryEntry,
@@ -36,7 +35,7 @@ import { SLEEP_GOAL_MINUTES } from "@/lib/validation/sleep";
 
 export default function SleepPage() {
   return (
-    <PageShell>
+    <PageShell active="/sleep">
       <Toaster
         position="top-center"
         theme="system"
@@ -46,7 +45,6 @@ export default function SleepPage() {
         }}
       />
 
-      <StandaloneHeader active="/sleep" />
 
       <div className="mb-8">
         <BackToDashboard />

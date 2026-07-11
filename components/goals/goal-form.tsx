@@ -21,7 +21,11 @@ import {
   useTransition,
 } from "react";
 import { toast } from "sonner";
-import { removeGoal, saveGoalRecord, updateGoalRecord } from "@/app/today/actions";
+import {
+  removeGoal,
+  saveGoalRecord,
+  updateGoalRecord,
+} from "@/app/today/actions";
 import { KpiHelp } from "@/components/dashboard/kpi";
 import type { EditableGoal } from "@/components/goals/types";
 import {
@@ -58,6 +62,12 @@ import { cn } from "@/lib/utils";
 
 const NONE = "none";
 const LB_PER_KG = 2.204_62;
+
+// Server-side limits (lib/validation/goals.ts). The form never hard-stops
+// typing or pasting; it shows a live counter and a plain validation message
+// instead (the X/LinkedIn pattern), so the limit is never a surprise.
+const TITLE_MAX = 200;
+const DETAIL_MAX = 8000;
 
 /** Metrics with no automatic data source: the member updates the number by
  *  hand (on this form or the goal's page). Weight reads from weigh-ins and
@@ -113,7 +123,7 @@ const METRIC_CHOICES: MetricChoice[] = [
     value: NONE,
     label: "No number",
     description:
-      "For goals that can't be measured with a number, like a sharper jawline. Chad still sees this goal and holds you to it.",
+      "For a goal that isn't necessarily measured with a number. Chad still sees this goal and holds you to it.",
     icon: <Sparkles className="size-4" />,
   },
 ];
@@ -307,7 +317,9 @@ export function GoalForm({
   const liftBaselineDisplay =
     liftBaselineLb == null
       ? null
-      : Math.round(liftUnit === "kg" ? liftBaselineLb / LB_PER_KG : liftBaselineLb);
+      : Math.round(
+          liftUnit === "kg" ? liftBaselineLb / LB_PER_KG : liftBaselineLb
+        );
 
   // Live feasibility: the coaching no mainstream app gives at the rate picker.
   const feasibility = useMemo(() => {
@@ -349,7 +361,15 @@ export function GoalForm({
       }
     }
     return null;
-  }, [metric, isLift, startValue, targetValue, targetDate, liftBaselineLb, liftUnit]);
+  }, [
+    metric,
+    isLift,
+    startValue,
+    targetValue,
+    targetDate,
+    liftBaselineLb,
+    liftUnit,
+  ]);
 
   // Narrowed weight-goal feasibility for the pace-first chips (TS can't carry
   // the discriminated-union narrowing into the chip onClick closures).
@@ -359,6 +379,13 @@ export function GoalForm({
     const found: Record<string, string> = {};
     if (!title.trim()) {
       found["g-title"] = "Enter your goal.";
+    } else if (title.trim().length > TITLE_MAX) {
+      found["g-title"] =
+        `Keep your goal under ${TITLE_MAX} characters. The full story goes in Details below.`;
+    }
+    if (detail.trim().length > DETAIL_MAX) {
+      found["g-detail"] =
+        `Details can hold up to ${DETAIL_MAX.toLocaleString()} characters. Trim it down a little.`;
     }
     if (isLift && !metricRef.trim()) {
       found["g-ref"] = "Enter the lift you want to track, like Back Squat.";
@@ -432,10 +459,16 @@ export function GoalForm({
       // the start; on edit an empty field falls back to the start too.
       currentValue:
         hasMetric && isManual
-          ? (isEdit ? (numOrNull(currentValue) ?? start) : start)
+          ? isEdit
+            ? (numOrNull(currentValue) ?? start)
+            : start
           : null,
       targetValue: hasMetric ? numOrNull(targetValue) : null,
-      unit: hasMetric ? (metric === "bodyfat" ? "%" : unit.trim() || null) : null,
+      unit: hasMetric
+        ? metric === "bodyfat"
+          ? "%"
+          : unit.trim() || null
+        : null,
     };
     startTransition(async () => {
       const result =
@@ -482,7 +515,6 @@ export function GoalForm({
             aria-invalid={errors["g-title"] ? true : undefined}
             className="h-11"
             id="g-title"
-            maxLength={120}
             onChange={(e) => {
               setTitle(e.target.value);
               clearError("g-title");
@@ -491,24 +523,54 @@ export function GoalForm({
             value={title}
           />
           <FieldError message={errors["g-title"]} />
-          <p className="text-muted-foreground text-xs">
-            One clear sentence works best. The full story goes below.
-          </p>
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="text-muted-foreground text-xs">
+              One clear sentence works best. The full story goes below.
+            </p>
+            {title.length >= TITLE_MAX - 30 && (
+              <p
+                className={cn(
+                  "shrink-0 text-xs tabular-nums",
+                  title.length > TITLE_MAX
+                    ? "font-medium text-destructive"
+                    : "text-muted-foreground"
+                )}
+              >
+                {title.length}/{TITLE_MAX}
+              </p>
+            )}
+          </div>
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="g-detail">Details (recommended)</Label>
           <Textarea
-            className="min-h-32"
+            aria-invalid={errors["g-detail"] ? true : undefined}
+            className="max-h-72 min-h-32 overflow-y-auto"
             id="g-detail"
-            maxLength={8000}
-            onChange={(e) => setDetail(e.target.value)}
+            onChange={(e) => {
+              setDetail(e.target.value);
+              clearError("g-detail");
+            }}
             placeholder="Why this goal matters to you, what success looks like, and anything else Chad should know."
             value={detail}
           />
-          <p className="text-muted-foreground text-xs">
-            Be as detailed as you want. The more you write, the better Chad can
-            coach you: he reads every word.
-          </p>
+          <FieldError message={errors["g-detail"]} />
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="text-muted-foreground text-xs">
+              The more you share, the better Chad can coach you: he reads every
+              word.
+            </p>
+            <p
+              className={cn(
+                "shrink-0 text-xs tabular-nums",
+                detail.length > DETAIL_MAX
+                  ? "font-medium text-destructive"
+                  : "text-muted-foreground"
+              )}
+            >
+              {detail.length.toLocaleString()}/{DETAIL_MAX.toLocaleString()}
+            </p>
+          </div>
         </div>
       </SectionCard>
 
@@ -520,9 +582,11 @@ export function GoalForm({
             A goal with a specific number attached can be measured, and
             measurable goals are far more likely to be reached: you can see
             exactly how close you are at every step, and it shows as a live
-            progress bar on your dashboard. Some goals, like a sharper jawline
-            or rounder glutes, can't be measured with a number. Chad still sees
-            those and holds you to them: choose "No number" below.
+            progress bar on your dashboard. Some goals, like having a sharper
+            jawline or rounder glutes, may not necessarily need a number by
+            which they can be measured. Chad still sees these goals and holds
+            you to them. If your goal can be numerically measured, choose a
+            number. If not, choose "No number".
           </>
         }
         title="Track it with a number (recommended)"
@@ -697,7 +761,8 @@ export function GoalForm({
                 }}
                 type="button"
               >
-                Use my current weight: {currentWeight.value} {currentWeight.unit}
+                Use my current weight: {currentWeight.value}{" "}
+                {currentWeight.unit}
               </button>
             )}
           </div>
@@ -784,7 +849,9 @@ export function GoalForm({
                   clearError("g-ref");
                 }}
                 placeholder={
-                  metric === "measurement" ? "e.g. Waist" : "e.g. Push-ups in one set"
+                  metric === "measurement"
+                    ? "e.g. Waist"
+                    : "e.g. Push-ups in one set"
                 }
                 value={metricRef}
               />
@@ -997,10 +1064,7 @@ export function GoalForm({
 
       {/* 5 · Status (edit only) */}
       {isEdit && (
-        <SectionCard
-          icon={<Activity className="size-4" />}
-          title="Status"
-        >
+        <SectionCard icon={<Activity className="size-4" />} title="Status">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             {(
               [
@@ -1040,9 +1104,25 @@ export function GoalForm({
         </SectionCard>
       )}
 
-      {/* Actions */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-border border-t pt-5">
-        <div>
+      {/* Actions: anchored to the content's left edge, right where the eye
+          lands after the last section (the full-page-form pattern; a
+          justify-end row on a wide frame strands the buttons far from the
+          form). Primary action first; destructive delete kept apart on the
+          right. */}
+      <div className="flex flex-wrap items-center gap-2 border-border border-t pt-5">
+        <Button className="h-11 min-w-32" disabled={pending} type="submit">
+          {pending ? "Saving…" : isEdit ? "Save changes" : "Create goal"}
+        </Button>
+        <Button
+          className="h-11"
+          disabled={pending}
+          onClick={() => router.push("/goals")}
+          type="button"
+          variant="ghost"
+        >
+          Cancel
+        </Button>
+        <div className="ml-auto">
           {isEdit && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -1061,9 +1141,9 @@ export function GoalForm({
                   <AlertDialogTitle>Delete this goal?</AlertDialogTitle>
                   <AlertDialogDescription>
                     "{goal?.title}" and its progress will be permanently
-                    deleted, and Chad will stop tracking it. If you just want
-                    it out of the way, set its status to Archived instead: you
-                    can reopen an archived goal anytime.
+                    deleted, and Chad will stop tracking it. If you just want it
+                    out of the way, set its status to Archived instead: you can
+                    reopen an archived goal anytime.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -1081,20 +1161,6 @@ export function GoalForm({
               </AlertDialogContent>
             </AlertDialog>
           )}
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            className="h-11"
-            disabled={pending}
-            onClick={() => router.push("/goals")}
-            type="button"
-            variant="ghost"
-          >
-            Cancel
-          </Button>
-          <Button className="h-11 min-w-32" disabled={pending} type="submit">
-            {pending ? "Saving…" : isEdit ? "Save changes" : "Create goal"}
-          </Button>
         </div>
       </div>
     </form>
@@ -1234,7 +1300,8 @@ function WeightPaceCheck({
   if (data.band === "safe") {
     message = `A sustainable pace. At ${data.ratePerWeek} ${unit} a week this is very doable.`;
   } else if (data.band === "aggressive") {
-    message = `An aggressive pace. It can be done, but expect hard weeks. Most coaches would give this a little more time.`;
+    message =
+      "An aggressive pace. It can be done, but expect hard weeks. Most coaches would give this a little more time.";
   } else if (data.band === "extreme") {
     message =
       data.direction === "lose"
