@@ -10,6 +10,7 @@ import type {
   NutritionTarget,
   ProgressEntry,
 } from "@/lib/db/schema";
+import { LB_PER_KG } from "@/lib/contracts/units";
 import { formatOz, mlToOz } from "@/lib/today/water-units";
 import { toLb } from "@/lib/workouts/stats";
 
@@ -21,7 +22,6 @@ const MAX_EXERCISES_PER_WORKOUT_IN_LOG = 10;
 const MAX_MEASUREMENTS_IN_LOG = 20;
 const MAX_KITCHEN_IN_LOG = 20;
 
-const LB_PER_KG = 2.204_62;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 function round(n: number): number {

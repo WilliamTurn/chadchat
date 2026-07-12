@@ -41,7 +41,9 @@ import { WeekStrip } from "@/components/today/week-strip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
+import { sumMacros } from "@/lib/ai/dashboard";
 import { ema } from "@/lib/chart/trend";
+import { LB_PER_KG } from "@/lib/contracts/units";
 import {
   calendarDayAnchorInTz,
   formatCalendarDay,
@@ -75,6 +77,7 @@ import { findCalorieConflict, findOverlapIds } from "@/lib/goals/coherence";
 import { clientField } from "@/lib/memory/client-field";
 import { toPlanStatusSummary } from "@/lib/subscription";
 import { normalizeSex, resolveHero } from "@/lib/today/goal-diagram";
+import { computeStreak } from "@/lib/today/streak";
 import { DEFAULT_WATER_GOAL_ML } from "@/lib/today/water-units";
 import {
   buildLastNight,
@@ -89,7 +92,6 @@ import { cn } from "@/lib/utils";
 import { toWorkoutData } from "@/lib/workouts/serialize";
 import { exercise1RMTrend, workoutVolumeLb } from "@/lib/workouts/stats";
 
-const LB_PER_KG = 2.204_62;
 const DAY_MS = 86_400_000;
 
 function round1(n: number): number {
@@ -117,31 +119,6 @@ function relativeDay(d: Date, timezone: string | null): string {
     return `${diffDays} days ago`;
   }
   return formatCalendarDay(d, { month: "short", day: "numeric" });
-}
-
-/** Consecutive days (ending today or yesterday) with at least one logged action.
- *  Days are the user's local calendar days (FEAT-8) — a late-night log counts
- *  toward THEIR today, not the next UTC day. */
-function computeStreak(dates: Date[], timezone: string | null): number {
-  if (dates.length === 0) {
-    return 0;
-  }
-  const days = new Set(
-    dates.map((d) => toCalendarDayISO(calendarDayAnchorInTz(d, timezone)))
-  );
-  let cursor = todayAnchorInTz(timezone);
-  if (!days.has(toCalendarDayISO(cursor))) {
-    cursor = new Date(cursor.getTime() - DAY_MS);
-    if (!days.has(toCalendarDayISO(cursor))) {
-      return 0;
-    }
-  }
-  let streak = 0;
-  while (days.has(toCalendarDayISO(cursor))) {
-    streak++;
-    cursor = new Date(cursor.getTime() - DAY_MS);
-  }
-  return streak;
 }
 
 export default function TodayPage() {
@@ -418,16 +395,14 @@ async function TodayContent() {
   // Daily hydration goal (DSH-24): user-set in ml, else one gallon.
   const waterGoalMl = user.waterGoalMl ?? DEFAULT_WATER_GOAL_ML;
 
-  const caloriesToday = todaysMeals.reduce(
-    (sum, m) => sum + (m.calories ?? 0),
-    0
-  );
-  const proteinToday = todaysMeals.reduce(
-    (sum, m) => sum + (m.protein ?? 0),
-    0
-  );
-  const carbsToday = todaysMeals.reduce((sum, m) => sum + (m.carbs ?? 0), 0);
-  const fatToday = todaysMeals.reduce((sum, m) => sum + (m.fat ?? 0), 0);
+  // Registered source for nutrition.*.today (lib/contracts/metrics.ts): the
+  // one sumMacros in lib/ai/dashboard.ts, never per-card inline reduces.
+  const {
+    calories: caloriesToday,
+    protein: proteinToday,
+    carbs: carbsToday,
+    fat: fatToday,
+  } = sumMacros(todaysMeals);
 
   // Streak + this week's strip from every tracked action (meals, workouts,
   // water, weigh-ins), so engagement on any surface keeps the streak alive.

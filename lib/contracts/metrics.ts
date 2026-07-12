@@ -517,9 +517,9 @@ export const METRICS = {
     label: "Streak",
     unit: "days",
     grain: "user-day",
-    source: { module: "app/today/page.tsx", symbol: "computeStreak" },
+    source: { module: "lib/today/streak.ts", symbol: "computeStreak" },
     derivation:
-      "Consecutive member-local days ending today or yesterday with any logged action (meal, workout, water, weigh-in, sleep). Extraction into a pure lib module is a Phase 2 task; the definition is pinned here now.",
+      "Consecutive member-local days ending today or yesterday with any logged action (meal, workout, water, weigh-in, sleep). Extracted to the pure lib module in P2-A (2026-07-12) exactly as pinned here; semantics unchanged.",
     target: { kind: "none" },
     allowedClaims: ["current-value"],
     estimated: false,

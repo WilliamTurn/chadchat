@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbo",
-    "build": "tsx lib/db/migrate && next build",
+    "build": "tsx scripts/design-lint.ts && tsx lib/db/migrate && next build",
     "start": "next start",
     "check": "ultracite check",
+    "lint:design": "tsx scripts/design-lint.ts",
+    "screenshot:fixtures": "node scripts/fixture-screenshots.mjs",
     "fix": "ultracite fix",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "npx tsx lib/db/migrate.ts",

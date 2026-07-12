@@ -76,8 +76,14 @@ export async function proxy(request: NextRequest) {
   const isPublicShare =
     pathname.startsWith("/share/") || pathname.startsWith("/q/");
 
+  // The fixture harness (P2-A) renders deterministic FIXTURE data only, never
+  // member data, and hard-404s in production (app/dev/fixtures/layout.tsx).
+  // It stays reachable logged-out so auditors and the FIX-39 screenshot suite
+  // can drive it without a session.
+  const isDevFixtures = pathname.startsWith("/dev/fixtures");
+
   if (!token) {
-    if (isAuthPage || isPublicShare) {
+    if (isAuthPage || isPublicShare || isDevFixtures) {
       return NextResponse.next();
     }
 

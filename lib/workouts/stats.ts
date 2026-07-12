@@ -5,7 +5,7 @@
  * cross-set comparison so a kg PR doesn't beat a heavier lb set by accident.
  */
 
-const LB_PER_KG = 2.204_62;
+import { LB_PER_KG } from "@/lib/contracts/units";
 
 export type WeightUnit = "lb" | "kg";
 export type SetType = "warmup" | "working" | "dropset" | "failure";

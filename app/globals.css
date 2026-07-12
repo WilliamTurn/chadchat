@@ -53,6 +53,55 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* ------------------------------------------------------------------
+   * FIX-13 DESIGN TOKENS (DSH-66 Phase 2, P2-A). The one layout language.
+   * Contract: lib/contracts/standards/visual-excellence.md + audit doc 05.
+   * Values with contrast ratios were measured (WCAG 2.x) against BOTH
+   * themes' surfaces; see audits/dashboard-overhaul-2026-07-11/evidence-p2a.
+   * Enforcement: scripts/design-lint.ts (FIX-37) rejects off-token usage.
+   * ------------------------------------------------------------------ */
+
+  /* Surface ladder: page < card < inset < overlay. Dark keeps 3+ visibly
+     distinct levels (rubric 5); values per theme below. */
+  --color-surface-page: var(--background);
+  --color-surface-card: var(--card);
+  --color-surface-inset: var(--surface-inset);
+  --color-surface-overlay: var(--popover);
+
+  /* Semantic state roles (doc 05). Each role has a FILL form (charts, bars,
+     badges) and a TEXT form (AA in its theme, 4.5:1+ on card AND inset).
+     Domain color NEVER substitutes for state color (color law). */
+  --color-positive: var(--positive);
+  --color-positive-text: var(--positive-text);
+  --color-attention: var(--attention);
+  --color-attention-text: var(--attention-text);
+  --color-critical: var(--critical);
+  --color-critical-text: var(--critical-text);
+  --color-info: var(--info);
+  --color-info-text: var(--info-text);
+  --color-missing: var(--muted-foreground);
+
+  /* DSH-61: brand red is a FILL color; member-readable red TEXT uses this
+     token (light: brand #a4161a at 7.8:1; dark: #f2555a at 5.7:1 on card). */
+  --color-blood-text: var(--critical-text);
+
+  /* Domain accent TEXT variants (AA both themes). Fills stay --chart-1..5 /
+     lib/chart/palette.ts. */
+  --color-hydration-text: var(--info-text);
+  --color-sleep-text: var(--sleep-text);
+  --color-nutrition-text: var(--attention-text);
+  --color-training-text: var(--critical-text);
+
+  /* Goal/target line color: emerald everywhere (color law rule 2). */
+  --color-goal-line: var(--positive);
+
+  /* Dashboard content region: full-width app shell with a bounded content
+     region inside it. 1500px is the owner-approved reference frame
+     (visual-excellence rubric 1; the s177/s184 full-width rulings). */
+  --container-content: 1500px;
+  /* Reading surfaces (report prose): 680 to 800px text column. */
+  --container-prose: 760px;
 }
 
 :root {
@@ -104,6 +153,28 @@
   --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* FIX-13 light theme. Surfaces: page #fbfbfb < card #fff, inset sits
+     below card, overlay = white + shadow. */
+  --surface-inset: oklch(0.955 0 0);
+
+  /* Semantic states, light. TEXT forms measured on white card / inset:
+     positive-text 5.5:1, attention-text 6.2:1, critical-text 7.8:1,
+     info-text 5.9:1, sleep-text 6.3:1. */
+  --positive: #10b981;
+  --positive-text: #047857;
+  --attention: #f59e0b;
+  --attention-text: #92400e;
+  --critical: #a4161a;
+  --critical-text: #a4161a;
+  --info: #0ea5e9;
+  --info-text: #0369a1;
+  --sleep-text: #4f46e5;
+
+  /* Motion tokens (motion-interaction.md): standard transitions 150-220ms,
+     ease-out entering, ease-in exiting. */
+  --motion-fast: 150ms;
+  --motion-base: 200ms;
 }
 
 .dark {
@@ -112,7 +183,9 @@
   --foreground: #d5dbe6;
   --card: #0b0f17;
   --card-foreground: #d5dbe6;
-  --popover: #0b0f17;
+  /* FIX-13: overlays sit one surface level above cards (menus, popovers,
+     dialogs separate from the card plane even before their shadow). */
+  --popover: #10141d;
   --popover-foreground: #d5dbe6;
   --primary: oklch(0.94 0 0);
   --primary-foreground: oklch(0.195 0 0);
@@ -154,6 +227,26 @@
   --shadow-composer-focus:
     0 0 0 1px oklch(1 0 0 / 0.1), 0 4px 16px -4px oklch(0 0 0 / 0.3),
     inset 0 1px 0 oklch(1 0 0 / 0.04);
+
+  /* FIX-13 dark theme. Ink surface ladder (page #04070d < card #0b0f17 <
+     inset #131a26); overlay is raised above card for menus/popovers.
+     Popover stays defined above; inset is the third distinguishable level
+     the rubric requires. */
+  --surface-inset: #131a26;
+
+  /* Semantic states, dark. TEXT forms measured on card #0b0f17 / inset:
+     positive-text 7.6:1, attention-text 8.9:1, critical-text 5.7:1 (the
+     DSH-61 fix: brand #a4161a is 2.5:1 on dark and is now FILL-ONLY there),
+     info-text 6.9:1, sleep-text 6.4:1. */
+  --positive: #10b981;
+  --positive-text: #10b981;
+  --attention: #f59e0b;
+  --attention-text: #f59e0b;
+  --critical: #a4161a;
+  --critical-text: #f2555a;
+  --info: #0ea5e9;
+  --info-text: #0ea5e9;
+  --sleep-text: #818cf8;
 }
 
 @layer base {
@@ -254,6 +347,151 @@ select:focus-visible,
 input:focus-visible,
 textarea:focus-visible {
   outline: none;
+}
+
+/* ----------------------------------------------------------------------
+ * FIX-13 SEMANTIC TYPE RAMP (visual-excellence rubric 4 + audit doc 05).
+ * One class per text role; off-ramp font sizes are a design-lint violation
+ * (FIX-37). Phone sizes are explicit (the 17px html scale below only
+ * affects rem-based legacy sizes). All sizes are member-readable: nothing
+ * below 12px, 12 to 13px reserved for short metadata.
+ * -------------------------------------------------------------------- */
+
+/* Page title: 32px desktop / 27px phone, display face. (Responsive sizes
+   live in the plain-CSS media block below: this Tailwind version drops an
+   entire @utility that contains a nested @media, silently.) */
+@utility text-page-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+/* Section title: 22px desktop / 20px phone. */
+@utility text-section-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Card title: 16px. Long titles clamp, never shrink below 14px. */
+@utility text-card-title {
+  font-size: 16px;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+/* Metric values: tabular numerals so columns align (rubric 4). */
+@utility text-metric {
+  font-size: 28px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+@utility text-metric-lg {
+  font-size: 32px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Body: 15px minimum for primary reading text. */
+@utility text-body {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* Secondary: 14px floor for supporting text. */
+@utility text-secondary {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Metadata: 13px, short strings only (chart ticks, captions, badges). */
+@utility text-meta {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* Eyebrow: the uppercase micro-label above a value (KPI anatomy). The ONLY
+   sanctioned all-caps role; never sentences. */
+@utility text-eyebrow {
+  font-size: 12px;
+  line-height: 1.3;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ----------------------------------------------------------------------
+ * FIX-13 GRID + SPACING (rubric 1-3). Full-width shell, bounded content,
+ * 12/8/4 columns, gutters 24-32px desktop / 16px phone, card gap 16/12.
+ * -------------------------------------------------------------------- */
+
+/* The dashboard column grid: 4 phone, 8 tablet (768+), 12 desktop (1280+).
+   Pair with col-span-* per the panel role contract. */
+@utility grid-dashboard {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* Content-region gutters: 16px phone, 24px tablet, 32px desktop. */
+@utility px-gutter {
+  padding-inline: 16px;
+}
+
+/* Card gap inside a section band: 16px desktop, 12px phone. */
+@utility gap-card {
+  gap: 12px;
+}
+
+/* Section gap between bands: 32px phone, 40px desktop, consistent. */
+@utility gap-section {
+  gap: 32px;
+}
+
+/* Responsive halves of the FIX-13 utilities. Plain (unlayered) CSS so it
+   wins over the layered base declarations above; keep the breakpoints in
+   lockstep with them. */
+@media (max-width: 40rem) {
+  .text-page-title {
+    font-size: 27px;
+  }
+  .text-section-title {
+    font-size: 20px;
+  }
+}
+
+@media (min-width: 48rem) {
+  .grid-dashboard {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .px-gutter {
+    padding-inline: 24px;
+  }
+  .gap-card {
+    gap: 16px;
+  }
+  .gap-section {
+    gap: 40px;
+  }
+}
+
+@media (min-width: 80rem) {
+  .grid-dashboard {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+  .px-gutter {
+    padding-inline: 32px;
+  }
 }
 
 @utility text-balance {
