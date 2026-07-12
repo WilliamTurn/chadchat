@@ -37,6 +37,22 @@ export const DOMAIN = {
   nutrition: "#f59e0b",
 } as const;
 
+/**
+ * Direction-verdict colors for trend lines (owner reversal s138 / DSH-50):
+ * emerald toward the goal, blood away, a deliberate cool slate when there is
+ * no goal or the window is flat. Centralized here (FIX-18) so the weight chart
+ * and every future trend chart color the same verdict the same way.
+ */
+export const TREND_NEUTRAL = "#94a3b8";
+
+export type TrendTone = "toward" | "away" | "neutral";
+
+export const TREND_TONE: Record<TrendTone, string> = {
+  toward: GOAL_EMERALD,
+  away: BLOOD,
+  neutral: TREND_NEUTRAL,
+};
+
 /** The macro trio (matches the MacroRings bars: sky / amber / violet). */
 export const MACRO = {
   calories: DOMAIN.nutrition,

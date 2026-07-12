@@ -26,6 +26,28 @@ export function formatShortDate(t: number): string {
   return formatCalendarDayMs(t, { month: "short", day: "numeric" });
 }
 
+/** Weekday axis tick for short windows, e.g. "Mon" (UTC-stable). */
+export function formatWeekdayTick(t: number): string {
+  return new Date(t).toLocaleDateString("en-US", {
+    weekday: "short",
+    timeZone: "UTC",
+  });
+}
+
+/**
+ * Glued axis-tick quantity, e.g. "96oz", "2.3k" for kcal-scale values
+ * (units doc: chart axis ticks stay glued; everywhere else is spaced).
+ */
+export function formatAxisQuantity(value: number, suffix: string): string {
+  const compact =
+    Math.abs(value) >= 10_000
+      ? `${Math.round(value / 1000)}k`
+      : Math.abs(value) >= 1000
+        ? `${Math.round(value / 100) / 10}k`
+        : `${Math.round(value * 10) / 10}`;
+  return `${compact}${suffix}`;
+}
+
 /**
  * Signed delta with unit and a real minus glyph, e.g. "+1.2 lb" / "−3.4 lb".
  * Returns "0 {unit}" (no sign) for a zero change.

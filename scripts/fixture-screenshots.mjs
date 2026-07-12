@@ -98,9 +98,21 @@ async function main() {
           await page.goto(`${BASE}${route}`, { waitUntil: "networkidle" });
           await page.addStyleTag({ content: FREEZE_CSS });
           await page.evaluate(() => document.fonts.ready);
+          // fullPage (captureBeyondViewport) rasterizes recharts SVG plots as
+          // BLANK even when the DOM is fully rendered (verified P2-C, evidence
+          // in artifacts/p2c-verify/probe-*.png). Size the viewport to the
+          // document and capture plain so chart pages screenshot correctly.
+          const docHeight = await page.evaluate(
+            () => document.documentElement.scrollHeight
+          );
+          await page.setViewportSize({
+            width,
+            height: Math.min(Math.max(900, docHeight), 20_000),
+          });
+          await page.evaluate(() => document.fonts.ready);
           await page.screenshot({
             path: join(dir, `${theme}-${width}.png`),
-            fullPage: true,
+            fullPage: false,
           });
           count++;
           process.stdout.write(`\r${slug} ${theme} ${width}px (${count})   `);
