@@ -37,22 +37,10 @@ export default function PricingPage({
             "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
         }}
       />
-      {/* Escape hatch: a logged-in member with no active plan would otherwise be
-          stranded here (every app route redirects back to /pricing). The logo
-          goes to the marketing site; signed-in users can also log out. */}
       <header className="mb-12 flex w-full max-w-5xl items-center justify-between">
-        <a
-          aria-label="Chad — home"
-          className="flex shrink-0 items-center gap-2"
-          href="https://chadcoach.ai"
-        >
-          <span className="flex size-7 items-center justify-center rounded-lg bg-muted/60 ring-1 ring-border/50">
-            <Dumbbell className="text-blood" size={14} strokeWidth={2.5} />
-          </span>
-          <span className="font-display font-bold text-[15px] tracking-[0.14em]">
-            CHAD
-          </span>
-        </a>
+        <Suspense fallback={<LogoMark />}>
+          <HeaderLogo />
+        </Suspense>
         <Suspense fallback={null}>
           <AccountControls />
         </Suspense>
@@ -119,6 +107,43 @@ function TrustStrip() {
   );
 }
 
+/** The CHAD wordmark by itself; also the logo's brief loading fallback. */
+function LogoMark() {
+  return (
+    <span className="flex shrink-0 items-center gap-2">
+      <span className="flex size-7 items-center justify-center rounded-lg bg-muted/60 ring-1 ring-border/50">
+        <Dumbbell className="text-blood" size={14} strokeWidth={2.5} />
+      </span>
+      <span className="font-display font-bold text-[15px] tracking-[0.14em]">
+        CHAD
+      </span>
+    </span>
+  );
+}
+
+/**
+ * The header logo. A signed-in member's logo ALWAYS stays inside the app
+ * (owner order, ACC-29: it must never dump them onto the logged-out marketing
+ * site): /today for members with access; without access /today bounces right
+ * back here, which keeps them on the page that can actually fix their plan.
+ * Only logged-out visitors go to the marketing site.
+ */
+async function HeaderLogo() {
+  const session = await auth();
+  if (session?.user?.id) {
+    return (
+      <Link aria-label="Chad — home" href="/today">
+        <LogoMark />
+      </Link>
+    );
+  }
+  return (
+    <a aria-label="Chad — home" href="https://chadcoach.ai">
+      <LogoMark />
+    </a>
+  );
+}
+
 async function AccountControls() {
   const session = await auth();
   const email = session?.user?.email;
@@ -176,21 +201,27 @@ async function PricingContent({
           </Button>
         </div>
       )}
-      {!hasAccess && isReturningCustomer && (
+      {/* alreadyTrialed keeps this to genuinely lapsed members: a row the
+          stale-customer heal reset reads as a fresh start, and "Welcome back"
+          next to "Start free trial" cards would contradict itself. */}
+      {!hasAccess && isReturningCustomer && alreadyTrialed && (
         <div className="mb-8 flex flex-col items-center gap-2">
-          <Button asChild variant="outline">
+          <p className="max-w-md text-balance text-center text-sm">
+            Welcome back. Your plan is not active right now. Pick a plan below
+            and Chad picks up right where you left off.
+          </p>
+          <Button asChild size="sm" variant="outline">
             <Link href="/account">Manage billing & payment</Link>
           </Button>
-          <p className="max-w-sm text-balance text-center text-muted-foreground text-xs">
-            Already a member before? Update your card or pick up where you left
-            off from your billing page.
-          </p>
         </div>
       )}
+      {/* Only a plan the member can USE today is "current". A lapsed tier must
+          never gray out its card (the ACC-29 trap: the dead plan was disabled,
+          so a stuck member could not click ANY working action on the page). */}
       <PricingPlans
         alreadyTrialed={alreadyTrialed}
         autostartTier={autostartTier}
-        currentTier={user?.subscriptionTier ?? null}
+        currentTier={hasAccess ? (user?.subscriptionTier ?? null) : null}
       />
     </>
   );

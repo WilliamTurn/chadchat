@@ -3,33 +3,10 @@
 import { redirect } from "next/navigation";
 import type Stripe from "stripe";
 import { auth } from "@/app/(auth)/auth";
-import { getUserById, setUserStripeCustomerId } from "@/lib/db/queries";
-import type { User } from "@/lib/db/schema";
+import { getUserById } from "@/lib/db/queries";
 import { getAppUrl, getStripe, PLANS, TRIAL_DAYS } from "@/lib/stripe";
+import { ensureStripeCustomer } from "@/lib/stripe-customer";
 import { hasUsedTrial, type PlanTier } from "@/lib/subscription";
-
-/**
- * Returns the user's Stripe customer id, creating (and saving) one the first
- * time. Reusing one customer per user keeps their cards + history together.
- * Takes the already-fetched user row so callers don't re-query.
- */
-async function getOrCreateStripeCustomer(
-  userId: string,
-  email: string,
-  existing: User | undefined
-): Promise<string> {
-  if (existing?.stripeCustomerId) {
-    return existing.stripeCustomerId;
-  }
-
-  const customer = await getStripe().customers.create({
-    email: email || undefined,
-    metadata: { userId },
-  });
-
-  await setUserStripeCustomerId(userId, customer.id);
-  return customer.id;
-}
 
 /**
  * Starts a subscription checkout for the given plan and redirects the user to
@@ -48,17 +25,22 @@ export async function createCheckoutSession(tier: PlanTier) {
   }
 
   const user = await getUserById(session.user.id);
-  const customerId = await getOrCreateStripeCustomer(
+  // Verified-or-recreated (ACC-29): a stale customer id previously 500'd every
+  // checkout attempt with "No such customer", dead-ending the member.
+  const { customerId, staleStateCleared } = await ensureStripeCustomer(
     session.user.id,
     session.user.email ?? "",
     user
   );
 
   // Each customer gets the free trial only once. Returning/cancelled customers
-  // resubscribe and are charged immediately (no repeat free trials).
-  const offerTrial = !hasUsedTrial({
-    stripeSubscriptionId: user?.stripeSubscriptionId ?? null,
-  });
+  // resubscribe and are charged immediately (no repeat free trials). A cleared
+  // stale subscription never counts: no live trial was ever consumed.
+  const offerTrial =
+    staleStateCleared ||
+    !hasUsedTrial({
+      stripeSubscriptionId: user?.stripeSubscriptionId ?? null,
+    });
 
   // Lands on the Subscription object, so it's present on every webhook.
   const subscriptionData: Stripe.Checkout.SessionCreateParams.SubscriptionData = {

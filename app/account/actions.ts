@@ -25,6 +25,10 @@ import {
 import { isValidTimezone } from "@/lib/date";
 import { type ProfileInput, profileSchema } from "@/lib/profile";
 import { getAppUrl, getStripe } from "@/lib/stripe";
+import {
+  ensureStripeCustomer,
+  isMissingStripeResource,
+} from "@/lib/stripe-customer";
 
 /**
  * Opens Stripe's hosted billing portal where the member can update their card,
@@ -41,8 +45,16 @@ export async function openBillingPortal() {
     redirect("/pricing");
   }
 
+  // Verified-or-recreated (ACC-29): a stale stored customer id would otherwise
+  // make the portal call throw and dead-end the member on an error screen.
+  const { customerId } = await ensureStripeCustomer(
+    session.user.id,
+    user.email ?? "",
+    user
+  );
+
   const portal = await getStripe().billingPortal.sessions.create({
-    customer: user.stripeCustomerId,
+    customer: customerId,
     return_url: `${getAppUrl()}/account`,
   });
 
@@ -69,16 +81,28 @@ export async function startPlanChange() {
     redirect("/pricing");
   }
 
-  const portal = await getStripe().billingPortal.sessions.create({
-    customer: user.stripeCustomerId,
-    return_url: `${getAppUrl()}/account`,
-    flow_data: {
-      type: "subscription_update",
-      subscription_update: { subscription: user.stripeSubscriptionId },
-    },
-  });
+  // A plan change needs the EXISTING customer + subscription; if Stripe no
+  // longer recognizes either (stale ids, ACC-29), there is nothing to change;
+  // send them to pick a plan fresh instead of erroring.
+  let portalUrl: string;
+  try {
+    const portal = await getStripe().billingPortal.sessions.create({
+      customer: user.stripeCustomerId,
+      return_url: `${getAppUrl()}/account`,
+      flow_data: {
+        type: "subscription_update",
+        subscription_update: { subscription: user.stripeSubscriptionId },
+      },
+    });
+    portalUrl = portal.url;
+  } catch (error) {
+    if (isMissingStripeResource(error)) {
+      redirect("/pricing");
+    }
+    throw error;
+  }
 
-  redirect(portal.url);
+  redirect(portalUrl);
 }
 
 /** Set the member's preferred body-weight unit (lb/kg). */

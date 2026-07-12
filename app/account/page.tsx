@@ -370,7 +370,10 @@ async function MembershipCard() {
 
   const hasAccess = hasActiveAccess(user);
   const tier = user.subscriptionTier;
-  const planName = tier ? PLANS[tier].name : "No active plan";
+  // A lapsed row can still carry its old tier; only name the plan while it is
+  // actually usable, so the card never reads "Chad Pro" next to "You don't
+  // have an active plan right now" (ACC-29).
+  const planName = tier && hasAccess ? PLANS[tier].name : "No active plan";
   const priceLabel = tier ? PLANS[tier].monthlyPriceLabel : null;
   const status = user.subscriptionStatus;
 
@@ -387,17 +390,33 @@ async function MembershipCard() {
 
   // Tier-colored top accent so the membership card reads its status at a glance:
   // Pro = brand blood-red, Basic = a calm neutral, past-due = destructive.
-  const accentClass = accentForCard({ isPastDue, tier });
+  const accentClass = accentForCard({
+    isPastDue,
+    tier: hasAccess ? tier : null,
+  });
 
   // Friendly, retention-minded status line. We always surface the actual price
   // so a renewal never reads as a surprise charge.
   let statusLine: string;
-  if (status === "trialing") {
+  if (!(hasAccess || isPastDue)) {
+    // Whatever the row's last Stripe status was, without live access there is
+    // no plan to describe; a stale "trialing"/"active" line here would
+    // contradict the "No active plan" name above (ACC-29).
+    statusLine = "You don't have an active plan right now.";
+  } else if (status === "trialing") {
     statusLine = `Free trial — your first charge${priceLabel ? ` of ${priceLabel}` : ""} is on ${formatDate(user.trialEndsAt ?? user.currentPeriodEnd)}.`;
-  } else if (status === "active" && user.cancelAtPeriodEnd) {
+  } else if (
+    status === "active" &&
+    user.cancelAtPeriodEnd &&
+    user.currentPeriodEnd
+  ) {
     statusLine = `Active until ${formatDate(user.currentPeriodEnd)}. We'd love to keep training with you — you can resume anytime before then.`;
   } else if (status === "active") {
-    statusLine = `${priceLabel ? `${priceLabel}/month · ` : ""}Renews on ${formatDate(user.currentPeriodEnd)}.`;
+    // A row with no period end (e.g. a comped membership) must not render
+    // "Renews on" with a bare dash where the date belongs.
+    statusLine = user.currentPeriodEnd
+      ? `${priceLabel ? `${priceLabel}/month · ` : ""}Renews on ${formatDate(user.currentPeriodEnd)}.`
+      : "Your plan is active.";
   } else if (status === "past_due") {
     statusLine =
       "There's a hiccup with your payment. Update your card to keep your access uninterrupted.";
