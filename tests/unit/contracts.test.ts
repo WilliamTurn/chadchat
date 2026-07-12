@@ -4,7 +4,9 @@
 // missing-is-never-zero rule, claim thresholds (including the exact failure
 // classes from the audits: the zero-data strength claim and the DSH-62
 // goal-overshoot contradiction), banned system copy, canonical formatting,
-// and the deterministic fixtures resolving to their declared panel states.
+// the owner-law slots (visual + week-strip, logger capabilities), and the
+// deterministic fixtures resolving to their declared panel states through
+// member-local (America/Chicago) day math.
 
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
@@ -23,8 +25,18 @@ import {
   unloggedReading,
 } from "../../lib/contracts/data-state";
 import { findBannedCopy } from "../../lib/contracts/copy";
-import { METRICS, type MetricId } from "../../lib/contracts/metrics";
-import { LOGGABLE_DOMAINS } from "../../lib/contracts/panels";
+import {
+  canClaimForMetric,
+  coverageWindowDays,
+  type MetricDef,
+  METRICS,
+  type MetricId,
+} from "../../lib/contracts/metrics";
+import {
+  LOGGABLE_DOMAINS,
+  PANEL_ROLES,
+  REQUIRED_LOGGER_CAPABILITIES,
+} from "../../lib/contracts/panels";
 import { DOMAINS, ROUTES } from "../../lib/contracts/routes";
 import {
   formatMinutesAsDuration,
@@ -35,8 +47,10 @@ import {
   UNITS,
 } from "../../lib/contracts/units";
 import { ema } from "../../lib/chart/trend";
+import { calendarDayAnchorInTz } from "../../lib/date";
 import { workoutVolumeLb } from "../../lib/workouts/stats";
 import {
+  FIXTURE_TIMEZONE,
   fixtureCoverage,
   fixtureDayAnchorMs,
   PERSONAS,
@@ -84,6 +98,10 @@ test("every metric's unit, domain, and surfaces are registered", () => {
       assert.ok(s in ROUTES, `${id}: unregistered surface ${s}`);
     }
     assert.ok(m.allowedClaims.length > 0, `${id}: no allowed claims`);
+    assert.ok(
+      coverageWindowDays(id as MetricId) > 0,
+      `${id}: no coverage window`
+    );
   }
 });
 
@@ -108,6 +126,33 @@ test("route paths are canonical and unique", () => {
   }
 });
 
+/* -------------------------------------------------- owner-law contract pins */
+
+test("every panel role requires a real visual (owner law s181)", () => {
+  for (const role of Object.values(PANEL_ROLES)) {
+    assert.ok(
+      role.requiredSlots.includes("visual"),
+      `role ${role.role} does not require a visual slot`
+    );
+  }
+  // Trackers carry strip AND chart: separate required slots.
+  assert.ok(PANEL_ROLES["quick-log"].requiredSlots.includes("week-strip"));
+});
+
+test("the logger capability law keeps all six capabilities", () => {
+  assert.deepEqual(
+    [...REQUIRED_LOGGER_CAPABILITIES].sort(),
+    [
+      "delete-entry-confirmed",
+      "edit-entry",
+      "immediate-refresh",
+      "log-now",
+      "log-past-day",
+      "undo-after-quick-add",
+    ]
+  );
+});
+
 /* ------------------------------------------------- missing is never zero */
 
 test("unlogged and zero are structurally different", () => {
@@ -126,6 +171,17 @@ test("unlogged and zero are structurally different", () => {
   );
   assert.equal(zero.status, "logged");
   assert.equal(zero.status === "logged" && zero.value, 0);
+});
+
+test("only logged-event counts opt into rendering zero", () => {
+  const zeroMetrics = (Object.keys(METRICS) as MetricId[]).filter(
+    (id) => (METRICS[id] as MetricDef).missingRendersAs === "zero"
+  );
+  assert.deepEqual(zeroMetrics.sort(), [
+    "nutrition.meals.today",
+    "training.prs",
+    "training.sessions.thisWeek",
+  ]);
 });
 
 test("panel state precedence: locked > loading > error > data", () => {
@@ -203,17 +259,44 @@ test("adherence needs real coverage; 1 of 7 days is not a percentage", () => {
   );
 });
 
-test("causal claims are never allowed on system surfaces", () => {
+test("causal claims: system never; Chad only with evidence attached", () => {
   const rich: Coverage = fixtureCoverage(
     Array.from({ length: 28 }, (_, i) => i),
     28
   );
   assert.equal(canClaim("causal", rich).allowed, false);
+  assert.equal(
+    canClaim("causal", rich, { surface: "coach-interpretation" }).allowed,
+    false
+  );
+  assert.equal(
+    canClaim("causal", rich, {
+      surface: "coach-interpretation",
+      hasEvidence: true,
+    }).allowed,
+    true
+  );
 });
 
 test("trend allowed with 3+ points across a week", () => {
   assert.equal(
     canClaim("trend-direction", fixtureCoverage([0, 4, 8], 30)).allowed,
+    true
+  );
+});
+
+test("a metric's claim allowlist is enforced at any coverage", () => {
+  const rich: Coverage = fixtureCoverage(
+    Array.from({ length: 28 }, (_, i) => i),
+    28
+  );
+  // Calories today never supports an ETA, no matter how much data exists.
+  assert.equal(
+    canClaimForMetric("nutrition.calories.today", "eta", rich).allowed,
+    false
+  );
+  assert.equal(
+    canClaimForMetric("body.weight.trend", "eta", rich).allowed,
     true
   );
 });
@@ -238,26 +321,52 @@ test("gain goals reach in the other direction", () => {
   assert.equal(isGoalReached(160, 175, 172.0), false);
 });
 
-test("standing needs trend coverage before direction language", () => {
-  const standing = goalStanding({
-    start: 205,
-    target: 180,
-    current: 200,
-    ratePerWeek: -0.8,
-    coverage: fixtureCoverage([0], 7),
-  });
-  assert.equal(standing, "insufficient-data");
+test("standing needs RATE coverage before any direction language", () => {
+  // One weigh-in: nothing to say.
+  assert.equal(
+    goalStanding({
+      start: 205,
+      target: 180,
+      current: 200,
+      ratePerWeek: -0.8,
+      coverage: fixtureCoverage([0], 7),
+    }),
+    "insufficient-data"
+  );
+  // Six days in with 3 weigh-ins: clears trend-direction but NOT the rate
+  // policy; the member must never see "moving away" from week-one noise.
+  assert.equal(
+    goalStanding({
+      start: 205,
+      target: 180,
+      current: 204.2,
+      ratePerWeek: 1.1,
+      coverage: fixtureCoverage([0, 3, 6], 7),
+    }),
+    "insufficient-data"
+  );
 });
 
-test("moving away from the target reads off-track", () => {
+test("moving away from the target reads off-track (with rate coverage)", () => {
   const standing = goalStanding({
     start: 205,
     target: 180,
     current: 200,
     ratePerWeek: 0.9,
-    coverage: fixtureCoverage([0, 3, 6, 9, 12], 30),
+    coverage: fixtureCoverage([0, 3, 6, 9, 12, 15], 30),
   });
   assert.equal(standing, "off-track");
+});
+
+test("a negligible rate reads holding, not a direction verdict", () => {
+  const standing = goalStanding({
+    start: 205,
+    target: 180,
+    current: 195,
+    ratePerWeek: 0.1,
+    coverage: fixtureCoverage([0, 3, 6, 9, 12, 15], 30),
+  });
+  assert.equal(standing, "holding");
 });
 
 /* --------------------------------------------------------- banned copy */
@@ -305,6 +414,8 @@ test("canonical formatting matches the approved copy system", () => {
   assert.equal(formatMinutesAsDuration(45), "45m");
   assert.equal(formatMinutesAsDuration(480), "8h");
   assert.equal(formatVsTarget(1840, 2300, "kcal"), "1,840 of 2,300 kcal");
+  // Durations format on BOTH sides of a vs-target readout.
+  assert.equal(formatVsTarget(462, 480, "duration"), "7h 42m of 8h");
 });
 
 test("lb/kg conversion round-trips", () => {
@@ -319,13 +430,31 @@ const SPARSE_POINTS = Object.fromEntries(
   LOGGABLE_DOMAINS.map((d) => [d.domain, d.sparseBelowPoints])
 ) as Record<(typeof LOGGABLE_DOMAINS)[number]["domain"], number>;
 
+/** The member-local calendar-day anchor (ms) an instant belongs to. */
+function localDayMs(d: Date): number {
+  return calendarDayAnchorInTz(d, FIXTURE_TIMEZONE).getTime();
+}
+
+test("fixture day math is member-local, not UTC", () => {
+  // 03:00 UTC on Jul 8 is 10pm on Jul 7 in Chicago: it belongs to Jul 7.
+  assert.equal(
+    localDayMs(new Date("2026-07-08T03:00:00.000Z")),
+    Date.UTC(2026, 6, 7)
+  );
+  // 22:30 UTC on Jul 8 (the fixture NOW, 5:30pm CDT) belongs to Jul 8.
+  assert.equal(
+    localDayMs(new Date("2026-07-08T22:30:00.000Z")),
+    Date.UTC(2026, 6, 8)
+  );
+});
+
 /** Derive the five domain panel states for a persona through the contracts. */
 function derivePanelStates(p: Persona): PersonaExpectations {
   const locked = p.tier === "basic";
   const today = fixtureDayAnchorMs(0);
 
   const mealsToday = p.meals.filter(
-    (m) => m.recordedAt.getTime() >= today
+    (m) => localDayMs(m.recordedAt) === today
   );
   const nutrition = resolvePanelState({
     locked,
@@ -338,11 +467,11 @@ function derivePanelStates(p: Persona): PersonaExpectations {
         1
       )
     ),
-    staleAfterDays: null,
+    staleAfterDays: METRICS["nutrition.calories.today"].staleAfterDays,
     sparseBelow: { points: SPARSE_POINTS.nutrition },
   });
 
-  const waterToday = p.waterDaily.filter((w) => w.t >= today);
+  const waterToday = p.waterDaily.filter((w) => w.t === today);
   const hydration = resolvePanelState({
     locked,
     fetch: "ready",
@@ -354,39 +483,45 @@ function derivePanelStates(p: Persona): PersonaExpectations {
         1
       )
     ),
-    staleAfterDays: null,
+    staleAfterDays: METRICS["hydration.water.today"].staleAfterDays,
     sparseBelow: { points: SPARSE_POINTS.hydration },
   });
 
+  const nightOffsets = p.sleepDaily.map((s) =>
+    Math.round((today - s.t) / DAY_MS)
+  );
   const latestNight = [...p.sleepDaily].sort((a, b) => b.t - a.t)[0];
   const sleep = resolvePanelState({
     locked,
     fetch: "ready",
     reading: latestNight
       ? loggedReading(latestNight.minutes, {
-          coverage: fixtureCoverage([0], 7, p.sleepDaily.length),
+          coverage: fixtureCoverage(nightOffsets, 7, p.sleepDaily.length),
           ageDays: Math.round((today - latestNight.t) / DAY_MS),
         })
       : unloggedReading(),
-    staleAfterDays: 1,
+    staleAfterDays: METRICS["sleep.lastNight.duration"].staleAfterDays,
     sparseBelow: { points: SPARSE_POINTS.sleep },
   });
 
+  const workoutDayOffsets = p.workouts.map((w) =>
+    Math.round((today - localDayMs(new Date(w.performedAt))) / DAY_MS)
+  );
   const training = resolvePanelState({
     locked,
     fetch: "ready",
-    reading: readingFromRows(
-      p.workouts,
-      (rows) => rows.length,
-      fixtureCoverage(
-        p.workouts.map((w) =>
-          Math.round((today - new Date(w.performedAt).getTime()) / DAY_MS)
-        ),
-        28,
-        p.workouts.length
-      )
-    ),
-    staleAfterDays: null,
+    reading:
+      p.workouts.length > 0
+        ? loggedReading(p.workouts.length, {
+            coverage: fixtureCoverage(
+              workoutDayOffsets,
+              28,
+              p.workouts.length
+            ),
+            ageDays: Math.min(...workoutDayOffsets),
+          })
+        : unloggedReading(),
+    staleAfterDays: METRICS["training.session.volume"].staleAfterDays,
     sparseBelow: { points: SPARSE_POINTS.training },
   });
 
@@ -405,7 +540,7 @@ function derivePanelStates(p: Persona): PersonaExpectations {
           ageDays: Math.round((today - latestWeighIn.t) / DAY_MS),
         })
       : unloggedReading(),
-    staleAfterDays: 10,
+    staleAfterDays: METRICS["body.weight.scale"].staleAfterDays,
     sparseBelow: { points: SPARSE_POINTS.body },
   });
 
@@ -483,4 +618,13 @@ test("every loggable-domain metric surface includes /today", () => {
       `${id} missing /today surface`
     );
   }
+});
+
+test("evaluation windows are pinned per metric (cross-surface agreement)", () => {
+  // Two surfaces reading the same metric must use the same window, so a
+  // claim can never be allowed on one page and denied on another.
+  assert.equal(coverageWindowDays("nutrition.calories.today"), 7);
+  assert.equal(coverageWindowDays("body.weight.trend"), 28);
+  assert.equal(coverageWindowDays("training.session.volume"), 28);
+  assert.equal(coverageWindowDays("sleep.week.nightly"), 7);
 });

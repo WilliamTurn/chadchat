@@ -26,6 +26,7 @@ Part of the Phase 1 contract layer (DSH-66). Pro apps feel alive because feedbac
 ## 4. Nothing starts uninvited (owner law)
 
 - No timer, keyboard, autofocus, autoplay, or state change on page or dialog open. Every automatic behavior is a direct consequence of an explicit member action (rest timer starts when a set is checked off).
+- Clarification vs section 2: a one-shot presentation animation of already-loaded values (a ring filling to its value, a number counting up once) is rendering, not an auto-start; it changes no state and demands no attention afterward.
 - On every dialog/sheet open at mobile width: `document.activeElement` is NOT an input. Fixtures and the mobile auditor assert this.
 
 ## 5. Overlay decision tree (one rule, no per-card inventing)
@@ -39,6 +40,8 @@ Part of the Phase 1 contract layer (DSH-66). Pro apps feel alive because feedbac
 | Confirmation of a destructive act | Alert dialog naming the object + consequence |
 | Data entry beyond a few fields, or any core feature | **A dedicated full page or full-screen flow with a back button.** Never a modal (owner law s168) |
 | Meal logging, live workout | Full-screen focused flow |
+
+The tiebreaker (gate ruling, 2026-07-12, encoding the s168 owner law): one-tap quick-adds may use popovers/inline controls; ANY multi-field domain logging (sleep, meal, weigh-in, measurement) is a dedicated full page or full-screen flow with a back button, NOT a dialog or sheet, unless the owner explicitly approves a sheet for that specific logger. "Short form, dialog/sheet" rows above cover non-logging forms (a rename, a goal-date change, a confirmation with one input).
 
 Hard bans: dialog stacked on dialog; popovers floating over adjacent cards (the old sleep logger, DSH-59 class); popovers containing long forms; the same domain logging inline on one card and via popup on its neighbor (consistency is part of feel).
 

@@ -17,10 +17,11 @@
  * contract unit tests verify every `source` module exists on disk and that
  * the named symbol appears in its source text.
  *
- * OWNER APPROVAL: this registry and the data-state model are the two Phase 1
- * artifacts the owner reviews and approves before later phases lock onto
- * them. Definition changes after approval are product decisions, not
- * refactors.
+ * OWNER-APPROVED 2026-07-12 (s185), together with the data-state model.
+ * Later phases lock onto these definitions. Changing a definition from here
+ * on is a product decision recorded in the program tracker's decision log,
+ * never a refactor. (The two rename proposals in routes.ts remain pending
+ * Phase 3 owner decisions; they were NOT part of this approval.)
  *
  * Time grain primer (FEAT-8, already built; do not rebuild):
  *   - "user-day"  = the member's own calendar day via lib/date.ts *InTz
@@ -33,7 +34,9 @@
  *   - "week"      = the member's Sunday-start calendar week (lib/today/week.ts).
  */
 
-import type { ClaimKind } from "./claims";
+import { canClaim, type ClaimKind } from "./claims";
+import type { ClaimVerdict } from "./claims";
+import type { Coverage } from "./data-state";
 import type { DomainId, RouteId } from "./routes";
 import type { UnitId } from "./units";
 
@@ -50,15 +53,58 @@ export type TargetDef =
       resolution?: string;
     }
   | { kind: "user-setting"; source: string; default?: string }
-  | { kind: "goal"; source: string };
+  | { kind: "goal"; source: string }
+  | {
+      /** Derived from a structured plan (FIX-28, P4); until the plan schema
+       *  ships, no target renders for the metric. */
+      kind: "plan";
+      source: string;
+    };
+
+/**
+ * Default window (member-local days) that coverage, sparse verdicts, and
+ * claim checks are evaluated over, per grain. EVERY surface evaluates a
+ * given metric over the SAME window (a per-metric `coverageWindowDays`
+ * overrides), so two pages can never disagree about whether the same claim
+ * is allowed. Day/night/week grains evaluate over the current week; slow
+ * outcome metrics (weigh-ins, sessions) evaluate over 28 days.
+ */
+export const COVERAGE_WINDOW_BY_GRAIN: Record<TimeGrain, number> = {
+  "user-day": 7,
+  night: 7,
+  week: 7,
+  instant: 28,
+  session: 28,
+};
+
+/** The evaluation window for a metric (override, else its grain default). */
+export function coverageWindowDays(id: MetricId): number {
+  // Widen: the as-const union only carries optional fields where declared.
+  const def: MetricDef = METRICS[id];
+  return def.coverageWindowDays ?? COVERAGE_WINDOW_BY_GRAIN[def.grain];
+}
 
 export type MetricDef = {
   domain: DomainId;
   /** Member-facing label (canonical; cards use this, not a rephrasing). */
   label: string;
-  /** Display unit. Storage unit noted when different. */
+  /**
+   * DEFAULT display unit, resolved per member where a preference exists:
+   * weight metrics render in User.weightUnit (kg members see kg via
+   * lib/contracts/units.ts conversions); the lb declared here is the
+   * default, not a constraint.
+   */
   unit: UnitId;
   storageUnit?: UnitId;
+  /**
+   * How the absence of rows renders. Default "not-logged" (missing is never
+   * zero). "zero" is the carve-out for counts of logged events (sessions,
+   * meals-logged count, PRs), where zero is a truthful observed value; see
+   * lib/contracts/data-state.ts.
+   */
+  missingRendersAs?: "not-logged" | "zero";
+  /** Override of COVERAGE_WINDOW_BY_GRAIN for this metric (member-local days). */
+  coverageWindowDays?: number;
   grain: TimeGrain;
   /** The one module + symbol that computes this value. */
   source: { module: string; symbol: string };
@@ -167,6 +213,7 @@ export const METRICS = {
     unit: "count",
     grain: "user-day",
     source: { module: "lib/db/queries.ts", symbol: "getMealsSince" },
+    missingRendersAs: "zero",
     target: { kind: "none" },
     allowedClaims: ["current-value"],
     estimated: false,
@@ -308,6 +355,8 @@ export const METRICS = {
     unit: "lb",
     grain: "week",
     source: { module: "lib/chart/trend.ts", symbol: "ratePerWeek" },
+    derivation:
+      "The quantity is lb PER WEEK; display appends the period outside the unit system ('-0.8 lb / week'). The shared chart formatter owns this form in Phase 2.",
     target: { kind: "none" },
     allowedClaims: ["rate"],
     estimated: true,
@@ -358,7 +407,7 @@ export const METRICS = {
     grain: "instant",
     source: { module: "lib/goals/progress.ts", symbol: "computeGoalProgress" },
     derivation:
-      "Anchored on the goal's stored startValue (DSH-26); `current` is trend weight for weight goals (LC-4). Reached/overshoot verdicts come ONLY from lib/contracts/claims.ts goalStanding (DSH-62), never from toGo == 0. The live GoalProgress.reached field (pct >= 100 after rounding/clamping) is DEPRECATED and removed in the DSH-62 implementation: it can read reached while goalStanding says not (e.g. 180.06 vs a 180 target rounds pct to 100). Display rule: show 100% only when goalStanding === reached; otherwise cap the displayed pct at 99.",
+      "Anchored on the goal's stored startValue (DSH-26); `current` is trend weight for weight goals (LC-4). Reached/overshoot verdicts come ONLY from lib/contracts/claims.ts goalStanding (DSH-62), never from toGo == 0. The live GoalProgress.reached field (pct >= 100 after rounding/clamping) is DEPRECATED and removed in the DSH-62 implementation: it can read reached while goalStanding says not (e.g. 180.06 vs a 180 target rounds pct to 100). Display rule: show 100% only when goalStanding === reached; otherwise cap the displayed pct at 99. Tier-locked outcome rule: when the goal's outcome metric is above the member's tier (a Basic member's weight goal reads Pro-only trend weight), the goal card shows the goal DEFINITION plus a locked-outcome note naming the capability and tier; state is the locked treatment for the outcome row, never fake progress, never an error tone.",
     target: { kind: "goal", source: "Goal.targetValue" },
     allowedClaims: ["current-value"],
     estimated: false,
@@ -376,11 +425,11 @@ export const METRICS = {
     grain: "session",
     source: { module: "lib/workouts/stats.ts", symbol: "workoutVolumeLb" },
     derivation:
-      "Sum of weight x reps over completed working sets (warmups excluded); mixed units normalized to lb.",
+      "Sum of weight x reps over completed working sets (warmups excluded); mixed units normalized to lb. Past staleness the panel shows the session DATED ('Last workout Jun 28') plus a fresh-session prompt, never a months-old number framed as current.",
     target: { kind: "none" },
     allowedClaims: ["current-value", "comparison"],
     estimated: false,
-    staleAfterDays: null,
+    staleAfterDays: 14,
     access: "pro",
     precision: 0,
     surfaces: ["/today", "/workouts"],
@@ -431,6 +480,7 @@ export const METRICS = {
       module: "lib/workouts/stats.ts",
       symbol: "computePersonalRecords",
     },
+    missingRendersAs: "zero",
     derivation:
       "One record per exercise across history; PR counts per workout replay history oldest-first (first-ever session is a baseline, not a record).",
     target: { kind: "none" },
@@ -447,7 +497,12 @@ export const METRICS = {
     unit: "count",
     grain: "week",
     source: { module: "lib/today/week.ts", symbol: "buildWorkoutWeek" },
-    target: { kind: "none" },
+    missingRendersAs: "zero",
+    target: {
+      kind: "plan",
+      source:
+        "Structured training plan sessions/week (FIX-28, P4). Until the plan schema ships, no target renders ('2 sessions this week', not '2 of ?').",
+    },
     allowedClaims: ["current-value", "comparison"],
     estimated: false,
     staleAfterDays: null,
@@ -498,4 +553,25 @@ export function metricsForDomain(domain: DomainId): MetricId[] {
   return (Object.keys(METRICS) as MetricId[]).filter(
     (id) => METRICS[id].domain === domain
   );
+}
+
+/**
+ * The executable form of the per-metric claim allowlist: a claim kind absent
+ * from a metric's `allowedClaims` is denied at ANY coverage, then the
+ * coverage thresholds apply. Surfaces call THIS, not bare canClaim, when the
+ * claim is about a registered metric.
+ */
+export function canClaimForMetric(
+  id: MetricId,
+  kind: ClaimKind,
+  coverage: Coverage,
+  opts?: Parameters<typeof canClaim>[2]
+): ClaimVerdict {
+  if (!(METRICS[id].allowedClaims as readonly ClaimKind[]).includes(kind)) {
+    return {
+      allowed: false,
+      reason: `${id} never allows "${kind}" claims (metric registry).`,
+    };
+  }
+  return canClaim(kind, coverage, opts);
 }

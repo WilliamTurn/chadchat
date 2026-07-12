@@ -33,7 +33,7 @@ The same fact may echo at a shallower depth ONLY if the shallower job differs (T
 ## 4. Density ceilings
 
 - A dashboard section (SectionBand) holds 2 to 4 panels. Five or more means a panel belongs deeper or two should merge.
-- A panel body carries at most ~4 data points (headline + 3 supporting). More belongs to its detail page.
+- A panel body carries the headline plus at most ~4 supporting values. The visual (ring, chart, week strip) and its cue captions count as the visual, not as data points; the target nutrition panel (calories headline + 3 macros + meal count + weekly cue) is compliant. More NUMBERS than that belongs to the detail page.
 - History on domain pages defaults to the **7 to 14 most recent rows** with a named "Complete history" path; complete history is paginated/filtered (P7). Record walls are a violation.
 - Row controls appear on hover/focus/selection or in an overflow, never 50 permanent Delete buttons.
 

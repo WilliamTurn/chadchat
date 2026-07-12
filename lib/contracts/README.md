@@ -29,7 +29,7 @@ Deterministic fixtures live at `tests/fixtures/dashboard-states.ts` (six member 
 
 ## Change protocol
 
-- `metrics.ts` definitions and `data-state.ts` semantics are OWNER-APPROVED artifacts. After approval, changing a definition is a product decision recorded in the program tracker's decision log, not a refactor.
+- `metrics.ts` definitions and `data-state.ts` semantics are OWNER-APPROVED (2026-07-12, s185). Changing a definition is a product decision recorded in the program tracker's decision log, not a refactor.
 - Claim thresholds (`claims.ts`) are owner-tunable policy; change the constant, cite the reason in the PR.
 - Rename proposals in `routes.ts` stay proposals until the owner approves them (P3).
 - Standards docs evolve by addition; weakening a rubric line needs the same owner visibility as a gate waiver.
@@ -39,5 +39,5 @@ Deterministic fixtures live at `tests/fixtures/dashboard-states.ts` (six member 
 - **P2 (shared UI)**: panels.ts roles onto ModuleCard; units/data-state/claims wired into the shared chart system; visual/density/motion/first-run/reward standards drive the fixture stories; performance baseline recorded.
 - **P3 (navigation)**: routes.ts becomes the nav source; rename decisions go to the owner.
 - **P4 (data)**: effective-dated targets and the refresh graph implement the target/refresh rules named in metrics.ts and motion-interaction.md.
-- **P5/P6 (Progress/Today)**: compose registered metrics through role panels; every fixture state screenshotted against the standards.
+- **P5/P6 (Progress/Today)**: compose registered metrics through role panels; every fixture state screenshotted against the standards. Known registry gaps to BATCH-REGISTER (with owner approval) at the start of P5, not mid-build: weekly nutrition adherence, sleep/hydration consistency summaries, training frequency as a trend, plan-slice numbers (next meal's calories), milestone-timeline values.
 - **P7 (reports/insight)**: claims.ts evidence envelope becomes structural; copy.ts runs as a lint over report/system strings.

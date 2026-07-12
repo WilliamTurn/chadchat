@@ -49,7 +49,8 @@ export type PanelRoleContract = {
   requiredSlots: readonly (
     | "header" // IconChip + canonical title
     | "headline" // the one number/statement the panel exists for
-    | "visual" // chart, ring, bars, or week strip (see reward-visual.md)
+    | "visual" // chart, ring, or bars (see reward-visual.md)
+    | "week-strip" // the habit dot strip; NEVER removed (owner law s181)
     | "target-context" // target/goal framing next to the headline
     | "coverage" // data coverage when interpretation depends on it
     | "detail-link" // named destination in the header slot
@@ -86,11 +87,14 @@ export const PANEL_ROLES: Record<PanelRole, PanelRoleContract> = {
   "quick-log": {
     role: "quick-log",
     purpose: "Show today's standing and make logging it one tap away.",
+    // "visual" AND "week-strip" are separate required slots: trackers carry
+    // strip AND chart (owner law s181); a chart alone must not typecheck.
     requiredSlots: [
       "header",
       "headline",
       "target-context",
       "visual",
+      "week-strip",
       "detail-link",
       "footer",
     ],

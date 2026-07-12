@@ -4,7 +4,7 @@ Part of the Phase 1 contract layer (DSH-66). The empty product is where cheap ap
 
 ## 1. Definitions (pinned to the live logic)
 
-- **First-run member**: no profile, no weigh-ins, no meals (the Today page's `isReturning` test). They landed after /welcome and have logged nothing.
+- **First-run member**: no profile, no weigh-ins, and no meals logged today (the Today page's live `isReturning` test). They landed after /welcome and have logged nothing.
 - **Empty panel**: nothing logged in the panel's SCOPE (data-state `empty`). Scope follows the metric's grain: a day-grain panel is empty when today has no logs even if history exists; a history-grain panel is empty only when the domain has never been logged. The two cases share the state but not the copy: first-ever empties use the "Log your first..." variant; nothing-today empties on a member with history use "No meals logged yet today", never "first".
 - **Sparse panel**: some data, below claim thresholds (data-state `sparse`).
 - **Locked panel**: entitlement gate (data-state `locked`). Never conflated with empty or error (FIX-11).

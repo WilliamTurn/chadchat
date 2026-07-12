@@ -207,6 +207,9 @@ export function formatVsTarget(
   target: number,
   unit: UnitId
 ): string {
+  if (unit === "duration") {
+    return `${formatMinutesAsDuration(value)} of ${formatMinutesAsDuration(target)}`;
+  }
   const def = UNITS[unit];
   const v = value.toLocaleString("en-US", {
     maximumFractionDigits: def.precision,
@@ -220,6 +223,9 @@ export function formatVsTargetCompact(
   target: number,
   unit: UnitId
 ): string {
+  if (unit === "duration") {
+    return `${formatMinutesAsDuration(value)} / ${formatMinutesAsDuration(target)}`;
+  }
   const def = UNITS[unit];
   const v = value.toLocaleString("en-US", {
     maximumFractionDigits: def.precision,

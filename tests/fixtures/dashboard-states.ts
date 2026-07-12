@@ -98,7 +98,12 @@ export type PersonaExpectations = {
 export type Persona = {
   id: string;
   description: string;
-  tier: "basic" | "pro";
+  /**
+   * "basic" locks the Pro panels; "pro" sees everything but the Elite-gated
+   * Weekly Report content (/reports renders the Elite teaser to Pro members;
+   * pinned in lib/contracts/routes.ts, designed in P7); "elite" sees all.
+   */
+  tier: "basic" | "pro" | "elite";
   /** True only for the never-logged-anything, no-profile member. */
   firstRun: boolean;
   meals: FixtureMeal[];

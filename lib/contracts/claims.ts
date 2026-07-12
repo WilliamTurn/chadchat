@@ -93,7 +93,7 @@ export const CLAIM_POLICIES: Record<
     // "volume up vs last week"; the caller checks BOTH periods against this.
     minLoggedDays: 3,
     rationale:
-      "Period-over-period comparisons need both periods reasonably covered (a 3x/week training schedule qualifies); the caller must check BOTH periods against this policy.",
+      "Period-over-period comparisons need both periods reasonably covered (a 3x/week training schedule qualifies); the caller must check BOTH periods against this policy. For session-grain metrics, loggedDays counts sessions; once structured plans exist (FIX-28, P4) a period that fully matches the member's prescribed schedule qualifies even below 3 (a 2x/week plan with both sessions logged is complete coverage).",
   },
   "strength-change": {
     minPoints: 3,
@@ -116,19 +116,40 @@ export type ClaimVerdict =
   | { allowed: false; reason: string };
 
 /**
- * May this claim be made from this coverage? Pure; every surface calls this
- * instead of eyeballing. `causal` is a hard no for system surfaces: system UI
- * and report FACT sections never assert causation. Chad may interpret in his
- * own voice, but interpretation must be framed as interpretation and carry
- * evidence (see ClaimEvidence below), which is a data-accuracy rule, not a
- * tone rule.
+ * Where a claim is being made. "system" = UI microcopy, chart captions, and
+ * report FACT sections. "coach-interpretation" = Chad's own coaching read,
+ * framed as interpretation, in chat or the report's coaching sections.
  */
-export function canClaim(kind: ClaimKind, coverage: Coverage): ClaimVerdict {
+export type ClaimSurface = "system" | "coach-interpretation";
+
+/**
+ * May this claim be made from this coverage? Pure; every surface calls this
+ * instead of eyeballing.
+ *
+ * `causal` evaluation (the executable copy-boundary rule, so Phase 7 never
+ * has to choose between violating this contract and silently editing Chad's
+ * persona): on "system" surfaces causal claims are a hard no at any
+ * coverage. On "coach-interpretation" surfaces Chad MAY assert causation in
+ * his own voice IFF a ClaimEvidence envelope is attached (`hasEvidence`) and
+ * the underlying facts each cleared their own policies; that is a
+ * data-accuracy rule, not a tone rule, and his attitude is untouched.
+ */
+export function canClaim(
+  kind: ClaimKind,
+  coverage: Coverage,
+  opts: { surface?: ClaimSurface; hasEvidence?: boolean } = {}
+): ClaimVerdict {
+  const surface = opts.surface ?? "system";
   if (kind === "causal") {
+    if (surface === "coach-interpretation" && opts.hasEvidence) {
+      return { allowed: true };
+    }
     return {
       allowed: false,
       reason:
-        "System surfaces never assert causation; describe what changed and let coverage speak.",
+        surface === "coach-interpretation"
+          ? "Chad may assert causation only with a ClaimEvidence envelope attached (data accuracy, not tone)."
+          : "System surfaces never assert causation; describe what changed and let coverage speak.",
     };
   }
   const p = CLAIM_POLICIES[kind];
@@ -164,7 +185,7 @@ export function canClaim(kind: ClaimKind, coverage: Coverage): ClaimVerdict {
  * ------------------------------------------------------------------------ */
 
 export type GoalStanding =
-  | "insufficient-data" // below trend threshold; no verdict language at all
+  | "insufficient-data" // below the rate threshold; no DIRECTION language
   | "on-track" // moving toward the target
   | "off-track" // moving away from the target
   | "holding" // rate is negligible in either direction
@@ -193,6 +214,18 @@ export function isGoalReached(
  * The one goal-standing derivation. `ratePerWeek` is signed in the metric's
  * own unit (from lib/chart/trend.ts ratePerWeek); `holdingBelow` is the
  * absolute weekly rate under which we call it holding rather than moving.
+ *
+ * Direction verdicts (on-track / off-track / holding) gate on the RATE
+ * policy (5 points across 14 days), not the looser trend-direction policy:
+ * they are statements about the rate's sign, and this file's own rate
+ * rationale says a rate quoted from under two weeks of data is noise. A
+ * member 6 days in with 3 weigh-ins gets "insufficient-data" (the surface
+ * states coverage and progress facts), never a scary "moving away" banner
+ * derived from water weight.
+ *
+ * `holdingBelow` defaults to 0.25 (in the metric's unit per week): daily EMA
+ * wobble on body weight is larger than 0.1 lb/week, and a maintaining member
+ * must not see on-track/off-track flap day to day.
  */
 export function goalStanding(args: {
   start: number;
@@ -206,14 +239,14 @@ export function goalStanding(args: {
   const { start, target, current, ratePerWeek, coverage } = args;
   // Reached deliberately precedes the coverage gate: being at/past the target
   // is a current-value fact (one honest data point suffices), not a trend
-  // claim. Direction language below IS a trend claim, so it stays gated.
+  // claim. Direction language below IS a rate claim, so it stays gated.
   if (isGoalReached(start, target, current)) {
     return "reached";
   }
-  if (!canClaim("trend-direction", coverage).allowed) {
+  if (!canClaim("rate", coverage).allowed) {
     return "insufficient-data";
   }
-  const holdingBelow = args.holdingBelow ?? 0.1;
+  const holdingBelow = args.holdingBelow ?? 0.25;
   if (Math.abs(ratePerWeek) < holdingBelow) {
     return "holding";
   }

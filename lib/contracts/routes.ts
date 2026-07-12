@@ -489,8 +489,8 @@ export const TERMS: readonly Term[] = [
   {
     term: "Not logged",
     meaning:
-      "The member-facing word for missing data. Missing is never rendered as 0.",
-    never: ["0 (for missing data)", "skipped (as a system judgment)"],
+      "The member-facing word for missing data. Missing is never rendered as 0. Carve-out: counts of logged events (sessions, meals-logged count, PRs) render a truthful 0; those metrics declare missingRendersAs: 'zero' in the registry.",
+    never: ["0 (for unobservable missing data)", "skipped (as a system judgment)"],
   },
   {
     term: "Log a past day",

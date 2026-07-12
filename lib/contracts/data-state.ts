@@ -10,6 +10,14 @@
  * enforces the difference: an unlogged reading structurally has no value field
  * to render, so a card cannot accidentally print 0.
  *
+ * The one carve-out (owner gate review, 2026-07-12): COUNTS OF LOGGED EVENTS.
+ * For behaviors that only exist when logged (workouts performed, meals-logged
+ * count, PRs), zero is a truthful observed value: "0 of 4 sessions this week"
+ * is a fact, and every benchmark app renders it as 0, never "Not logged".
+ * A metric opts into this via `missingRendersAs: "zero"` in the metric
+ * registry; everything else (meals eaten, sleep, water, weight: absence of a
+ * log is NOT absence of the behavior) keeps the "Not logged" law.
+ *
  * Three layers, deliberately separate because they vary independently:
  *
  *   1. Entitlement  - may this member see this data at all? (locked)
@@ -29,6 +37,9 @@
  * Locked wins even over loading because a locked member's data is never
  * fetched; loading wins over error because an in-flight retry supersedes the
  * failure it is retrying.
+ *
+ * OWNER-APPROVED 2026-07-12 (s185), together with the metric registry.
+ * Semantic changes from here on are product decisions, not refactors.
  */
 
 /** How much of the requested window actually has logged data. */
@@ -123,6 +134,12 @@ export type PanelStateInput = {
 /**
  * THE state resolver. Pure, total, and order-fixed so every surface agrees on
  * precedence: locked > loading > error > data states.
+ *
+ * Composite panels (a cross-domain Progress card, a multi-outcome goal card)
+ * resolve their PANEL state from one declared primary reading (the domain's
+ * `primaryMetric` in lib/contracts/panels.ts, or the panel's declared
+ * headline metric); each secondary outcome row carries and renders its own
+ * reading state. A panel never averages or invents a blended state.
  */
 export function resolvePanelState(input: PanelStateInput): PanelState {
   if (input.locked) {
@@ -176,6 +193,8 @@ export function readingFromRows<Row, T>(
  * Coverage phrasing, the one member-facing form: "4 of 7 days logged".
  * Surfaces that interpret partial data must show this next to the claim
  * (lib/contracts/claims.ts decides WHETHER the claim is allowed at all).
+ * Day-grain current-value readouts ("1,840 of 2,300 kcal" today) do NOT
+ * render a coverage line; coverage accompanies interpretation, not facts.
  */
 export function formatCoverage(c: Coverage): string {
   return `${c.loggedDays} of ${c.windowDays} days logged`;

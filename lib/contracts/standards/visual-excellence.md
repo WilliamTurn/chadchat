@@ -16,8 +16,8 @@ The pro pattern (Claude.ai, Linear, Stripe, Hevy web): a full-width app shell (n
 Checkable rules:
 
 - [ ] The app shell (sidebar/header) spans the full viewport.
-- [ ] Dashboard content region max-width is **1280 to 1536px**, horizontally centered beyond that, with **24 to 32px gutters** at desktop, 16px at phone. The owner-approved live reference is the Today page's 1500px frame (LAY-1); the band as a formal law is proposed amendment 1 in the design-rationale doc and stays a recommendation until the owner approves it. What is NOT pending: neither extreme ships (a narrow centered strip violates the s177 law; pixel-edge sprawl violates this standard).
-- [ ] Reading surfaces (the weekly report body) bound the TEXT column to **680 to 800px**, with summary cards composed above it at full content width. The page is still a full page; only the prose column is bounded. No helper right-rails (banned, s178).
+- [ ] Dashboard content region max-width is **1280 to 1536px**, horizontally centered beyond that, with **24 to 32px gutters** at desktop, 16px at phone. OWNER-APPROVED LAW (2026-07-12, amendment 1 of the design-rationale doc, formalizing the s177/s184 full-width rulings): neither extreme ships; a narrow centered strip and pixel-edge sprawl are both violations. The live Today page's 1500px frame is the reference implementation.
+- [ ] Reading surfaces (the weekly report body) bound the TEXT column to **680 to 800px**, with summary cards composed above it at full content width; part of the same approved amendment. The page is still a full page; only the prose column is bounded. No helper right-rails (banned, s178).
 - [ ] Desktop dashboards compose **multi-column** (the xl 3-column grid, side-by-sides, 2/3 + 1/3 splits). A single-column stack at >= 1280px is a violation.
 - [ ] At no width does content touch the viewport edge (min 16px padding).
 - [ ] No dead bands: after removing or collapsing an element, its former container collapses too.
