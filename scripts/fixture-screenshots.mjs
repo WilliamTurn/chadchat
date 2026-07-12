@@ -33,12 +33,36 @@ const PAGES = {
   "roles-lapsed": "/dev/fixtures/roles?persona=lapsed",
   "roles-overshoot": "/dev/fixtures/roles?persona=overshoot",
   "roles-locked": "/dev/fixtures/roles?persona=locked-basic",
+  // P2-B: panel composition (role spans + collapse) per persona.
+  "panels-consistent": "/dev/fixtures/panels?persona=consistent",
+  "panels-first-run": "/dev/fixtures/panels?persona=first-run",
+  "panels-sparse": "/dev/fixtures/panels?persona=sparse",
+  "panels-lapsed": "/dev/fixtures/panels?persona=lapsed",
+  "panels-overshoot": "/dev/fixtures/panels?persona=overshoot",
+  "panels-locked": "/dev/fixtures/panels?persona=locked-basic",
+  // P2-D: overlay platform, closed and deterministically-open states.
+  overlays: "/dev/fixtures/overlays",
+  "overlays-quicklog": "/dev/fixtures/overlays?open=quicklog",
+  "overlays-edit": "/dev/fixtures/overlays?open=edit",
+  "overlays-confirm": "/dev/fixtures/overlays?open=confirm",
+  "overlays-sheet": "/dev/fixtures/overlays?open=sheet",
+  // P2-E: form and feedback primitives (FIX-38).
+  forms: "/dev/fixtures/forms",
+  // P2-C: chart grammar states + chart types per persona (FIX-18).
+  "charts-consistent": "/dev/fixtures/charts?persona=consistent",
+  "charts-first-run": "/dev/fixtures/charts?persona=first-run",
+  "charts-sparse": "/dev/fixtures/charts?persona=sparse",
+  "charts-lapsed": "/dev/fixtures/charts?persona=lapsed",
+  "charts-overshoot": "/dev/fixtures/charts?persona=overshoot",
+  "charts-locked": "/dev/fixtures/charts?persona=locked-basic",
 };
 
 const WIDTHS = [1440, 1280, 1024, 768, 390, 360, 320];
 const THEMES = ["dark", "light"];
 
-/** Kill animation/transition nondeterminism before every capture. */
+/** Kill animation/transition nondeterminism before every capture. The
+ *  Next.js dev-indicator portal is hidden too: its issue badge occludes
+ *  panel pixels and is dev-only chrome, not product UI. */
 const FREEZE_CSS = `
   *, *::before, *::after {
     animation-duration: 0s !important;
@@ -47,6 +71,7 @@ const FREEZE_CSS = `
     transition-delay: 0s !important;
     caret-color: transparent !important;
   }
+  nextjs-portal { display: none !important; }
 `;
 
 async function main() {

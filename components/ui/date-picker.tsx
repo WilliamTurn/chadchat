@@ -15,6 +15,11 @@ import { cn } from "@/lib/utils";
 
 const ISO = "yyyy-MM-dd";
 
+// Stable reference date for date-fns parse: every field it supplies is
+// overridden by the full ISO string, and a constant keeps `new Date()` out
+// of client render (Next.js flags it without a Suspense boundary).
+const PARSE_REF = new Date(0);
+
 /**
  * Branded date field (DSH-10) — a Button trigger + Popover + shadcn Calendar,
  * replacing the off-brand native `<input type="date">`. Keeps the exact same
@@ -39,9 +44,9 @@ export function DatePicker({
   placeholder?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const selected = value ? parse(value, ISO, new Date()) : undefined;
-  const maxDate = max ? parse(max, ISO, new Date()) : undefined;
-  const minDate = min ? parse(min, ISO, new Date()) : undefined;
+  const selected = value ? parse(value, ISO, PARSE_REF) : undefined;
+  const maxDate = max ? parse(max, ISO, PARSE_REF) : undefined;
+  const minDate = min ? parse(min, ISO, PARSE_REF) : undefined;
 
   return (
     <Popover onOpenChange={setOpen} open={open}>

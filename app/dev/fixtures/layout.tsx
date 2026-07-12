@@ -50,6 +50,30 @@ export default function FixturesLayout({ children }: { children: ReactNode }) {
             >
               Personas
             </Link>
+            <Link
+              className="shrink-0 text-muted-foreground text-sm hover:text-foreground"
+              href="/dev/fixtures/panels"
+            >
+              Panel composition
+            </Link>
+            <Link
+              className="shrink-0 text-muted-foreground text-sm hover:text-foreground"
+              href="/dev/fixtures/charts"
+            >
+              Charts
+            </Link>
+            <Link
+              className="shrink-0 text-muted-foreground text-sm hover:text-foreground"
+              href="/dev/fixtures/overlays"
+            >
+              Overlays
+            </Link>
+            <Link
+              className="shrink-0 text-muted-foreground text-sm hover:text-foreground"
+              href="/dev/fixtures/forms"
+            >
+              Forms
+            </Link>
           </nav>
           <FixtureChrome />
         </div>
