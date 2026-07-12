@@ -13,6 +13,9 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  /* P2-D (FIX-17): the mobile bottom-sheet top radius mandated by the
+     overlay platform spec (briefing, Session P2-D packet). */
+  --radius-sheet: 20px;
 
   /* Brand fonts — matched to the Chad landing page. */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
@@ -492,6 +495,17 @@ textarea:focus-visible {
   .px-gutter {
     padding-inline: 32px;
   }
+}
+
+/* P2-D (FIX-17) overlay utilities: safe-area bottom padding for sheet
+   bodies/footers and the bottom-sheet height ceiling, tokenized so overlay
+   components stay free of arbitrary values (FIX-37). */
+@utility pb-safe {
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}
+
+@utility max-h-overlay {
+  max-height: 85dvh;
 }
 
 @utility text-balance {
