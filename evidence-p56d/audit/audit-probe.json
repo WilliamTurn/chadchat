@@ -1,0 +1,123 @@
+{
+  "data": {
+    "headerText": "CHADDashboardC",
+    "cells": [
+      {
+        "aria": "Open Calorie Tracker",
+        "href": "/nutrition",
+        "text": "CaloriesNo meals yet. Log a meal to see today's total."
+      },
+      {
+        "aria": "Open Hydration",
+        "href": "/hydration",
+        "text": "WaterNot logged yet. One tap on the water panel adds a glass."
+      },
+      {
+        "aria": "Open Sleep",
+        "href": "/sleep",
+        "text": "SleepLast night isn't logged. Log it on the sleep panel below."
+      },
+      {
+        "aria": "Open Workouts",
+        "href": "/workouts",
+        "text": "Training0sessions this week"
+      }
+    ],
+    "stripCols": "275px 275px 275px 275px",
+    "upnextBlock": "Up nextSleep trends →Log last night's sleepLast night's sleep isn't logged yet.Ask ChadLog last night",
+    "consBlock": "ConsistencyProgress →0 of 7days logged this week0-day streakNo streak yet. Log anything today to start one.SuMoTuWeThFrSa",
+    "dots": [
+      "Sun, Jul 12: Nothing logged",
+      "Mon, Jul 13: Nothing logged",
+      "Tue, Jul 14: Upcoming",
+      "Wed, Jul 15: Upcoming",
+      "Thu, Jul 16: Upcoming",
+      "Fri, Jul 17: Upcoming",
+      "Sat, Jul 18: Upcoming"
+    ]
+  },
+  "focusStatusCell": {
+    "active": true,
+    "outline": "none 0px",
+    "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0"
+  },
+  "upnextHelpKeyboard": {
+    "opened": true
+  },
+  "contrastLight": [
+    {
+      "label": "cell-headline-0",
+      "ratio": 13.79,
+      "size": "13px",
+      "text": ""
+    },
+    {
+      "label": "cell-headline-1",
+      "ratio": 13.79,
+      "size": "13px",
+      "text": ""
+    },
+    {
+      "label": "cell-headline-2",
+      "ratio": 13.79,
+      "size": "13px",
+      "text": ""
+    },
+    {
+      "label": "cell-headline-3",
+      "missing": true
+    }
+  ],
+  "siblings": {
+    "nutrition": {
+      "overflow": false,
+      "scrollW": 390,
+      "clientW": 390,
+      "hasHamburger": false,
+      "hasAccountMenu": true,
+      "react310": false
+    },
+    "hydration": {
+      "overflow": false,
+      "scrollW": 390,
+      "clientW": 390,
+      "hasHamburger": false,
+      "hasAccountMenu": true,
+      "react310": false
+    },
+    "sleep": {
+      "overflow": false,
+      "scrollW": 390,
+      "clientW": 390,
+      "hasHamburger": false,
+      "hasAccountMenu": true,
+      "react310": false
+    },
+    "goals": {
+      "overflow": false,
+      "scrollW": 390,
+      "clientW": 390,
+      "hasHamburger": false,
+      "hasAccountMenu": true,
+      "react310": false
+    },
+    "account": {
+      "overflow": false,
+      "scrollW": 390,
+      "clientW": 390,
+      "hasHamburger": false,
+      "hasAccountMenu": true,
+      "react310": false
+    }
+  },
+  "chat-390": {
+    "overflow": false,
+    "hasComposer": true,
+    "react310": false
+  },
+  "chat-1440": {
+    "overflow": false,
+    "hasComposer": true,
+    "react310": false
+  }
+}

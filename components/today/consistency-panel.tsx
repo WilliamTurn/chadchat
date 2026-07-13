@@ -160,10 +160,9 @@ export function ConsistencyPanel({
             <span className="font-display font-semibold text-sm">
               <CountUp value={`${streak}-day streak`} />
             </span>
-            <span className="hidden min-w-0 truncate text-meta text-muted-foreground @[320px]:inline">
-              {streakMeaning}
-            </span>
           </div>
+          {/* Full-width fact line: never truncated mid-sentence (audit P3-2). */}
+          <p className="text-meta text-muted-foreground">{streakMeaning}</p>
 
           {/* The aligned week: labels, the any-domain strip, domain rows. */}
           <TooltipProvider>
@@ -213,7 +212,7 @@ export function ConsistencyPanel({
                       <TooltipTrigger asChild>
                         <div
                           aria-label={`${d.dateLabel}: ${value}`}
-                          className="flex cursor-default items-center justify-center py-0.5"
+                          className="flex cursor-default items-center justify-center rounded py-0.5 outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           tabIndex={0}
                         >
                           <span
@@ -258,7 +257,7 @@ export function ConsistencyPanel({
                             ? `logged ${loggedLabels.join(", ")}`
                             : "nothing logged this week"
                         }`}
-                        className="col-span-8 grid cursor-default grid-cols-subgrid items-center"
+                        className="col-span-8 grid cursor-default grid-cols-subgrid items-center rounded outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         tabIndex={0}
                       >
                         <Icon

@@ -1,4 +1,4 @@
-import { Play } from "lucide-react";
+import { Moon, Play } from "lucide-react";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { KpiHelp } from "@/components/dashboard/kpi";
 import { PlanPanel } from "@/components/panels/roles";
@@ -110,7 +110,21 @@ export function UpNextPanel({
         )}
       </div>
     ) : verdict.kind === "sleep" && visual.sleepBars ? (
-      <WeekBars barClassName="bg-chart-4" days={visual.sleepBars} />
+      visual.sleepBars.some((d) => d.fraction != null) ? (
+        <WeekBars barClassName="bg-chart-4" days={visual.sleepBars} />
+      ) : (
+        // Zero nights logged: a purposeful "the gap you're repairing" cue,
+        // not a row of blank placeholder boxes (pre-delivery audit P2-1).
+        <div className="flex items-center gap-3 self-start rounded-xl border border-border border-dashed bg-background/40 px-3 py-2">
+          <Moon aria-hidden className="size-4 text-muted-foreground" />
+          <span className="text-body-sm text-muted-foreground">
+            <span className="font-medium text-foreground">
+              Last night: not logged.
+            </span>{" "}
+            Your first log starts the week's picture.
+          </span>
+        </div>
+      )
     ) : verdict.kind === "meal-plan" && visual.mealChips?.length ? (
       <div className="flex flex-wrap gap-2">
         {visual.mealChips.map((c) => (
@@ -133,14 +147,15 @@ export function UpNextPanel({
         points={visual.weightSpark}
       />
     ) : (
-      // Honest fallback when no series exists yet: a hollow week, the same
-      // designed-empty grammar the trackers use. Never a fake chart.
-      <WeekBars
-        days={Array.from({ length: 7 }, (_, i) => ({
-          key: i,
-          fraction: null,
-        }))}
-      />
+      // Honest fallback when no trend series exists yet: a purposeful cue,
+      // never a fake chart and never blank placeholder boxes (audit P2-1).
+      <div className="flex items-center gap-3 self-start rounded-xl border border-border border-dashed bg-background/40 px-3 py-2">
+        <Play aria-hidden className="size-4 text-muted-foreground" />
+        <span className="text-body-sm text-muted-foreground">
+          Your progress picture builds from your logs; the review below fills
+          in as they land.
+        </span>
+      </div>
     );
 
   return (

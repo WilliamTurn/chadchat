@@ -630,6 +630,7 @@ async function TodayContent() {
                 title="Calorie Tracker"
                 tone="amber"
                 viewHref="/nutrition#history"
+                viewLabel="Meal history"
               />
               <div className="mt-2 flex flex-1 flex-col justify-center">
                 <MacroRings
@@ -855,6 +856,7 @@ async function TodayContent() {
                 title="Workout log"
                 tone="blood"
                 viewHref="/workouts#history"
+                viewLabel="Workout history"
               />
               <div className="flex flex-1 flex-col gap-4">
                 <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">

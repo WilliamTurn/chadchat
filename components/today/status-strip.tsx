@@ -178,8 +178,8 @@ export function StatusStrip({ data }: { data: StatusStripData }) {
       <CellLink href="/nutrition" name="Calorie Tracker">
         <StatusPanel
           empty={{
-            absent: "No meals yet.",
-            unlock: "Log a meal to see today's total.",
+            absent: "Not logged yet.",
+            unlock: "Log a meal below.",
             visual: (
               <ProgressRing
                 className="text-muted-foreground"
@@ -229,7 +229,7 @@ export function StatusStrip({ data }: { data: StatusStripData }) {
         <StatusPanel
           empty={{
             absent: "Not logged yet.",
-            unlock: "One tap on the water panel adds a glass.",
+            unlock: "One tap below.",
             visual: (
               <ProgressRing
                 className="text-muted-foreground"
@@ -263,8 +263,8 @@ export function StatusStrip({ data }: { data: StatusStripData }) {
       <CellLink href="/sleep" name="Sleep">
         <StatusPanel
           empty={{
-            absent: "Last night isn't logged.",
-            unlock: "Log it on the sleep panel below.",
+            absent: "Not logged yet.",
+            unlock: "Log last night below.",
             visual: (
               <ProgressRing
                 className="text-muted-foreground"
