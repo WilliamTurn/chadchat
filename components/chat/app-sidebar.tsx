@@ -142,6 +142,12 @@ export function AppSidebar({
               after Dashboard (the primary group) rather than living in the
               shared list. */}
           <div className="shrink-0">
+            {/* DEC-08 (owner, 2026-07-13): at phone widths the bottom nav's
+                More tab is the SINGLE overflow path for destinations, so the
+                grouped nav block renders md+ only. The phone drawer stays
+                chat-focused: New chat (below), history, delete-all, and the
+                footer user menu. The desktop sidebar is untouched. */}
+            <div className="hidden md:block">
             {NAV_GROUPS.map((group) => {
               const links = group.links.filter((link) =>
                 link.surfaces.includes("sidebar")
@@ -208,6 +214,28 @@ export function AppSidebar({
                 </SidebarGroup>
               );
             })}
+            </div>
+            {/* Phone widths only: the one chat action the grouped block was
+                carrying (DEC-08). Destinations live in the bottom nav. */}
+            <SidebarGroup className="py-1 md:hidden">
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      className="h-10 rounded-lg border border-sidebar-border text-base text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                      onClick={() => {
+                        setOpenMobile(false);
+                        router.push("/");
+                      }}
+                      tooltip="New Chat"
+                    >
+                      <PenSquareIcon className="size-4" />
+                      <span className="font-medium">New chat</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
             {user && (
               <SidebarGroup className="py-1">
                 <SidebarGroupContent>

@@ -156,6 +156,10 @@
     0 0 0 1px oklch(0 0 0 / 0.06), 0 2px 8px -2px oklch(0 0 0 / 0.06);
   --shadow-inset: inset 0 1px 1px oklch(0 0 0 / 0.03);
   --shadow-glow: 0 0 20px oklch(0 0 0 / 0.08);
+  /* P56-D reward-glow tokens (owner order, tokenized): the habit-dot blood
+     halo and the goal-met / perfect-week emerald halo. */
+  --shadow-glow-blood: 0 0 8px var(--color-blood);
+  --shadow-glow-positive: 0 0 12px -2px var(--positive);
 
   --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -246,6 +250,9 @@
   --shadow-composer-focus:
     0 0 0 1px oklch(1 0 0 / 0.1), 0 4px 16px -4px oklch(0 0 0 / 0.3),
     inset 0 1px 0 oklch(1 0 0 / 0.04);
+  /* P56-D reward-glow tokens (owner order, tokenized). */
+  --shadow-glow-blood: 0 0 8px var(--color-blood);
+  --shadow-glow-positive: 0 0 12px -2px var(--positive);
 
   /* FIX-13 dark theme. Ink surface ladder (page #04070d < card #0b0f17 <
      inset #131a26); overlay is raised above card for menus/popovers.

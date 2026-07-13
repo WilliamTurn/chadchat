@@ -307,6 +307,27 @@ async function PreferencesAndDataSettings() {
           <div className="mt-6 border-border border-t pt-6">
             <QuitDateSettings initialEnabled={user.quitDateEnabled} />
           </div>
+
+          {/* Appearance (DEC-05): the relocated figure customizer's owned
+              destination. */}
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-border border-t pt-6">
+            <div>
+              <h3 className="font-medium text-sm">Appearance</h3>
+              <p className="mt-1 text-muted-foreground text-sm">
+                The figure that represents you: pick a silhouette or upload
+                your own image.
+              </p>
+            </div>
+            <Link
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+                "min-h-11 sm:min-h-8"
+              )}
+              href="/account/appearance"
+            >
+              Open Appearance
+            </Link>
+          </div>
         </div>
       </section>
 

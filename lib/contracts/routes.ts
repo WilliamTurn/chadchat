@@ -400,6 +400,15 @@ export const ROUTES = {
     purpose: "Manage subscription, billing, and preferences.",
     proposedNavGroup: "utility",
   },
+  "/account/appearance": {
+    path: "/account/appearance",
+    name: "Appearance",
+    domain: "account",
+    access: "member",
+    // DEC-05 (DECIDED 2026-07-13): the owned home of the relocated /today
+    // header figure customizer. Registered additively by P56-D.
+    purpose: "Choose the figure that represents you.",
+  },
   "/help": {
     path: "/help",
     name: "Help",

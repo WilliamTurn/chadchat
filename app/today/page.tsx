@@ -5,10 +5,8 @@ import {
   Dumbbell,
   LineChart,
   Lock,
-  MessageSquare,
   Moon,
   Utensils,
-  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -21,9 +19,13 @@ import { RewardProvider } from "@/components/dashboard/reward";
 import { PageShell } from "@/components/nav/page-shell";
 import { MacroRings } from "@/components/nutrition/macro-rings";
 import { WeightChartInteractive } from "@/components/progress/weight-chart-interactive";
+import type { DayBar, SparkPoint } from "@/components/panels/visuals";
+import {
+  ConsistencyPanel,
+  type ConsistencyDomainRow,
+} from "@/components/today/consistency-panel";
 import type { LiftProgress } from "@/components/today/goal-list";
 import { GoalList } from "@/components/today/goal-list";
-import { HeroCustomizer } from "@/components/today/hero-customizer";
 import { HydrationPanel } from "@/components/today/hydration-panel";
 import {
   ModuleCard,
@@ -31,14 +33,13 @@ import {
   ModuleHeader,
 } from "@/components/today/module-card";
 import { PlanList } from "@/components/today/plan-list";
-import { QuitDateCard } from "@/components/today/quit-date-card";
 import { SectionBand } from "@/components/today/section-band";
 import { SleepTracker } from "@/components/today/sleep-tracker";
-import { StatPills } from "@/components/today/stat-pills";
-import { StreakStrip } from "@/components/today/streak-strip";
+import { StatusStrip } from "@/components/today/status-strip";
 import { TargetEditor } from "@/components/today/target-editor";
+import { PlanBadge, TodayHeader } from "@/components/today/today-header";
+import { UpNextPanel } from "@/components/today/up-next-panel";
 import { WeekStrip } from "@/components/today/week-strip";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import { sumMacros } from "@/lib/ai/dashboard";
@@ -54,13 +55,16 @@ import {
   todayStartInTz,
 } from "@/lib/date";
 import {
+  getPlanSessionCompletions,
+  resolvePlanScheduleView,
+} from "@/lib/db/plan-goal-queries";
+import {
   getActiveGoalsByUserId,
   getActiveMealPlanByUserId,
   getActivePlansByUserId,
   getActivityDaysSince,
   getInactiveGoalsByUserId,
   getInactivePlansByUserId,
-  getLatestQuitPrediction,
   getLatestSleepEntry,
   getMealsSince,
   getNutritionTarget,
@@ -75,9 +79,12 @@ import {
 import type { ProgressEntry } from "@/lib/db/schema";
 import { findCalorieConflict, findOverlapIds } from "@/lib/goals/coherence";
 import { clientField } from "@/lib/memory/client-field";
+import { weeklyPlanAdherence } from "@/lib/plans/adherence";
+import type { CompletionEvent } from "@/lib/plans/up-next";
+import { selectUpNextSession } from "@/lib/plans/up-next";
 import { toPlanStatusSummary } from "@/lib/subscription";
-import { normalizeSex, resolveHero } from "@/lib/today/goal-diagram";
 import { computeStreak } from "@/lib/today/streak";
+import { selectUpNextToday, type UpNextSnapshot } from "@/lib/today/up-next";
 import { DEFAULT_WATER_GOAL_ML } from "@/lib/today/water-units";
 import {
   buildLastNight,
@@ -103,8 +110,8 @@ function round1(n: number): number {
 // plenty for a strength-goal trend line.
 const TODAY_WORKOUT_LIMIT = 60;
 
-/** "Today" / "Yesterday" / "N days ago" / a short date, for the last-workout card
- *  — day boundaries on the user's own wall clock (FEAT-8). */
+/** "Today" / "Yesterday" / "N days ago" / a short date, for the last-workout
+ *  card. Day boundaries on the user's own wall clock (FEAT-8). */
 function relativeDay(d: Date, timezone: string | null): string {
   const today = todayAnchorInTz(timezone);
   const that = calendarDayAnchorInTz(d, timezone);
@@ -124,13 +131,15 @@ function relativeDay(d: Date, timezone: string | null): string {
 export default function TodayPage() {
   return (
     <PageShell active="/today" className="max-w-[1500px]">
+      {/* Bottom-anchored receipts (P56-D toast decision): success/error tint
+          via richColors, anchored in the thumb zone and offset above the
+          phone tab bar; desktop keeps a comfortable bottom margin. */}
       <Toaster
-        position="top-center"
+        mobileOffset={{ bottom: 76 }}
+        offset={{ bottom: 24 }}
+        position="bottom-center"
+        richColors
         theme="system"
-        toastOptions={{
-          className:
-            "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
-        }}
       />
       <Suspense fallback={<TodaySkeleton />}>
         <TodayContent />
@@ -156,7 +165,7 @@ async function TodayContent() {
   if (!canAccessChad(user)) {
     redirect("/pricing");
   }
-  // First-run onboarding (ONB-1): a new member with access hasn't set up yet —
+  // First-run onboarding (ONB-1): a new member with access hasn't set up yet;
   // route them through the welcome wizard once before the dashboard.
   if (!user.onboardedAt) {
     redirect("/welcome");
@@ -171,14 +180,17 @@ async function TodayContent() {
   const timezone = user.timezone;
   const startOfToday = todayStartInTz(timezone);
 
-  // Window for the streak / week strip — long enough that a real streak isn't
+  // Window for the streak / week strip. Long enough that a real streak isn't
   // capped, cheap because each select pulls a single timestamp column.
   const activitySince = new Date(startOfToday.getTime() - 120 * DAY_MS);
+  // Meals for the whole current week (consistency matrix + today's macros);
+  // 7 local days back always covers the Sunday-start week.
+  const mealsSince = new Date(startOfToday.getTime() - 7 * DAY_MS);
 
   const [
     memory,
     entries,
-    todaysMeals,
+    weekMeals,
     target,
     waterMl,
     waterDaily,
@@ -191,11 +203,10 @@ async function TodayContent() {
     mealPlan,
     latestSleep,
     sleepDaily,
-    latestQuitPrediction,
   ] = await Promise.all([
     getUserMemory(user.id),
     isPro ? getProgressEntriesByUserId(user.id) : Promise.resolve([]),
-    isPro ? getMealsSince(user.id, startOfToday) : Promise.resolve([]),
+    isPro ? getMealsSince(user.id, mealsSince) : Promise.resolve([]),
     isPro ? getNutritionTarget(user.id) : Promise.resolve(undefined),
     isPro ? getWaterMlSince(user.id, startOfToday) : Promise.resolve(0),
     isPro ? getWaterDailyTotals(user.id, timezone) : Promise.resolve([]),
@@ -212,22 +223,17 @@ async function TodayContent() {
     isPro ? getActiveMealPlanByUserId(user.id) : Promise.resolve(null),
     isPro ? getLatestSleepEntry(user.id) : Promise.resolve(null),
     isPro ? getSleepDailyTotals(user.id, timezone) : Promise.resolve([]),
-    // Not tier-gated (FEAT-21): every member gets a quit date. Latest row
-    // regardless of status (FEAT-22): active renders the live countdown, hit
-    // renders the called-it callback with the restart path. Members who
-    // switched the feature off (FEAT-25) see no card at all.
-    user.quitDateEnabled
-      ? getLatestQuitPrediction(user.id)
-      : Promise.resolve(undefined),
   ]);
 
-  // Active meal plan summary for the /today card. Targets stay structured so
-  // the card can render them as labeled chips (VF-16). Plain nouns, not
-  // lifter shorthand like "200P / 190C / 65F" (P3-5).
-  // LC-2: the card measures against the user's LIVE daily Calorie-Tracker
-  // target first, the same resolution rule the /meal-plan page uses (NUT-13),
-  // falling back to the plan's stored snapshot only when no daily target is
-  // set. One plan, one set of numbers, on both screens.
+  // Today's meals from the week fetch: effective day = recordedAt ?? createdAt
+  // (the getMealsSince convention), bounded by the member-local today window.
+  const todaysMeals = weekMeals.filter(
+    (m) => (m.recordedAt ?? m.createdAt) >= startOfToday
+  );
+
+  // Active meal plan summary for the plan card. Targets stay structured so
+  // the card renders them as labeled chips (VF-16). LC-2: the live daily
+  // Calorie-Tracker target wins; the plan snapshot is the fallback.
   const planTargets =
     target?.calories != null
       ? {
@@ -262,9 +268,8 @@ async function TodayContent() {
       }
     : null;
 
-  // Most-recent logged workout, summarized for the /today card. Volume is the
-  // card's visual anchor (VF-16): the one number that makes "last session"
-  // feel like a result instead of a caption.
+  // Most-recent logged workout, summarized for the workout card. Volume is
+  // the card's visual anchor (VF-16).
   const lastWorkout = recentWorkouts[0]
     ? {
         title: recentWorkouts[0].title,
@@ -301,9 +306,8 @@ async function TodayContent() {
   const calorieConflict = findCalorieConflict(goalItems, target?.calories);
   const overlapIds = findOverlapIds(goalItems);
 
-  // Lift goals (DSH-28): read the est.-1RM trend for each tracked exercise from
-  // the logged workouts, so the goal card shows live progress + charts against
-  // the PR data already collected.
+  // Lift goals (DSH-28): est.-1RM trend per tracked exercise from the logged
+  // workouts, so the goal card shows live progress against real PR data.
   const workoutData = recentWorkouts.map(toWorkoutData);
 
   const liftProgress: Record<string, LiftProgress> = {};
@@ -330,16 +334,7 @@ async function TodayContent() {
   const profile = memory?.profile ?? null;
   const nameField = clientField(profile, "Name");
   const firstName = nameField ? nameField.split(/\s+/)[0] : null;
-  const goal = clientField(profile, "Primary goal");
   const workoutPlan = clientField(profile, "Current workout plan");
-
-  // Decorative header figure (DSH-21): explicit choice → else gender-derived
-  // silhouette (sex from Chad's memory) → else the male default.
-  const hero = resolveHero(
-    user.heroFigure,
-    user.heroImageUrl,
-    normalizeSex(clientField(profile, "Sex"))
-  );
 
   // Weight summary (Pro).
   const weighed = entries.filter(
@@ -359,11 +354,8 @@ async function TodayContent() {
           : e.weight / LB_PER_KG
     ),
   }));
-  // The canonical "current weight" is the smoothed TREND weight — the same
-  // gap-aware EMA the charts draw — not the latest raw weigh-in (LC-4). Before
-  // this, /today headlined the raw number while /progress headlined the trend,
-  // so current / lost / to-goal silently disagreed between the two screens.
-  // The raw weigh-in stays visible, labeled, next to the trend on the card.
+  // The canonical "current weight" is the smoothed TREND weight (LC-4), the
+  // same gap-aware EMA the charts draw, never the latest raw weigh-in.
   const trendRows = ema(points);
   const trendWeight = trendRows.at(-1)?.trend ?? null;
   const lastWeighIn = points.at(-1)?.weight ?? null;
@@ -391,7 +383,6 @@ async function TodayContent() {
               : weightGoal.targetValue / LB_PER_KG
         );
 
-  // Today's intake (Pro).
   // Daily hydration goal (DSH-24): user-set in ml, else one gallon.
   const waterGoalMl = user.waterGoalMl ?? DEFAULT_WATER_GOAL_ML;
 
@@ -406,8 +397,7 @@ async function TodayContent() {
 
   // Streak + this week's strip from every tracked action (meals, workouts,
   // water, weigh-ins), so engagement on any surface keeps the streak alive.
-  // The strip is the user's Sunday-start calendar week (VF-10); all day math
-  // runs on their local calendar days (00:00-UTC anchors).
+  // Sunday-start member-local week (VF-10); 00:00-UTC anchors.
   const streak = computeStreak(activityDays, timezone);
   const activeDayKeys = new Set(
     activityDays.map((d) =>
@@ -422,261 +412,217 @@ async function TodayContent() {
     isToday: d.getTime() === todayMs,
     isFuture: d.getTime() > todayMs,
   }));
-  const activeThisWeek = week.filter((d) => d.active).length;
 
-  // Sleep + hydration week strips — the compact in-card readouts (the full
-  // history charts live on /sleep and /hydration; one surface per domain).
+  // Domain week strips: the registered week builders (lib/today/week.ts).
   const lastNight = buildLastNight(latestSleep, timezone);
   const sleepWeek = buildSleepWeek(sleepDaily, timezone);
   const waterWeek = buildWaterWeek(waterDaily, timezone);
-  // Workout week strip (R2-14): the Workout log card is a LOGGER like the
-  // other daily trackers, so it gets the same shared 7-day treatment.
   const workoutWeek = buildWorkoutWeek(
     recentWorkouts.map((w) => w.performedAt),
     timezone
   );
+  // Meal days through the same Sunday-start bucketer (consistency matrix).
+  const mealWeek = buildWorkoutWeek(
+    weekMeals.map((m) => m.recordedAt ?? m.createdAt),
+    timezone
+  );
 
-  // First-run: a brand-new member with no profile and nothing logged yet. We
-  // show a "welcome / get started" header instead of "Welcome back" (which is
-  // illogical the very first time they sign in), the hero carries the page's
-  // ONE dominant first action (P1-4), and the empty cards state what will
-  // appear instead of each shouting its own CTA.
+  // The FIX-24 domain-aware matrix rows, aligned to the week's 7 columns.
+  const consistencyDomains: ConsistencyDomainRow[] = [
+    {
+      id: "nutrition",
+      label: "Nutrition",
+      days: mealWeek.map((d) => d.logged),
+    },
+    {
+      id: "hydration",
+      label: "Hydration",
+      days: waterWeek.map((d) => d.logged),
+    },
+    { id: "sleep", label: "Sleep", days: sleepWeek.map((d) => d.logged) },
+    {
+      id: "training",
+      label: "Training",
+      days: workoutWeek.map((d) => d.logged),
+    },
+  ];
+
+  // FIX-23: the active training plan's resolved schedule + completions feed
+  // the deterministic Up next selector (P34-D's rotation model; FIX-28).
+  const trainingPlan = plans.find((p) => p.kind === "training") ?? null;
+  let upNextTraining: UpNextSnapshot["training"] = null;
+  let plannedPerWeek: number | null = null;
+  if (isPro && trainingPlan) {
+    const scheduleView = await resolvePlanScheduleView(trainingPlan);
+    if (scheduleView.kind !== "document") {
+      const completionRows = await getPlanSessionCompletions({
+        planId: trainingPlan.id,
+        userId: user.id,
+      });
+      const completions: CompletionEvent[] = completionRows.map((c) => ({
+        planSessionId: c.planSessionId,
+        completedDayMs: c.completedDay.getTime(),
+      }));
+      const weekStartMs = weekDays[0].getTime();
+      const weekEndMs = weekStartMs + 7 * DAY_MS;
+      const todayAnchorMs = todayAnchorInTz(timezone).getTime();
+      const bySession = new Map<string, boolean>();
+      for (const c of completions) {
+        if (c.completedDayMs >= weekStartMs && c.completedDayMs < weekEndMs) {
+          bySession.set(c.planSessionId, true);
+        }
+      }
+      upNextTraining = {
+        planId: trainingPlan.id,
+        planTitle: trainingPlan.title,
+        verdict: selectUpNextSession(scheduleView.schedule, completions),
+        trainedToday: completions.some(
+          (c) => c.completedDayMs === todayAnchorMs
+        ),
+        rotation: [...scheduleView.schedule.sessions]
+          .sort((a, b) => a.position - b.position)
+          .map((s) => ({
+            name: s.name,
+            completedThisWeek:
+              s.id !== null && (bySession.get(s.id) ?? false),
+          })),
+      };
+      plannedPerWeek = weeklyPlanAdherence({
+        schedule: scheduleView.schedule,
+        completions,
+        weekStartMs,
+        weekEndMs,
+      }).plannedPerWeek;
+    }
+  }
+
+  const upNext = selectUpNextToday({
+    training: upNextTraining,
+    lastNightLogged: lastNight?.isCurrent === true,
+    hasMealPlan: mealPlan != null,
+    mealsLoggedToday: todaysMeals.length,
+    isPro,
+  });
+
+  // Honest per-kind visuals for the Up next panel (real data only).
+  const sleepGoalMinutes = user.sleepGoalMinutes ?? null;
+  const sleepBars: DayBar[] = sleepWeek.map((d) => ({
+    key: d.t,
+    fraction: d.logged
+      ? sleepGoalMinutes
+        ? d.minutes / sleepGoalMinutes
+        : 1
+      : null,
+    isToday: d.isToday,
+    isFuture: d.isFuture,
+  }));
+  const sparkSource = trendRows.slice(-10);
+  const sparkT0 = sparkSource[0]?.t ?? 0;
+  const sparkSpan = (sparkSource.at(-1)?.t ?? 1) - sparkT0 || 1;
+  const weightSpark: SparkPoint[] = sparkSource.map((r) => ({
+    x: (r.t - sparkT0) / sparkSpan,
+    value: r.trend,
+  }));
+
+  // First-run: a brand-new member with no profile and nothing logged yet.
+  // The header carries the page's ONE dominant action (P1-4); the shell
+  // panels (status, Up next, consistency) hold back until there is a day to
+  // summarize, and every empty card below stays quiet.
   const isReturning =
     Boolean(profile) || entries.length > 0 || todaysMeals.length > 0;
   const firstRun = !isReturning;
 
-  // "Thursday, July 2" on the member's own wall clock (R2-11) — the page says
-  // "today" everywhere, so it should say WHICH day that is. Rendered as the
-  // greeting's small tracked-out eyebrow (VF-13).
+  // "Sunday, July 13" on the member's own wall clock (R2-11).
   const todayLabel = formatDayInTz(new Date(), timezone, {
     weekday: "long",
     month: "long",
     day: "numeric",
   });
 
-  // One focal point (VF-13): the greeting itself is the hero line.
   const heroLine = isReturning
     ? firstName
       ? `Welcome back, ${firstName}`
       : "Welcome back"
     : "Welcome to Chad";
 
-  // Plan badge, defined once (VF-12): inline with the greeting eyebrow on
-  // mobile, in the top-right column at sm+, never a floating orphan cluster.
-  const planBadge =
-    plan.tier === "elite" ? (
-      <Badge
-        className="gap-1 border-foreground/30 bg-foreground/10 px-2.5 font-semibold uppercase tracking-wide"
-        variant="secondary"
-      >
-        <Zap className="size-3" fill="currentColor" />
-        Elite
-      </Badge>
-    ) : plan.tier === "pro" ? (
-      <Badge
-        className="gap-1 border-blood/40 bg-blood/15 px-2.5 font-semibold text-blood uppercase tracking-wide shadow-[0_0_12px_-2px_var(--color-blood)]"
-        variant="secondary"
-      >
-        <Zap className="size-3" fill="currentColor" />
-        Pro
-      </Badge>
-    ) : plan.status === "trialing" && plan.trialDaysLeft !== null ? (
-      <Badge variant="secondary">
-        {plan.trialDaysLeft <= 0
-          ? "Trial ends today"
-          : `${plan.trialDaysLeft} days left in trial`}
-      </Badge>
-    ) : (
-      <Badge variant="secondary">Basic</Badge>
-    );
-
   return (
     <RewardProvider haptics={user.hapticsEnabled} sound={user.soundEnabled}>
       <div className="flex flex-col gap-8">
-        {/* Header */}
-        {/* Same VF-18 elevation as ModuleCard: top-lit wash, 1px inner top
-          highlight, shared card shadow. */}
-        <header className="relative overflow-hidden rounded-2xl border border-border bg-card bg-gradient-to-b from-white/[0.04] via-white/[0.01] to-transparent p-6 shadow-[var(--shadow-card),inset_0_1px_0_0_rgba(255,255,255,0.06)] sm:p-8 lg:pr-64">
-          <div
-            aria-hidden
-            className="-right-16 -top-16 pointer-events-none absolute size-56 rounded-full bg-blood/25 blur-3xl"
+        {/* 1. Compact header (FIX-22 / DEC-05): date, greeting, tier, one
+            quiet Coach action. The silhouette customizer lives at
+            Account > Appearance now. */}
+        <TodayHeader
+          firstRun={firstRun}
+          heroLine={heroLine}
+          planBadge={<PlanBadge plan={plan} />}
+          todayLabel={todayLabel}
+        />
+
+        {/* 2. Four-domain status strip (FIX-22): the day in ten seconds. */}
+        {isPro && !firstRun && (
+          <StatusStrip
+            data={{
+              nutrition: {
+                calories: caloriesToday,
+                target: target?.calories ?? null,
+                mealsToday: todaysMeals.length,
+                macros: {
+                  protein: proteinToday,
+                  carbs: carbsToday,
+                  fat: fatToday,
+                },
+              },
+              hydration: { ml: waterMl, goalMl: waterGoalMl },
+              sleep: { lastNight, goalMinutes: sleepGoalMinutes },
+              training: {
+                week: workoutWeek.map((d) => ({
+                  t: d.t,
+                  logged: d.logged,
+                  isToday: d.isToday,
+                  isFuture: d.isFuture,
+                })),
+                sessionsThisWeek: workoutWeek.reduce((n, d) => n + d.count, 0),
+                plannedPerWeek,
+              },
+            }}
           />
-          {/* Brand hero figure (DSH-21/DSH-29) — decorative, confined to its own
-            clipped right column with a left-fading mask so it can never overlap
-            the stat pills, streak strip, or CTA (the lg:pr-64 gutter above keeps
-            the content clear of this column). A built-in silhouette bleeds up
-            from the bottom; a user photo fills the column. Plain <img> (not
-            next/image) so the proxy serves it on this authenticated route.
-            VF-17: the one brand moment now survives every viewport. Below lg
-            the header content stacks over this column, so the figure runs
-            ghost-quiet (low opacity, harder left fade) as a cropped presence
-            behind the right edge; at lg+ it gets its own gutter and full
-            strength. A soft blood glow hugs the figure so it reads as lit,
-            not pasted on. */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 right-0 hidden w-60 overflow-hidden lg:block"
-          >
-            <div
-              aria-hidden
-              className="absolute right-0 bottom-0 size-44 translate-x-1/4 translate-y-1/4 rounded-full bg-blood/20 blur-3xl"
+        )}
+
+        {/* 3 + 4. Deterministic Up next (FIX-23) beside the seven-day
+            consistency panel (FIX-24). */}
+        {isPro && !firstRun && (
+          <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
+            <UpNextPanel
+              className="lg:col-span-2"
+              verdict={upNext}
+              visual={{
+                sleepBars,
+                mealChips: mealPlanSummary?.targets
+                  ? [...mealPlanSummary.targets]
+                  : undefined,
+                weightSpark,
+                weightSparkGoal:
+                  goalWeight != null && weightSpark.length > 1
+                    ? goalWeight
+                    : undefined,
+              }}
             />
-            {hero.kind === "custom" ? (
-              <img
-                alt=""
-                aria-hidden
-                className="h-full w-full select-none object-cover opacity-80 [mask-image:linear-gradient(to_left,black_55%,transparent)]"
-                src={hero.src}
-              />
-            ) : (
-              <img
-                alt=""
-                aria-hidden
-                // h-full, not an over-100% bleed: bleeding the figure above the
-                // container clipped its head off (DSH-37).
-                className="absolute right-0 bottom-0 h-full w-auto max-w-none select-none object-contain object-bottom opacity-90 [mask-image:linear-gradient(to_left,black_45%,transparent)]"
-                src={hero.src}
-              />
-            )}
+            <ConsistencyPanel
+              domains={consistencyDomains}
+              streak={streak}
+              week={week}
+            />
           </div>
-          {/* Below lg: the figure is the WHOLE silhouette, never a cropped
-            half-body (user report: "the hero image is cut off in half").
-            It rides the header's right edge bottom-anchored and fits inside
-            its column by width, with a left fade so the stacked content stays
-            readable over it. */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 right-0 w-32 overflow-hidden sm:w-44 lg:hidden"
-          >
-            {hero.kind === "custom" ? (
-              <img
-                alt=""
-                aria-hidden
-                className="h-full w-full select-none object-cover opacity-30 [mask-image:linear-gradient(to_left,black_35%,transparent)]"
-                src={hero.src}
-              />
-            ) : (
-              <img
-                alt=""
-                aria-hidden
-                className="absolute right-0 bottom-0 w-full select-none object-contain object-bottom opacity-60 [mask-image:linear-gradient(to_left,black_35%,transparent)]"
-                src={hero.src}
-              />
-            )}
-          </div>
-          {/* Greeting (VF-12 + VF-13): three intentional tiers (date eyebrow,
-            "Welcome back, Name" hero line, coaching subtitle). On mobile the
-            plan badge sits inline with the eyebrow and the CTA is a
-            full-width, greeting-aligned row; at sm+ badge and CTA form the
-            top-right column. Never a centered control island. */}
-          <div className="relative flex flex-wrap items-start justify-between gap-4">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center justify-between gap-3">
-                <p className="font-medium text-muted-foreground text-xs uppercase tracking-[0.14em]">
-                  {todayLabel}
-                </p>
-                <span className="sm:hidden">{planBadge}</span>
-              </div>
-              <h1 className="mt-1.5 font-display font-bold text-3xl tracking-tight sm:text-4xl">
-                {heroLine}
-              </h1>
-              <p className="mt-2 max-w-md text-muted-foreground text-sm">
-                {isReturning
-                  ? "Here's where you stand today. No excuses, just the numbers."
-                  : "One thing first: tell Chad about yourself. He'll set your targets and build your plan, and this page fills in as you log."}
-              </p>
-              {/* First-run (P1-4): the page's ONE dominant action. Every other
-                empty state below stays quiet so this is the obvious next step. */}
-              {firstRun && (
-                <Button asChild className="mt-4 gap-2" size="lg">
-                  <Link
-                    href={`/?prompt=${encodeURIComponent(
-                      "I'm new here. Ask me what you need to know about me, then set up my targets and my plan."
-                    )}`}
-                  >
-                    <MessageSquare className="size-4" />
-                    Tell Chad about yourself
-                  </Link>
-                </Button>
-              )}
-              {/* Mobile CTA: full-width under the greeting stack (VF-12). */}
-              {!firstRun && (
-                <Button
-                  asChild
-                  className="mt-4 w-full gap-1.5 sm:hidden"
-                  size="sm"
-                >
-                  <Link href="/">
-                    <MessageSquare className="size-3.5" />
-                    Talk to Chad
-                  </Link>
-                </Button>
-              )}
-            </div>
-            <div className="hidden flex-col items-end gap-2 sm:flex">
-              {planBadge}
-              {/* Hidden on first-run: the hero's big CTA is the one action. */}
-              {!firstRun && (
-                <Button asChild className="gap-1.5" size="sm">
-                  <Link href="/">
-                    <MessageSquare className="size-3.5" />
-                    Talk to Chad
-                  </Link>
-                </Button>
-              )}
-            </div>
-          </div>
+        )}
 
-          {/* KPI vital strip (Pro) — at-a-glance numbers the page already computes */}
-          {isPro && (
-            <div className="relative">
-              <StatPills
-                activeThisWeek={activeThisWeek}
-                calories={caloriesToday}
-                calorieTarget={target?.calories ?? null}
-                weightChange={weightChange}
-                weightUnit={displayUnit}
-              />
-            </div>
-          )}
-
-          {/* Streak strip */}
-          <div className="relative">
-            <StreakStrip streak={streak} week={week} />
-          </div>
-
-          {/* Personalize the header figure. In-flow below the streak strip on
-            phones (mobile members could never reach it while it was lg-only),
-            floated bottom-right at lg+ where the full-strength figure lives. */}
-          <div className="relative mt-4 flex justify-end lg:absolute lg:right-4 lg:bottom-4 lg:z-10 lg:mt-0 lg:block">
-            <HeroCustomizer hero={hero} />
-          </div>
-        </header>
-
-        {/* R2-13 + R2-14: the page's organizing model (STATUS → LOGGERS →
-          PLANS → REVIEW) is visible as labeled section bands, and the cards
-          are regrouped by role. The Workout log joins the daily loggers
-          (reworked from the passive "Last workout" readout into the logging
-          entry point pro apps put on home), the plans band holds exactly the
-          plans (goals, training plan, meal plan), and review is the weight
-          trend finale. The hero above is STATUS and needs no band. */}
-        {/* LAY-1 dashboard grid: phones AND 768-beside-the-expanded-sidebar
-          keep the one-column stacking order (pairing at md made 220px
-          columns that truncated card titles), lg pairs the cards, and xl
-          gets a real three-column desktop grid (Calorie Tracker beside
-          Hydration, then Sleep beside the Workout log). Explicit grid-cols-1
-          everywhere a grid is declared: the implicit grid column sizes to
-          max-content and silently clips phones under overflow-x: clip (s182
-          trap). Cards are min-w-0 flex columns, so rows stay equal-height
-          with aligned footers. */}
+        {/* 5. Daily tracking (P56-C's panels mount here at integration; the
+            calorie/sleep cards below are the live stand-ins until their
+            FIX-25/27 panels publish). */}
         <SectionBand
           contentClassName="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3"
           description="Record these every day."
           title="Today's log"
         >
-          {/* Calorie Tracker (Pro): the daily centerpiece, leading the grid at
-            double width. One name everywhere (R2-6): nav label, page title,
-            this card, and Chad's own copy all say "Calorie Tracker". */}
           {isPro ? (
             <ModuleCard className="lg:col-span-2" glow="amber">
               <ModuleHeader
@@ -685,9 +631,6 @@ async function TodayContent() {
                 tone="amber"
                 viewHref="/nutrition#history"
               />
-              {/* flex-1 + centering: beside the taller Hydration card at xl
-                  this card stretches, so the rings ride the vertical middle
-                  instead of leaving a dead band above the footer. */}
               <div className="mt-2 flex flex-1 flex-col justify-center">
                 <MacroRings
                   caloriesConsumed={caloriesToday}
@@ -695,8 +638,8 @@ async function TodayContent() {
                   carbsConsumed={carbsToday}
                   carbsTarget={target?.carbs ?? null}
                   emptyCta={
-                    // First-run keeps this quiet (P1-4): the hero owns the one
-                    // CTA and Chad sets targets from the intro chat anyway.
+                    // First-run keeps this quiet (P1-4): the header owns the
+                    // one CTA and Chad sets targets from the intro chat.
                     firstRun ? undefined : (
                       <TargetEditor
                         calories={target?.calories ?? null}
@@ -715,7 +658,10 @@ async function TodayContent() {
               </div>
               <ModuleFooter
                 askChad={
-                  <AskChadButton prompt="Look at what I've eaten today and how it stacks up against my calorie and macro targets. Am I on track, and what should I eat for the rest of the day?" />
+                  <AskChadButton
+                    className="min-h-11 sm:min-h-8"
+                    prompt="Look at what I've eaten today and how it stacks up against my calorie and macro targets. Am I on track, and what should I eat for the rest of the day?"
+                  />
                 }
                 status={
                   todaysMeals.length > 0
@@ -729,7 +675,12 @@ async function TodayContent() {
                   fat={target?.fat ?? null}
                   protein={target?.protein ?? null}
                 />
-                <Button asChild className="gap-1.5" size="sm" variant="outline">
+                <Button
+                  asChild
+                  className="min-h-11 gap-1.5 sm:min-h-8"
+                  size="sm"
+                  variant="outline"
+                >
                   <Link href="/nutrition#log-meal">
                     Log a meal
                     <ArrowRight className="size-3.5" />
@@ -746,13 +697,8 @@ async function TodayContent() {
             />
           )}
 
-          {/* Hydration + Sleep (Pro): the other daily trackers, right under the
-            calorie tracker so "am I on track today?" is answerable from the
-            top of the page. Direct grid children: Hydration completes the top
-            row at xl, Sleep opens the second. */}
           {isPro ? (
-            /* P2-Z pilot: the first live panel on the Phase 2 system
-               (QuickLogPanel role + overlay platform + form primitives). */
+            /* P2-Z pilot: the first live panel on the Phase 2 system. */
             <HydrationPanel
               goalMl={waterGoalMl}
               totalMl={waterMl}
@@ -782,133 +728,23 @@ async function TodayContent() {
               title="Sleep"
             />
           )}
-
-          {/* Workout log (Pro), per R2-14: it was a passive "Last workout"
-            readout stranded next to the meal plan. Mainstream apps (MFP,
-            Fitbit, Hevy, Strong) all treat workouts as a loggable domain on
-            home, so the card lives with the loggers, leads with the log
-            action, and keeps the last session as context. */}
-          {isPro ? (
-            <ModuleCard className="lg:col-span-2" glow="blood">
-              <ModuleHeader
-                icon={<Dumbbell className="size-4" />}
-                title="Workout log"
-                tone="blood"
-                viewHref="/workouts#history"
-              />
-              <div className="flex flex-1 flex-col gap-4">
-                <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
-                  {lastWorkout ? (
-                    <div className="min-w-0">
-                      <div className="text-muted-foreground text-xs uppercase tracking-wide">
-                        Last session
-                      </div>
-                      <div className="mt-1 font-display font-semibold text-lg leading-tight">
-                        {lastWorkout.title}
-                      </div>
-                      <div className="mt-0.5 text-muted-foreground text-sm">
-                        {relativeDay(lastWorkout.performedAt, timezone)}
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="max-w-md text-muted-foreground text-sm">
-                      No workouts logged yet. Log your first session and Chad
-                      starts tracking your PRs and volume.
-                    </p>
-                  )}
-                  {/* Shared Sunday-start week-strip treatment (VF-10/VF-11),
-                    workout tone. Always rendered (VF-16): an empty week of
-                    hollow slots is the same honest readout the other loggers
-                    show, and it keeps the card from collapsing to one line. */}
-                  <div className="flex items-center gap-4 rounded-xl border border-border bg-background/40 px-4 py-2.5">
-                    <span className="text-muted-foreground text-xs">
-                      This week
-                    </span>
-                    <WeekStrip
-                      days={workoutWeek.map((day) => ({
-                        key: day.t,
-                        label: day.label,
-                        dateLabel: day.dateLabel,
-                        isToday: day.isToday,
-                        isFuture: day.isFuture,
-                        dotClassName: day.logged
-                          ? "bg-blood shadow-[0_0_8px_var(--color-blood)]"
-                          : "bg-border",
-                        value: day.logged
-                          ? `${day.count} workout${day.count === 1 ? "" : "s"}`
-                          : "No workout",
-                      }))}
-                    />
-                  </div>
-                </div>
-                {/* Last-session numbers as a stat row (VF-16): the card's visual
-                  anchor, matching the KPI-tile grammar of the other cards. */}
-                {lastWorkout && (
-                  <div className="flex flex-wrap gap-3">
-                    <WorkoutStat
-                      label={lastWorkout.setCount === 1 ? "set" : "sets"}
-                      value={String(lastWorkout.setCount)}
-                    />
-                    <WorkoutStat
-                      label={
-                        lastWorkout.exerciseCount === 1
-                          ? "exercise"
-                          : "exercises"
-                      }
-                      value={String(lastWorkout.exerciseCount)}
-                    />
-                    {lastWorkout.volumeLb > 0 && (
-                      <WorkoutStat
-                        label="lb moved"
-                        value={lastWorkout.volumeLb.toLocaleString()}
-                      />
-                    )}
-                  </div>
-                )}
-              </div>
-              <ModuleFooter
-                askChad={
-                  <AskChadButton prompt="Look at the workouts card on my dashboard: my last session and this week's training. What's working, what's lagging, and what should I hit next session?" />
-                }
-              >
-                <Button asChild className="gap-1.5" size="sm" variant="outline">
-                  {/* Straight into the Workouts page to start a session. */}
-                  <Link href="/workouts">
-                    Start a workout
-                    <ArrowRight className="size-3.5" />
-                  </Link>
-                </Button>
-              </ModuleFooter>
-            </ModuleCard>
-          ) : (
-            <LockedCard
-              className="lg:col-span-2"
-              icon={<Dumbbell className="size-4" />}
-              text="Log your workouts and Chad tracks your PRs, volume, and what to hit next session. Pro only."
-              title="Workout log"
-            />
-          )}
         </SectionBand>
 
-        {/* Same LAY-1 grid as Today's log: the three plan cards (Goals,
-          Training plan, Meal Plan) sit in one equal-height row at xl; lg
-          keeps goals full width over the side-by-side plans; phones and 768
-          beside the expanded sidebar keep the original stack. */}
+        {/* 6. Plans and goals (P56-E rebuilds these summaries; the workout
+            action card sits with the plans per the target architecture,
+            since training is execution, not a passive daily logger). */}
         <SectionBand
           contentClassName="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3"
           description="Set once, update occasionally."
           title="Your plans"
         >
-          {/* Goals lead the band: full width at lg, first of the three equal
-            columns at xl. One consistent card treatment (DSH-30): the header
-            silhouette stays the page's single body-visualization style. */}
           <ModuleCard className="lg:col-span-2 xl:col-span-1" glow="blood">
             <GoalList
               calorieConflict={calorieConflict}
               currentWeight={trendWeight}
               goals={goalItems}
               liftProgress={liftProgress}
-              memoryGoalHint={goal}
+              memoryGoalHint={clientField(profile, "Primary goal")}
               overlapIds={overlapIds}
               pastGoals={pastGoalItems}
               quiet={firstRun}
@@ -916,11 +752,6 @@ async function TodayContent() {
             />
           </ModuleCard>
 
-          {/* Training plan + meal plan: side by side at lg, completing the
-            three-card row at xl (R2-14's regroup; the meal plan no longer
-            shares a row with the workout readout). Basic members get the
-            same locked teaser as every other Pro module (P2-7: one gating
-            rule). */}
           <ModuleCard glow="blood">
             <PlanList
               memoryPlanHint={workoutPlan}
@@ -958,8 +789,6 @@ async function TodayContent() {
                       </div>
                     </div>
                   </div>
-                  {/* Daily targets as labeled chips (VF-16): fills the card
-                    with the plan's real numbers instead of dead space. */}
                   {mealPlanSummary.targets && (
                     <div className="flex flex-wrap gap-2">
                       {mealPlanSummary.targets.map((t) => (
@@ -987,6 +816,7 @@ async function TodayContent() {
               <ModuleFooter
                 askChad={
                   <AskChadButton
+                    className="min-h-11 sm:min-h-8"
                     prompt={
                       mealPlanSummary
                         ? "Walk me through my meal plan. What am I eating today, and what can I swap if I'm missing something?"
@@ -995,7 +825,12 @@ async function TodayContent() {
                   />
                 }
               >
-                <Button asChild className="gap-1.5" size="sm" variant="outline">
+                <Button
+                  asChild
+                  className="min-h-11 gap-1.5 sm:min-h-8"
+                  size="sm"
+                  variant="outline"
+                >
                   <Link href="/meal-plan">
                     {mealPlanSummary ? "Open plan" : "Build a meal plan"}
                     <ArrowRight className="size-3.5" />
@@ -1010,21 +845,130 @@ async function TodayContent() {
               title="Meal Plan"
             />
           )}
+
+          {/* Workout log: execution entry point + last-session context,
+              beside the training plan (03 spec section 3). */}
+          {isPro ? (
+            <ModuleCard className="lg:col-span-2 xl:col-span-3" glow="blood">
+              <ModuleHeader
+                icon={<Dumbbell className="size-4" />}
+                title="Workout log"
+                tone="blood"
+                viewHref="/workouts#history"
+              />
+              <div className="flex flex-1 flex-col gap-4">
+                <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
+                  {lastWorkout ? (
+                    <div className="min-w-0">
+                      <div className="text-muted-foreground text-xs uppercase tracking-wide">
+                        Last session
+                      </div>
+                      <div className="mt-1 font-display font-semibold text-lg leading-tight">
+                        {lastWorkout.title}
+                      </div>
+                      <div className="mt-0.5 text-muted-foreground text-sm">
+                        {relativeDay(lastWorkout.performedAt, timezone)}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="max-w-md text-muted-foreground text-sm">
+                      No workouts logged yet. Log your first session and Chad
+                      starts tracking your PRs and volume.
+                    </p>
+                  )}
+                  {/* Shared Sunday-start week-strip treatment (VF-10/VF-11),
+                      workout tone. Always rendered (VF-16). */}
+                  <div className="flex items-center gap-4 rounded-xl border border-border bg-background/40 px-4 py-2.5">
+                    <span className="text-muted-foreground text-xs">
+                      This week
+                    </span>
+                    <WeekStrip
+                      days={workoutWeek.map((day) => ({
+                        key: day.t,
+                        label: day.label,
+                        dateLabel: day.dateLabel,
+                        isToday: day.isToday,
+                        isFuture: day.isFuture,
+                        dotClassName: day.logged
+                          ? "bg-blood shadow-[var(--shadow-glow-blood)]"
+                          : "bg-border",
+                        value: day.logged
+                          ? `${day.count} workout${day.count === 1 ? "" : "s"}`
+                          : "No workout",
+                      }))}
+                    />
+                  </div>
+                </div>
+                {lastWorkout && (
+                  <div className="flex flex-wrap gap-3">
+                    <WorkoutStat
+                      label={lastWorkout.setCount === 1 ? "set" : "sets"}
+                      value={String(lastWorkout.setCount)}
+                    />
+                    <WorkoutStat
+                      label={
+                        lastWorkout.exerciseCount === 1
+                          ? "exercise"
+                          : "exercises"
+                      }
+                      value={String(lastWorkout.exerciseCount)}
+                    />
+                    {lastWorkout.volumeLb > 0 && (
+                      <WorkoutStat
+                        label="lb moved"
+                        value={lastWorkout.volumeLb.toLocaleString()}
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+              <ModuleFooter
+                askChad={
+                  <AskChadButton
+                    className="min-h-11 sm:min-h-8"
+                    prompt="Look at the workouts card on my dashboard: my last session and this week's training. What's working, what's lagging, and what should I hit next session?"
+                  />
+                }
+              >
+                <Button
+                  asChild
+                  className="min-h-11 gap-1.5 sm:min-h-8"
+                  size="sm"
+                  variant="outline"
+                >
+                  <Link href="/workouts">
+                    Start a workout
+                    <ArrowRight className="size-3.5" />
+                  </Link>
+                </Button>
+              </ModuleFooter>
+            </ModuleCard>
+          ) : (
+            <LockedCard
+              className="lg:col-span-2 xl:col-span-3"
+              icon={<Dumbbell className="size-4" />}
+              text="Log your workouts and Chad tracks your PRs, volume, and what to hit next session. Pro only."
+              title="Workout log"
+            />
+          )}
         </SectionBand>
 
+        {/* 7. Progress highlights (P56-E wires the /progress category links
+            after GATE-05; the weight trend is the live highlight until then).
+            8. The weekly-review + Coach-insight slots land in P7 (FIX-36A/B)
+            per the contracts; deliberately not built here. */}
         <SectionBand
           description="What your daily logging adds up to over time."
           title="Results"
         >
-          {/* Weight trend (Pro): the REVIEW finale; the slow metric the
-            product's promise hangs on gets the page's one full-width chart. */}
           {isPro ? (
             <ModuleCard glow="violet">
               <ModuleHeader
                 icon={<LineChart className="size-4" />}
                 title="Weight trend"
                 tone="violet"
-                viewHref="/progress"
+                viewHref="/progress/body"
+                viewLabel="Body progress"
               />
               {trendWeight != null && (
                 <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
@@ -1057,11 +1001,19 @@ async function TodayContent() {
               </div>
               <ModuleFooter
                 askChad={
-                  <AskChadButton prompt="Look at the weight card on my dashboard: my latest weigh-in and the recent trend toward my goal weight. Am I moving in the right direction, and should I change anything?" />
+                  <AskChadButton
+                    className="min-h-11 sm:min-h-8"
+                    prompt="Look at the weight card on my dashboard: my latest weigh-in and the recent trend toward my goal weight. Am I moving in the right direction, and should I change anything?"
+                  />
                 }
               >
-                <Button asChild className="gap-1.5" size="sm" variant="outline">
-                  <Link href="/progress#log-entry">
+                <Button
+                  asChild
+                  className="min-h-11 gap-1.5 sm:min-h-8"
+                  size="sm"
+                  variant="outline"
+                >
+                  <Link href="/progress/body#log-entry">
                     Log weight
                     <ArrowRight className="size-3.5" />
                   </Link>
@@ -1077,15 +1029,9 @@ async function TodayContent() {
           )}
         </SectionBand>
 
-        {/* The Quit Test (FEAT-21/25/26): at the BOTTOM of the dashboard,
-          under Results (owner order, s157). Full width, every member —
-          unless they switched the feature off on /account (FEAT-25). */}
-        {user.quitDateEnabled && (
-          <QuitDateCard prediction={latestQuitPrediction} timezone={timezone} />
-        )}
-
-        {/* No quick-actions row (P2-8): it duplicated the top nav incompletely,
-          and the mobile sheet nav already covers reach. */}
+        {/* The Quit Test's Today promotion is REMOVED per DEC-03 (the P6
+            rebuild half of the decision); its owned destination is
+            /quit-date in the utility nav group. */}
       </div>
     </RewardProvider>
   );
@@ -1132,7 +1078,7 @@ function LockedCard({
       <div className="flex flex-1 flex-col items-start justify-center gap-3 py-4">
         <Lock className="size-5 text-muted-foreground" />
         <p className="text-muted-foreground text-sm">{text}</p>
-        <Button asChild size="sm">
+        <Button asChild className="min-h-11 sm:min-h-8" size="sm">
           <Link href="/account">Upgrade to Pro</Link>
         </Button>
       </div>

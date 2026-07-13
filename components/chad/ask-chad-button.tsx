@@ -25,7 +25,9 @@ export function AskChadButton({
   return (
     <Button
       asChild
-      className={`gap-1.5${className ? ` ${className}` : ""}`}
+      // 44px touch floor at phone widths, everywhere this renders (FIX-19);
+      // desktop keeps the compact footer height.
+      className={`min-h-11 gap-1.5 sm:min-h-8${className ? ` ${className}` : ""}`}
       size="sm"
       variant="outline"
     >
