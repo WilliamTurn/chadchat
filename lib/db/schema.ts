@@ -991,6 +991,36 @@ export const customExercise = pgTable("CustomExercise", {
 export type CustomExercise = InferSelectModel<typeof customExercise>;
 
 
+// Canonical exercise identity (FIX-34). Maps a logged name variant onto ONE
+// canonical exercise so records/PRs stop splitting across aliases ("Bench
+// Press" vs "Barbell Bench Press"). Resolution happens at READ time when stats
+// group exercises (lib/workouts/exercise-identity.ts); WorkoutExercise rows
+// are never rewritten, so removing a row un-merges. The curated global set
+// ships in code; this table holds member-scoped mappings (a member merging
+// their own custom exercise into another) plus any future global overrides.
+// Only status "approved" rows participate in resolution.
+export const exerciseAlias = pgTable("ExerciseAlias", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  // Null = global mapping; set = scoped to this member's log only.
+  userId: uuid("userId").references(() => user.id),
+  // The name variant, stored normalized (normalizeExerciseKey).
+  alias: text("alias").notNull(),
+  // The canonical display name records group under.
+  canonicalName: text("canonicalName").notNull(),
+  source: varchar("source", { enum: ["curated", "member"] })
+    .notNull()
+    .default("member"),
+  status: varchar("status", { enum: ["proposed", "approved", "rejected"] })
+    .notNull()
+    .default("proposed"),
+  confidence: varchar("confidence", { enum: ["high", "medium"] }),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  decidedAt: timestamp("decidedAt"),
+});
+
+export type ExerciseAlias = InferSelectModel<typeof exerciseAlias>;
+
+
 // --- Structured meal plans (Pro) ---
 // A multi-day meal plan Chad (or the user) generates. Unlike the markdown `plan`
 // table (which holds free-text training/diet plans), a meal plan is fully
