@@ -55,6 +55,21 @@ const PAGES = {
   "charts-lapsed": "/dev/fixtures/charts?persona=lapsed",
   "charts-overshoot": "/dev/fixtures/charts?persona=overshoot",
   "charts-locked": "/dev/fixtures/charts?persona=locked-basic",
+  // P56-C: the real FIX-25/26/27 tracking panels, all personas + forced
+  // fetch states on one page (new images; P56-Z reviews the wave approval).
+  "today-panels": "/dev/fixtures/today-panels",
+  // P56-A: the FIX-32 cross-domain Progress overview, all nine sections per
+  // persona (new images; P56-Z reviews the wave approval).
+  "progress-overview-consistent": "/dev/fixtures/progress?persona=consistent",
+  "progress-overview-first-run": "/dev/fixtures/progress?persona=first-run",
+  "progress-overview-sparse": "/dev/fixtures/progress?persona=sparse",
+  "progress-overview-lapsed": "/dev/fixtures/progress?persona=lapsed",
+  "progress-overview-overshoot": "/dev/fixtures/progress?persona=overshoot",
+  "progress-overview-locked": "/dev/fixtures/progress?persona=locked-basic",
+  // P56-B: the FIX-33 Progress > Training analytics matrix, every persona +
+  // the locked teaser on one page (new images; P56-Z reviews the wave
+  // approval).
+  training: "/dev/fixtures/training",
 };
 
 const WIDTHS = [1440, 1280, 1024, 768, 390, 360, 320];
