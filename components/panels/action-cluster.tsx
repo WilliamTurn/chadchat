@@ -139,14 +139,22 @@ export function ActionCluster({
             {overflow.map((item) => {
               warnBannedCopy("overflow", item.label);
               return item.href ? (
-                <DropdownMenuItem asChild key={item.label}>
+                <DropdownMenuItem
+                  asChild
+                  className={TOUCH_TARGET}
+                  key={item.label}
+                >
                   <Link href={item.href}>
                     {item.icon}
                     {item.label}
                   </Link>
                 </DropdownMenuItem>
               ) : (
-                <DropdownMenuItem key={item.label} onClick={item.onClick}>
+                <DropdownMenuItem
+                  className={TOUCH_TARGET}
+                  key={item.label}
+                  onClick={item.onClick}
+                >
                   {item.icon}
                   {item.label}
                 </DropdownMenuItem>

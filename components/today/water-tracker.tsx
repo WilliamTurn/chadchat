@@ -422,7 +422,6 @@ export function WaterTracker({
               <div className="flex gap-2">
                 <Input
                   aria-label="Custom water amount in ounces"
-                  autoFocus
                   className="h-10"
                   inputMode="numeric"
                   onChange={(e) => setCustomValue(e.target.value)}
@@ -727,7 +726,6 @@ function WaterGoalEditor({
           <div className="flex gap-2">
             <Input
               aria-label="Daily hydration goal in ounces"
-              autoFocus
               className="h-10"
               inputMode="numeric"
               onChange={(e) => setValue(e.target.value)}

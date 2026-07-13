@@ -326,7 +326,13 @@ function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
     <main
       data-slot="sidebar-inset"
       className={cn(
-        "relative flex w-full flex-1 flex-col bg-sidebar [transform:translate3d(0,0,0)]",
+        // No transform here (P2-Z): the template's translate3d(0,0,0) GPU
+        // hack made <main> the containing block for position:fixed
+        // descendants, pinning every in-page toast to the DOCUMENT top --
+        // invisible whenever the member had scrolled (mobile audit,
+        // live2-toast-undo-390-dark.png). Identity transform, so removal
+        // changes no pixels.
+        "relative flex w-full flex-1 flex-col bg-sidebar",
         className
       )}
       {...props}
