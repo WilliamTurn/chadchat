@@ -58,9 +58,13 @@ export function AuthForm({
 
   return (
     <Form {...form}>
-      {/* noValidate: our inline messages replace the browser's native popups. */}
+      {/* noValidate: our inline messages replace the browser's native popups.
+          method="post": a submit before React hydrates falls back to a native
+          form submission, which defaults to GET and would put the email and
+          password in the URL. */}
       <form
         className="flex flex-col gap-4"
+        method="post"
         noValidate
         onSubmit={form.handleSubmit(onSubmit)}
       >
@@ -73,9 +77,10 @@ export function AuthForm({
                 Email
               </FormLabel>
               <FormControl>
+                {/* No autoFocus: it pops the keyboard on mobile page load
+                    (nothing starts uninvited). */}
                 <Input
                   autoComplete="email"
-                  autoFocus
                   placeholder="you@someo.ne"
                   type="email"
                   {...field}

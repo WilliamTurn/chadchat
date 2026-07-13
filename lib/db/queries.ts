@@ -40,10 +40,12 @@ import {
   type Document,
   document,
   emailVerificationToken,
+  exerciseAlias,
   type FutureYouForecast,
   futureYouForecast,
   type Goal,
   goal,
+  goalOutcome,
   type MealAnalysis,
   mealAnalysis,
   type MealPlan,
@@ -57,6 +59,10 @@ import {
   type ProgressMontage,
   passwordResetToken,
   plan,
+  planSession,
+  planSessionCompletion,
+  planSessionExercise,
+  planSessionSet,
   progressEntry,
   progressMontage,
   type QuitPrediction,
@@ -937,6 +943,40 @@ export async function deleteUserByEmail(
       // Nightly sleep log.
       await tx.delete(sleepEntry).where(eq(sleepEntry.userId, userId));
 
+      // Effective-dated target history (FIX-07).
+      await tx
+        .delete(nutritionTargetVersion)
+        .where(eq(nutritionTargetVersion.userId, userId));
+      await tx
+        .delete(userTargetVersion)
+        .where(eq(userTargetVersion.userId, userId));
+
+      // Materialized plan schedules + completion events (FIX-28): they FK
+      // plans AND workouts, so they go before both.
+      await tx.delete(planSessionSet).where(eq(planSessionSet.userId, userId));
+      await tx
+        .delete(planSessionExercise)
+        .where(eq(planSessionExercise.userId, userId));
+      await tx
+        .delete(planSessionCompletion)
+        .where(eq(planSessionCompletion.userId, userId));
+      await tx.delete(planSession).where(eq(planSession.userId, userId));
+
+      // Linked goal outcomes (FIX-29): before goals.
+      await tx.delete(goalOutcome).where(eq(goalOutcome.userId, userId));
+
+      // Member-scoped exercise aliases (FIX-34); global rows have a null
+      // userId and stay.
+      await tx.delete(exerciseAlias).where(eq(exerciseAlias.userId, userId));
+
+      // Future You forecasts FK both the user and a goal, so they go before
+      // goals; uploads FK the user. (Both were missing here pre-wave, which
+      // broke this whole funnel for any member who had either.)
+      await tx
+        .delete(futureYouForecast)
+        .where(eq(futureYouForecast.userId, userId));
+      await tx.delete(userUpload).where(eq(userUpload.userId, userId));
+
       // Goals, plans, and body measurements.
       await tx.delete(goal).where(eq(goal.userId, userId));
       await tx.delete(plan).where(eq(plan.userId, userId));
@@ -1014,6 +1054,30 @@ export async function deleteAllUserData(userId: string): Promise<void> {
         .where(eq(nutritionTarget.userId, userId));
       await tx.delete(waterLog).where(eq(waterLog.userId, userId));
       await tx.delete(sleepEntry).where(eq(sleepEntry.userId, userId));
+      // FIX-07/28/29/34 children first (FKs are no action): target history,
+      // materialized schedules + completions, goal outcomes, member aliases.
+      await tx
+        .delete(nutritionTargetVersion)
+        .where(eq(nutritionTargetVersion.userId, userId));
+      await tx
+        .delete(userTargetVersion)
+        .where(eq(userTargetVersion.userId, userId));
+      await tx.delete(planSessionSet).where(eq(planSessionSet.userId, userId));
+      await tx
+        .delete(planSessionExercise)
+        .where(eq(planSessionExercise.userId, userId));
+      await tx
+        .delete(planSessionCompletion)
+        .where(eq(planSessionCompletion.userId, userId));
+      await tx.delete(planSession).where(eq(planSession.userId, userId));
+      await tx.delete(goalOutcome).where(eq(goalOutcome.userId, userId));
+      await tx.delete(exerciseAlias).where(eq(exerciseAlias.userId, userId));
+      // Pre-wave gap, same failure class: forecasts FK user + goal, uploads
+      // FK user; without these the wipe fails for members who have either.
+      await tx
+        .delete(futureYouForecast)
+        .where(eq(futureYouForecast.userId, userId));
+      await tx.delete(userUpload).where(eq(userUpload.userId, userId));
       await tx.delete(goal).where(eq(goal.userId, userId));
       await tx.delete(plan).where(eq(plan.userId, userId));
       await tx
@@ -1489,7 +1553,15 @@ export async function deleteGoal({
   userId: string;
 }): Promise<void> {
   try {
-    await db.delete(goal).where(and(eq(goal.id, id), eq(goal.userId, userId)));
+    await db.transaction(async (tx) => {
+      // Linked outcomes (FIX-29) FK the goal with no action.
+      await tx
+        .delete(goalOutcome)
+        .where(and(eq(goalOutcome.goalId, id), eq(goalOutcome.userId, userId)));
+      await tx
+        .delete(goal)
+        .where(and(eq(goal.id, id), eq(goal.userId, userId)));
+    });
   } catch (_error) {
     throw new ChatbotError("bad_request:database", "Failed to delete goal");
   }
@@ -1673,7 +1745,44 @@ export async function deletePlan({
   userId: string;
 }): Promise<void> {
   try {
-    await db.delete(plan).where(and(eq(plan.id, id), eq(plan.userId, userId)));
+    await db.transaction(async (tx) => {
+      const [owned] = await tx
+        .select({ id: plan.id })
+        .from(plan)
+        .where(and(eq(plan.id, id), eq(plan.userId, userId)));
+      if (!owned) {
+        return;
+      }
+      // The materialized schedule (FIX-28) FKs the plan with no action:
+      // sets → exercises → completions → sessions, then the plan itself.
+      const sessions = await tx
+        .select({ id: planSession.id })
+        .from(planSession)
+        .where(eq(planSession.planId, id));
+      const sessionIds = sessions.map((s) => s.id);
+      if (sessionIds.length > 0) {
+        const exercises = await tx
+          .select({ id: planSessionExercise.id })
+          .from(planSessionExercise)
+          .where(inArray(planSessionExercise.planSessionId, sessionIds));
+        const exerciseIds = exercises.map((e) => e.id);
+        if (exerciseIds.length > 0) {
+          await tx
+            .delete(planSessionSet)
+            .where(inArray(planSessionSet.planSessionExerciseId, exerciseIds));
+          await tx
+            .delete(planSessionExercise)
+            .where(inArray(planSessionExercise.id, exerciseIds));
+        }
+        await tx
+          .delete(planSessionCompletion)
+          .where(eq(planSessionCompletion.planId, id));
+        await tx.delete(planSession).where(eq(planSession.planId, id));
+      }
+      await tx
+        .delete(plan)
+        .where(and(eq(plan.id, id), eq(plan.userId, userId)));
+    });
   } catch (_error) {
     throw new ChatbotError("bad_request:database", "Failed to delete plan");
   }
@@ -3781,6 +3890,12 @@ export async function deleteWorkout({
           .where(inArray(workoutSet.workoutExerciseId, existingIds));
       }
       await tx.delete(workoutExercise).where(eq(workoutExercise.workoutId, id));
+      // A workout saved from a plan session carries a completion event whose
+      // workoutId FK (no action) would block this delete; adherence must not
+      // keep counting a deleted workout.
+      await tx
+        .delete(planSessionCompletion)
+        .where(eq(planSessionCompletion.workoutId, id));
       await tx
         .delete(workout)
         .where(and(eq(workout.id, id), eq(workout.userId, userId)));

@@ -738,8 +738,9 @@ export const planSessionCompletion = pgTable(
       .notNull()
       .references(() => workout.id),
     sessionName: text("sessionName").notNull(),
-    // The member-local day the completion counts toward (noon-UTC anchor via
-    // lib/date.ts, same convention as every picked day).
+    // The member-local day the completion counts toward (00:00-UTC calendar
+    // anchor via lib/date.ts calendarDayAnchorInTz, matching the write in
+    // app/workouts/actions.ts and the week-strip windows).
     completedDay: timestamp("completedDay").notNull(),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
   },

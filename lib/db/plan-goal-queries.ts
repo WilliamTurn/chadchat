@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { hashPlanDays } from "@/lib/plans/materialize";
@@ -166,11 +166,21 @@ async function materializeSchedule(args: {
   const { planRow, target, hash } = args;
 
   await db.transaction(async (tx) => {
+    // Serialize materialization per plan. Under READ COMMITTED, two
+    // concurrent first views would both read "no sessions", both skip the
+    // prescription clear, and the second would double-insert every exercise
+    // and set after the first commits (its session upsert only blocks on the
+    // unique index, then proceeds).
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${planRow.id}, 0))`
+    );
+
     const existing = await tx
       .select({
         id: planSession.id,
         position: planSession.position,
         active: planSession.active,
+        sourceHash: planSession.sourceHash,
       })
       .from(planSession)
       .where(
@@ -179,6 +189,16 @@ async function materializeSchedule(args: {
           eq(planSession.userId, planRow.userId)
         )
       );
+
+    // The race loser lands here after the winner committed: if the schedule
+    // is already fresh, rebuilding it would churn rows for nothing.
+    const activeExisting = existing.filter((s) => s.active);
+    if (
+      activeExisting.length === target.sessions.length &&
+      activeExisting.every((s) => s.sourceHash === hash)
+    ) {
+      return;
+    }
 
     // Clear old prescriptions for every session row of this plan.
     const allSessionIds = existing.map((s) => s.id);
@@ -328,7 +348,8 @@ export async function getPlanSessions(entry: {
 /**
  * Record that a logged workout completed a prescribed session. Idempotent on
  * workoutId (a double-submitted save stays one event). Completions are
- * immutable history: nothing updates or deletes them.
+ * immutable history: nothing updates them; they are removed only when their
+ * workout, plan, or member is deleted (the queries.ts delete funnels).
  */
 export async function recordPlanSessionCompletion(entry: {
   userId: string;

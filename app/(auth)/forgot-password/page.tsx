@@ -76,8 +76,11 @@ export default function Page() {
         Enter your email and we'll send you a link to set a new password.
       </p>
       <Form {...form}>
+        {/* method="post": a pre-hydration native submit must never GET the
+            field values into the URL. */}
         <form
           className="flex flex-col gap-4"
+          method="post"
           noValidate
           onSubmit={form.handleSubmit(onSubmit)}
         >
