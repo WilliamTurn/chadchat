@@ -20,10 +20,11 @@
  *     designed compact state with no chart furniture, locked is a teaser and
  *     never an error tone.
  *
- * Embedding: `chrome=false` drops the card shell (and, with `compact`, the
- * title/headline row) so a panel that already renders its own header via the
- * P2-B panel frame can mount just the plot + captions. Chart-level state
- * treatments still apply either way.
+ * Embedding: `chrome=false` drops the card shell; `compact` additionally
+ * drops the title/headline row AND the figcaption rows (legend, coverage,
+ * caption), because the P2-B panel frame carries all of that in its own
+ * slots. Panel-embed = bare plot + the sr-only text summary. Chart-level
+ * state treatments still apply either way.
  */
 
 import { Lock } from "lucide-react";
@@ -236,7 +237,11 @@ export function ChartFrame({
 
       <div className={compact ? undefined : "mt-4"}>{body}</div>
 
-      {showPlotChrome && (legend?.length || showCoverage || caption) ? (
+      {/* Panel-embed (compact) renders NO figcaption rows: the panel frame
+          already carries coverage, context, and staleness in its own slots,
+          and the benchmark tiles (MacroFactor) keep embedded plots bare.
+          Full-chrome charts keep legend/coverage/caption here. */}
+      {showPlotChrome && !compact && (legend?.length || showCoverage || caption) ? (
         <figcaption className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5">
           {legend?.map((item) => (
             <span

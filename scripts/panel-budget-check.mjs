@@ -37,14 +37,19 @@ if (!multMatch) {
 }
 const PHONE_MULT = Number(multMatch[1]);
 
+/**
+ * Budgets are GRID-LAYOUT budgets, so they are enforced on the composition
+ * pages (the real grid-dashboard columns, the surface P2-B's accepted run-3
+ * measurements used). The roles matrix squeezes panels into inspection cells
+ * narrower than any real grid column, which inflates wrap-driven heights and
+ * over-fires the check.
+ */
 const PAGES = [
-  "/dev/fixtures/roles?persona=consistent",
-  "/dev/fixtures/roles?persona=first-run",
-  "/dev/fixtures/roles?persona=sparse",
-  "/dev/fixtures/roles?persona=lapsed",
   "/dev/fixtures/panels?persona=consistent",
   "/dev/fixtures/panels?persona=first-run",
+  "/dev/fixtures/panels?persona=sparse",
   "/dev/fixtures/panels?persona=lapsed",
+  "/dev/fixtures/panels?persona=overshoot",
 ];
 const WIDTHS = [1440, 1280, 768, 390, 360, 320];
 
@@ -65,7 +70,9 @@ async function main() {
           state: el.getAttribute("data-panel-state"),
           min: Number(el.getAttribute("data-height-min")),
           max: Number(el.getAttribute("data-height-max")),
-          height: el.getBoundingClientRect().height,
+          // clientHeight: the budget bounds CONTENT height (padding included,
+          // border excluded), matching the P2-B run-3 method.
+          height: el.clientHeight,
         }))
       );
       for (const p of panels) {

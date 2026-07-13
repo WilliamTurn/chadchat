@@ -275,18 +275,21 @@
   --chart-fat: #a78bfa;
 }
 
+/* FIX-19 reduced-motion law: looping utility animations stop too (state
+   stays conveyed by aria-busy/labels, not motion). Recharts reveals and the
+   motion/react springs already honor the preference themselves. UNLAYERED on
+   purpose: inside @layer base it loses to Tailwind's utilities layer where
+   animate-* is defined; unlayered rules outrank every layer. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse,
+  .animate-spin {
+    animation: none;
+  }
+}
+
 @layer base {
   * {
     @apply border-border ring-0;
-  }
-  /* FIX-19 reduced-motion law: looping utility animations stop too (state
-     stays conveyed by aria-busy/labels, not motion). Recharts reveals and
-     the motion/react springs already honor the preference themselves. */
-  @media (prefers-reduced-motion: reduce) {
-    .animate-pulse,
-    .animate-spin {
-      animation: none;
-    }
   }
   body {
     @apply bg-background text-foreground;
