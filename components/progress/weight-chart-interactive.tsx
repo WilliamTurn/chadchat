@@ -40,7 +40,7 @@ import {
   ChartContainer,
   ChartTooltip,
 } from "@/components/ui/chart";
-import { useChartRange } from "@/hooks/use-chart-range";
+import { useUrlChartRange } from "@/hooks/use-url-chart-range";
 import { useMountReveal } from "@/hooks/use-mount-reveal";
 import {
   formatFullDate,
@@ -121,6 +121,7 @@ export function WeightChartInteractive({
   goalWeight = null,
   goalStartWeight = null,
   variant = "full",
+  urlState = false,
 }: {
   points: { t: number; weight: number }[];
   unit: string;
@@ -128,12 +129,19 @@ export function WeightChartInteractive({
   /** The active weight goal's stored start weight, in `unit` (DSH-26 anchor). */
   goalStartWeight?: number | null;
   variant?: "full" | "compact";
+  /** Sync the range (incl. custom from/to) to `?range=` for back/forward and
+   * deep links (FIX-03). Only the page that owns those params opts in
+   * (/progress); embedded mounts (/today, goal detail) stay URL-silent. */
+  urlState?: boolean;
 }) {
   // Trend is computed over the FULL history so the smoothing never restarts at a
   // range boundary; the range only narrows what's drawn.
   const allRows = useMemo<TrendRow[]>(() => ema(points, 10), [points]);
 
-  const { rows, control } = useChartRange(allRows, { minPoints: 8 });
+  const { rows, control } = useUrlChartRange(allRows, {
+    minPoints: 8,
+    enabled: urlState,
+  });
   const n = points.length;
 
   // ---- Single source of truth: trend-based stats over the selected range ----

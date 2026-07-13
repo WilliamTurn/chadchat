@@ -5,7 +5,9 @@
 
 import { ChevronRight, Plus, Search } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useUrlParam } from "@/hooks/use-url-state";
+import { enumParam, textParam } from "@/lib/url-state";
 import {
   MUSCLE_GROUP_LABELS,
   MUSCLE_GROUPS,
@@ -21,6 +23,9 @@ import {
 import { formatWeight } from "./format";
 import { WCard } from "./ui";
 
+const QUERY_PARAM = textParam();
+const MUSCLE_PARAM = enumParam<string>(["all", ...MUSCLE_GROUPS], "all");
+
 export function ExerciseLibrary({
   customExercises,
   prBaseline,
@@ -28,8 +33,14 @@ export function ExerciseLibrary({
   customExercises: CustomExerciseData[];
   prBaseline: Record<string, PrBaseline>;
 }) {
-  const [query, setQuery] = useState("");
-  const [muscle, setMuscle] = useState<string>("all");
+  // URL-synced (FIX-03): `?q=` + `?muscle=` restore the filtered catalog on
+  // back/forward and deep links. Typing debounces the URL write (the input
+  // itself is instant); both replace, never push (Linear/Stripe filter
+  // hygiene: no history entry per keystroke). `all` is the default, omitted.
+  const [query, setQuery] = useUrlParam("q", QUERY_PARAM, {
+    debounceMs: 350,
+  });
+  const [muscle, setMuscle] = useUrlParam("muscle", MUSCLE_PARAM);
   const catalog = useMemo(() => mergeCatalog(customExercises), [customExercises]);
 
   const results = useMemo(() => {

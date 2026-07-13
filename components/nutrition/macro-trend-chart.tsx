@@ -12,7 +12,7 @@
  */
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   Bar,
   CartesianGrid,
@@ -31,8 +31,10 @@ import {
   ChartContainer,
   ChartTooltip,
 } from "@/components/ui/chart";
-import { useChartRange } from "@/hooks/use-chart-range";
+import { useUrlChartRange } from "@/hooks/use-url-chart-range";
+import { useUrlParam } from "@/hooks/use-url-state";
 import { useMountReveal } from "@/hooks/use-mount-reveal";
+import { enumParam } from "@/lib/url-state";
 import { formatTick, niceScale } from "@/lib/chart/format";
 import { GOAL_EMERALD, MACRO } from "@/lib/chart/palette";
 import { ema } from "@/lib/chart/trend";
@@ -66,6 +68,10 @@ const METRICS: Record<
 
 const METRIC_ORDER: MetricKey[] = ["calories", "protein", "carbs", "fat"];
 
+// `?metric=` grammar (FIX-03): calories is the default and stays out of the
+// URL; invalid values fall back to it.
+const METRIC_PARAM = enumParam<MetricKey>(METRIC_ORDER, "calories");
+
 const ASK_CHAD_PROMPT =
   "Review my nutrition trend chart: daily calories and protein against my targets over the last few weeks, not just today. What's the pattern, and what should I change?";
 
@@ -87,9 +93,11 @@ export function MacroTrendChart({
   days: DailyMacros[];
   target: MacroTarget | null;
 }) {
-  const [metric, setMetric] = useState<MetricKey>("calories");
+  // URL-synced (FIX-03): `?metric=` + `?range=` restore across back/forward
+  // and deep links. This chart mounts only on /nutrition, which owns them.
+  const [metric, setMetric] = useUrlParam("metric", METRIC_PARAM);
   const reveal = useMountReveal();
-  const { rows, control } = useChartRange(days, { minPoints: 5 });
+  const { rows, control } = useUrlChartRange(days, { minPoints: 5 });
 
   const meta = METRICS[metric];
   const targetValue = target?.[metric] ?? null;

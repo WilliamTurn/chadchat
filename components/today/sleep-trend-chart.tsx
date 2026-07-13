@@ -20,7 +20,7 @@ import { useMemo } from "react";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { ChartFrame } from "@/components/charts/chart-frame";
 import { DailyBarsChart } from "@/components/charts/slot-bars-chart";
-import { useChartWindow } from "@/components/charts/use-chart-window";
+import { useUrlChartWindow } from "@/hooks/use-url-chart-range";
 import { Kpi } from "@/components/dashboard/kpi";
 import { DOMAIN } from "@/lib/chart/palette";
 import { buildChartSummary } from "@/lib/chart/summary";
@@ -57,7 +57,9 @@ export function SleepTrendChart({
     () => days.map((d) => ({ t: d.t, value: d.minutes })),
     [days]
   );
-  const { window: w, control } = useChartWindow(points, {
+  // URL-synced (FIX-03): `?range=` restores across back/forward and deep
+  // links. This chart mounts only on /sleep, which owns the param.
+  const { window: w, control } = useUrlChartWindow(points, {
     todayMs,
     minPoints: 7,
   });

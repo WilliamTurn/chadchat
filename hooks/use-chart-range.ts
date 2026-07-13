@@ -54,7 +54,14 @@ export type RangeControlProps = {
  */
 export function useChartRange<T extends { t: number }>(
   rows: T[],
-  opts: { minPoints?: number } = {}
+  opts: {
+    minPoints?: number;
+    /** Starting preset (FIX-03 deep links); invalid/unsupported keys fall
+     * back to the computed default. Does not change later resets. */
+    initialRange?: RangeKey;
+    /** Starting custom window (FIX-03 deep links); wins over initialRange. */
+    initialCustom?: CustomRange | null;
+  } = {}
 ): {
   range: RangeKey;
   setRange: (r: RangeKey) => void;
@@ -90,8 +97,18 @@ export function useChartRange<T extends { t: number }>(
     return "all";
   }, [presets, rows, minPoints]);
 
-  const [range, setRangeState] = useState<RangeKey>(initialRange);
-  const [custom, setCustomState] = useState<CustomRange | null>(null);
+  const [range, setRangeState] = useState<RangeKey>(() => {
+    if (opts.initialCustom) {
+      return "custom";
+    }
+    const wanted = opts.initialRange;
+    return wanted && wanted !== "custom" && presets.some((p) => p.key === wanted)
+      ? wanted
+      : initialRange;
+  });
+  const [custom, setCustomState] = useState<CustomRange | null>(
+    opts.initialCustom ?? null
+  );
 
   function setRange(r: RangeKey) {
     // "custom" only activates through setCustom (it needs a window to mean

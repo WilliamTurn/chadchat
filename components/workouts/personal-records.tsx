@@ -10,7 +10,8 @@
 
 import { ChevronDown, Trophy } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useState } from "react";
+import { useUrlParam } from "@/hooks/use-url-state";
+import { idParam } from "@/lib/url-state";
 import type { PersonalRecord } from "@/lib/workouts/stats";
 import { ExerciseTrendChart } from "./exercise-trend-chart";
 
@@ -26,7 +27,11 @@ export function PersonalRecords({
 }: {
   records: PersonalRecordWithTrend[];
 }) {
-  const [openName, setOpenName] = useState<string | null>(null);
+  // URL-synced (FIX-03): the open drill-down lives at `?pr=<exercise name>`,
+  // so a deep link opens it and back/forward restores it. Opening PUSHES a
+  // history entry (Back closes the panel, the nuqs open-a-panel convention);
+  // closing in the UI replaces (no forward junk).
+  const [openName, setOpenName] = useUrlParam("pr", idParam());
   const reduced = useReducedMotion() ?? false;
 
   if (records.length === 0) {
@@ -55,9 +60,9 @@ export function PersonalRecords({
               }`}
               key={r.exerciseName}
               onClick={() =>
-                setOpenName((prev) =>
-                  prev === r.exerciseName ? null : r.exerciseName
-                )
+                isOpen
+                  ? setOpenName(null)
+                  : setOpenName(r.exerciseName, { history: "push" })
               }
               type="button"
             >

@@ -228,6 +228,7 @@ async function Dashboard({
               goalWeight={goalWeight}
               points={points}
               unit={displayUnit}
+              urlState
             />
           ) : (
             <section className="rounded-2xl border border-border bg-card p-6">

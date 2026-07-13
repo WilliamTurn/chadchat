@@ -26,7 +26,7 @@ import {
   ChartContainer,
   ChartTooltip,
 } from "@/components/ui/chart";
-import { useChartRange } from "@/hooks/use-chart-range";
+import { useUrlChartRange } from "@/hooks/use-url-chart-range";
 import { useMountReveal } from "@/hooks/use-mount-reveal";
 import { formatTick, niceScale } from "@/lib/chart/format";
 import { DOMAIN } from "@/lib/chart/palette";
@@ -93,7 +93,9 @@ export function VolumeChart({ points }: { points: Point[] }) {
   // (base duration + per-bar delay), so no bar gets cut off mid-grow. Computed
   // from the fixed point count so a range toggle doesn't re-trigger it.
   const reveal = useMountReveal(460 + Math.min(points.length, 24) * 45);
-  const { rows, control } = useChartRange(points, { minPoints: 6 });
+  // URL-synced (FIX-03): `?range=` restores across back/forward and deep
+  // links. This chart mounts only on /workouts, which owns the param.
+  const { rows, control } = useUrlChartRange(points, { minPoints: 6 });
 
   const stats = useMemo(() => {
     if (rows.length === 0) {

@@ -6,6 +6,7 @@ import { auth } from "@/app/(auth)/auth";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { PageShell } from "@/components/nav/page-shell";
 import { ReportActions } from "@/components/reports/report-actions";
+import { ReportDetails } from "./report-details";
 import { ReportTeaser } from "@/components/reports/report-teaser";
 import { ReportView } from "@/components/reports/report-view";
 import { Badge } from "@/components/ui/badge";
@@ -200,8 +201,9 @@ function ReportsList({
             </h2>
             <div className="flex flex-col gap-3">
               {older.map((report) => (
-                <details
+                <ReportDetails
                   className="group rounded-2xl border border-border bg-card"
+                  id={report.id}
                   key={report.id}
                 >
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 [&::-webkit-details-marker]:hidden">
@@ -232,7 +234,7 @@ function ReportsList({
                       />
                     </div>
                   </div>
-                </details>
+                </ReportDetails>
               ))}
             </div>
           </section>
