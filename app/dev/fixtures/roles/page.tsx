@@ -46,7 +46,7 @@ export default async function RolesMatrixPage({
           {PERSONAS.map((p) => (
             <Link
               className={cn(
-                "rounded-lg border px-3 py-2 text-secondary transition-colors",
+                "rounded-lg border px-3 py-2 text-body-sm transition-colors",
                 p.id === persona.id
                   ? "border-foreground/40 bg-muted text-foreground"
                   : "border-border text-muted-foreground hover:text-foreground"
@@ -67,7 +67,7 @@ export default async function RolesMatrixPage({
           <section className="space-y-4" data-role={role} key={role}>
             <div className="space-y-1">
               <h2 className="text-section-title">{role}</h2>
-              <p className="text-secondary text-muted-foreground">
+              <p className="text-body-sm text-muted-foreground">
                 {contract.purpose} Height {contract.heightRange[0]} to{" "}
                 {contract.heightRange[1]}px. Span {contract.defaultSpan}.{" "}
                 {contract.maxPrimaryActions} primary action

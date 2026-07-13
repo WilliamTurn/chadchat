@@ -446,7 +446,7 @@ textarea:focus-visible {
 }
 
 /* Secondary: 14px floor for supporting text. */
-@utility text-secondary {
+@utility text-body-sm {
   font-size: 14px;
   line-height: 1.5;
 }

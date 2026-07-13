@@ -100,7 +100,7 @@ function EmptyBody({
   compact?: boolean;
 }) {
   const copy = (
-    <p className="text-muted-foreground text-secondary">
+    <p className="text-muted-foreground text-body-sm">
       <span className="font-medium text-foreground">{empty.absent}</span>{" "}
       {empty.unlock}
     </p>
@@ -282,7 +282,7 @@ export function PanelHeadline({
     <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
       <span className={large ? "text-metric-lg" : "text-metric"}>{value}</span>
       {context && (
-        <span className="text-muted-foreground text-secondary">{context}</span>
+        <span className="text-muted-foreground text-body-sm">{context}</span>
       )}
     </div>
   );

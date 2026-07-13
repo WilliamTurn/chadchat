@@ -66,7 +66,7 @@ export default async function PanelsCompositionPage({
           {PERSONAS.map((p) => (
             <Link
               className={cn(
-                "rounded-lg border px-3 py-2 text-secondary transition-colors",
+                "rounded-lg border px-3 py-2 text-body-sm transition-colors",
                 p.id === persona.id
                   ? "border-foreground/40 bg-muted text-foreground"
                   : "border-border text-muted-foreground hover:text-foreground"

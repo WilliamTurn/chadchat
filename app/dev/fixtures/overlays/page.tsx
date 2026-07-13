@@ -75,7 +75,7 @@ export default async function OverlaysFixturePage({
           <UndoQuickAddDemo />
           <DetailSheetDemo autoOpen={open === "sheet"} />
         </div>
-        <ul className="max-w-prose list-disc space-y-1 pl-5 text-secondary text-muted-foreground">
+        <ul className="max-w-prose list-disc space-y-1 pl-5 text-body-sm text-muted-foreground">
           <li>
             Log water: the quick-log short form. Phone gets the bottom sheet
             with a sticky primary action; saving shows the receipt with Undo.
@@ -102,12 +102,12 @@ export default async function OverlaysFixturePage({
 
       <section className="space-y-4">
         <h2 className="text-section-title">Overlay decision tree</h2>
-        <p className="max-w-prose text-secondary text-muted-foreground">
+        <p className="max-w-prose text-body-sm text-muted-foreground">
           One rule, no per-card inventing (motion-interaction.md section 5).
           Dialog stacked on dialog is banned and logs a dev-build error.
         </p>
         <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full min-w-96 text-left text-secondary">
+          <table className="w-full min-w-96 text-left text-body-sm">
             <thead>
               <tr className="border-border border-b bg-surface-inset">
                 <th className="px-4 py-2 font-medium">Need</th>

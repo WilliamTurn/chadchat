@@ -219,14 +219,14 @@ export function ChartFrame({
               <div className="mt-1 flex flex-wrap items-baseline gap-x-2">
                 <span className="text-metric tabular-nums">{headlineText}</span>
                 {headlineLabel && (
-                  <span className="text-secondary text-muted-foreground">
+                  <span className="text-body-sm text-muted-foreground">
                     {headlineLabel}
                   </span>
                 )}
               </div>
             )}
             {(goalText || activeRangeLabel) && showPlotChrome && (
-              <p className="mt-0.5 text-secondary text-muted-foreground">
+              <p className="mt-0.5 text-body-sm text-muted-foreground">
                 {[goalText, activeRangeLabel].filter(Boolean).join(" · ")}
               </p>
             )}

@@ -66,7 +66,7 @@ export default function FixturesIndexPage() {
 
       <section className="space-y-3">
         <h2 className="text-section-title">Personas loaded</h2>
-        <p className="text-secondary text-muted-foreground">
+        <p className="text-body-sm text-muted-foreground">
           {PERSONAS.map((p) => p.id).join(", ")} (anchor date 2026-07-08,
           America/Chicago)
         </p>

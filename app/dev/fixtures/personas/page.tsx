@@ -40,7 +40,7 @@ export default function PersonasPage() {
               <tr className="border-border/60 border-b align-top" key={p.id}>
                 <td className="py-3 pr-4">
                   <p className="font-medium">{p.id}</p>
-                  <p className="mt-1 max-w-[36ch] text-muted-foreground text-secondary">
+                  <p className="mt-1 max-w-[36ch] text-muted-foreground text-body-sm">
                     {p.description}
                   </p>
                 </td>

@@ -61,7 +61,7 @@ function SectionHeader({
   return (
     <div className="space-y-1">
       <h2 className="text-section-title">{title}</h2>
-      <p className="max-w-prose text-muted-foreground text-secondary">
+      <p className="max-w-prose text-muted-foreground text-body-sm">
         {description}
       </p>
     </div>
@@ -525,7 +525,7 @@ function ButtonsSection() {
           >
             Save entry
           </Button>
-          <p className="text-muted-foreground text-secondary">
+          <p className="text-muted-foreground text-body-sm">
             Click to run the 2 second pending demo. Width must not change.
           </p>
         </div>

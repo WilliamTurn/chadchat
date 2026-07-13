@@ -62,7 +62,7 @@ export default async function ChartsMatrixPage({
           {PERSONAS.map((p) => (
             <Link
               className={cn(
-                "rounded-lg border px-3 py-2 text-secondary transition-colors",
+                "rounded-lg border px-3 py-2 text-body-sm transition-colors",
                 p.id === persona.id
                   ? "border-foreground/40 bg-muted text-foreground"
                   : "border-border text-muted-foreground hover:text-foreground"
@@ -79,7 +79,7 @@ export default async function ChartsMatrixPage({
       <section className="space-y-4" data-testid="chart-grammar-states">
         <div className="space-y-1">
           <h2 className="text-section-title">Grammar states</h2>
-          <p className="text-secondary text-muted-foreground">
+          <p className="text-body-sm text-muted-foreground">
             The weight trend chart forced through all seven render states.
             Loading reserves the plot height (zero-shift); empty and locked are
             designed treatments with no chart furniture.
@@ -100,7 +100,7 @@ export default async function ChartsMatrixPage({
       <section className="space-y-4" data-testid="chart-types">
         <div className="space-y-1">
           <h2 className="text-section-title">Chart types</h2>
-          <p className="text-secondary text-muted-foreground">
+          <p className="text-body-sm text-muted-foreground">
             Every shared chart type on this persona's real data: trend line
             (raw + smoothed + goal), daily adherence bars vs target across
             three domains, and weekly frequency counts.
@@ -118,7 +118,7 @@ export default async function ChartsMatrixPage({
       <section className="space-y-4" data-testid="chart-compact">
         <div className="space-y-1">
           <h2 className="text-section-title">Compact variants (panel embed)</h2>
-          <p className="text-secondary text-muted-foreground">
+          <p className="text-body-sm text-muted-foreground">
             The chrome-off compact form a panel's visual slot mounts (TrendPanel
             adopts these at P2-Z integration). The panel header carries title
             and headline; the chart keeps its captions and text summary.

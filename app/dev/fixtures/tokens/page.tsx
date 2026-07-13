@@ -43,7 +43,7 @@ const TYPE_RAMP = [
   { cls: "text-metric-lg", label: "Metric large 32px tabular" },
   { cls: "text-metric", label: "Metric 28px tabular" },
   { cls: "text-body", label: "Body 15px" },
-  { cls: "text-secondary", label: "Secondary 14px" },
+  { cls: "text-body-sm", label: "Secondary 14px" },
   { cls: "text-meta", label: "Meta 13px (short metadata only)" },
   { cls: "text-eyebrow", label: "Eyebrow 12px uppercase" },
 ] as const;
@@ -95,7 +95,7 @@ export default function TokensPage() {
               />
             </div>
           ))}
-          <p className="pt-2 text-secondary text-muted-foreground">
+          <p className="pt-2 text-body-sm text-muted-foreground">
             Card padding 20 to 24px. Card gap 16px desktop, 12px phone.
             Section gap 32 to 40px. No 6/10/14px one-offs.
           </p>
@@ -126,7 +126,7 @@ export default function TokensPage() {
 
       <section className="space-y-4">
         <h2 className="text-section-title">Semantic state colors</h2>
-        <p className="max-w-[72ch] text-secondary text-muted-foreground">
+        <p className="max-w-[72ch] text-body-sm text-muted-foreground">
           Fills draw charts, bars, and badges; text forms are AA-measured on
           card and inset in their theme. Brand red #a4161a is FILL-ONLY in
           dark (2.5:1); red text uses critical-text (the DSH-61 fix). Domain
@@ -145,7 +145,7 @@ export default function TokensPage() {
             <tbody>
               {CONTRAST_TABLE.map((row) => (
                 <tr className="border-border/60 border-b" key={row.role}>
-                  <td className="py-3 pr-4 font-mono text-secondary">
+                  <td className="py-3 pr-4 font-mono text-body-sm">
                     {row.role}
                   </td>
                   <td className="py-3 pr-4">
@@ -178,7 +178,7 @@ export default function TokensPage() {
 
       <section className="space-y-4">
         <h2 className="text-section-title">Dashboard grid: 12 / 8 / 4</h2>
-        <p className="text-secondary text-muted-foreground">
+        <p className="text-body-sm text-muted-foreground">
           Resize to see composition change: 12 columns at 1280+, 8 at 768+,
           4 below. Content region bounds at 1500px inside the full shell.
         </p>
@@ -195,10 +195,10 @@ export default function TokensPage() {
               {i + 1}
             </div>
           ))}
-          <div className="col-span-4 flex h-24 items-center justify-center rounded-xl border border-border bg-card text-secondary md:col-span-4 xl:col-span-4">
+          <div className="col-span-4 flex h-24 items-center justify-center rounded-xl border border-border bg-card text-body-sm md:col-span-4 xl:col-span-4">
             span 4 (quick-log)
           </div>
-          <div className="col-span-4 flex h-24 items-center justify-center rounded-xl border border-border bg-card text-secondary md:col-span-4 xl:col-span-8">
+          <div className="col-span-4 flex h-24 items-center justify-center rounded-xl border border-border bg-card text-body-sm md:col-span-4 xl:col-span-8">
             span 8 (trend, 2/3 split)
           </div>
         </div>
