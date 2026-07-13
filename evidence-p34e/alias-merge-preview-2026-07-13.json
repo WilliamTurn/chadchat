@@ -1,0 +1,248 @@
+{
+  "generatedAt": "2026-07-13",
+  "members": [
+    {
+      "userId": "38370ae1-6a20-4314-9b0e-e82f5391c7fc",
+      "emailMasked": "jon***@gmail.com",
+      "preview": {
+        "groups": [
+          {
+            "canonicalName": "Leg Curl",
+            "slug": "leg-curl",
+            "members": [
+              {
+                "rawName": "Lying Leg Curl",
+                "matchedVia": "curated-alias",
+                "confidence": "high",
+                "exerciseRowCount": 1
+              }
+            ],
+            "recordsBefore": [
+              {
+                "exerciseName": "Lying Leg Curl",
+                "bestWeight": 150,
+                "bestWeightUnit": "lb",
+                "bestWeightReps": 10,
+                "bestEst1RM": 200,
+                "est1RMUnit": "lb",
+                "bestReps": 12,
+                "bestSessionVolume": 4540,
+                "lastPerformed": "2026-07-11T12:00:00.000Z"
+              }
+            ],
+            "recordAfter": {
+              "exerciseName": "Leg Curl",
+              "bestWeight": 150,
+              "bestWeightUnit": "lb",
+              "bestWeightReps": 10,
+              "bestEst1RM": 200,
+              "est1RMUnit": "lb",
+              "bestReps": 12,
+              "bestSessionVolume": 4540,
+              "lastPerformed": "2026-07-11T12:00:00.000Z"
+            }
+          }
+        ],
+        "customShadows": [
+          {
+            "customName": "Pushups",
+            "wouldHaveMergedInto": "Push-Up"
+          }
+        ],
+        "totalDistinctNames": 10,
+        "untouchedNameCount": 9
+      }
+    },
+    {
+      "userId": "94f4e0c1-c24e-47ae-bf39-95eb04a1ea32",
+      "emailMasked": "ste***@gmail.com",
+      "preview": {
+        "groups": [
+          {
+            "canonicalName": "Barbell Back Squat",
+            "slug": "barbell-back-squat",
+            "members": [
+              {
+                "rawName": "Back Squat",
+                "matchedVia": "curated-alias",
+                "confidence": "high",
+                "exerciseRowCount": 8
+              }
+            ],
+            "recordsBefore": [
+              {
+                "exerciseName": "Back Squat",
+                "bestWeight": 315,
+                "bestWeightUnit": "lb",
+                "bestWeightReps": 5,
+                "bestEst1RM": 368,
+                "est1RMUnit": "lb",
+                "bestReps": 6,
+                "bestSessionVolume": 6795,
+                "lastPerformed": "2026-07-01T00:30:00.000Z"
+              }
+            ],
+            "recordAfter": {
+              "exerciseName": "Barbell Back Squat",
+              "bestWeight": 315,
+              "bestWeightUnit": "lb",
+              "bestWeightReps": 5,
+              "bestEst1RM": 368,
+              "est1RMUnit": "lb",
+              "bestReps": 6,
+              "bestSessionVolume": 6795,
+              "lastPerformed": "2026-07-01T00:30:00.000Z"
+            }
+          },
+          {
+            "canonicalName": "Barbell Bench Press",
+            "slug": "barbell-bench-press",
+            "members": [
+              {
+                "rawName": "Bench Press",
+                "matchedVia": "curated-alias",
+                "confidence": "high",
+                "exerciseRowCount": 9
+              }
+            ],
+            "recordsBefore": [
+              {
+                "exerciseName": "Bench Press",
+                "bestWeight": 230,
+                "bestWeightUnit": "lb",
+                "bestWeightReps": 5,
+                "bestEst1RM": 268,
+                "est1RMUnit": "lb",
+                "bestReps": 6,
+                "bestSessionVolume": 4610,
+                "lastPerformed": "2026-07-06T14:05:00.000Z"
+              }
+            ],
+            "recordAfter": {
+              "exerciseName": "Barbell Bench Press",
+              "bestWeight": 230,
+              "bestWeightUnit": "lb",
+              "bestWeightReps": 5,
+              "bestEst1RM": 268,
+              "est1RMUnit": "lb",
+              "bestReps": 6,
+              "bestSessionVolume": 4610,
+              "lastPerformed": "2026-07-06T14:05:00.000Z"
+            }
+          },
+          {
+            "canonicalName": "Calf Raise",
+            "slug": "calf-raise",
+            "members": [
+              {
+                "rawName": "Standing Calf Raise",
+                "matchedVia": "curated-alias",
+                "confidence": "medium",
+                "exerciseRowCount": 8
+              }
+            ],
+            "recordsBefore": [
+              {
+                "exerciseName": "Standing Calf Raise",
+                "bestWeight": 265,
+                "bestWeightUnit": "lb",
+                "bestWeightReps": 12,
+                "bestEst1RM": 371,
+                "est1RMUnit": "lb",
+                "bestReps": 13,
+                "bestSessionVolume": 12245,
+                "lastPerformed": "2026-07-01T00:30:00.000Z"
+              }
+            ],
+            "recordAfter": {
+              "exerciseName": "Calf Raise",
+              "bestWeight": 265,
+              "bestWeightUnit": "lb",
+              "bestWeightReps": 12,
+              "bestEst1RM": 371,
+              "est1RMUnit": "lb",
+              "bestReps": 13,
+              "bestSessionVolume": 12245,
+              "lastPerformed": "2026-07-01T00:30:00.000Z"
+            }
+          },
+          {
+            "canonicalName": "Hip Thrust",
+            "slug": "hip-thrust",
+            "members": [
+              {
+                "rawName": "Barbell Hip Thrust",
+                "matchedVia": "curated-alias",
+                "confidence": "high",
+                "exerciseRowCount": 7
+              }
+            ],
+            "recordsBefore": [
+              {
+                "exerciseName": "Barbell Hip Thrust",
+                "bestWeight": 385,
+                "bestWeightUnit": "lb",
+                "bestWeightReps": 10,
+                "bestEst1RM": 513,
+                "est1RMUnit": "lb",
+                "bestReps": 11,
+                "bestSessionVolume": 11020,
+                "lastPerformed": "2026-07-05T00:30:00.000Z"
+              }
+            ],
+            "recordAfter": {
+              "exerciseName": "Hip Thrust",
+              "bestWeight": 385,
+              "bestWeightUnit": "lb",
+              "bestWeightReps": 10,
+              "bestEst1RM": 513,
+              "est1RMUnit": "lb",
+              "bestReps": 11,
+              "bestSessionVolume": 11020,
+              "lastPerformed": "2026-07-05T00:30:00.000Z"
+            }
+          },
+          {
+            "canonicalName": "Leg Curl",
+            "slug": "leg-curl",
+            "members": [
+              {
+                "rawName": "Seated Leg Curl",
+                "matchedVia": "curated-alias",
+                "confidence": "medium",
+                "exerciseRowCount": 8
+              }
+            ],
+            "recordsBefore": [
+              {
+                "exerciseName": "Seated Leg Curl",
+                "bestWeight": 130,
+                "bestWeightUnit": "lb",
+                "bestWeightReps": 12,
+                "bestEst1RM": 182,
+                "est1RMUnit": "lb",
+                "bestReps": 13,
+                "bestSessionVolume": 4560,
+                "lastPerformed": "2026-07-01T00:30:00.000Z"
+              }
+            ],
+            "recordAfter": {
+              "exerciseName": "Leg Curl",
+              "bestWeight": 130,
+              "bestWeightUnit": "lb",
+              "bestWeightReps": 12,
+              "bestEst1RM": 182,
+              "est1RMUnit": "lb",
+              "bestReps": 13,
+              "bestSessionVolume": 4560,
+              "lastPerformed": "2026-07-01T00:30:00.000Z"
+            }
+          }
+        ],
+        "customShadows": [],
+        "totalDistinctNames": 22,
+        "untouchedNameCount": 17
+      }
+    }
+  ]
+}
