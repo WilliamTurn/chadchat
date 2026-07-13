@@ -1,0 +1,314 @@
+{
+  "desktop_standalone_dark": {
+    "navInfo": {
+      "hasAside": true,
+      "groupCount": 6,
+      "labels": [
+        "Track",
+        "Plan",
+        "Review"
+      ],
+      "active": [
+        "Progress",
+        "Progress"
+      ],
+      "linkCount": 3,
+      "links": [
+        "Today",
+        "Progress",
+        "Coach"
+      ]
+    },
+    "smallTargets": [],
+    "console": [],
+    "consoleRaw": 0
+  },
+  "desktop_chat_dark": {
+    "console": [],
+    "consoleRaw": 0
+  },
+  "desktop_standalone_light": {
+    "navInfo": {
+      "hasAside": true,
+      "groupCount": 6,
+      "labels": [
+        "Track",
+        "Plan",
+        "Review"
+      ],
+      "active": [
+        "Progress",
+        "Progress"
+      ],
+      "linkCount": 3,
+      "links": [
+        "Today",
+        "Progress",
+        "Coach"
+      ]
+    },
+    "smallTargets": [],
+    "console": [],
+    "consoleRaw": 0
+  },
+  "desktop_chat_light": {
+    "console": [],
+    "consoleRaw": 0
+  },
+  "mobile_dark": {
+    "barInfo": {
+      "present": true,
+      "top": 784,
+      "h": 61,
+      "z": "40",
+      "bg": "oklab(0.127419 -0.00337692 -0.0156867 / 0.95)",
+      "blur": "blur(8px)",
+      "tabs": [
+        {
+          "label": "Today",
+          "w": 77,
+          "h": 60,
+          "active": true
+        },
+        {
+          "label": "Log",
+          "w": 79,
+          "h": 60,
+          "active": false
+        },
+        {
+          "label": "Progress",
+          "w": 77,
+          "h": 60,
+          "active": false
+        },
+        {
+          "label": "Coach",
+          "w": 77,
+          "h": 60,
+          "active": false
+        },
+        {
+          "label": "More",
+          "w": 79,
+          "h": 60,
+          "active": false
+        }
+      ]
+    },
+    "overflow": false,
+    "logDrawer": {
+      "opened": true,
+      "activeEl": "DIV",
+      "autofocusInput": false,
+      "items": [
+        "Close",
+        "Log a meal",
+        "Log water",
+        "Log sleep",
+        "Log a weigh-in",
+        "Log a workout"
+      ]
+    },
+    "moreSheet": {
+      "opened": true,
+      "autofocusInput": false,
+      "items": [
+        "Close",
+        "Workouts",
+        "Calorie Tracker",
+        "Hydration",
+        "Sleep",
+        "Goals",
+        "Meal Plan",
+        "Future You",
+        "Weekly Report",
+        "Rate My Kitchen",
+        "Files",
+        "Quit Test",
+        "Account",
+        "Help"
+      ]
+    },
+    "emdashInMain": true,
+    "console": [
+      {
+        "type": "warning",
+        "text": "Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}."
+      },
+      {
+        "type": "warning",
+        "text": "Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}."
+      },
+      {
+        "type": "warning",
+        "text": "Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}."
+      },
+      {
+        "type": "warning",
+        "text": "Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}."
+      }
+    ],
+    "consoleRaw": 4
+  },
+  "mobile_light": {
+    "barInfo": {
+      "present": true,
+      "top": 784,
+      "h": 61,
+      "z": "40",
+      "bg": "oklab(0.984998 -0.00000956655 0.0000230074 / 0.95)",
+      "blur": "blur(8px)",
+      "tabs": [
+        {
+          "label": "Today",
+          "w": 77,
+          "h": 60,
+          "active": true
+        },
+        {
+          "label": "Log",
+          "w": 79,
+          "h": 60,
+          "active": false
+        },
+        {
+          "label": "Progress",
+          "w": 77,
+          "h": 60,
+          "active": false
+        },
+        {
+          "label": "Coach",
+          "w": 77,
+          "h": 60,
+          "active": false
+        },
+        {
+          "label": "More",
+          "w": 79,
+          "h": 60,
+          "active": false
+        }
+      ]
+    },
+    "overflow": false,
+    "logDrawer": {
+      "opened": true,
+      "activeEl": "DIV",
+      "autofocusInput": false,
+      "items": [
+        "Close",
+        "Log a meal",
+        "Log water",
+        "Log sleep",
+        "Log a weigh-in",
+        "Log a workout"
+      ]
+    },
+    "moreSheet": {
+      "opened": true,
+      "autofocusInput": false,
+      "items": [
+        "Close",
+        "Workouts",
+        "Calorie Tracker",
+        "Hydration",
+        "Sleep",
+        "Goals",
+        "Meal Plan",
+        "Future You",
+        "Weekly Report",
+        "Rate My Kitchen",
+        "Files",
+        "Quit Test",
+        "Account",
+        "Help"
+      ]
+    },
+    "emdashInMain": true,
+    "console": [
+      {
+        "type": "warning",
+        "text": "Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}."
+      },
+      {
+        "type": "warning",
+        "text": "Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}."
+      },
+      {
+        "type": "warning",
+        "text": "Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}."
+      },
+      {
+        "type": "warning",
+        "text": "Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}."
+      }
+    ],
+    "consoleRaw": 4
+  },
+  "urlstate_nutrition": {
+    "finalUrl": "/nutrition",
+    "overflow": false,
+    "emdashInMain": false,
+    "console": [],
+    "consoleRaw": 0
+  },
+  "urlstate_progress": {
+    "finalUrl": "/progress",
+    "overflow": false,
+    "emdashInMain": true,
+    "console": [],
+    "consoleRaw": 0
+  },
+  "urlstate_workouts": {
+    "finalUrl": "/workouts",
+    "overflow": false,
+    "emdashInMain": false,
+    "console": [],
+    "consoleRaw": 0
+  },
+  "plan_workouts": {
+    "workoutsPlan": {
+      "hasUpNext": false,
+      "hasPlan": true,
+      "emdash": false
+    },
+    "planHref": null,
+    "console": [],
+    "consoleRaw": 0
+  },
+  "auth_login": {
+    "info": {
+      "formMethod": "POST",
+      "formAction": "",
+      "autofocused": "INPUT[email]",
+      "emdash": false,
+      "overflow": false
+    },
+    "console": [],
+    "consoleRaw": 0
+  },
+  "auth_register": {
+    "info": {
+      "formMethod": "POST",
+      "formAction": "",
+      "autofocused": "INPUT[email]",
+      "emdash": false,
+      "overflow": false
+    },
+    "console": [],
+    "consoleRaw": 0
+  },
+  "auth_forgot-password": {
+    "info": {
+      "formMethod": "post",
+      "formAction": null,
+      "autofocused": "INPUT[email]",
+      "emdash": false,
+      "overflow": false
+    },
+    "console": [],
+    "consoleRaw": 0
+  }
+}

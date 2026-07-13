@@ -1,0 +1,38 @@
+[PASS] LOGIN :: Marcus account leaves /login :: landed http://localhost:3600/today
+[PASS] 1 :: click range -> ?range set (shallow), active segment matches :: clicked 1M; url=http://localhost:3600/progress?range=1m; range=1m; active=1M
+[PASS] 2 :: reload ?range -> segment restored on first paint :: url=http://localhost:3600/progress?range=1m; active=1M
+[PASS] 3 :: nav away + browser Back -> range preserved :: backUrl=http://localhost:3600/progress?range=1m; active=1M
+[PASS] 4 :: custom picker apply -> range=custom&from&to; reload -> Custom active :: wrote=http://localhost:3600/progress?range=custom&from=2026-05-11&to=2026-07-06; afterReload custom-btn="Custom"
+[PASS] 5 :: ?range=banana -> renders at default range, no error boundary :: active=1W (a valid preset, not "banana"); errorBoundary=0
+[PASS] 6 :: volume range click -> ?range set; reload restores :: clicked 1M; range=1m; afterReload active=1M
+[PASS] 7 :: PR row -> panel opens + ?pr pushed (Back closes) :: pr="Leg Press"; panelOpen=true; history 6->7 (push=true); afterBack pr=null, expandedRows=0
+[PASS] 8 :: deep link ?pr=<name> -> drill-down open on load :: panelOpen=true; expandedRows=1; url=http://localhost:3600/workouts?pr=Leg%20Press
+[PASS] 9 :: search burst -> ?q=bench debounced; Back leaves the page (0 history entries) :: ?q=bench; Back landed at /workouts (left library=true -> typing added 0 history entries)
+[PASS] 10 :: muscle chip -> ?muscle set; All muscles omits it; deep link pre-filters :: chip->muscle=chest; AllMuscles->muscle=null(omitted); deeplink input="press", chestSelected=true
+[PASS] 11 :: day-back -> ?day=YYYY-MM-DD, heading changes; Back -> today :: ?day=2026-07-12; headingLeftToday=true; Back->today=true
+[PASS] 12 :: macro metric+range -> params; reload restores; ?metric=banana -> Calories default :: metric=protein, range=all; afterReload proteinActive=true, rangeActive=All; ?metric=banana -> Cal active=true
+[PASS] 13a :: /hydration range click -> ?range; reload restores; Back LEAVES page (replace) :: clicked 1W; range=1w; reload active=1W; Back landed /today (left /hydration=true -> replace)
+[PASS] 13b :: /sleep range click -> ?range; reload restores; Back LEAVES page (replace) :: clicked 1W; range=1w; reload active=1W; Back landed /today (left /sleep=true -> replace)
+[PASS] 14 :: older report open -> ?report pushed; Back closes; deep link opens+scrolls :: report=ff22d08f-91e2-46c3-a03c-d921a6bc8b82; history 14->15(push=true); open=true; afterBack report=null; deepLinkOpen=true
+[PASS] 15 :: list -> detail -> Back restores scrollY within ~100px :: scrolled to y1=700 (scrollH=2331); onDetail=true; afterBack y2=700; delta=0
+[PASS] 16 :: range click does NOT navigate the document (window marker survives) :: markerSurvived=true; urlChanged=true (http://localhost:3600/progress?range=1m)
+
+=== P34-B: 18/18 PASS ===
+PASS LOGIN: Marcus account leaves /login
+PASS 1: click range -> ?range set (shallow), active segment matches
+PASS 2: reload ?range -> segment restored on first paint
+PASS 3: nav away + browser Back -> range preserved
+PASS 4: custom picker apply -> range=custom&from&to; reload -> Custom active
+PASS 5: ?range=banana -> renders at default range, no error boundary
+PASS 6: volume range click -> ?range set; reload restores
+PASS 7: PR row -> panel opens + ?pr pushed (Back closes)
+PASS 8: deep link ?pr=<name> -> drill-down open on load
+PASS 9: search burst -> ?q=bench debounced; Back leaves the page (0 history entries)
+PASS 10: muscle chip -> ?muscle set; All muscles omits it; deep link pre-filters
+PASS 11: day-back -> ?day=YYYY-MM-DD, heading changes; Back -> today
+PASS 12: macro metric+range -> params; reload restores; ?metric=banana -> Calories default
+PASS 13a: /hydration range click -> ?range; reload restores; Back LEAVES page (replace)
+PASS 13b: /sleep range click -> ?range; reload restores; Back LEAVES page (replace)
+PASS 14: older report open -> ?report pushed; Back closes; deep link opens+scrolls
+PASS 15: list -> detail -> Back restores scrollY within ~100px
+PASS 16: range click does NOT navigate the document (window marker survives)

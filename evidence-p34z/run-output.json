@@ -1,0 +1,40 @@
+{
+  "workoutId": "4f6e0894-1d86-452c-84f3-8e8c5ce7c635",
+  "results": {
+    "1-login": {
+      "pass": true,
+      "note": "http://localhost:3600/today"
+    },
+    "2-plan-section": {
+      "pass": true,
+      "note": "plan=true d1=true d2=true d3=true"
+    },
+    "3-start-button-present": {
+      "pass": true,
+      "note": "Start Day 1: Upper"
+    },
+    "3-on-session": {
+      "pass": true,
+      "note": "http://localhost:3600/workouts/session"
+    },
+    "3-saved-workout": {
+      "pass": true,
+      "note": "url=http://localhost:3600/workouts/history/4f6e0894-1d86-452c-84f3-8e8c5ce7c635?new=1 workoutId=4f6e0894-1d86-452c-84f3-8e8c5ce7c635"
+    },
+    "4a-day1-last-done": {
+      "pass": true,
+      "note": "{\"name\":\"Day 1: UpperLast done Jul\",\"lastDone\":true,\"lastDoneText\":\"Last done Jul 13Barbell Bench Press4 x 4-6 @ 185 lb · RPE 8Barbell Row4 x 8-12Overhead Press3 x 8-10 @ 95 lb\",\"notDone\":false,\"upNext\":false}"
+    },
+    "4b-upnext-day2": {
+      "pass": true,
+      "note": "d1.upNext=false d2.upNext=true"
+    },
+    "5-workout-detail-opens": {
+      "pass": true,
+      "note": ""
+    }
+  },
+  "consoleErrors": [
+    "An async function with useActionState was called outside of a transition. This is likely not what you intended (for example, isPending will not update correctly). Either call the returned function inside startTransition, or pass it to an `action` or `formAction` prop."
+  ]
+}
