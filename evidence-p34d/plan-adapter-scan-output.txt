@@ -1,0 +1,9 @@
+Plans scanned: 4
+Resolve to structured schedule: 4
+Resolve to document view: 0
+Blocked or discarded: 0 (by construction; every branch renders)
+
+- b4790318 [training/archived] "The Proving Ground: Single Leg Day": STRUCTURED, 1 sessions, 4 exercises, detail 850 chars preserved
+- 44f24cb2 [training/active] "4-Day Upper/Lower Strength & Shred": STRUCTURED, 4 sessions, 22 exercises, detail 1870 chars preserved
+- 5909c7a3 [training/archived] "The Proving Ground: Single Push Day": STRUCTURED, 1 sessions, 6 exercises, detail 1130 chars preserved
+- 7ccf38cb [training/active] "16-Week Out: 5-Day Prep Program": STRUCTURED, 5 sessions, 23 exercises, detail 1166 chars preserved

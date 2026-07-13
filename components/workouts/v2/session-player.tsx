@@ -866,7 +866,11 @@ export function SessionPlayer({
           }),
       });
     }
-    const result = await saveWorkout(payload, session.templateId ?? undefined);
+    const result = await saveWorkout(
+      payload,
+      session.templateId ?? undefined,
+      session.planRef ?? undefined
+    );
     setSaving(false);
     if (!result.ok || !result.id) {
       toast.error(result.error ?? "Couldn't save that workout. Try again.");

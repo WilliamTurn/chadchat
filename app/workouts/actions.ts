@@ -1,10 +1,12 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { auth } from "@/app/(auth)/auth";
 import { canAccessProFeatures } from "@/lib/admin";
-import { parseCalendarDay } from "@/lib/date";
+import { calendarDayAnchorInTz, parseCalendarDay, toCalendarDayISO } from "@/lib/date";
 import { extractPlanDays } from "@/lib/ai/plan-days";
+import { recordPlanSessionCompletion } from "@/lib/db/plan-goal-queries";
+import { applyMutationReceipt } from "@/lib/refresh/coordinator";
+import { loggingReceipt, mutationReceipt } from "@/lib/refresh/receipt";
 import {
   createCustomExercise,
   createWorkout,
@@ -29,6 +31,8 @@ import {
 import {
   type CustomExerciseInput,
   customExerciseSchema,
+  type PlanCompletionRef,
+  planCompletionRefSchema,
   type SaveWorkoutInput,
   saveWorkoutSchema,
   type UpdateCustomExerciseInput,
@@ -115,7 +119,8 @@ export type SaveWorkoutResult = WorkoutActionState & { id?: string };
  */
 export async function saveWorkout(
   input: SaveWorkoutInput,
-  templateId?: string
+  templateId?: string,
+  planRef?: PlanCompletionRef
 ): Promise<SaveWorkoutResult> {
   const user = await requirePro();
   if (!user) {
@@ -138,9 +143,47 @@ export async function saveWorkout(
       when: created.performedAt,
     });
   }
-  revalidatePath("/workouts");
-  revalidatePath("/workouts/history");
-  revalidatePath("/today");
+  // FIX-28: the session was started from a prescribed plan day, so record
+  // the completion event (idempotent on workoutId; session ownership is
+  // verified in the query). Best-effort on purpose: adherence bookkeeping
+  // must never fail the member's saved workout.
+  let completedPlanSession = false;
+  if (planRef) {
+    const ref = planCompletionRefSchema.safeParse(planRef);
+    if (ref.success) {
+      try {
+        await recordPlanSessionCompletion({
+          userId: user.id,
+          planId: ref.data.planId,
+          planSessionId: ref.data.planSessionId,
+          workoutId: created.id,
+          sessionName: ref.data.sessionName,
+          completedDay: calendarDayAnchorInTz(
+            created.performedAt,
+            user.timezone
+          ),
+        });
+        completedPlanSession = true;
+      } catch (_error) {
+        // The workout save stands; the plan card simply shows no completion.
+      }
+    }
+  }
+  applyMutationReceipt(
+    loggingReceipt({
+      domain: "training",
+      entity: "workout",
+      op: "create",
+      // performedAt is a raw instant for logged-now sessions; the receipt day
+      // is the MEMBER-LOCAL day of that instant (grain law), never the UTC day.
+      days: {
+        startISO: toCalendarDayISO(
+          calendarDayAnchorInTz(created.performedAt, user.timezone)
+        ),
+      },
+      alsoDomains: completedPlanSession ? ["plans"] : undefined,
+    })
+  );
   return { ok: true, id: created.id };
 }
 
@@ -162,8 +205,9 @@ export async function editWorkout(
 
   const { id, ...rest } = parsed.data;
   await updateWorkout({ ...toWriteInput(user.id, rest), id });
-  revalidatePath("/workouts");
-  revalidatePath("/today");
+  applyMutationReceipt(
+    loggingReceipt({ domain: "training", entity: "workout", op: "update" })
+  );
   return { ok: true };
 }
 
@@ -173,9 +217,9 @@ export async function removeWorkout(id: string): Promise<WorkoutActionState> {
     return { ok: false, error: "Not authorized." };
   }
   await deleteWorkout({ id, userId: user.id });
-  revalidatePath("/workouts");
-  revalidatePath("/workouts/history");
-  revalidatePath("/today");
+  applyMutationReceipt(
+    loggingReceipt({ domain: "training", entity: "workout", op: "delete" })
+  );
   return { ok: true };
 }
 
@@ -204,7 +248,13 @@ export async function saveTemplate(
       return { ok: false, error: "That workout wasn't found." };
     }
     await updateWorkoutTemplate({ id, userId: user.id, name, exercises });
-    revalidatePath("/workouts");
+    applyMutationReceipt(
+      mutationReceipt({
+        domain: "training",
+        entity: "workoutTemplate",
+        op: "update",
+      })
+    );
     return { ok: true, id };
   }
 
@@ -213,7 +263,13 @@ export async function saveTemplate(
     name,
     exercises,
   });
-  revalidatePath("/workouts");
+  applyMutationReceipt(
+    mutationReceipt({
+      domain: "training",
+      entity: "workoutTemplate",
+      op: "create",
+    })
+  );
   return { ok: true, id: created.id };
 }
 
@@ -223,7 +279,13 @@ export async function removeTemplate(id: string): Promise<WorkoutActionState> {
     return { ok: false, error: "Not authorized." };
   }
   await deleteWorkoutTemplate({ id, userId: user.id });
-  revalidatePath("/workouts");
+  applyMutationReceipt(
+    mutationReceipt({
+      domain: "training",
+      entity: "workoutTemplate",
+      op: "delete",
+    })
+  );
   return { ok: true };
 }
 
@@ -290,9 +352,13 @@ export async function removeCustomExercise(
 
 /** Custom-exercise edits surface on every page that renders the library. */
 function revalidateExercisePages() {
-  revalidatePath("/workouts");
-  revalidatePath("/workouts/exercises");
-  revalidatePath("/workouts/exercises/pick");
+  applyMutationReceipt(
+    mutationReceipt({
+      domain: "training",
+      entity: "customExercise",
+      op: "update",
+    })
+  );
 }
 
 export type SyncPlanDaysState =
@@ -333,6 +399,16 @@ export async function syncPlanDays(planId: string): Promise<SyncPlanDaysState> {
   }
 
   await updatePlanDays({ id: record.id, userId: user.id, days });
-  revalidatePath("/workouts");
+  applyMutationReceipt(
+    mutationReceipt({
+      domain: "plans",
+      entity: "planDays",
+      op: "update",
+      alsoDomains: ["training"],
+      // Plan summaries render on /today (registry gap until FIX-28 registers
+      // plan metrics).
+      alsoSurfaces: ["/today"],
+    })
+  );
   return { ok: true, days };
 }

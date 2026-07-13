@@ -1,9 +1,24 @@
 # P34-D schema design: structured training plans (FIX-28) + goal outcomes (FIX-29)
 
-Status: DRAFT pending rule-8 teardown reconciliation (Hevy / MacroFactor / TrainingPeaks / Strong).
+Status: FINAL (as built, commit 9ab4e3c, migration 0037). Reconciled against the rule-8
+teardown (`benchmark-teardown.md`); the graded side-by-side is `benchmark-grade.md`.
 Written 2026-07-13 by session P34-D. Binding decisions: DEC-06 (raw legacy plan text preserved,
 rendered via a reviewed adapter/fallback; no plan discarded or blocked). Additive schema only
 (wave rule 6; shared prod Neon DB).
+
+TEARDOWN RECONCILIATION (changes from the draft):
+1. Prescriptions went SET-LEVEL: a fourth table `PlanSessionSet` (Hevy RoutineSet shape:
+   type warmup|normal|failure|dropset, fixed reps XOR repRangeStart/End, weight,
+   durationSeconds, rpe) is materialized from each exercise's prescription; the raw reps
+   string stays on the exercise row as the display form. Exercise-level-only storage cannot
+   express warmups/dropsets/ramps and the additive-only constraint makes granularity a
+   one-way door; the teardown's recommendation 4.2 was adopted in full.
+2. `PlanSessionExercise` gained `restSeconds` + `supersetGroup` (exercise-level per
+   Hevy/Strong convergence, teardown 2.1/2.2).
+3. Rotation-first scheduling with a nullable `weekday` hint was confirmed (teardown 3.1);
+   no plan_instance table (deliberate divergence, argued in benchmark-grade.md row 5).
+4. Unique indexes added: (planId, position) on PlanSession (the upsert target) and
+   workoutId on PlanSessionCompletion (idempotent completion writes).
 
 ## 1. Current state (what exists on disk today)
 
