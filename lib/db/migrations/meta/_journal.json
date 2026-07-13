@@ -253,6 +253,13 @@
       "when": 1783803945704,
       "tag": "0035_romantic_gauntlet",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1783949880896,
+      "tag": "0036_public_greymalkin",
+      "breakpoints": true
     }
   ]
 }

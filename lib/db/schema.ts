@@ -291,6 +291,54 @@ export const nutritionTarget = pgTable("NutritionTarget", {
 
 export type NutritionTarget = InferSelectModel<typeof nutritionTarget>;
 
+// --- Effective-dated targets (FIX-07, P4 / DSH-66) ---
+// Append-only version history for the daily nutrition target. Historical
+// adherence resolves the version active on each member-local day, so changing
+// a target never rewrites how past days are interpreted (the MacroFactor /
+// MyFitnessPal forward-only model; see evidence-p34c/benchmark-teardown.md).
+// The NutritionTarget row above stays the live "current" pointer the deployed
+// code reads; every write to it now also appends a row here (one funnel:
+// lib/db/queries.upsertNutritionTarget). Rows are NEVER updated or deleted.
+export const nutritionTargetVersion = pgTable("NutritionTargetVersion", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  // Snapshot of the full target as set (all nullable, like the live row).
+  calories: integer("calories"),
+  protein: integer("protein"),
+  carbs: integer("carbs"),
+  fat: integer("fat"),
+  // First member-local calendar day this version applies to, stored as that
+  // day's 00:00-UTC anchor (the calendarDayAnchorInTz day-key shape). The
+  // version active on day D = greatest effectiveDay <= D, createdAt tiebreak.
+  effectiveDay: timestamp("effectiveDay").notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type NutritionTargetVersion = InferSelectModel<
+  typeof nutritionTargetVersion
+>;
+
+// Same append-only version history for the single-value user-setting targets
+// declared in lib/contracts/metrics.ts: the water goal (ml, User.waterGoalMl)
+// and the sleep goal (minutes, User.sleepGoalMinutes). value null = "cleared,
+// use the product default", which is itself a dated fact. One funnel each:
+// lib/db/queries.updateUserWaterGoal / updateUserSleepGoal.
+export const userTargetVersion = pgTable("UserTargetVersion", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  kind: varchar("kind", { enum: ["water", "sleep"] }).notNull(),
+  // ml for water, minutes for sleep; null = revert to the default.
+  value: integer("value"),
+  effectiveDay: timestamp("effectiveDay").notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type UserTargetVersion = InferSelectModel<typeof userTargetVersion>;
+
 // --- Auth email flows (Phase 4): short-lived, single-use tokens ---
 // Tokens are stored hashed (sha256); the raw token only ever lives in the
 // emailed link. A row is deleted as soon as it's used, when it expires, and

@@ -24,8 +24,9 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import type { ArtifactKind } from "@/components/chat/artifact";
 import type { VisibilityType } from "@/components/chat/visibility-selector";
-import { calendarDayAnchorInTz, startOfDayUTC } from "../date";
+import { calendarDayAnchorInTz, startOfDayUTC, todayAnchorInTz } from "../date";
 import { ChatbotError } from "../errors";
+import { planTargetWrite, resolveTargetByDay } from "../targets/effective";
 import {
   type BodyMeasurement,
   bodyMeasurement,
@@ -50,6 +51,7 @@ import {
   message,
   type NutritionTarget,
   nutritionTarget,
+  nutritionTargetVersion,
   type Plan,
   type ProgressEntry,
   type ProgressMontage,
@@ -68,6 +70,7 @@ import {
   type UserMemory,
   user,
   userMemory,
+  userTargetVersion,
   userUpload,
   vote,
   type WeeklyReport,
@@ -383,16 +386,53 @@ export async function updateUserHero(
   }
 }
 
-/** Set the user's daily hydration goal in ml (null = the default gallon). */
+/**
+ * Set the user's daily hydration goal in ml (null = the default gallon).
+ * FIX-07: also appends an effective-dated UserTargetVersion row (effective
+ * from the member's local today) so historical adherence keeps the goal that
+ * was active on each past day; the first write epoch-seeds any pre-existing
+ * custom goal. The User column stays the live current pointer.
+ */
 export async function updateUserWaterGoal(
   userId: string,
   waterGoalMl: number | null
 ) {
   try {
-    return await db
-      .update(user)
-      .set({ waterGoalMl, updatedAt: new Date() })
-      .where(eq(user.id, userId));
+    return await db.transaction(async (tx) => {
+      const [u] = await tx
+        .select({ timezone: user.timezone, waterGoalMl: user.waterGoalMl })
+        .from(user)
+        .where(eq(user.id, userId));
+      const [anyVersion] = await tx
+        .select({ id: userTargetVersion.id })
+        .from(userTargetVersion)
+        .where(
+          and(
+            eq(userTargetVersion.userId, userId),
+            eq(userTargetVersion.kind, "water")
+          )
+        )
+        .limit(1);
+      const inserts = planTargetWrite<{ value: number | null }>({
+        hasVersions: Boolean(anyVersion),
+        previous:
+          u && u.waterGoalMl !== null ? { value: u.waterGoalMl } : null,
+        next: { value: waterGoalMl },
+        todayAnchorMs: todayAnchorInTz(u?.timezone).getTime(),
+      });
+      for (const ins of inserts) {
+        await tx.insert(userTargetVersion).values({
+          userId,
+          kind: "water",
+          value: ins.values.value,
+          effectiveDay: new Date(ins.effectiveDayMs),
+        });
+      }
+      return await tx
+        .update(user)
+        .set({ waterGoalMl, updatedAt: new Date() })
+        .where(eq(user.id, userId));
+    });
   } catch (_error) {
     throw new ChatbotError(
       "bad_request:database",
@@ -401,16 +441,55 @@ export async function updateUserWaterGoal(
   }
 }
 
-/** Set the user's nightly sleep goal in minutes (null = the recommended 7h). */
+/**
+ * Set the user's nightly sleep goal in minutes (null = the recommended 7h).
+ * FIX-07: same effective-dated versioning as updateUserWaterGoal.
+ */
 export async function updateUserSleepGoal(
   userId: string,
   sleepGoalMinutes: number | null
 ) {
   try {
-    return await db
-      .update(user)
-      .set({ sleepGoalMinutes, updatedAt: new Date() })
-      .where(eq(user.id, userId));
+    return await db.transaction(async (tx) => {
+      const [u] = await tx
+        .select({
+          timezone: user.timezone,
+          sleepGoalMinutes: user.sleepGoalMinutes,
+        })
+        .from(user)
+        .where(eq(user.id, userId));
+      const [anyVersion] = await tx
+        .select({ id: userTargetVersion.id })
+        .from(userTargetVersion)
+        .where(
+          and(
+            eq(userTargetVersion.userId, userId),
+            eq(userTargetVersion.kind, "sleep")
+          )
+        )
+        .limit(1);
+      const inserts = planTargetWrite<{ value: number | null }>({
+        hasVersions: Boolean(anyVersion),
+        previous:
+          u && u.sleepGoalMinutes !== null
+            ? { value: u.sleepGoalMinutes }
+            : null,
+        next: { value: sleepGoalMinutes },
+        todayAnchorMs: todayAnchorInTz(u?.timezone).getTime(),
+      });
+      for (const ins of inserts) {
+        await tx.insert(userTargetVersion).values({
+          userId,
+          kind: "sleep",
+          value: ins.values.value,
+          effectiveDay: new Date(ins.effectiveDayMs),
+        });
+      }
+      return await tx
+        .update(user)
+        .set({ sleepGoalMinutes, updatedAt: new Date() })
+        .where(eq(user.id, userId));
+    });
   } catch (_error) {
     throw new ChatbotError(
       "bad_request:database",
@@ -2075,40 +2154,209 @@ export async function getNutritionTarget(
   }
 }
 
+/** The four daily nutrition target values, all nullable (set just one). */
+export type NutritionTargetValues = {
+  calories: number | null;
+  protein: number | null;
+  carbs: number | null;
+  fat: number | null;
+};
+
+/**
+ * Save the daily nutrition target. FIX-07: the NutritionTarget row stays the
+ * live current pointer (deployed readers keep working), and every save also
+ * appends an effective-dated NutritionTargetVersion row (effective from the
+ * member's local today) so historical adherence keeps using the target that
+ * was active on each past day. The first versioned save epoch-seeds the
+ * pre-existing target so old days keep their old interpretation.
+ */
 export async function upsertNutritionTarget(
   userId: string,
-  target: {
-    calories: number | null;
-    protein: number | null;
-    carbs: number | null;
-    fat: number | null;
-  }
+  target: NutritionTargetValues
 ): Promise<void> {
   try {
-    await db
-      .insert(nutritionTarget)
-      .values({
-        userId,
-        calories: target.calories,
-        protein: target.protein,
-        carbs: target.carbs,
-        fat: target.fat,
-        updatedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: nutritionTarget.userId,
-        set: {
+    await db.transaction(async (tx) => {
+      const [u] = await tx
+        .select({ timezone: user.timezone })
+        .from(user)
+        .where(eq(user.id, userId));
+      const [existing] = await tx
+        .select()
+        .from(nutritionTarget)
+        .where(eq(nutritionTarget.userId, userId));
+      const [anyVersion] = await tx
+        .select({ id: nutritionTargetVersion.id })
+        .from(nutritionTargetVersion)
+        .where(eq(nutritionTargetVersion.userId, userId))
+        .limit(1);
+      const inserts = planTargetWrite<NutritionTargetValues>({
+        hasVersions: Boolean(anyVersion),
+        previous: existing
+          ? {
+              calories: existing.calories,
+              protein: existing.protein,
+              carbs: existing.carbs,
+              fat: existing.fat,
+            }
+          : null,
+        next: target,
+        todayAnchorMs: todayAnchorInTz(u?.timezone).getTime(),
+      });
+      for (const ins of inserts) {
+        await tx.insert(nutritionTargetVersion).values({
+          userId,
+          calories: ins.values.calories,
+          protein: ins.values.protein,
+          carbs: ins.values.carbs,
+          fat: ins.values.fat,
+          effectiveDay: new Date(ins.effectiveDayMs),
+        });
+      }
+      await tx
+        .insert(nutritionTarget)
+        .values({
+          userId,
           calories: target.calories,
           protein: target.protein,
           carbs: target.carbs,
           fat: target.fat,
           updatedAt: new Date(),
-        },
-      });
+        })
+        .onConflictDoUpdate({
+          target: nutritionTarget.userId,
+          set: {
+            calories: target.calories,
+            protein: target.protein,
+            carbs: target.carbs,
+            fat: target.fat,
+            updatedAt: new Date(),
+          },
+        });
+    });
   } catch (_error) {
     throw new ChatbotError(
       "bad_request:database",
       "Failed to save nutrition target"
+    );
+  }
+}
+
+/* --------------------------------------------------------------------------
+ * Effective-dated target reads (FIX-07). Day identity everywhere below is a
+ * member-local calendar day as a 00:00-UTC anchor (lib/date.ts
+ * calendarDayAnchorInTz / todayAnchorInTz with user.timezone). Resolution
+ * semantics live in lib/targets/effective.ts: latest version whose
+ * effectiveDay <= the day wins; a member with no version rows resolves every
+ * day to their live current-pointer target (exact pre-FIX-07 behavior).
+ * ------------------------------------------------------------------------ */
+
+/**
+ * The nutrition target active on each requested day anchor, position-matched
+ * to `dayAnchors`. null = no target existed on that day.
+ */
+export async function getNutritionTargetsByDay(
+  userId: string,
+  dayAnchors: Date[]
+): Promise<(NutritionTargetValues | null)[]> {
+  try {
+    const [versions, [current]] = await Promise.all([
+      db
+        .select()
+        .from(nutritionTargetVersion)
+        .where(eq(nutritionTargetVersion.userId, userId)),
+      db
+        .select()
+        .from(nutritionTarget)
+        .where(eq(nutritionTarget.userId, userId)),
+    ]);
+    return resolveTargetByDay<NutritionTargetValues>(
+      versions.map((v) => ({
+        effectiveDayMs: v.effectiveDay.getTime(),
+        createdAtMs: v.createdAt.getTime(),
+        values: {
+          calories: v.calories,
+          protein: v.protein,
+          carbs: v.carbs,
+          fat: v.fat,
+        },
+      })),
+      dayAnchors.map((d) => d.getTime()),
+      current
+        ? {
+            calories: current.calories,
+            protein: current.protein,
+            carbs: current.carbs,
+            fat: current.fat,
+          }
+        : null
+    );
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to resolve nutrition targets"
+    );
+  }
+}
+
+/**
+ * The water goal (ml) active on each requested day anchor, position-matched
+ * to `dayAnchors`. null = the product default applied that day.
+ */
+export async function getWaterGoalMlByDay(
+  userId: string,
+  dayAnchors: Date[]
+): Promise<(number | null)[]> {
+  return await getUserTargetValuesByDay(userId, "water", dayAnchors, (u) =>
+    u ? u.waterGoalMl : null
+  );
+}
+
+/**
+ * The sleep goal (minutes) active on each requested day anchor,
+ * position-matched to `dayAnchors`. null = the recommended default applied.
+ */
+export async function getSleepGoalMinutesByDay(
+  userId: string,
+  dayAnchors: Date[]
+): Promise<(number | null)[]> {
+  return await getUserTargetValuesByDay(userId, "sleep", dayAnchors, (u) =>
+    u ? u.sleepGoalMinutes : null
+  );
+}
+
+async function getUserTargetValuesByDay(
+  userId: string,
+  kind: "water" | "sleep",
+  dayAnchors: Date[],
+  currentOf: (u: User | undefined) => number | null
+): Promise<(number | null)[]> {
+  try {
+    const [versions, [u]] = await Promise.all([
+      db
+        .select()
+        .from(userTargetVersion)
+        .where(
+          and(
+            eq(userTargetVersion.userId, userId),
+            eq(userTargetVersion.kind, kind)
+          )
+        ),
+      db.select().from(user).where(eq(user.id, userId)),
+    ]);
+    const resolved = resolveTargetByDay<{ value: number | null }>(
+      versions.map((v) => ({
+        effectiveDayMs: v.effectiveDay.getTime(),
+        createdAtMs: v.createdAt.getTime(),
+        values: { value: v.value },
+      })),
+      dayAnchors.map((d) => d.getTime()),
+      { value: currentOf(u) }
+    );
+    return resolved.map((r) => (r ? r.value : null));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      `Failed to resolve ${kind} goal history`
     );
   }
 }
