@@ -25,6 +25,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -33,7 +34,8 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { sidebarLinks } from "@/lib/nav-links";
+import { NAV_GROUPS } from "@/lib/nav-links";
+import { cn } from "@/lib/utils";
 import type { PlanStatusSummary } from "@/lib/subscription";
 import {
   AlertDialog,
@@ -132,75 +134,104 @@ export function AppSidebar({
             drawer pattern); SidebarHistory drops its own scroll region below md
             to match. */}
         <SidebarContent className="overflow-y-auto md:overflow-hidden">
-          <SidebarGroup className="shrink-0 pt-1">
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {/* Section links come from the shared nav list (NAV-3) so the
-                    sidebar and the StandaloneHeader can't drift apart. As of
-                    NAV-31 the sidebar carries the full feature inventory
-                    (Dashboard, Workouts, Calorie Tracker, Meal Plan, Kitchen,
-                    Progress, Sleep, Help) — same nav model as the header — so
-                    the product is discoverable from the chat landing. The
-                    "New chat" action is sidebar-only, so it's rendered inline
-                    right after Dashboard (the first link) rather than living in
-                    the shared list. */}
-                {sidebarLinks.map((link, index) => {
-                  const Icon = link.icon;
-                  return (
-                    <Fragment key={link.href}>
-                      <SidebarMenuItem>
-                        <SidebarMenuButton
-                          asChild
-                          className="h-10 rounded-lg text-[15px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground md:h-8 md:text-[13px]"
-                          tooltip={link.label}
-                        >
-                          <Link
-                            href={link.href}
-                            onClick={() => setOpenMobile(false)}
-                          >
-                            <Icon className="size-4" />
-                            <span className="font-medium">{link.label}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                      {index === 0 && (
-                        <SidebarMenuItem>
-                          <SidebarMenuButton
-                            className="h-10 rounded-lg border border-sidebar-border text-[15px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground md:h-8 md:text-[13px]"
-                            onClick={() => {
-                              setOpenMobile(false);
-                              router.push("/");
-                            }}
-                            tooltip="New Chat"
-                          >
-                            <PenSquareIcon className="size-4" />
-                            <span className="font-medium">New chat</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      )}
-                    </Fragment>
-                  );
-                })}
-                {user && (
-                  // Named for its exact scope + visually detached from the nav
-                  // links above (LC-11): a bare "Delete all" inside a nav list
-                  // read as "delete all <anything>".
-                  <SidebarMenuItem className="mt-2 border-sidebar-border border-t pt-2">
-                    <SidebarMenuButton
-                      className="h-10 rounded-lg text-sidebar-foreground/40 transition-colors duration-150 hover:bg-destructive/10 hover:text-destructive md:h-8"
-                      onClick={() => setShowDeleteAllDialog(true)}
-                      tooltip="Delete all chats"
-                    >
-                      <TrashIcon className="size-4" />
-                      <span className="text-[15px] md:text-[13px]">
-                        Delete all chats
-                      </span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          {/* Section links come from the shared nav groups (NAV-3 / FIX-20)
+              so the sidebar and the standalone nav can't drift apart: the
+              full feature inventory (NAV-31), grouped Primary / Track / Plan
+              / Review / More exactly like the desktop nav panel. The
+              "New chat" action is sidebar-only, so it's rendered inline right
+              after Dashboard (the primary group) rather than living in the
+              shared list. */}
+          <div className="shrink-0">
+            {NAV_GROUPS.map((group) => {
+              const links = group.links.filter((link) =>
+                link.surfaces.includes("sidebar")
+              );
+              if (links.length === 0) {
+                return null;
+              }
+              return (
+                <SidebarGroup
+                  className={cn(
+                    "py-1 first:pt-1",
+                    // The uncaptioned trailing utility block gets a rule so
+                    // it reads as its own section, not more of Review.
+                    group.id === "utility" && "border-sidebar-border border-t"
+                  )}
+                  key={group.id}
+                >
+                  {group.label && (
+                    <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+                  )}
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {links.map((link) => {
+                        const Icon = link.icon;
+                        return (
+                          <Fragment key={link.href}>
+                            <SidebarMenuItem>
+                              <SidebarMenuButton
+                                asChild
+                                className="h-10 rounded-lg text-[15px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground md:h-8 md:text-[13px]"
+                                tooltip={link.label}
+                              >
+                                <Link
+                                  href={link.href}
+                                  onClick={() => setOpenMobile(false)}
+                                >
+                                  <Icon className="size-4" />
+                                  <span className="font-medium">
+                                    {link.label}
+                                  </span>
+                                </Link>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            {link.href === "/today" && (
+                              <SidebarMenuItem>
+                                <SidebarMenuButton
+                                  className="h-10 rounded-lg border border-sidebar-border text-[15px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground md:h-8 md:text-[13px]"
+                                  onClick={() => {
+                                    setOpenMobile(false);
+                                    router.push("/");
+                                  }}
+                                  tooltip="New Chat"
+                                >
+                                  <PenSquareIcon className="size-4" />
+                                  <span className="font-medium">New chat</span>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            )}
+                          </Fragment>
+                        );
+                      })}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
+              );
+            })}
+            {user && (
+              <SidebarGroup className="py-1">
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {/* Named for its exact scope + visually detached from the
+                        nav links above (LC-11): a bare "Delete all" inside a
+                        nav list read as "delete all <anything>". */}
+                    <SidebarMenuItem className="border-sidebar-border border-t pt-2">
+                      <SidebarMenuButton
+                        className="h-10 rounded-lg text-sidebar-foreground/40 transition-colors duration-150 hover:bg-destructive/10 hover:text-destructive md:h-8"
+                        onClick={() => setShowDeleteAllDialog(true)}
+                        tooltip="Delete all chats"
+                      >
+                        <TrashIcon className="size-4" />
+                        <span className="text-[15px] md:text-[13px]">
+                          Delete all chats
+                        </span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            )}
+          </div>
           <SidebarHistory user={user} />
         </SidebarContent>
         <SidebarFooter className="border-t border-sidebar-border pt-2 pb-3">

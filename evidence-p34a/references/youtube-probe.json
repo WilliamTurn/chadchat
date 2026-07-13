@@ -1,0 +1,102 @@
+{
+  "found": true,
+  "viewport": {
+    "w": 390,
+    "h": 664
+  },
+  "tagName": "ytm-pivot-bar-renderer",
+  "id": null,
+  "classSample": "frosted-glass",
+  "ariaLabel": null,
+  "role": "tablist",
+  "box": {
+    "x": 0,
+    "y": 607,
+    "w": 390,
+    "h": 57,
+    "bottom": 664
+  },
+  "style": {
+    "position": "fixed",
+    "bottom": "0px",
+    "height": "56px",
+    "minHeight": "0px",
+    "paddingBottom": "0px",
+    "paddingBottomPx": 0,
+    "paddingTop": "0px",
+    "backgroundColor": "rgba(255, 255, 255, 0.9)",
+    "backdropFilter": "blur(24px)",
+    "borderTop": "1px solid rgba(0, 0, 0, 0.2)",
+    "boxShadow": "none",
+    "zIndex": "3"
+  },
+  "tabCount": 3,
+  "tabs": [
+    {
+      "label": "Home",
+      "iconOnly": false,
+      "w": 130,
+      "h": 56,
+      "x": 0,
+      "y": 608,
+      "meets44": true,
+      "icon": {
+        "tag": "svg",
+        "w": 24,
+        "h": 24
+      },
+      "labelFontSize": "11px",
+      "labelFontWeight": "400",
+      "color": "rgb(15, 15, 15)",
+      "fill": "rgb(0, 0, 0)",
+      "ariaCurrent": null,
+      "ariaSelected": "true",
+      "activeByClass": false,
+      "likelyActive": true
+    },
+    {
+      "label": "Shorts",
+      "iconOnly": false,
+      "w": 130,
+      "h": 56,
+      "x": 130,
+      "y": 608,
+      "meets44": true,
+      "icon": {
+        "tag": "svg",
+        "w": 24,
+        "h": 24
+      },
+      "labelFontSize": "11px",
+      "labelFontWeight": "400",
+      "color": "rgb(15, 15, 15)",
+      "fill": "rgb(0, 0, 0)",
+      "ariaCurrent": null,
+      "ariaSelected": "false",
+      "activeByClass": false,
+      "likelyActive": false
+    },
+    {
+      "label": "You",
+      "iconOnly": false,
+      "w": 130,
+      "h": 56,
+      "x": 260,
+      "y": 608,
+      "meets44": true,
+      "icon": {
+        "tag": "svg",
+        "w": 24,
+        "h": 24
+      },
+      "labelFontSize": "11px",
+      "labelFontWeight": "400",
+      "color": "rgb(15, 15, 15)",
+      "fill": "rgb(0, 0, 0)",
+      "ariaCurrent": null,
+      "ariaSelected": "false",
+      "activeByClass": false,
+      "likelyActive": false
+    }
+  ]
+}

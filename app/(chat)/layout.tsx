@@ -7,6 +7,7 @@ import { AppSidebar } from "@/components/chat/app-sidebar";
 import { DataStreamProvider } from "@/components/chat/data-stream-provider";
 import { ChatShell } from "@/components/chat/shell";
 import { VerifyEmailBanner } from "@/components/chat/verify-email-banner";
+import { BottomNav } from "@/components/nav/bottom-nav";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ActiveChatProvider } from "@/hooks/use-active-chat";
 import { canAccessChad } from "@/lib/admin";
@@ -66,7 +67,13 @@ async function SidebarShell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider defaultOpen={!isCollapsed}>
       <AppSidebar plan={plan} user={session?.user} />
-      <SidebarInset>
+      {/* h-dvh lives HERE, not on the chat shell (P34-A audit fix): the shell
+          must share the viewport with siblings (the verify banner above it,
+          the reserved tab-bar band below), so it fills the remainder via
+          flex-1. A blind h-dvh on the shell overflowed the viewport by the
+          banner's height and pushed the composer/disclaimer under the phone
+          tab bar. */}
+      <SidebarInset className="h-dvh overflow-hidden">
         {showVerifyBanner && <VerifyEmailBanner />}
         <Toaster
           position="top-center"
@@ -76,12 +83,16 @@ async function SidebarShell({ children }: { children: React.ReactNode }) {
               "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
           }}
         />
-        <Suspense fallback={<div className="flex h-dvh" />}>
+        <Suspense fallback={<div className="min-h-0 flex-1" />}>
           <ActiveChatProvider>
             <ChatShell />
           </ActiveChatProvider>
         </Suspense>
         {children}
+        {/* FIX-21: the phone bottom tab bar. No spacer here: the chat shell
+            is h-dvh (nothing scrolls under the bar) and reserves the bar's
+            height itself via pb-tabbar. Chat routes all mark Coach active. */}
+        <BottomNav active="/" spacer={false} />
       </SidebarInset>
     </SidebarProvider>
   );

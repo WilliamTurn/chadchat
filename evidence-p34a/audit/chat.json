@@ -1,0 +1,18 @@
+{
+  "layout": {
+    "navTop": 784,
+    "composerBottom": 736,
+    "disclBottom": 825,
+    "disclTop": 794,
+    "disclUnderBar": true
+  },
+  "focus": {
+    "vkOpen": true,
+    "barTransform": "none",
+    "activeEl": "TEXTAREA"
+  },
+  "blur": {
+    "vkOpen": false,
+    "barTransform": "none"
+  }
+}

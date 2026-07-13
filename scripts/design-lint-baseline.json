@@ -105,7 +105,6 @@
   "components/billing/pricing-plans.tsx::banned-copy": 2,
   "components/chad/ask-chad-button.tsx::banned-copy": 2,
   "components/chat/app-sidebar.tsx::arbitrary-utility": 7,
-  "components/chat/app-sidebar.tsx::banned-copy": 1,
   "components/chat/artifact-actions.tsx::raw-control": 1,
   "components/chat/artifact-close-button.tsx::raw-control": 1,
   "components/chat/artifact-messages.tsx::arbitrary-utility": 1,

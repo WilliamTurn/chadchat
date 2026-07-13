@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, useEffect } from "react";
+import { BottomNav } from "@/components/nav/bottom-nav";
 import {
   SidebarInset,
   SidebarProvider,
@@ -36,7 +37,13 @@ export function StandaloneShell({ children }: { children: ReactNode }) {
       <StandaloneSidebar />
       {/* bg-background (not the primitive's bg-sidebar) so the content area
           and the nav panel are visibly distinct surfaces. */}
-      <SidebarInset className="bg-background">{children}</SidebarInset>
+      <SidebarInset className="bg-background">
+        {children}
+        {/* FIX-21: the phone bottom tab bar (renders nothing at md+). Its
+            in-flow spacer sits at the end of the page column so scrolled-to-
+            bottom content clears the fixed bar. */}
+        <BottomNav />
+      </SidebarInset>
     </SidebarProvider>
   );
 }

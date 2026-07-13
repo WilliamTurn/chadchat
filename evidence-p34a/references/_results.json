@@ -1,0 +1,281 @@
+[
+  {
+    "key": "youtube",
+    "urls": [
+      "https://m.youtube.com"
+    ],
+    "loadedUrl": "https://m.youtube.com",
+    "blocked": false,
+    "notes": [],
+    "bar": {
+      "found": true,
+      "viewport": {
+        "w": 390,
+        "h": 664
+      },
+      "tagName": "ytm-pivot-bar-renderer",
+      "id": null,
+      "classSample": "frosted-glass",
+      "ariaLabel": null,
+      "role": "tablist",
+      "box": {
+        "x": 0,
+        "y": 607,
+        "w": 390,
+        "h": 57,
+        "bottom": 664
+      },
+      "style": {
+        "position": "fixed",
+        "bottom": "0px",
+        "height": "56px",
+        "minHeight": "0px",
+        "paddingBottom": "0px",
+        "paddingBottomPx": 0,
+        "paddingTop": "0px",
+        "backgroundColor": "rgba(255, 255, 255, 0.9)",
+        "backdropFilter": "blur(24px)",
+        "borderTop": "1px solid rgba(0, 0, 0, 0.2)",
+        "boxShadow": "none",
+        "zIndex": "3"
+      },
+      "tabCount": 3,
+      "tabs": [
+        {
+          "label": "Home",
+          "iconOnly": false,
+          "w": 130,
+          "h": 56,
+          "x": 0,
+          "y": 608,
+          "meets44": true,
+          "icon": {
+            "tag": "svg",
+            "w": 24,
+            "h": 24
+          },
+          "labelFontSize": "11px",
+          "labelFontWeight": "400",
+          "color": "rgb(15, 15, 15)",
+          "fill": "rgb(0, 0, 0)",
+          "ariaCurrent": null,
+          "ariaSelected": "true",
+          "activeByClass": false,
+          "likelyActive": true
+        },
+        {
+          "label": "Shorts",
+          "iconOnly": false,
+          "w": 130,
+          "h": 56,
+          "x": 130,
+          "y": 608,
+          "meets44": true,
+          "icon": {
+            "tag": "svg",
+            "w": 24,
+            "h": 24
+          },
+          "labelFontSize": "11px",
+          "labelFontWeight": "400",
+          "color": "rgb(15, 15, 15)",
+          "fill": "rgb(0, 0, 0)",
+          "ariaCurrent": null,
+          "ariaSelected": "false",
+          "activeByClass": false,
+          "likelyActive": false
+        },
+        {
+          "label": "You",
+          "iconOnly": false,
+          "w": 130,
+          "h": 56,
+          "x": 260,
+          "y": 608,
+          "meets44": true,
+          "icon": {
+            "tag": "svg",
+            "w": 24,
+            "h": 24
+          },
+          "labelFontSize": "11px",
+          "labelFontWeight": "400",
+          "color": "rgb(15, 15, 15)",
+          "fill": "rgb(0, 0, 0)",
+          "ariaCurrent": null,
+          "ariaSelected": "false",
+          "activeByClass": false,
+          "likelyActive": false
+        }
+      ]
+    },
+    "scroll": {
+      "scrolledToY": 0,
+      "barStillDetected": true,
+      "barBottomAfter": 664,
+      "persists": true,
+      "note": "page did not scroll (logged-out empty state / no scrollable feed), scroll-persistence not exercised; bar is position:fixed bottom:0 so it is structurally pinned regardless"
+    },
+    "inputFocus": {
+      "attempted": true,
+      "focused": true,
+      "activeElement": {
+        "tag": "input",
+        "type": "text",
+        "isTextInput": true
+      },
+      "note": "clicked trigger [aria-label*=\"Search\" i][role=\"button\"]; focused input input[placeholder*=\"Search\" i]",
+      "barExistedAtDefault": true,
+      "barVisibleWhileInputFocused": true,
+      "barBottom": 664,
+      "interpretation": "bottom bar REMAINS visible while search input focused"
+    },
+    "w320": {
+      "barDetected": true,
+      "height": 57,
+      "width": 320,
+      "fitsWidth": true,
+      "tabLabels": [
+        "Home",
+        "Shorts",
+        "You"
+      ],
+      "anyLabelDropped": false
+    },
+    "error": null,
+    "title": "YouTube",
+    "gate": {
+      "headline": "Try searching to get started",
+      "hasLoginWords": false,
+      "snippet": "Home Shorts You Search YouTube Try searching to get started Start watching videos to help us build a feed of videos you'll love."
+    }
+  },
+  {
+    "key": "x",
+    "urls": [
+      "https://x.com/explore",
+      "https://x.com"
+    ],
+    "loadedUrl": "https://x.com/explore",
+    "blocked": false,
+    "notes": [
+      "no bottom bar detected in default logged-out render"
+    ],
+    "bar": null,
+    "scroll": {
+      "scrolledToY": 0,
+      "barStillDetected": false,
+      "barBottomAfter": null,
+      "persists": false,
+      "note": "no bar to begin with"
+    },
+    "inputFocus": {
+      "attempted": true,
+      "focused": true,
+      "activeElement": {
+        "tag": "input",
+        "type": "text",
+        "isTextInput": true
+      },
+      "note": "focused input input[type=\"text\"]",
+      "barExistedAtDefault": false,
+      "barVisibleWhileInputFocused": false,
+      "barBottom": null,
+      "interpretation": "N/A, no bottom bar existed in the logged-out render (login/app wall), so there is no hide-on-focus behavior to observe"
+    },
+    "w320": {
+      "barDetected": false,
+      "height": null,
+      "width": null,
+      "fitsWidth": null,
+      "tabLabels": null,
+      "anyLabelDropped": null
+    },
+    "error": null,
+    "title": "X - The Everything App / X",
+    "gate": {
+      "headline": null,
+      "hasLoginWords": true,
+      "snippet": "See what's happening Continue with phone Continue with Apple or Email or username Continue By continuing, you agree to our Terms of Service, Privacy Policy and Cookie Use."
+    }
+  },
+  {
+    "key": "instagram",
+    "urls": [
+      "https://www.instagram.com/instagram/",
+      "https://www.instagram.com"
+    ],
+    "loadedUrl": "https://www.instagram.com/instagram/",
+    "blocked": false,
+    "notes": [
+      "no bottom bar detected in default logged-out render"
+    ],
+    "bar": null,
+    "scroll": {
+      "scrolledToY": 289,
+      "barStillDetected": false,
+      "barBottomAfter": null,
+      "persists": false,
+      "note": "no bar to begin with"
+    },
+    "inputFocus": {
+      "attempted": true,
+      "focused": false,
+      "note": "no reachable search input found"
+    },
+    "w320": {
+      "barDetected": false,
+      "height": null,
+      "width": null,
+      "fitsWidth": null,
+      "tabLabels": null,
+      "anyLabelDropped": null
+    },
+    "error": null,
+    "title": "Instagram",
+    "gate": {
+      "headline": "instagram",
+      "hasLoginWords": true,
+      "snippet": "Log in Open app instagram Instagram 685M followers 255 following Discover what's new on Instagram 🔎✨ Get the full experience Sign up for Instagram See full profile in the app Use "
+    }
+  },
+  {
+    "key": "reddit",
+    "urls": [
+      "https://www.reddit.com"
+    ],
+    "loadedUrl": "https://www.reddit.com",
+    "blocked": false,
+    "notes": [
+      "no bottom bar detected in default logged-out render"
+    ],
+    "bar": null,
+    "scroll": {
+      "scrolledToY": 800,
+      "barStillDetected": false,
+      "barBottomAfter": null,
+      "persists": false,
+      "note": "no bar to begin with"
+    },
+    "inputFocus": {
+      "attempted": true,
+      "focused": false,
+      "note": "no reachable search input found"
+    },
+    "w320": {
+      "barDetected": false,
+      "height": null,
+      "width": null,
+      "fitsWidth": null,
+      "tabLabels": null,
+      "anyLabelDropped": null
+    },
+    "error": null,
+    "title": "Reddit - The heart of the internet",
+    "gate": {
+      "headline": null,
+      "hasLoginWords": true,
+      "snippet": "Skip to main content Open menu Open App Expand user menu Find anything Found digging a new garden . r/whatisit • 15h ago Found digging a new garden . Advertisement: Customize the l"
+    }
+  }
+]

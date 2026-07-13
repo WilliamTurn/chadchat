@@ -74,7 +74,13 @@ export function ChatShell() {
 
   return (
     <>
-      <div className="flex h-dvh w-full flex-row overflow-hidden">
+      {/* min-h-0 flex-1 (P34-A): fill the viewport space left over by
+          siblings in the (chat) layout's h-dvh inset (verify banner above),
+          instead of a blind h-dvh that overflowed by the banner's height.
+          pb-tabbar (FIX-21) reserves the phone bottom-nav band inside the
+          column (0 at md+ and while the keyboard is up, so the composer
+          keeps riding directly above the keys). */}
+      <div className="flex min-h-0 w-full flex-1 flex-row overflow-hidden pb-tabbar">
         <div
           className={cn(
             "flex min-w-0 flex-col bg-sidebar transition-[width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",

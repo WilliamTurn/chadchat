@@ -16,6 +16,24 @@ const nextConfig: NextConfig = {
     // guessed/bookmarked /dashboard lands somewhere sensible. Runs before the
     // auth proxy, so it works whether or not the visitor is signed in.
     { source: "/dashboard", destination: "/today", permanent: false },
+    // FIX-20 (P3) alias redirects: guessed/legacy URLs land on the registered
+    // destination (`lib/contracts/routes.ts`) instead of a 404. All temporary
+    // (307): P5 re-maps /progress to a cross-domain view, so nothing here may
+    // cache as permanent.
+    { source: "/chat", destination: "/", permanent: false },
+    { source: "/coach", destination: "/", permanent: false },
+    { source: "/water", destination: "/hydration", permanent: false },
+    { source: "/weight", destination: "/progress", permanent: false },
+    { source: "/body", destination: "/progress", permanent: false },
+    { source: "/food", destination: "/nutrition", permanent: false },
+    { source: "/meals", destination: "/nutrition", permanent: false },
+    { source: "/calories", destination: "/nutrition", permanent: false },
+    { source: "/workout", destination: "/workouts", permanent: false },
+    { source: "/settings", destination: "/account", permanent: false },
+    { source: "/billing", destination: "/account", permanent: false },
+    { source: "/report", destination: "/reports", permanent: false },
+    { source: "/quit", destination: "/quit-date", permanent: false },
+    { source: "/quit-test", destination: "/quit-date", permanent: false },
     ...(basePath
       ? [
           {

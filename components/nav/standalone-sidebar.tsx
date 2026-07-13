@@ -9,6 +9,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -17,15 +18,18 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { headerLinks } from "@/lib/nav-links";
+import { isRouteActive, NAV_GROUPS } from "@/lib/nav-links";
 
 /**
  * The collapsible left navigation panel for the standalone (non-chat) pages
  * (LAY-2, owner order s178): full-width pages get the standard app shell,
  * labeled nav down the left, collapsible to an icon rail so the member can
- * focus on the page. Renders from the shared `headerLinks` list (NAV-3) so it
- * can't drift from the mobile sheet. Desktop/tablet only; phones keep the
- * hamburger sheet in `StandaloneHeader`.
+ * focus on the page. Renders the shared `NAV_GROUPS` (NAV-3 / FIX-20) so it
+ * can't drift from the mobile sheet: links grouped Primary / Track / Plan /
+ * Review / More, driven by the route registry's nav groups. Selected state
+ * covers subroutes (isRouteActive: /workouts/history highlights Workouts).
+ * Desktop/tablet only; phones keep the hamburger sheet in `StandaloneHeader`
+ * plus the FIX-21 bottom tab bar.
  */
 export function StandaloneSidebar() {
   // Current path, read after mount. `usePathname` here would sit outside the
@@ -74,31 +78,55 @@ export function StandaloneSidebar() {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {headerLinks.map((link) => {
-                const Icon = link.icon;
-                const active = path === link.href;
-                return (
-                  <SidebarMenuItem key={link.href}>
-                    <SidebarMenuButton
-                      asChild
-                      className="h-11"
-                      isActive={active}
-                      tooltip={link.label}
-                    >
-                      <Link href={link.href}>
-                        <Icon className={active ? "text-blood" : undefined} />
-                        <span>{link.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {NAV_GROUPS.map((group) => {
+          const links = group.links.filter((link) =>
+            link.surfaces.includes("header")
+          );
+          if (links.length === 0) {
+            return null;
+          }
+          return (
+            <SidebarGroup
+              // The uncaptioned trailing utility block gets a rule so it
+              // reads as its own section, not a continuation of Review.
+              className={
+                group.id === "utility"
+                  ? "border-border/60 border-t"
+                  : undefined
+              }
+              key={group.id}
+            >
+              {group.label && (
+                <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+              )}
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {links.map((link) => {
+                    const Icon = link.icon;
+                    const active = isRouteActive(path, link.href);
+                    return (
+                      <SidebarMenuItem key={link.href}>
+                        <SidebarMenuButton
+                          asChild
+                          className="h-11"
+                          isActive={active}
+                          tooltip={link.label}
+                        >
+                          <Link href={link.href}>
+                            <Icon
+                              className={active ? "text-blood" : undefined}
+                            />
+                            <span>{link.label}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          );
+        })}
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>

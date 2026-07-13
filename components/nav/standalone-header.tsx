@@ -16,7 +16,7 @@ import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -34,7 +34,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useSignOut } from "@/hooks/use-sign-out";
-import { headerLinks } from "@/lib/nav-links";
+import { headerLinks, isRouteActive, NAV_GROUPS } from "@/lib/nav-links";
 import { cn } from "@/lib/utils";
 
 /**
@@ -179,7 +179,15 @@ export function StandaloneHeader({ active }: { active?: string }) {
     setPath(window.location.pathname);
   }, []);
   const current = active ?? path;
-  const section = headerLinks.find((link) => link.href === current) ?? null;
+  // Subroutes resolve to their section (FIX-20 selected state): /workouts/
+  // history still shows "Workouts" in the bar. Exact match wins over prefix
+  // so "/" (Chat) can never shadow another section.
+  const section =
+    headerLinks.find((link) => link.href === current) ??
+    headerLinks.find(
+      (link) => link.href !== "/" && isRouteActive(current, link.href)
+    ) ??
+    null;
   const SectionIcon = section?.icon;
 
   const [open, setOpen] = useState(false);
@@ -187,7 +195,7 @@ export function StandaloneHeader({ active }: { active?: string }) {
   const { setTheme, resolvedTheme } = useTheme();
   const { handleSignOut, signingOut } = useSignOut();
 
-  const isActive = (href: string) => (active ? active === href : path === href);
+  const isActive = (href: string) => isRouteActive(current, href);
 
   // Mobile-sheet entrance: links slide in one after another when the sheet
   // opens (reduced-motion → instant). Variants live on the wrapper so they
@@ -257,28 +265,61 @@ export function StandaloneHeader({ active }: { active?: string }) {
               initial="hidden"
               variants={sheetList}
             >
-              {headerLinks.map((link) => {
-                const Icon = link.icon;
-                const activeLink = isActive(link.href);
+              {/* Grouped exactly like the desktop nav panel (FIX-20): the two
+                  navs describe one model. */}
+              {NAV_GROUPS.map((group) => {
+                const links = group.links.filter((link) =>
+                  link.surfaces.includes("header")
+                );
+                if (links.length === 0) {
+                  return null;
+                }
                 return (
-                  <motion.div key={link.href} variants={sheetItem}>
-                    <SheetClose asChild>
-                      <Link
-                        className={cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-3 font-medium text-base transition-colors",
-                          activeLink
-                            ? "bg-accent text-foreground"
-                            : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-                        )}
-                        href={link.href}
+                  <Fragment key={group.id}>
+                    {group.label && (
+                      <motion.p
+                        className="px-3 pt-2 text-eyebrow text-muted-foreground"
+                        variants={sheetItem}
                       >
-                        <Icon
-                          className={cn("size-5", activeLink && "text-blood")}
-                        />
-                        <span>{link.label}</span>
-                      </Link>
-                    </SheetClose>
-                  </motion.div>
+                        {group.label}
+                      </motion.p>
+                    )}
+                    {/* The uncaptioned trailing utility block still needs a
+                        visible break from the captioned group above it. */}
+                    {group.id === "utility" && (
+                      <motion.div
+                        className="my-1 border-border border-t"
+                        variants={sheetItem}
+                      />
+                    )}
+                    {links.map((link) => {
+                      const Icon = link.icon;
+                      const activeLink = isActive(link.href);
+                      return (
+                        <motion.div key={link.href} variants={sheetItem}>
+                          <SheetClose asChild>
+                            <Link
+                              className={cn(
+                                "flex items-center gap-3 rounded-lg px-3 py-3 font-medium text-base transition-colors",
+                                activeLink
+                                  ? "bg-accent text-foreground"
+                                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                              )}
+                              href={link.href}
+                            >
+                              <Icon
+                                className={cn(
+                                  "size-5",
+                                  activeLink && "text-blood"
+                                )}
+                              />
+                              <span>{link.label}</span>
+                            </Link>
+                          </SheetClose>
+                        </motion.div>
+                      );
+                    })}
+                  </Fragment>
                 );
               })}
               <motion.div variants={sheetItem}>

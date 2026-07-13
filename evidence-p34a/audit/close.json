@@ -1,0 +1,38 @@
+{
+  "escape": {
+    "openedBefore": true,
+    "closedAfter": true
+  },
+  "xClose": {
+    "found": true,
+    "w": 47,
+    "h": 47,
+    "closed": true
+  },
+  "hamburger": {
+    "opened": true,
+    "activeEl": "DIV",
+    "editable": false,
+    "sheetH": 844,
+    "vh": 844
+  },
+  "hambClosed": true,
+  "moreAfterHamb": {
+    "opened": true,
+    "scroll": {
+      "drawerH": 717,
+      "vh": 844,
+      "scrollH": 2152,
+      "clientH": 717,
+      "linkCount": 13
+    }
+  },
+  "chatSidebar": {
+    "sidebarOpened": true,
+    "navZ": "40",
+    "sheetZ": "50",
+    "navTransform": "none",
+    "navBottom": 844,
+    "sheetCoversBar": true
+  }
+}

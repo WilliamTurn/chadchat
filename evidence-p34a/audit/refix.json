@@ -1,0 +1,50 @@
+{
+  "A": {
+    "bannerPresent": true,
+    "colTop": 53,
+    "colBottom": 844,
+    "viewportH": 844,
+    "docScrolls": false,
+    "docScrollH": 844,
+    "navTop": 783.5,
+    "disclBottom": 771.8,
+    "disclAboveBar": true,
+    "composer": {
+      "top": 581,
+      "bottom": 683,
+      "fullyVisible": true
+    },
+    "pbTabbarPadding": "59.5px"
+  },
+  "B": {
+    "activeEl": "TEXTAREA",
+    "vkOpen": true,
+    "barTransform": "none",
+    "barHidden": false,
+    "pbTabbarPaddingFocused": "0px"
+  },
+  "Bblur": {
+    "vkOpen": false,
+    "barTransform": "none",
+    "pbTabbarPadding": "59.5px"
+  },
+  "D": {
+    "barPresent": true,
+    "barTop": 784,
+    "barBottom": 844,
+    "overflowX": false
+  },
+  "C": {
+    "headerVisible": true,
+    "composer": {
+      "top": 719,
+      "bottom": 815,
+      "visible": true
+    },
+    "docScrolls": false,
+    "bodyScrolls": false,
+    "barDisplay": "none",
+    "viewportH": 900,
+    "docScrollH": 900
+  }
+}

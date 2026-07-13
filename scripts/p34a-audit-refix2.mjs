@@ -1,0 +1,22 @@
+import { chromium } from "@playwright/test";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const OUT = join(__dirname, "..", "evidence-p34a", "audit");
+const BASE = "http://localhost:3600";
+const browser = await chromium.launch();
+const ctx = await browser.newContext({ storageState: join(OUT,"state.json"), viewport:{width:390,height:844}, hasTouch:true, isMobile:true, deviceScaleFactor:2 });
+const page = await ctx.newPage();
+await page.goto(`${BASE}/`, { waitUntil:"domcontentloaded" });
+await page.waitForTimeout(2200);
+const ta = await page.$("textarea");
+await ta.tap();
+await page.waitForTimeout(800);
+const r = await page.evaluate(() => {
+  const nav = document.querySelector('nav[aria-label="Primary"]');
+  const cs = getComputedStyle(nav);
+  const rect = nav.getBoundingClientRect();
+  return { translate: cs.translate, transform: cs.transform, top: Math.round(rect.top), vh: window.innerHeight, offscreen: rect.top >= window.innerHeight - 1 };
+});
+console.log("bar while focused:", JSON.stringify(r));
+await browser.close();

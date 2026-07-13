@@ -546,6 +546,37 @@ textarea:focus-visible {
   max-height: 85dvh;
 }
 
+/* P34-A (FIX-21) bottom tab bar utilities. `pb-safe-edge` is the bar's own
+   safe-area padding (no 1.5rem floor: the bar sits flush on devices without
+   a home indicator, unlike sheet bodies which use pb-safe). `h-tabbar` is the
+   in-flow spacer matching the bar's total height; `pb-tabbar` reserves the
+   same space on the chat shell's h-dvh root. Plain CSS for the responsive
+   and keyboard halves (Tailwind v4 drops @utility with nested @media,
+   P2-A gotcha): the bar hides while the software keyboard is up (the
+   BottomNav component stamps `data-vk-open` on <html>), so the reserved
+   space must collapse with it or a dead gap opens above the keyboard. */
+@utility pb-safe-edge {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.h-tabbar {
+  height: calc(3.5rem + env(safe-area-inset-bottom));
+}
+
+.pb-tabbar {
+  padding-bottom: calc(3.5rem + env(safe-area-inset-bottom));
+}
+
+html[data-vk-open] .pb-tabbar {
+  padding-bottom: 0;
+}
+
+@media (min-width: 48rem) {
+  .pb-tabbar {
+    padding-bottom: 0;
+  }
+}
+
 @utility text-balance {
   text-wrap: balance;
 }
