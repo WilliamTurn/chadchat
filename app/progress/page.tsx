@@ -242,7 +242,7 @@ async function Dashboard({
 
         {/* Log a new entry. id: the dashboard card's "Log weight" landing spot (R2-5). */}
         <section
-          className="min-w-0 rounded-2xl border border-border bg-card p-6"
+          className="min-w-0 scroll-mt-20 rounded-2xl border border-border bg-card p-6"
           id="log-entry"
         >
           <h2 className="mb-4 font-medium text-lg">Log an entry</h2>

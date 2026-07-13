@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   Drawer,
   DrawerContent,
+  DrawerDescription,
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
@@ -220,6 +221,9 @@ export function BottomNav({
         <DrawerContent>
           <DrawerHeader>
             <DrawerTitle>What do you want to log?</DrawerTitle>
+            <DrawerDescription className="sr-only">
+              Pick a logger to open its page.
+            </DrawerDescription>
           </DrawerHeader>
           <div className="flex flex-col gap-1 pb-2">
             {LOG_ACTIONS.map((action) => {
@@ -245,6 +249,9 @@ export function BottomNav({
         <DrawerContent>
           <DrawerHeader>
             <DrawerTitle>More</DrawerTitle>
+            <DrawerDescription className="sr-only">
+              Every other destination, grouped like the desktop navigation.
+            </DrawerDescription>
           </DrawerHeader>
           <div className="flex flex-col gap-3 pb-2">
             {moreGroups.map((group) => (
@@ -267,6 +274,7 @@ export function BottomNav({
                   const isActive = isRouteActive(current, link.href);
                   return (
                     <Link
+                      aria-current={isActive ? "page" : undefined}
                       className={cn(
                         "flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 font-medium text-base transition-colors",
                         isActive

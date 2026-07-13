@@ -2,7 +2,7 @@
 
 /**
  * URL-synced chart range state (FIX-03). Drop-in wrappers around the two
- * existing range hooks — they COMPOSE with them (the briefing's rule), never
+ * existing range hooks - they COMPOSE with them (the briefing's rule), never
  * fork them:
  *
  *   - `useUrlChartWindow` wraps P2-C's `useChartWindow` (window-axis charts:

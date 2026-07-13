@@ -252,7 +252,7 @@ async function Feed({
           phones/tablets (clipped invisibly by overflow-x: clip). */}
       <div className="grid grid-cols-1 items-start gap-8 xl:grid-cols-2">
         <section
-          className="min-w-0 rounded-2xl border border-border bg-card p-6"
+          className="min-w-0 scroll-mt-20 rounded-2xl border border-border bg-card p-6"
           id="log-meal"
         >
           {/* Keyed by day so browsing to a past day re-arms the form's date to
@@ -335,7 +335,7 @@ function DaySummary({
     // id="history": where the dashboard card's "View all" link lands (R2-5) --
     // the day heading + totals, with the day's meals right below, not the
     // log form.
-    <section className="flex min-w-0 flex-col gap-4" id="history">
+    <section className="flex min-w-0 scroll-mt-20 flex-col gap-4" id="history">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <div className="flex items-baseline gap-3">
           <h2 className="font-medium text-lg">{heading}</h2>

@@ -25,7 +25,7 @@ export function WaterHistory({
   }
 
   return (
-    <section id="history">
+    <section className="scroll-mt-20" id="history">
       <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
         History · last 30 days
       </h2>

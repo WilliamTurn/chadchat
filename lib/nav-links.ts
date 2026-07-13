@@ -94,9 +94,7 @@ export const NAV_LINKS: NavLink[] = NAV_CONFIG.map(
       label: def.name,
       icon,
       surfaces,
-      // The registry drives grouping. /quit-date carries no proposedNavGroup
-      // yet (DEC-03 decided its nav home is a utility entry; registering the
-      // group on the route is a registry change queued in the decision log).
+      // The registry drives grouping; ungrouped routes default to utility.
       group: ("proposedNavGroup" in def ? def.proposedNavGroup : undefined) ?? "utility",
     };
   }

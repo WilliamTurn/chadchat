@@ -267,7 +267,7 @@ async function Home({ user }: { user: User }) {
           )}
 
           {/* Recent history + the full log. id: dashboard "View all" target. */}
-          <section id="history">
+          <section className="scroll-mt-20" id="history">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
                 Recent workouts

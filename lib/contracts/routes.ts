@@ -389,6 +389,8 @@ export const ROUTES = {
     domain: "quit",
     access: "member",
     purpose: "The quit-date prediction.",
+    // DEC-03 (DECIDED 2026-07-13): the Quit Test's owned nav destination.
+    proposedNavGroup: "utility",
   },
   "/account": {
     path: "/account",

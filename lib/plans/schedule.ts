@@ -8,12 +8,12 @@ import type { PlanDay } from "@/lib/validation/plan-days";
  * prescribes.
  *
  * Storage forms, in resolution order:
- *   1. "structured"   — materialized PlanSession/PlanSessionExercise/
+ *   1. "structured"   - materialized PlanSession/PlanSessionExercise/
  *                       PlanSessionSet rows (session ids are real).
- *   2. "legacy-days"  — `Plan.days` json parsed on the fly (session ids null;
+ *   2. "legacy-days"  - `Plan.days` json parsed on the fly (session ids null;
  *                       lib/db/plan-goal-queries.ts materializes lazily, the
  *                       syncPlanDays idiom).
- *   3. "document"     — text-only plan: no schedule; the raw `Plan.detail`
+ *   3. "document"     - text-only plan: no schedule; the raw `Plan.detail`
  *                       renders as the full document (DEC-06: never blocked,
  *                       never rewritten; the existing one-tap AI extraction
  *                       on /workouts remains the upgrade path).
