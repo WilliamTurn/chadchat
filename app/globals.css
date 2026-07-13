@@ -129,11 +129,12 @@
   --ring: #a4161a;
   /* Domain accents — mirror lib/chart/palette.ts (the VF-7 color law):
      1 hydration sky · 2 goal emerald · 3 nutrition amber · 4 sleep indigo ·
-     5 brand blood (training). */
-  --chart-1: #0ea5e9;
-  --chart-2: #10b981;
-  --chart-3: #f59e0b;
-  --chart-4: #818cf8;
+     5 brand blood (training). Light uses 600-level fills (FIX-19: 500s were
+     below 3:1 non-text contrast on white cards); dark keeps the 500s. */
+  --chart-1: #0284c7;
+  --chart-2: #059669;
+  --chart-3: #d97706;
+  --chart-4: #6366f1;
   --chart-5: #a4161a;
   --sidebar: oklch(0.97 0 0);
   --sidebar-foreground: oklch(0.38 0 0);
@@ -163,16 +164,25 @@
 
   /* Semantic states, light. TEXT forms measured on white card / inset:
      positive-text 5.5:1, attention-text 6.2:1, critical-text 7.8:1,
-     info-text 5.9:1, sleep-text 6.3:1. */
-  --positive: #10b981;
+     info-text 5.9:1, sleep-text 6.3:1. FILL forms darkened one step in
+     light (FIX-19, P2-C auditor finding): 500-level hues sat below the
+     3:1 non-text bar on white cards; 600-level passes (positive 3.8:1,
+     attention 3.2:1, info 4.1:1 on white). Dark keeps the 500s. */
+  --positive: #059669;
   --positive-text: #047857;
-  --attention: #f59e0b;
+  --attention: #d97706;
   --attention-text: #92400e;
   --critical: #a4161a;
   --critical-text: #a4161a;
-  --info: #0ea5e9;
+  --info: #0284c7;
   --info-text: #0369a1;
   --sleep-text: #4f46e5;
+  /* Chart-only hues with no state role (FIX-19, same 3:1 law): the neutral
+     trend line and the macro trio. Dark values below. */
+  --chart-neutral: #64748b;
+  --chart-protein: #0284c7;
+  --chart-carbs: #b45309;
+  --chart-fat: #7c3aed;
 
   /* Motion tokens (motion-interaction.md): standard transitions 150-220ms,
      ease-out entering, ease-in exiting. */
@@ -204,7 +214,8 @@
   --border: rgba(216, 231, 242, 0.08);
   --input: rgba(216, 231, 242, 0.1);
   --ring: #a4161a;
-  /* Same domain accents as light — see lib/chart/palette.ts (VF-7). */
+  /* Same hue families as light, kept at 500-level — the ink surfaces need
+     the brighter fills (see the light block's FIX-19 note). */
   --chart-1: #0ea5e9;
   --chart-2: #10b981;
   --chart-3: #f59e0b;
@@ -250,6 +261,12 @@
   --info: #0ea5e9;
   --info-text: #0ea5e9;
   --sleep-text: #818cf8;
+  /* Chart-only hues, dark (see the light block): 400/500-level reads best
+     on the ink surfaces and passes 3:1 there. */
+  --chart-neutral: #94a3b8;
+  --chart-protein: #38bdf8;
+  --chart-carbs: #fbbf24;
+  --chart-fat: #a78bfa;
 }
 
 @layer base {

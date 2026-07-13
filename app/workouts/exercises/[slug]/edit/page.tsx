@@ -20,7 +20,7 @@ export default function EditCustomExercisePage({
   return (
     // Full-width desktop frame (LAY-1); the form lays itself out inside it.
     <PageShell active="/workouts" className="max-w-[1500px]">
-      <Toaster position="top-center" theme="system" />
+      <Toaster position="top-center" richColors theme="system" />
       <Suspense fallback={<WorkoutsPageLoading />}>
         <Content params={params} />
       </Suspense>

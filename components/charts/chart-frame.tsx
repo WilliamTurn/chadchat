@@ -148,7 +148,12 @@ export function ChartFrame({
               We couldn't load this chart. Your logs are safe.
             </p>
             {onRetry && (
-              <Button onClick={onRetry} size="sm" variant="outline">
+              <Button
+                className="min-h-11 sm:min-h-8"
+                onClick={onRetry}
+                size="sm"
+                variant="outline"
+              >
                 Try again
               </Button>
             )}
@@ -171,7 +176,12 @@ export function ChartFrame({
             <p className="max-w-sm text-body text-muted-foreground">
               {lockedCapability ?? `${title} charts are a Pro feature.`}
             </p>
-            <Button asChild size="sm" variant="outline">
+            <Button
+              asChild
+              className="min-h-11 sm:min-h-8"
+              size="sm"
+              variant="outline"
+            >
               <Link href="/account">Upgrade to Pro</Link>
             </Button>
           </div>

@@ -170,6 +170,20 @@ export const PANEL_ROLES: Record<PanelRole, PanelRoleContract> = {
 };
 
 /**
+ * DEC-07 (resolved P2-Z, 2026-07-13): `heightRange` is the DESKTOP-grid
+ * budget, enforced at 1280/1440. Below the md break (phone widths, the
+ * 4-column grid), the max scales by this multiplier: the owner-mandated
+ * panel anatomy (strip AND chart AND 44px footer targets) legitimately
+ * needs more vertical room in a single narrow column, and clamping would
+ * clip member content (measured P2-B run 3: quick-log 1.12x, trend 1.06x,
+ * plan 1.20x of desktop max at 320 to 390px). The min (the empty-state
+ * floor) does not scale. Also ratified: empty = hard compact (<= min*1.2);
+ * sparse = full-size facts within the role max, never shrunk (first-run.md
+ * wins over the density-hierarchy "shrink to compact" phrasing).
+ */
+export const PHONE_HEIGHT_MULTIPLIER = 1.25;
+
+/**
  * The states every panel must design for, in the order fixtures exercise
  * them. "Designed" means composed on purpose (see standards/first-run.md and
  * standards/reward-visual.md), not the populated layout with holes in it.

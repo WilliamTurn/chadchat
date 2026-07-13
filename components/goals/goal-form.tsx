@@ -28,18 +28,8 @@ import {
 } from "@/app/today/actions";
 import { KpiHelp } from "@/components/dashboard/kpi";
 import type { EditableGoal } from "@/components/goals/types";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { ConfirmActionDialog } from "@/components/ui/confirm-undo";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -485,20 +475,20 @@ export function GoalForm({
     });
   }
 
-  function destroy() {
+  // ConfirmActionDialog contract (FIX-17): resolve closes the dialog, a
+  // rejection keeps it open so the member can retry.
+  async function destroyConfirmed() {
     if (!goal) {
       return;
     }
-    startTransition(async () => {
-      const result = await removeGoal(goal.id);
-      if (result.ok) {
-        toast.success("Goal deleted.");
-        router.push("/goals");
-        router.refresh();
-      } else {
-        toast.error(result.error ?? "Couldn't delete that goal.");
-      }
-    });
+    const result = await removeGoal(goal.id);
+    if (!result.ok) {
+      toast.error(result.error ?? "Couldn't delete that goal.");
+      throw new Error("Goal delete failed");
+    }
+    toast.success("Goal deleted.");
+    router.push("/goals");
+    router.refresh();
   }
 
   return (
@@ -1124,10 +1114,15 @@ export function GoalForm({
         </Button>
         <div className="ml-auto">
           {isEdit && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
+            <ConfirmActionDialog
+              confirmLabel="Delete goal"
+              consequence="Its progress will be permanently deleted, and Chad will stop tracking it. If you just want it out of the way, set its status to Archived instead: you can reopen an archived goal anytime."
+              onConfirm={destroyConfirmed}
+              title={`Delete "${goal?.title}"?`}
+              trigger={
                 <Button
                   className="h-11 gap-1.5 text-muted-foreground"
+                  disabled={pending}
                   size="sm"
                   type="button"
                   variant="ghost"
@@ -1135,31 +1130,8 @@ export function GoalForm({
                   <Trash2 className="size-3.5" />
                   Delete goal
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete this goal?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    "{goal?.title}" and its progress will be permanently
-                    deleted, and Chad will stop tracking it. If you just want it
-                    out of the way, set its status to Archived instead: you can
-                    reopen an archived goal anytime.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel disabled={pending}>
-                    Cancel
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    disabled={pending}
-                    onClick={destroy}
-                  >
-                    {pending ? "Deleting…" : "Delete goal"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+              }
+            />
           )}
         </div>
       </div>

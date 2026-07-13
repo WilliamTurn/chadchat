@@ -96,7 +96,10 @@ export function ModuleHeader({
       </h2>
       {viewHref && (
         <Link
-          className="whitespace-nowrap text-muted-foreground text-xs underline-offset-4 transition-colors hover:text-foreground hover:underline"
+          // Phone widths: pad the hit area to 44px+ and pull it back with
+          // negative margins so the header's visual layout doesn't change
+          // (FIX-19; nothing else is interactive in the header row).
+          className="-mx-2 -my-3.5 flex items-center whitespace-nowrap px-2 py-3.5 text-muted-foreground text-xs underline-offset-4 transition-colors hover:text-foreground hover:underline sm:mx-0 sm:my-0 sm:px-0 sm:py-0"
           href={viewHref}
         >
           {viewLabel} →

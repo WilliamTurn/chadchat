@@ -74,7 +74,7 @@ export default function WorkoutDetailPage({
     // Full-width desktop layout (LAY-1): the per-exercise breakdown renders
     // two-across on desktop instead of one stacked column.
     <PageShell active="/workouts" className="max-w-[1500px]">
-      <Toaster position="top-center" theme="system" />
+      <Toaster position="top-center" richColors theme="system" />
       <Suspense fallback={<WorkoutsPageLoading />}>
         <Content params={params} searchParams={searchParams} />
       </Suspense>

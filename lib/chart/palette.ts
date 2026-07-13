@@ -17,24 +17,30 @@
  * headers) live in `components/today/icon-chip.tsx` on the same hue families.
  */
 
-/** Brand blood red — chrome, alerts, and the training domain. */
+/** Brand blood red — chrome, alerts, and the training domain. Same hex in
+ *  both themes (7.8:1 on white), so it stays a literal. */
 export const BLOOD = "#a4161a";
 
 /** Emerald — "toward / at goal" verdicts, goal bars, goal lines, and the
- *  always-emerald weight trend line (rule 2). */
-export const GOAL_EMERALD = "#10b981";
+ *  always-emerald weight trend line (rule 2). Theme-aware (FIX-19): light
+ *  resolves to emerald-600, dark to emerald-500 (globals.css --chart-2). */
+export const GOAL_EMERALD = "var(--chart-2)";
 
-/** One fixed accent per domain. A chart's series color comes from here. */
+/** One fixed accent per domain. A chart's series color comes from here.
+ *  Values are the --chart-N tokens (globals.css) so light gets the darker
+ *  600-level fills that pass 3:1 on white cards (FIX-19) while dark keeps
+ *  the 500s. SVG fill/stroke resolves var() fine; canvas/PDF renderers keep
+ *  their own literals. */
 export const DOMAIN = {
   /** Training volume + est. 1RM — the brand domain (see rule 1). */
   training: BLOOD,
   /** Water — sky. */
-  hydration: "#0ea5e9",
+  hydration: "var(--chart-1)",
   /** Sleep — indigo. */
-  sleep: "#818cf8",
+  sleep: "var(--chart-4)",
   /** Calories / nutrition — amber (never blood: a red calorie fill is
    *  indistinguishable from the genuine over-target alert). */
-  nutrition: "#f59e0b",
+  nutrition: "var(--chart-3)",
 } as const;
 
 /**
@@ -43,7 +49,7 @@ export const DOMAIN = {
  * no goal or the window is flat. Centralized here (FIX-18) so the weight chart
  * and every future trend chart color the same verdict the same way.
  */
-export const TREND_NEUTRAL = "#94a3b8";
+export const TREND_NEUTRAL = "var(--chart-neutral)";
 
 export type TrendTone = "toward" | "away" | "neutral";
 
@@ -53,10 +59,11 @@ export const TREND_TONE: Record<TrendTone, string> = {
   neutral: TREND_NEUTRAL,
 };
 
-/** The macro trio (matches the MacroRings bars: sky / amber / violet). */
+/** The macro trio (matches the MacroRings bars: sky / amber / violet).
+ *  Theme-aware like DOMAIN (FIX-19). */
 export const MACRO = {
   calories: DOMAIN.nutrition,
-  protein: "#38bdf8",
-  carbs: "#fbbf24",
-  fat: "#a78bfa",
+  protein: "var(--chart-protein)",
+  carbs: "var(--chart-carbs)",
+  fat: "var(--chart-fat)",
 } as const;

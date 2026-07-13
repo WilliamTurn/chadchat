@@ -21,7 +21,7 @@ import {
   getWaterDailyTotals,
   getWaterLogsSince,
 } from "@/lib/db/queries";
-import { resolveTimezone, todayStartInTz } from "@/lib/date";
+import { resolveTimezone, todayAnchorInTz, todayStartInTz } from "@/lib/date";
 import { computeWaterStats } from "@/lib/today/water-stats";
 import { DEFAULT_WATER_GOAL_ML, formatOz } from "@/lib/today/water-units";
 import { buildWaterWeek } from "@/lib/today/week";
@@ -182,7 +182,11 @@ async function HydrationContent() {
           <div className="flex min-w-0 flex-col gap-6">
             <WaterTodayLog entries={todayLog} />
             {showTrend && (
-              <WaterTrendChart days={waterDaily} goalMl={waterGoalMl} />
+              <WaterTrendChart
+                days={waterDaily}
+                goalMl={waterGoalMl}
+                todayMs={todayAnchorInTz(timezone).getTime()}
+              />
             )}
           </div>
         )}

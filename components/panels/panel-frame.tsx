@@ -129,7 +129,12 @@ function LockedBody({ capability }: { capability: string }) {
         <Lock aria-hidden className="size-4" />
       </span>
       <p className="text-body text-muted-foreground">{capability}</p>
-      <Button asChild className="gap-1.5" size="sm" variant="outline">
+      <Button
+        asChild
+        className="min-h-11 gap-1.5 sm:min-h-8"
+        size="sm"
+        variant="outline"
+      >
         <Link href="/account">
           <Crown className="size-4" />
           Upgrade to Pro

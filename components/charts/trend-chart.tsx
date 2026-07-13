@@ -55,7 +55,7 @@ export function trendChartLegend(
     { swatch: "line", color: TREND_TONE[tone], label: labels.trend },
   ];
   if (labels.goal) {
-    items.push({ swatch: "dash", color: "var(--goal-line)", label: labels.goal });
+    items.push({ swatch: "dash", color: "var(--color-goal-line)", label: labels.goal });
   }
   return items;
 }
@@ -191,7 +191,7 @@ export function TrendChart({
             inline label never collides with data near the target. */}
         {goal && (
           <ReferenceLine
-            stroke="var(--goal-line)"
+            stroke="var(--color-goal-line)"
             strokeDasharray="5 4"
             strokeWidth={2}
             y={goal.value}

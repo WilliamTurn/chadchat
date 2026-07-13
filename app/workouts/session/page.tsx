@@ -18,7 +18,7 @@ export default function SessionPage() {
     // Full-width desktop layout (LAY-1): the live exercise cards render
     // two-across on desktop instead of one stacked column.
     <PageShell active="/workouts" className="max-w-[1500px]">
-      <Toaster position="top-center" theme="system" />
+      <Toaster position="top-center" richColors theme="system" />
       <Suspense fallback={<WorkoutsPageLoading />}>
         <Content />
       </Suspense>

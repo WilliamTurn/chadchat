@@ -30,6 +30,7 @@ import {
   WeekBars,
 } from "@/components/panels/visuals";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
+import { WeightTrendChartDemo } from "@/components/charts/demo/chart-demos";
 import { WeekStrip } from "@/components/today/week-strip";
 import type { PanelState } from "@/lib/contracts/data-state";
 import { formatCoverage } from "@/lib/contracts/data-state";
@@ -107,7 +108,7 @@ function quietAction(label: string, href: string) {
 
 function retry() {
   return (
-    <Button size="sm" variant="outline">
+    <Button className="min-h-11 sm:min-h-8" size="sm" variant="outline">
       Try again
     </Button>
   );
@@ -307,10 +308,6 @@ export function TrendWeightDemo({
     .sort((a, b) => b.daysAgo - a.daysAgo);
   const resolved = effectiveState(state, inWindow.length > 0);
 
-  const points: SparkPoint[] = inWindow.map((w) => ({
-    x: (TREND_WINDOW_DAYS - 1 - w.daysAgo) / (TREND_WINDOW_DAYS - 1),
-    value: w.weight,
-  }));
   const latest = inWindow.at(-1);
   const first = inWindow.at(0);
   const loggedDays = new Set(inWindow.map((w) => w.daysAgo)).size;
@@ -381,11 +378,10 @@ export function TrendWeightDemo({
       title="Weight trend"
       tone="emerald"
       visual={
-        <PanelSparkline
-          className={towardGoal ? "text-emerald-500" : "text-blood"}
-          goal={goal?.targetValue}
-          points={points}
-        />
+        /* P2-Z integration: the trend role's visual slot mounts the shared
+           chart system in panel-embed form (ChartFrame chrome={false}
+           compact + TrendChart), never a bespoke plot. */
+        <WeightTrendChartDemo compact persona={persona} state={resolved} />
       }
     />
   );

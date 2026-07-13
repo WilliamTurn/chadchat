@@ -180,7 +180,7 @@ export function DailyBarsChart({
             the ChartFrame header and legend state it in text. */}
         {target && (
           <ReferenceLine
-            stroke="var(--goal-line)"
+            stroke="var(--color-goal-line)"
             strokeDasharray="5 4"
             strokeWidth={2}
             y={target.value}
@@ -276,7 +276,7 @@ export function WeeklyBarsChart({
         {/* Unlabeled goal line; the frame header and legend carry the text. */}
         {target && (
           <ReferenceLine
-            stroke="var(--goal-line)"
+            stroke="var(--color-goal-line)"
             strokeDasharray="5 4"
             strokeWidth={2}
             y={target.value}

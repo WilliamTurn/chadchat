@@ -1,141 +1,159 @@
 "use client";
 
 /**
- * Nightly sleep trend (the /sleep detail page) — each bar is one night's time
- * asleep, oldest → newest, with a dashed 7-hour recommended line and a scrub
- * tooltip. Built on Recharts via the shadcn chart primitive and the shared
- * dashboard chart system (ChartCard / Kpi / useChartRange), so it matches the
- * weight, volume and water trends. Nights that reach 7h are full-strength
- * indigo; short nights are faded.
- *
- * Honest axis (audit P2-5): unlogged nights render as empty slots instead of
- * silently vanishing — the series is gap-filled per calendar day.
+ * Nightly sleep trend (the /sleep detail page), MIGRATED onto the FIX-18
+ * shared chart system (P2-Z): ChartFrame carries the grammar and
+ * DailyBarsChart draws one bar per WINDOW night (DSH-60: the axis spans the
+ * window; unlogged nights are gaps, never zeros).
  *
  * One window, one denominator (LC-9): BOTH stats count only the nights the
- * user actually logged in the selected range. The average was always
- * per-logged-night; the "Nights with 7h+" denominator used to be every night
- * in the window (so honest logging gaps read as failed nights, and the two
- * stats silently used different denominators on one card). A night with no
- * log is unknown, not a miss — the chart's empty slots already show the gaps.
+ * user actually logged in the selected range. A night with no log is
+ * unknown, not a miss — the chart's gaps already show it. The stats compose
+ * at page level from the same slots the chart draws (the "KPI strip composes
+ * at panel level" rule; the chart system has no bespoke KPI slots).
+ *
+ * Per-night quality stays on this page in the "Sleep history" list; the
+ * shared chart tooltip speaks duration only.
  */
 
 import { useMemo } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  ReferenceLine,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { ChartCard } from "@/components/dashboard/chart-card";
-import { ChartTip } from "@/components/dashboard/chart-tip";
+import { AskChadButton } from "@/components/chad/ask-chad-button";
+import { ChartFrame } from "@/components/charts/chart-frame";
+import { DailyBarsChart } from "@/components/charts/slot-bars-chart";
+import { useChartWindow } from "@/components/charts/use-chart-window";
 import { Kpi } from "@/components/dashboard/kpi";
-import {
-  formatSleepDuration,
-  QUALITY_LABELS,
-} from "@/components/today/sleep-log-form";
-import {
-  type ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-} from "@/components/ui/chart";
-import { useChartRange } from "@/hooks/use-chart-range";
-import { useMountReveal } from "@/hooks/use-mount-reveal";
-import { formatTick, niceScale } from "@/lib/chart/format";
 import { DOMAIN } from "@/lib/chart/palette";
-import { fillDailyGaps } from "@/lib/chart/trend";
+import { buildChartSummary } from "@/lib/chart/summary";
+import { toDaySlots } from "@/lib/chart/window";
+import {
+  type Coverage,
+  loggedReading,
+  type MetricReading,
+  unloggedReading,
+} from "@/lib/contracts/data-state";
+import { formatMinutesAsDuration } from "@/lib/contracts/units";
 import { SLEEP_GOAL_MINUTES } from "@/lib/validation/sleep";
-
-const INDIGO = DOMAIN.sleep;
 
 const ASK_CHAD_PROMPT =
   "Look at my sleep trend chart: the night-to-night pattern over the last couple of weeks, not just one night. Is my sleep consistent enough to recover and make progress, and what would smooth it out?";
 
-const chartConfig = {
-  minutes: { label: "Sleep", color: INDIGO },
-} satisfies ChartConfig;
-
 type Point = { t: number; minutes: number; quality: number | null };
-type Row = Point & { logged: boolean };
-
-/** Compact axis label in hours, e.g. "7h". */
-function fmtAxis(minutes: number): string {
-  return `${Math.round(minutes / 60)}h`;
-}
 
 export function SleepTrendChart({
   days,
   goalMinutes = SLEEP_GOAL_MINUTES,
+  todayMs,
 }: {
   days: Point[];
   /** The user's nightly target (DSH-40); defaults to the recommended 7h. */
   goalMinutes?: number;
+  /** Member-local today anchor (todayAnchorInTz), for window determinism. */
+  todayMs: number;
 }) {
-  const reveal = useMountReveal();
   const isDefaultGoal = goalMinutes === SLEEP_GOAL_MINUTES;
-  const goalLabel = formatSleepDuration(goalMinutes);
+  const goalLabel = formatMinutesAsDuration(goalMinutes);
 
-  // Gap-fill unlogged nights so the date axis stays honest (bars are evenly
-  // spaced bands — without the fill, missing days silently vanish).
-  const filled = useMemo<Row[]>(
-    () =>
-      fillDailyGaps<Row>(
-        days.map((d) => ({ ...d, logged: true })),
-        (t) => ({ t, minutes: 0, quality: null, logged: false })
-      ),
+  const points = useMemo(
+    () => days.map((d) => ({ t: d.t, value: d.minutes })),
     [days]
   );
-  const { rows, control } = useChartRange(filled, { minPoints: 7 });
+  const { window: w, control } = useChartWindow(points, {
+    todayMs,
+    minPoints: 7,
+  });
 
+  const slots = useMemo(() => toDaySlots(w, points), [points, w]);
+
+  const coverage = useMemo<Coverage>(() => {
+    const loggedIdx = slots.flatMap((s, i) => (s.value != null ? [i] : []));
+    return {
+      loggedDays: loggedIdx.length,
+      windowDays: slots.length,
+      points: loggedIdx.length,
+      spanDays:
+        loggedIdx.length >= 2 ? loggedIdx[loggedIdx.length - 1] - loggedIdx[0] : 0,
+    };
+  }, [slots]);
+
+  // Window-following stats, logged nights only (LC-9), from the same slots.
   const stats = useMemo(() => {
-    const loggedRows = rows.filter((r) => r.logged);
-    if (loggedRows.length === 0) {
+    const logged = slots.filter((s) => s.value != null) as {
+      t: number;
+      value: number;
+    }[];
+    if (logged.length === 0) {
       return null;
     }
-    const sum = loggedRows.reduce((s, r) => s + r.minutes, 0);
-    const avg = Math.round(sum / loggedRows.length);
-    const hit = loggedRows.filter((r) => r.minutes >= goalMinutes).length;
-    // Denominator = logged nights only (LC-9): same basis as the average, so
-    // the two stats can't disagree about what a "night" is. Unlogged nights
-    // are unknowns, shown as gaps in the chart, not counted as misses.
-    return { avg, hit, logged: loggedRows.length };
-  }, [rows, goalMinutes]);
+    const avg = Math.round(
+      logged.reduce((sum, s) => sum + s.value, 0) / logged.length
+    );
+    const hit = logged.filter((s) => s.value >= goalMinutes).length;
+    return { avg, hit, logged: logged.length };
+  }, [slots, goalMinutes]);
 
-  // Even whole-hour ticks (VF-8): 0h/2h/4h…, never the irregular 0h/3h/7h/9h
-  // a raw-max domain produced. Data is minutes; steps are display hours.
-  const { max: yMax, ticks: yTicks } = useMemo(
-    () =>
-      niceScale(Math.max(...rows.map((r) => r.minutes), goalMinutes), {
-        steps: [1, 2, 3, 4, 6, 12],
-        unit: 60,
-      }),
-    [rows, goalMinutes]
-  );
+  const target = {
+    value: goalMinutes,
+    label: `Goal ${goalLabel}`,
+    direction: "atLeast" as const,
+  };
+
+  const lastNight = slots[slots.length - 1]?.value;
+  const reading: MetricReading<number> =
+    lastNight != null
+      ? loggedReading(lastNight, { coverage })
+      : unloggedReading(coverage);
+
+  const summary = buildChartSummary({
+    title: "Sleep",
+    rangeLabel: control.rangeLabel,
+    reading,
+    unit: "duration",
+    goal: { value: goalMinutes, label: "Goal" },
+  });
 
   if (days.length < 2) {
     return null;
   }
 
   return (
-    <ChartCard
-      askChadPrompt={ASK_CHAD_PROMPT}
-      footer={
-        <span>
-          <span className="font-medium text-indigo-400">{goalLabel}+</span>{" "}
-          a night {isDefaultGoal ? "recommended" : "is your goal"} · each bar
-          is one night · gaps are unlogged nights
-        </span>
-      }
-      kpis={
-        stats && (
-          <>
+    <section className="rounded-2xl border border-border bg-card p-5 md:p-6">
+      <ChartFrame
+        caption={`${goalLabel}+ a night ${
+          isDefaultGoal ? "recommended" : "is your goal"
+        }`}
+        chrome={false}
+        coverage={coverage}
+        goalText={target.label}
+        headlineLabel="last night"
+        height={200}
+        range={control}
+        reading={reading}
+        state="populated"
+        summary={summary}
+        title="Sleep"
+        unit="duration"
+      >
+        <DailyBarsChart
+          color={DOMAIN.sleep}
+          formatAxisTick={(v) => `${Math.round(v / 60)}h`}
+          formatValue={(v) => formatMinutesAsDuration(v)}
+          slots={slots}
+          target={target}
+          tipLabel="Sleep"
+          unit="duration"
+          yScale={{ unit: 60, steps: [1, 2, 3, 4, 6, 12] }}
+        />
+      </ChartFrame>
+
+      {/* Page-level KPI strip + Ask Chad; values follow the selected window. */}
+      <div className="mt-4 flex flex-wrap items-end justify-between gap-x-6 gap-y-3 border-border border-t pt-4">
+        {stats && (
+          <div className="flex items-end gap-6">
             <Kpi
               help="Your average across the nights you logged in this range. Nights you didn't log aren't counted."
               label="Avg / night"
               size="lg"
-              value={formatSleepDuration(stats.avg)}
+              value={formatMinutesAsDuration(stats.avg)}
             />
             <Kpi
               help={`How many of the nights you logged in this range hit ${
@@ -148,112 +166,13 @@ export function SleepTrendChart({
               tone={stats.hit > 0 ? "good" : "neutral"}
               value={`${stats.hit} / ${stats.logged}`}
             />
-          </>
-        )
-      }
-      range={control}
-      title="Sleep trend"
-    >
-      <ChartContainer className="h-[200px] w-full" config={chartConfig}>
-        <BarChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-          <XAxis
-            axisLine={false}
-            dataKey="t"
-            minTickGap={32}
-            tickFormatter={formatTick}
-            tickLine={false}
-            tickMargin={8}
-          />
-          <YAxis
-            axisLine={false}
-            domain={[0, yMax]}
-            tickFormatter={fmtAxis}
-            tickLine={false}
-            tickMargin={4}
-            ticks={yTicks}
-            width={36}
-          />
-          <ChartTooltip
-            content={<SleepTooltip goalMinutes={goalMinutes} />}
-            cursor={{ fill: "var(--muted-foreground)", fillOpacity: 0.08 }}
-          />
-          <ReferenceLine
-            stroke={INDIGO}
-            strokeDasharray="5 4"
-            strokeOpacity={0.7}
-            strokeWidth={1.5}
-            y={goalMinutes}
-          />
-          <Bar
-            animationDuration={750}
-            animationEasing="ease-out"
-            dataKey="minutes"
-            isAnimationActive={reveal}
-            maxBarSize={34}
-            radius={[3, 3, 0, 0]}
-          >
-            {rows.map((r) => (
-              <Cell
-                fill={INDIGO}
-                fillOpacity={
-                  r.logged ? (r.minutes >= goalMinutes ? 0.9 : 0.4) : 0
-                }
-                key={r.t}
-              />
-            ))}
-          </Bar>
-        </BarChart>
-      </ChartContainer>
-    </ChartCard>
-  );
-}
-
-function SleepTooltip({
-  active,
-  payload,
-  goalMinutes,
-}: {
-  active?: boolean;
-  payload?: { payload?: Row }[];
-  goalMinutes: number;
-}) {
-  if (!active || !payload?.length) {
-    return null;
-  }
-  const row = payload[0]?.payload;
-  if (!row) {
-    return null;
-  }
-  const hit = row.minutes >= goalMinutes;
-  const goalLabel = formatSleepDuration(goalMinutes);
-  return (
-    <ChartTip
-      rows={
-        row.logged
-          ? [
-              {
-                color: INDIGO,
-                label: "Sleep",
-                value: formatSleepDuration(row.minutes),
-              },
-            ]
-          : []
-      }
-      t={row.t}
-    >
-      {row.logged ? (
-        <div className="mt-1 flex items-center justify-between gap-4 text-muted-foreground">
-          <span>{row.quality == null ? "—" : QUALITY_LABELS[row.quality]}</span>
-          <span className={hit ? "font-medium text-emerald-500" : ""}>
-            {hit
-              ? `${goalLabel}+ reached`
-              : `${formatSleepDuration(goalMinutes - row.minutes)} short of ${goalLabel}`}
-          </span>
-        </div>
-      ) : (
-        <div className="text-muted-foreground">Not logged</div>
-      )}
-    </ChartTip>
+          </div>
+        )}
+        <AskChadButton
+          className="min-h-11 sm:min-h-8"
+          prompt={ASK_CHAD_PROMPT}
+        />
+      </div>
+    </section>
   );
 }

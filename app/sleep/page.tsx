@@ -16,7 +16,11 @@ import { SleepTrendChart } from "@/components/today/sleep-trend-chart";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
-import { formatCalendarDay, toCalendarDayISO } from "@/lib/date";
+import {
+  formatCalendarDay,
+  toCalendarDayISO,
+  todayAnchorInTz,
+} from "@/lib/date";
 import {
   getLatestSleepEntry,
   getSleepDailyTotals,
@@ -147,7 +151,11 @@ async function SleepContent() {
               />
             </div>
             <div className="min-w-0">
-              <SleepTrendChart days={sleepDaily} goalMinutes={goalMinutes} />
+              <SleepTrendChart
+                days={sleepDaily}
+                goalMinutes={goalMinutes}
+                todayMs={todayAnchorInTz(timezone).getTime()}
+              />
             </div>
           </div>
           <SleepHistory entries={history} goalMinutes={goalMinutes} />

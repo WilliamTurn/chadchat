@@ -24,6 +24,7 @@ import { WeightChartInteractive } from "@/components/progress/weight-chart-inter
 import type { LiftProgress } from "@/components/today/goal-list";
 import { GoalList } from "@/components/today/goal-list";
 import { HeroCustomizer } from "@/components/today/hero-customizer";
+import { HydrationPanel } from "@/components/today/hydration-panel";
 import {
   ModuleCard,
   ModuleFooter,
@@ -36,7 +37,6 @@ import { SleepTracker } from "@/components/today/sleep-tracker";
 import { StatPills } from "@/components/today/stat-pills";
 import { StreakStrip } from "@/components/today/streak-strip";
 import { TargetEditor } from "@/components/today/target-editor";
-import { WaterTracker } from "@/components/today/water-tracker";
 import { WeekStrip } from "@/components/today/week-strip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -751,7 +751,9 @@ async function TodayContent() {
             top of the page. Direct grid children: Hydration completes the top
             row at xl, Sleep opens the second. */}
           {isPro ? (
-            <WaterTracker
+            /* P2-Z pilot: the first live panel on the Phase 2 system
+               (QuickLogPanel role + overlay platform + form primitives). */
+            <HydrationPanel
               goalMl={waterGoalMl}
               totalMl={waterMl}
               viewHref="/hydration"
