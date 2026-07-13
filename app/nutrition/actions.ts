@@ -403,7 +403,7 @@ const MAX_WATER_ML = 3785;
  */
 export async function logWaterAmount(
   amountMl: number
-): Promise<NutritionActionState> {
+): Promise<NutritionActionState & { id?: string }> {
   const user = await requirePro();
   if (!user) {
     return { ok: false, error: "Not authorized." };
@@ -412,10 +412,12 @@ export async function logWaterAmount(
     return { ok: false, error: "Enter how much you drank." };
   }
   const clamped = Math.min(Math.round(amountMl), MAX_WATER_ML);
-  await addWaterLog({ userId: user.id, amountMl: clamped });
+  // Return the created id so the caller's Undo toast can remove EXACTLY this
+  // entry (two quick-adds inside the toast window must not undo each other).
+  const id = await addWaterLog({ userId: user.id, amountMl: clamped });
   revalidatePath("/today");
   revalidatePath("/hydration");
-  return { ok: true };
+  return { ok: true, id };
 }
 
 /**

@@ -150,7 +150,7 @@ export function DailyBarsChart({
         <XAxis
           axisLine={false}
           dataKey="t"
-          fontSize={11}
+          tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
           interval={interval}
           tickFormatter={tickFormatter}
           tickLine={false}
@@ -160,7 +160,7 @@ export function DailyBarsChart({
         <YAxis
           axisLine={false}
           domain={[0, max]}
-          fontSize={11}
+          tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
           orientation="right"
           tickFormatter={
             formatAxisTick ?? ((v: number) => formatAxisQuantity(v, suffix))
@@ -246,7 +246,7 @@ export function WeeklyBarsChart({
         <XAxis
           axisLine={false}
           dataKey="t"
-          fontSize={11}
+          tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
           tickFormatter={(t: number) => `Wk of ${formatShortDate(t)}`}
           tickLine={false}
           tickMargin={8}
@@ -255,7 +255,7 @@ export function WeeklyBarsChart({
           allowDecimals={false}
           axisLine={false}
           domain={[0, max]}
-          fontSize={11}
+          tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
           orientation="right"
           tickLine={false}
           tickMargin={4}

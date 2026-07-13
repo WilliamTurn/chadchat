@@ -103,6 +103,7 @@ export function QuickLogOverlayDemo({ autoOpen = false }: { autoOpen?: boolean }
             <Label htmlFor="overlay-demo-water">Amount (oz)</Label>
             <Input
               id="overlay-demo-water"
+              size="lg"
               inputMode="decimal"
               onChange={(e) => setAmount(e.target.value)}
               placeholder="16"
@@ -165,6 +166,7 @@ export function EditEntryOverlayDemo({ autoOpen = false }: { autoOpen?: boolean 
             <Input
               data-testid="edit-hours"
               id="overlay-demo-hours"
+              size="lg"
               inputMode="decimal"
               onChange={(e) => setHours(e.target.value)}
               value={hours}
@@ -174,6 +176,7 @@ export function EditEntryOverlayDemo({ autoOpen = false }: { autoOpen?: boolean 
             <Label htmlFor="overlay-demo-quality">Sleep quality (1 to 5)</Label>
             <Input
               id="overlay-demo-quality"
+              size="lg"
               inputMode="numeric"
               onChange={(e) => setQuality(e.target.value)}
               value={quality}

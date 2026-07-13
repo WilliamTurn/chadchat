@@ -8,7 +8,7 @@
  *
  * One window, one denominator (LC-9): BOTH stats count only the nights the
  * user actually logged in the selected range. A night with no log is
- * unknown, not a miss — the chart's gaps already show it. The stats compose
+ * unknown, not a miss; the chart's gaps already show it. The stats compose
  * at page level from the same slots the chart draws (the "KPI strip composes
  * at panel level" rule; the chart system has no bespoke KPI slots).
  *

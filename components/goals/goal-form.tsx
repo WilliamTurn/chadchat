@@ -29,6 +29,7 @@ import {
 import { KpiHelp } from "@/components/dashboard/kpi";
 import type { EditableGoal } from "@/components/goals/types";
 import { Button } from "@/components/ui/button";
+import { LB_PER_KG } from "@/lib/contracts/units";
 import { ConfirmActionDialog } from "@/components/ui/confirm-undo";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,7 +52,6 @@ import {
 import { cn } from "@/lib/utils";
 
 const NONE = "none";
-const LB_PER_KG = 2.204_62;
 
 // Server-side limits (lib/validation/goals.ts). The form never hard-stops
 // typing or pasting; it shows a live counter and a plain validation message

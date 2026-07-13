@@ -36,7 +36,10 @@ async function login(context) {
   await p.locator('input[type=password], input[name=password], #password').first().fill("12345678");
   await Promise.all([
     p.waitForLoadState("networkidle").catch(() => {}),
-    p.locator('button[type=submit], button:has-text("Log in"), button:has-text("Sign in")').first().click(),
+    // The Google OAuth button is also a type=submit and sits first in the
+    // DOM; target the credential form's own submit (P2-Z fix: the generic
+    // selector silently walked the OAuth path and unauthenticated pages).
+    p.locator('form:has(input[type=password]) button[type=submit], button:has-text("Log in"), button:has-text("Sign in")').first().click(),
   ]);
   await p.waitForTimeout(1500);
   const url = p.url();

@@ -17,11 +17,11 @@
  * headers) live in `components/today/icon-chip.tsx` on the same hue families.
  */
 
-/** Brand blood red — chrome, alerts, and the training domain. Same hex in
+/** Brand blood red: chrome, alerts, and the training domain. Same hex in
  *  both themes (7.8:1 on white), so it stays a literal. */
 export const BLOOD = "#a4161a";
 
-/** Emerald — "toward / at goal" verdicts, goal bars, goal lines, and the
+/** Emerald: "toward / at goal" verdicts, goal bars, goal lines, and the
  *  always-emerald weight trend line (rule 2). Theme-aware (FIX-19): light
  *  resolves to emerald-600, dark to emerald-500 (globals.css --chart-2). */
 export const GOAL_EMERALD = "var(--chart-2)";
@@ -32,8 +32,9 @@ export const GOAL_EMERALD = "var(--chart-2)";
  *  the 500s. SVG fill/stroke resolves var() fine; canvas/PDF renderers keep
  *  their own literals. */
 export const DOMAIN = {
-  /** Training volume + est. 1RM — the brand domain (see rule 1). */
-  training: BLOOD,
+  /** Training volume + est. 1RM, the brand domain (see rule 1). Dark
+   *  resolves one step brighter than brand chrome (3:1 fill law, FIX-19). */
+  training: "var(--chart-5)",
   /** Water — sky. */
   hydration: "var(--chart-1)",
   /** Sleep — indigo. */
@@ -55,7 +56,7 @@ export type TrendTone = "toward" | "away" | "neutral";
 
 export const TREND_TONE: Record<TrendTone, string> = {
   toward: GOAL_EMERALD,
-  away: BLOOD,
+  away: DOMAIN.training,
   neutral: TREND_NEUTRAL,
 };
 

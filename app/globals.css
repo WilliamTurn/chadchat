@@ -214,13 +214,15 @@
   --border: rgba(216, 231, 242, 0.08);
   --input: rgba(216, 231, 242, 0.1);
   --ring: #a4161a;
-  /* Same hue families as light, kept at 500-level — the ink surfaces need
-     the brighter fills (see the light block's FIX-19 note). */
+  /* Same hue families as light, kept at 500-level; the ink surfaces need
+     the brighter fills (see the light block's FIX-19 note). chart-5 blood
+     brightens one step in dark for the 3:1 non-text bar (brand chrome keeps
+     #a4161a; see --critical above). */
   --chart-1: #0ea5e9;
   --chart-2: #10b981;
   --chart-3: #f59e0b;
   --chart-4: #818cf8;
-  --chart-5: #a4161a;
+  --chart-5: #c92a2f;
   --sidebar: #070b12;
   --sidebar-foreground: oklch(0.78 0 0);
   --sidebar-primary: oklch(0.94 0 0);
@@ -256,7 +258,11 @@
   --positive-text: #10b981;
   --attention: #f59e0b;
   --attention-text: #f59e0b;
-  --critical: #a4161a;
+  /* Critical FILL brightened for dark (FIX-19): brand #a4161a is 2.6:1 on
+     the ink card, below the 3:1 non-text bar; #c92a2f reads as the same
+     blood at 3.4:1. Brand chrome (--color-blood) keeps the flagship hex;
+     this token only feeds data fills (charts, bars, badges). */
+  --critical: #c92a2f;
   --critical-text: #f2555a;
   --info: #0ea5e9;
   --info-text: #0ea5e9;
@@ -272,6 +278,15 @@
 @layer base {
   * {
     @apply border-border ring-0;
+  }
+  /* FIX-19 reduced-motion law: looping utility animations stop too (state
+     stays conveyed by aria-busy/labels, not motion). Recharts reveals and
+     the motion/react springs already honor the preference themselves. */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-pulse,
+    .animate-spin {
+      animation: none;
+    }
   }
   body {
     @apply bg-background text-foreground;

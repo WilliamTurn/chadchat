@@ -1,21 +1,25 @@
 "use client";
 
 /**
- * The /hydration "Today's log" — one row per individual water entry logged
+ * The /hydration "Today's log": one row per individual water entry logged
  * today, newest first, with a per-entry Delete (LC-11). Water previously had
  * no itemized correction path anywhere: the card's "Undo last" only removes
  * the MOST RECENT entry, so a mis-tap from this morning was uncorrectable by
  * lunch. Mirrors the /sleep and /progress History rows: value + time on the
  * left, quiet Delete on the right. Time labels are formatted server-side in
  * the member's time zone.
+ *
+ * Deletion confirms with the NAMED entry via ConfirmActionDialog (P2-Z):
+ * one-tap unrecoverable deletes are banned everywhere, history rows included
+ * (owner confirm-or-undo law s185 / delete-entry-confirmed in panels.ts).
  */
 
 import { GlassWater } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
 import { toast } from "sonner";
 import { removeWaterEntry } from "@/app/nutrition/actions";
 import { Button } from "@/components/ui/button";
+import { ConfirmActionDialog } from "@/components/ui/confirm-undo";
 import { cn } from "@/lib/utils";
 
 export type WaterTodayEntry = {
@@ -26,28 +30,34 @@ export type WaterTodayEntry = {
   amountLabel: string;
 };
 
-function DeleteEntryButton({ id }: { id: string }) {
+function DeleteEntryButton({ entry }: { entry: WaterTodayEntry }) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  // ConfirmActionDialog contract: resolve closes, a rejection keeps the
+  // dialog open so the member can retry.
+  async function destroy() {
+    const result = await removeWaterEntry(entry.id);
+    if (!result.ok) {
+      toast.error(result.error ?? "Couldn't delete that entry.");
+      throw new Error("Water entry delete failed");
+    }
+    router.refresh();
+  }
   return (
-    <Button
-      className="min-h-11 text-muted-foreground"
-      disabled={pending}
-      onClick={() =>
-        startTransition(async () => {
-          const result = await removeWaterEntry(id);
-          if (result.ok) {
-            router.refresh();
-          } else {
-            toast.error(result.error ?? "Couldn't delete that entry.");
-          }
-        })
+    <ConfirmActionDialog
+      confirmLabel="Delete entry"
+      consequence="Today's total updates immediately."
+      onConfirm={destroy}
+      title={`Delete the ${entry.timeLabel} entry of ${entry.amountLabel}?`}
+      trigger={
+        <Button
+          className="min-h-11 text-muted-foreground"
+          size="sm"
+          variant="ghost"
+        >
+          Delete
+        </Button>
       }
-      size="sm"
-      variant="ghost"
-    >
-      {pending ? "Deleting…" : "Delete"}
-    </Button>
+    />
   );
 }
 
@@ -78,7 +88,7 @@ export function WaterTodayLog({ entries }: { entries: WaterTodayEntry[] }) {
                 {e.timeLabel}
               </span>
             </div>
-            <DeleteEntryButton id={e.id} />
+            <DeleteEntryButton entry={e} />
           </div>
         ))}
       </div>

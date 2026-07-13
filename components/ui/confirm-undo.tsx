@@ -104,6 +104,10 @@ function ConfirmActionDialog({
       setPending(true);
       await onConfirm();
       setOpen(false);
+    } catch {
+      // A rejected onConfirm means "stay open so the member can retry"; the
+      // caller has already surfaced the error (toast/inline). Swallow it so
+      // the rejection never escapes as an unhandled-promise error.
     } finally {
       setPending(false);
     }

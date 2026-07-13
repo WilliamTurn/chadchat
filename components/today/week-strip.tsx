@@ -72,7 +72,7 @@ export function WeekStrip({ days }: { days: WeekStripDay[] }) {
                   />
                   <span
                     className={cn(
-                      "text-[10px]",
+                      "text-xs",
                       day.isToday
                         ? "font-semibold text-foreground"
                         : day.isFuture

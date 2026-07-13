@@ -1,0 +1,94 @@
+# FIX-39 visual-regression gate (P2-Z, DSH-66). Captures the deterministic
+# fixture-harness screenshot set (roles x personas x states x 7 widths x 2
+# themes) and byte-diffs it against the reviewed baseline manifest
+# (tests/visual-baseline.json). Any pixel change on a system surface fails
+# the check and uploads the capture set; a reviewer approves by running the
+# "update baseline" dispatch (or `pnpm screenshot:approve` on the CI
+# platform) and committing the manifest diff.
+#
+# The fixture routes are dev-only 404s in a normal prod build; this job
+# builds with FIXTURES_ENABLED=1 (build-time flag, see app/dev/fixtures).
+name: visual-regression
+
+on:
+  pull_request:
+    paths:
+      - "app/**"
+      - "components/**"
+      - "lib/**"
+      - "scripts/fixture-screenshots.mjs"
+      - "scripts/fixture-diff.mjs"
+      - "tests/visual-baseline.json"
+  workflow_dispatch:
+    inputs:
+      update_baseline:
+        description: "Re-freeze tests/visual-baseline.json from this run (reviewed approval)"
+        type: boolean
+        default: false
+
+jobs:
+  visual-regression:
+    runs-on: ubuntu-latest
+    # contents: write is only exercised by the update_baseline dispatch path.
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build with fixture harness enabled
+        run: pnpm exec next build
+        env:
+          FIXTURES_ENABLED: "1"
+          # The harness renders from deterministic fixtures; the DB is not
+          # queried at build time, but the driver needs a well-formed URL.
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL || 'postgres://ci:ci@localhost:5432/ci' }}
+          AUTH_SECRET: ci-visual-regression
+
+      - name: Start server
+        run: |
+          pnpm exec next start -p 3600 &
+          for i in $(seq 1 60); do
+            if curl -sf -o /dev/null http://localhost:3600/dev/fixtures/tokens; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "server never became ready" && exit 1
+        env:
+          FIXTURES_ENABLED: "1"
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL || 'postgres://ci:ci@localhost:5432/ci' }}
+          AUTH_SECRET: ci-visual-regression
+
+      - name: Capture fixture screenshots
+        run: pnpm screenshot:fixtures
+
+      - name: Re-freeze baseline (reviewed approval)
+        if: ${{ inputs.update_baseline }}
+        run: |
+          pnpm screenshot:approve
+          git config user.name "visual-regression-bot"
+          git config user.email "noreply@chadcoach.ai"
+          git add tests/visual-baseline.json
+          git commit -m "chore(fix-39): re-freeze visual-regression baseline" || echo "no change"
+          git push
+
+      - name: Diff against reviewed baseline
+        if: ${{ !inputs.update_baseline }}
+        run: pnpm screenshot:diff
+
+      - name: Upload capture set on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fixture-screenshots
+          path: artifacts/fixture-screenshots
+          retention-days: 14

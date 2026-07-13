@@ -9,6 +9,8 @@
     "check": "ultracite check",
     "lint:design": "tsx scripts/design-lint.ts",
     "screenshot:fixtures": "node scripts/fixture-screenshots.mjs",
+    "screenshot:diff": "node scripts/fixture-diff.mjs",
+    "screenshot:approve": "node scripts/fixture-diff.mjs --update",
     "fix": "ultracite fix",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "npx tsx lib/db/migrate.ts",

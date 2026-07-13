@@ -56,7 +56,7 @@ import {
   round1,
   type TrendRow,
 } from "@/lib/chart/trend";
-import { BLOOD, GOAL_EMERALD } from "@/lib/chart/palette";
+import { GOAL_EMERALD, TREND_TONE } from "@/lib/chart/palette";
 import { computeGoalProgress } from "@/lib/goals/progress";
 import { cn } from "@/lib/utils";
 
@@ -70,9 +70,9 @@ const GOAL_COLOR = GOAL_EMERALD;
 // a flat unglowing line looks broken), and the KPI tones stay in agreement —
 // the line and the Change/Rate numbers always tell one story.
 const TREND_COLORS: Record<KpiTone, string> = {
-  good: GOAL_EMERALD,
-  bad: BLOOD,
-  neutral: "#94a3b8",
+  good: TREND_TONE.toward,
+  bad: TREND_TONE.away,
+  neutral: TREND_TONE.neutral,
 };
 const TREND_GLOWS: Record<KpiTone, string> = {
   good: "[filter:drop-shadow(0_0_6px_rgba(16,185,129,0.45))]",

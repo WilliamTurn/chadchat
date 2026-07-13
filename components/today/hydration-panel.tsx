@@ -4,7 +4,7 @@ import { Droplets } from "lucide-react";
 import { useOptimistic, useState, useTransition } from "react";
 import {
   logWaterAmount,
-  removeWater,
+  removeWaterEntry,
   saveWaterGoal,
 } from "@/app/nutrition/actions";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
@@ -141,17 +141,30 @@ export function HydrationPanel({
     const newTotal = optimisticMl + ml;
     startTransition(async () => {
       addOptimisticMl(ml);
-      const result = await logWaterAmount(ml);
+      let result: Awaited<ReturnType<typeof logWaterAmount>>;
+      try {
+        result = await logWaterAmount(ml);
+      } catch {
+        result = { ok: false };
+      }
       if (!result.ok) {
         toastError(result.error ?? "We couldn't log that water. Try again.");
         return;
       }
+      const entryId = result.id;
       toastUndo(
         `Added ${formatQuantity(Math.round(mlToOz(ml)), "oz")}. ${formatQuantity(
           Math.round(mlToOz(newTotal)),
           "oz"
         )} of ${goalOzLabel} today.`,
-        { onUndo: () => removeWater() }
+        {
+          // Undo removes EXACTLY the entry this toast receipted, so rapid
+          // quick-adds inside the 6s window never undo each other.
+          onUndo: () =>
+            entryId
+              ? removeWaterEntry(entryId)
+              : { ok: false, error: "We couldn't undo that. Try again." },
+        }
       );
     });
   }
@@ -159,13 +172,22 @@ export function HydrationPanel({
   function saveGoal(ml: number) {
     return new Promise<{ ok: boolean; error?: string | null }>((resolve) => {
       startTransition(async () => {
-        const result = await saveWaterGoal(ml);
-        if (result.ok) {
-          toastReceipt(
-            `Daily goal set to ${formatQuantity(Math.round(mlToOz(ml)), "oz")}.`
-          );
+        // Always resolve, even on a rejected server action, so the goal
+        // dialog can surface the failure instead of hanging in `loading`.
+        try {
+          const result = await saveWaterGoal(ml);
+          if (result.ok) {
+            toastReceipt(
+              `Daily goal set to ${formatQuantity(Math.round(mlToOz(ml)), "oz")}.`
+            );
+          }
+          resolve(result);
+        } catch {
+          resolve({
+            ok: false,
+            error: "We couldn't save your goal. Try again.",
+          });
         }
-        resolve(result);
       });
     });
   }
@@ -224,6 +246,9 @@ export function HydrationPanel({
       />
       <EditWaterGoalDialog
         goalMl={safeGoal}
+        // Remount on goal change so the draft re-seeds from the saved value
+        // instead of a stale initial captured at first mount.
+        key={safeGoal}
         onOpenChange={setGoalOpen}
         open={goalOpen}
         pending={pending}

@@ -68,7 +68,34 @@ Checkable rules:
 - [ ] Adjacent destructive/primary controls separated by >= 8px.
 - [ ] Icon-only controls have accessible names and tooltips.
 
-## 8. How the auditor grades a surface
+## 8. System-only composition and benchmark teardowns (FIX-40)
+
+Encoded here per the owner directive (s186) so every future build session hits
+it before writing UI. Verified in place by P2-Z (2026-07-13).
+
+- [ ] **New UI composes system primitives only**: panel roles
+  (`components/panels/roles.tsx`), the overlay platform
+  (`components/ui/adaptive-dialog.tsx`, `drawer.tsx`, `sheet.tsx`,
+  `confirm-undo.tsx`), the form/feedback primitives (`field.tsx`,
+  `stepper.tsx`, `toast.tsx`, `panel-skeleton.tsx`, button/input/select
+  variants), and the shared chart system (`components/charts/**`). One-off
+  dropdowns, custom cards, bespoke plots, and novel layouts are how the
+  pre-P2 dashboard happened; they are over.
+- [ ] **A primitive that does not exist gets proposed, not improvised**: the
+  proposal names what 2+ benchmark apps (section header list) do for that
+  exact need, with captures, and passes the pre-delivery auditor BEFORE
+  first use.
+- [ ] **Benchmark teardown FIRST**: before building any surface, rank the
+  current best-designed apps for that surface, capture references from the
+  top 2 to 3, and state the ranking and why in the session's evidence
+  folder (`audits/dashboard-overhaul-2026-07-11/evidence-*/`).
+- [ ] **Side-by-side grading**: the finished surface is graded next to the
+  captures, by the build session and by the auditors. The pass bar is
+  indistinguishable from, or better than, the best reference.
+  "Better than our old dashboard", "not default anymore", and "looks fine
+  alone" are all FAILS.
+
+## 9. How the auditor grades a surface
 
 For each changed surface, the visual auditor (Opus, per owner law) produces:
 

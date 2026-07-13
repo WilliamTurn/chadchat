@@ -149,7 +149,7 @@ export function TrendChart({
           axisLine={false}
           dataKey="t"
           domain={[w.startMs, w.endMs]}
-          fontSize={11}
+          tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
           scale="time"
           tickFormatter={tickFormatter}
           tickLine={false}
@@ -162,7 +162,7 @@ export function TrendChart({
         <YAxis
           axisLine={false}
           domain={yDomain}
-          fontSize={11}
+          tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
           orientation="right"
           tickCount={compact ? 3 : 4}
           tickLine={false}

@@ -29,3 +29,7 @@ tsconfig.tsbuildinfo
 # DSH-16 image pipeline: keep chroma-green source + preview composites local-only
 public/today/raw/
 public/today/*_on_*.jpg
+
+# session dev-server logs and local capture artifacts (P2-Z)
+.dev*.log
+artifacts/

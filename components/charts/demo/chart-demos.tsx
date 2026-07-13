@@ -26,7 +26,7 @@ import {
   mlToOz,
 } from "@/lib/contracts/units";
 import { formatShortDate } from "@/lib/chart/format";
-import { BLOOD, DOMAIN, type TrendTone } from "@/lib/chart/palette";
+import { DOMAIN, type TrendTone } from "@/lib/chart/palette";
 import { ema, round1 } from "@/lib/chart/trend";
 import { buildChartSummary } from "@/lib/chart/summary";
 import {
@@ -161,7 +161,7 @@ export function WeightTrendChartDemo({ persona, state, compact }: ChartDemoProps
       emptyMessage="Log your first weigh-in and your trend line starts here."
       goalText={goal?.label}
       headlineLabel="Trend weight"
-      height={compact ? 150 : 260}
+      height={compact ? 110 : 260}
       legend={trendChartLegend(tone, {
         raw: "Weighed in",
         trend: "Trend (smoothed)",
@@ -463,7 +463,7 @@ export function TrainingFrequencyChartDemo({ persona, state, compact }: ChartDem
       unit="count"
     >
       <WeeklyBarsChart
-        color={BLOOD}
+        color={DOMAIN.training}
         compact={compact}
         formatValue={(v) => `${v} session${v === 1 ? "" : "s"}`}
         slots={slots}

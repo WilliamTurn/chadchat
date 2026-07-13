@@ -8,8 +8,8 @@
  * window, unlogged days are gaps, never zeros).
  *
  * The window-following stats (Avg / day, Days hit goal) compose OUTSIDE the
- * chart at page level from the same slots the chart draws — the "KPI strip
- * composes at panel level" rule (P2-C handoff): the chart system never grows
+ * chart at page level from the same slots the chart draws (the "KPI strip
+ * composes at panel level" rule, P2-C handoff): the chart system never grows
  * bespoke KPI slots.
  */
 
@@ -80,6 +80,9 @@ export function WaterTrendChart({
   }, [slots]);
 
   // Window-following stats from the SAME slots the chart draws (one source).
+  // Both stats count LOGGED days only (the LC-9 rule sleep already follows,
+  // and the data-state law: an unlogged day is unknown, never a miss; the
+  // chart's gaps already show the unlogged days).
   const stats = useMemo(() => {
     const logged = slots.filter((s) => s.value != null) as {
       t: number;
@@ -92,8 +95,7 @@ export function WaterTrendChart({
       logged.reduce((sum, s) => sum + s.value, 0) / logged.length
     );
     const hit = logged.filter((s) => s.value >= goalOz).length;
-    // Denominator = every day in the window, unlogged included.
-    return { avgOz, hit, total: slots.length };
+    return { avgOz, hit, logged: logged.length };
   }, [slots, goalOz]);
 
   const target = {
@@ -157,8 +159,9 @@ export function WaterTrendChart({
             />
             <Kpi
               label="Days hit goal"
+              sub="of logged days"
               tone={stats.hit > 0 ? "good" : "neutral"}
-              value={`${stats.hit} / ${stats.total}`}
+              value={`${stats.hit} / ${stats.logged}`}
             />
           </div>
         )}
