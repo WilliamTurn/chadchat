@@ -92,7 +92,12 @@ function TextInputsSection() {
           <StateCaption>rest</StateCaption>
           <Field>
             <FieldLabel htmlFor="fx-weight">Weight (lb)</FieldLabel>
-            <Input id="fx-weight" placeholder="205.8" size="lg" />
+            <Input
+              id="fx-weight"
+              inputMode="decimal"
+              placeholder="205.8"
+              size="lg"
+            />
           </Field>
         </div>
         <div data-testid="input-filled">
@@ -132,6 +137,7 @@ function TextInputsSection() {
               defaultValue="205.8"
               disabled
               id="fx-weight-disabled"
+              inputMode="decimal"
               size="lg"
             />
           </Field>

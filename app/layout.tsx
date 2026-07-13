@@ -14,7 +14,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  maximumScale: 1,
+  // FIX-19 (P2-Z): no maximum-scale. Pinch-zoom must stay available (WCAG
+  // 1.4.4 / the accessibility law); the old iOS focus-zoom jump this guarded
+  // against is already prevented by 16px+ input font sizes.
   // MOB-3: mobile Chrome defaults to interactive-widget=resizes-visual, which
   // keeps the layout viewport (and the h-dvh chat shell with its sticky
   // composer) full-height behind the open keyboard — the send button lands
