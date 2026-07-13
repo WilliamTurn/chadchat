@@ -5,6 +5,12 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/app/(auth)/auth";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import { parseCalendarDay } from "@/lib/date";
+import { applyMutationReceipt } from "@/lib/refresh/coordinator";
+import {
+  loggingReceipt,
+  mutationReceipt,
+  targetReceipt,
+} from "@/lib/refresh/receipt";
 import {
   createGoal,
   createPlan,
@@ -122,7 +128,9 @@ export async function saveGoal(
   profile = setClientField(profile, "Week / phase", phase ?? "");
 
   await upsertUserMemory(user.id, profile);
-  revalidatePath("/today");
+  applyMutationReceipt(
+    mutationReceipt({ domain: "goals", entity: "memoryGoal", op: "update" })
+  );
   return { ok: true };
 }
 
@@ -158,7 +166,9 @@ export async function saveGoalRecord(
     targetValue: d.targetValue ?? null,
     unit: d.unit ?? null,
   });
-  revalidatePath("/today");
+  applyMutationReceipt(
+    mutationReceipt({ domain: "goals", entity: "goal", op: "create" })
+  );
   return { ok: true };
 }
 
@@ -191,7 +201,9 @@ export async function updateGoalRecord(
     targetValue: d.targetValue ?? null,
     unit: d.unit ?? null,
   });
-  revalidatePath("/today");
+  applyMutationReceipt(
+    mutationReceipt({ domain: "goals", entity: "goal", op: "update" })
+  );
   return { ok: true };
 }
 
@@ -201,7 +213,9 @@ export async function removeGoal(id: string): Promise<TodayActionState> {
     return { ok: false, error: gate.error };
   }
   await deleteGoal({ id, userId: gate.user.id });
-  revalidatePath("/today");
+  applyMutationReceipt(
+    mutationReceipt({ domain: "goals", entity: "goal", op: "delete" })
+  );
   return { ok: true };
 }
 
@@ -229,7 +243,16 @@ export async function savePlanRecord(
     source: "user",
     sourceChatId: null,
   });
-  revalidatePath("/today");
+  applyMutationReceipt(
+    mutationReceipt({
+      domain: "plans",
+      entity: "plan",
+      op: "create",
+      // Plan summaries render on /today; no plan metric is registered until
+      // FIX-28's batch registration, so the surface is named explicitly.
+      alsoSurfaces: ["/today"],
+    })
+  );
   return { ok: true };
 }
 
@@ -256,7 +279,14 @@ export async function updatePlanRecord(
     kind: d.kind,
     status: d.status,
   });
-  revalidatePath("/today");
+  applyMutationReceipt(
+    mutationReceipt({
+      domain: "plans",
+      entity: "plan",
+      op: "update",
+      alsoSurfaces: ["/today"],
+    })
+  );
   return { ok: true };
 }
 
@@ -266,7 +296,14 @@ export async function removePlan(id: string): Promise<TodayActionState> {
     return { ok: false, error: gate.error };
   }
   await deletePlan({ id, userId: gate.user.id });
-  revalidatePath("/today");
+  applyMutationReceipt(
+    mutationReceipt({
+      domain: "plans",
+      entity: "plan",
+      op: "delete",
+      alsoSurfaces: ["/today"],
+    })
+  );
   return { ok: true };
 }
 
@@ -314,8 +351,14 @@ export async function logSleep(
     quality: quality ?? null,
   });
 
-  revalidatePath("/today");
-  revalidatePath("/sleep");
+  applyMutationReceipt(
+    loggingReceipt({
+      domain: "sleep",
+      entity: "sleepEntry",
+      op: "create",
+      days: recordedAt ? { startISO: recordedAt } : undefined,
+    })
+  );
   return { ok: true, id: created.id };
 }
 
@@ -326,8 +369,9 @@ export async function removeSleep(id: string): Promise<TodayActionState> {
     return { ok: false, error: gate.error };
   }
   await deleteSleepEntry({ id, userId: gate.user.id });
-  revalidatePath("/today");
-  revalidatePath("/sleep");
+  applyMutationReceipt(
+    loggingReceipt({ domain: "sleep", entity: "sleepEntry", op: "delete" })
+  );
   return { ok: true };
 }
 
@@ -352,8 +396,9 @@ export async function saveSleepGoal(
     MAX_SLEEP_GOAL_MINUTES
   );
   await updateUserSleepGoal(gate.user.id, clamped);
-  revalidatePath("/today");
-  revalidatePath("/sleep");
+  applyMutationReceipt(
+    targetReceipt({ domain: "sleep", entity: "sleepGoal" })
+  );
   return { ok: true };
 }
 

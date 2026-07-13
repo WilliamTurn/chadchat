@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { auth } from "@/app/(auth)/auth";
 import { canAccessProFeatures } from "@/lib/admin";
 import {
@@ -11,9 +10,16 @@ import {
   calendarRangeWindowInTz,
   parseCalendarDay,
   startOfDayUTC,
+  toCalendarDayISO,
   todayAnchorInTz,
   todayStartInTz,
 } from "@/lib/date";
+import { applyMutationReceipt } from "@/lib/refresh/coordinator";
+import {
+  loggingReceipt,
+  mutationReceipt,
+  targetReceipt,
+} from "@/lib/refresh/receipt";
 import {
   addWaterLog,
   createMealAnalysis,
@@ -129,8 +135,15 @@ export async function analyzeMeal(
       };
     }
 
-    revalidatePath("/nutrition");
-    revalidatePath("/today");
+    applyMutationReceipt(
+      loggingReceipt({
+        domain: "nutrition",
+        entity: "meal",
+        op: "create",
+        alsoDomains: ["kitchen"],
+        days: { startISO: recordedAt ?? toCalendarDayISO(todayAnchorInTz(user.timezone)) },
+      })
+    );
     return { ok: true };
   }
 
@@ -163,9 +176,27 @@ export async function analyzeMeal(
     };
   }
 
-  revalidatePath("/nutrition");
-  revalidatePath("/kitchen");
-  revalidatePath("/today");
+  applyMutationReceipt(
+    kind === "meal"
+      ? loggingReceipt({
+          domain: "nutrition",
+          entity: "meal",
+          op: "create",
+          alsoDomains: ["kitchen"],
+          days: {
+            startISO:
+              recordedAt ?? toCalendarDayISO(todayAnchorInTz(user.timezone)),
+          },
+        })
+      : // Kitchen shots are point-in-time gradings, not diary logs; MealAnalysis
+        // rows still surface on the nutrition feed, so both domains refresh.
+        mutationReceipt({
+          domain: "kitchen",
+          entity: "kitchenAnalysis",
+          op: "create",
+          alsoDomains: ["nutrition"],
+        })
+  );
   return { ok: true };
 }
 
@@ -245,8 +276,18 @@ export async function logMealManually(
     tips: [],
   });
 
-  revalidatePath("/nutrition");
-  revalidatePath("/today");
+  applyMutationReceipt(
+    loggingReceipt({
+      domain: "nutrition",
+      entity: "meal",
+      op: "create",
+      alsoDomains: ["kitchen"],
+      days: {
+        startISO:
+          recordedAt ?? toCalendarDayISO(todayAnchorInTz(user.timezone)),
+      },
+    })
+  );
   return { ok: true };
 }
 
@@ -283,8 +324,18 @@ export async function editMeal(
     fat,
   });
 
-  revalidatePath("/nutrition");
-  revalidatePath("/today");
+  applyMutationReceipt(
+    loggingReceipt({
+      domain: "nutrition",
+      entity: "meal",
+      op: "update",
+      alsoDomains: ["kitchen"],
+      days: {
+        startISO:
+          recordedAt ?? toCalendarDayISO(todayAnchorInTz(user.timezone)),
+      },
+    })
+  );
   return { ok: true };
 }
 
@@ -297,9 +348,17 @@ export async function removeMealAnalysis(
   }
 
   const deleted = await deleteMealAnalysis({ id, userId: user.id });
-  revalidatePath("/nutrition");
-  revalidatePath("/kitchen");
-  revalidatePath("/today");
+  applyMutationReceipt(
+    loggingReceipt({
+      domain: "nutrition",
+      entity: "meal",
+      op: "delete",
+      alsoDomains: ["kitchen"],
+      days: deleted?.recordedAt
+        ? { startISO: toCalendarDayISO(deleted.recordedAt) }
+        : undefined,
+    })
+  );
   return {
     ok: true,
     // Hand the deleted row back (dates as ISO strings) so the delete toast's
@@ -356,9 +415,17 @@ export async function undoRemoveMealAnalysis(
     tips: parsed.data.tips ?? [],
     userId: user.id,
   });
-  revalidatePath("/nutrition");
-  revalidatePath("/kitchen");
-  revalidatePath("/today");
+  applyMutationReceipt(
+    loggingReceipt({
+      domain: "nutrition",
+      entity: "meal",
+      op: "create",
+      alsoDomains: ["kitchen"],
+      days: parsed.data.recordedAt
+        ? { startISO: toCalendarDayISO(new Date(parsed.data.recordedAt)) }
+        : undefined,
+    })
+  );
   return { ok: true };
 }
 
@@ -372,8 +439,14 @@ export async function removeWater(): Promise<NutritionActionState> {
     userId: user.id,
     since: todayStartInTz(user.timezone),
   });
-  revalidatePath("/today");
-  revalidatePath("/hydration");
+  applyMutationReceipt(
+    loggingReceipt({
+      domain: "hydration",
+      entity: "waterLog",
+      op: "delete",
+      days: { startISO: toCalendarDayISO(todayAnchorInTz(user.timezone)) },
+    })
+  );
   return { ok: true };
 }
 
@@ -386,8 +459,9 @@ export async function removeWaterEntry(
     return { ok: false, error: "Not authorized." };
   }
   await deleteWaterLogById({ id, userId: user.id });
-  revalidatePath("/today");
-  revalidatePath("/hydration");
+  applyMutationReceipt(
+    loggingReceipt({ domain: "hydration", entity: "waterLog", op: "delete" })
+  );
   return { ok: true };
 }
 
@@ -415,8 +489,14 @@ export async function logWaterAmount(
   // Return the created id so the caller's Undo toast can remove EXACTLY this
   // entry (two quick-adds inside the toast window must not undo each other).
   const id = await addWaterLog({ userId: user.id, amountMl: clamped });
-  revalidatePath("/today");
-  revalidatePath("/hydration");
+  applyMutationReceipt(
+    loggingReceipt({
+      domain: "hydration",
+      entity: "waterLog",
+      op: "create",
+      days: { startISO: toCalendarDayISO(todayAnchorInTz(user.timezone)) },
+    })
+  );
   return { ok: true, id };
 }
 
@@ -467,8 +547,14 @@ export async function logWaterForDay(input: {
     amountMl: clamped,
     recordedAt,
   });
-  revalidatePath("/today");
-  revalidatePath("/hydration");
+  applyMutationReceipt(
+    loggingReceipt({
+      domain: "hydration",
+      entity: "waterLog",
+      op: "create",
+      days: { startISO: input.day },
+    })
+  );
   return { ok: true, id };
 }
 
@@ -493,8 +579,13 @@ export async function saveWaterGoal(
     MAX_WATER_GOAL_ML
   );
   await updateUserWaterGoal(user.id, clamped);
-  revalidatePath("/today");
-  revalidatePath("/hydration");
+  applyMutationReceipt(
+    targetReceipt({
+      domain: "hydration",
+      entity: "waterGoal",
+      todayISO: toCalendarDayISO(todayAnchorInTz(user.timezone)),
+    })
+  );
   return { ok: true };
 }
 
@@ -526,8 +617,13 @@ export async function saveNutritionTarget(
   }
 
   await upsertNutritionTarget(user.id, parsed.data);
-  revalidatePath("/nutrition");
-  revalidatePath("/today");
+  applyMutationReceipt(
+    targetReceipt({
+      domain: "nutrition",
+      entity: "nutritionTarget",
+      todayISO: toCalendarDayISO(todayAnchorInTz(user.timezone)),
+    })
+  );
   return { ok: true };
 }
 
@@ -561,7 +657,12 @@ export async function applyRecalibration(): Promise<NutritionActionState> {
     carbs: rec.carbs ?? existing?.carbs ?? null,
     fat: rec.fat ?? existing?.fat ?? null,
   });
-  revalidatePath("/nutrition");
-  revalidatePath("/today");
+  applyMutationReceipt(
+    targetReceipt({
+      domain: "nutrition",
+      entity: "nutritionTarget",
+      todayISO: toCalendarDayISO(todayAnchorInTz(user.timezone)),
+    })
+  );
   return { ok: true };
 }

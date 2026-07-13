@@ -1,11 +1,12 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import { canAccessProFeatures } from "@/lib/admin";
 import { generateMealPlan, recomputePlanTotals } from "@/lib/ai/meal-plan";
 import { parseCalendarDay } from "@/lib/date";
+import { applyMutationReceipt } from "@/lib/refresh/coordinator";
+import { loggingReceipt, mutationReceipt } from "@/lib/refresh/receipt";
 import {
   createMealAnalysis,
   createMealPlan,
@@ -137,11 +138,17 @@ export async function generatePlan(
         status: "archived",
       });
     }
-    revalidatePath("/meal-plan");
-    // The build may have set/updated the daily target (NUT-13) — refresh the
-    // surfaces whose rings read it.
-    revalidatePath("/today");
-    revalidatePath("/nutrition");
+    // The build may also have set/updated the daily target (NUT-13), so the
+    // receipt spans nutrition as well as plans.
+    applyMutationReceipt(
+      mutationReceipt({
+        domain: "plans",
+        entity: "mealPlan",
+        op: "create",
+        alsoDomains: ["nutrition"],
+        alsoSurfaces: ["/today"],
+      })
+    );
     return { ok: true, planId };
   } catch (error) {
     console.error("Meal plan generation failed:", error);
@@ -186,9 +193,15 @@ export async function regeneratePlan(
       userId: user.id,
       status: "archived",
     });
-    revalidatePath("/meal-plan");
-    revalidatePath("/today");
-    revalidatePath("/nutrition");
+    applyMutationReceipt(
+      mutationReceipt({
+        domain: "plans",
+        entity: "mealPlan",
+        op: "update",
+        alsoDomains: ["nutrition"],
+        alsoSurfaces: ["/today"],
+      })
+    );
     return { ok: true, planId: newId };
   } catch (error) {
     console.error("Meal plan regeneration failed:", error);
@@ -224,7 +237,9 @@ export async function updateMealPlan(
     coachIntro: parsed.data.coachIntro,
     days,
   });
-  revalidatePath("/meal-plan");
+  applyMutationReceipt(
+    mutationReceipt({ domain: "plans", entity: "mealPlan", op: "update" })
+  );
   return { ok: true, planId: parsed.data.id };
 }
 
@@ -241,7 +256,9 @@ export async function archivePlan(
     userId: user.id,
     status: "archived",
   });
-  revalidatePath("/meal-plan");
+  applyMutationReceipt(
+    mutationReceipt({ domain: "plans", entity: "mealPlan", op: "update" })
+  );
   return { ok: true };
 }
 
@@ -258,7 +275,9 @@ export async function reactivatePlan(
     userId: user.id,
     status: "active",
   });
-  revalidatePath("/meal-plan");
+  applyMutationReceipt(
+    mutationReceipt({ domain: "plans", entity: "mealPlan", op: "update" })
+  );
   return { ok: true };
 }
 
@@ -312,7 +331,14 @@ export async function logPlannedMeal(
     tips: [],
   });
 
-  revalidatePath("/nutrition");
-  revalidatePath("/today");
+  applyMutationReceipt(
+    loggingReceipt({
+      domain: "nutrition",
+      entity: "meal",
+      op: "create",
+      alsoDomains: ["kitchen"],
+      days: recordedAt ? { startISO: recordedAt } : undefined,
+    })
+  );
   return { ok: true };
 }

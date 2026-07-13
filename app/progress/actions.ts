@@ -5,6 +5,8 @@ import { auth } from "@/app/(auth)/auth";
 import { canAccessProFeatures } from "@/lib/admin";
 import { buildMontageVerdict, type PhotoEntry } from "@/lib/ai/montage";
 import { parseCalendarDay } from "@/lib/date";
+import { applyMutationReceipt } from "@/lib/refresh/coordinator";
+import { loggingReceipt } from "@/lib/refresh/receipt";
 import {
   createBodyMeasurement,
   createProgressEntry,
@@ -73,7 +75,14 @@ export async function addProgressEntry(
     note: note?.trim() ? note.trim() : null,
   });
 
-  revalidatePath("/progress");
+  applyMutationReceipt(
+    loggingReceipt({
+      domain: "body",
+      entity: "progressEntry",
+      op: "create",
+      days: recordedAt ? { startISO: recordedAt } : undefined,
+    })
+  );
   return { ok: true };
 }
 
@@ -105,7 +114,14 @@ export async function editProgressEntry(
     note: note?.trim() ? note.trim() : null,
   });
 
-  revalidatePath("/progress");
+  applyMutationReceipt(
+    loggingReceipt({
+      domain: "body",
+      entity: "progressEntry",
+      op: "update",
+      days: recordedAt ? { startISO: recordedAt } : undefined,
+    })
+  );
   return { ok: true };
 }
 
@@ -118,7 +134,9 @@ export async function removeProgressEntry(
   }
 
   await deleteProgressEntry({ id, userId: user.id });
-  revalidatePath("/progress");
+  applyMutationReceipt(
+    loggingReceipt({ domain: "body", entity: "progressEntry", op: "delete" })
+  );
   return { ok: true };
 }
 
@@ -149,7 +167,14 @@ export async function addBodyMeasurement(
     unit,
   });
 
-  revalidatePath("/progress");
+  applyMutationReceipt(
+    loggingReceipt({
+      domain: "body",
+      entity: "bodyMeasurement",
+      op: "create",
+      days: recordedAt ? { startISO: recordedAt } : undefined,
+    })
+  );
   return { ok: true };
 }
 
@@ -162,7 +187,9 @@ export async function removeBodyMeasurement(
   }
 
   await deleteBodyMeasurement({ id, userId: user.id });
-  revalidatePath("/progress");
+  applyMutationReceipt(
+    loggingReceipt({ domain: "body", entity: "bodyMeasurement", op: "delete" })
+  );
   return { ok: true };
 }
 

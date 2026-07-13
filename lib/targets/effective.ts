@@ -14,7 +14,7 @@
  *
  * Resolution rule: the version governing day D is the one with the greatest
  * effectiveDay <= D; ties (same-day re-edits) break by createdAt, latest
- * wins. Days before a member's first-ever version have no target (null) —
+ * wins. Days before a member's first-ever version have no target (null);
  * adherence against a target that did not exist is not computable.
  *
  * Legacy fallback rule: a member with ZERO version rows keeps resolving every
