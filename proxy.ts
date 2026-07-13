@@ -50,6 +50,13 @@ export async function proxy(request: NextRequest) {
   const token = await getToken({
     req: request,
     secret: process.env.AUTH_SECRET,
+    // NOTE for local prod smoke-tests (next start over http): this reads
+    // ONLY the __Secure- cookie name in production mode, while AuthJS on
+    // http sets the non-secure name, so a plain login can't pass the proxy
+    // AND a minted __Secure- cookie alone breaks client hydration (the
+    // session API reads the other name; React #310). Test with BOTH: a real
+    // credential login PLUS a minted __Secure-authjs.session-token (AuthJS
+    // v5 encode salt = the cookie name). Real https prod is unaffected.
     secureCookie: !isDevelopmentEnvironment,
   });
 
