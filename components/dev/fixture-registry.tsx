@@ -1,4 +1,13 @@
 import type { ReactNode } from "react";
+import {
+  InsightProteinDemo,
+  MilestonePrDemo,
+  PlanTrainingDemo,
+  QuickLogHydrationDemo,
+  StatusCaloriesDemo,
+  SummaryProgressDemo,
+  TrendWeightDemo,
+} from "@/components/panels/demo/panel-demos";
 import type { PanelState } from "@/lib/contracts/data-state";
 import type { PanelRole } from "@/lib/contracts/panels";
 import type { Persona } from "@/tests/fixtures/dashboard-states";
@@ -23,5 +32,13 @@ export type PanelRenderer = (props: {
 }) => ReactNode;
 
 export const PANEL_RENDERERS: Partial<Record<PanelRole, PanelRenderer>> = {
-  // P2-B registers: status, quick-log, trend, plan, insight, milestone, summary
+  // P2-B (FIX-14/15/16): all seven roles, rendered by the real typed role
+  // components on fixture-persona data (components/panels/demo/panel-demos).
+  status: (p) => <StatusCaloriesDemo {...p} />,
+  "quick-log": (p) => <QuickLogHydrationDemo {...p} />,
+  trend: (p) => <TrendWeightDemo {...p} />,
+  plan: (p) => <PlanTrainingDemo {...p} />,
+  insight: (p) => <InsightProteinDemo {...p} />,
+  milestone: (p) => <MilestonePrDemo {...p} />,
+  summary: (p) => <SummaryProgressDemo {...p} />,
 };

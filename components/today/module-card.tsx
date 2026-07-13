@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { type ChipTone, IconChip } from "@/components/today/icon-chip";
 import { cn } from "@/lib/utils";
 
@@ -44,18 +44,20 @@ export function ModuleCard({
   className,
   children,
   glow,
+  ...rest
 }: {
   className?: string;
   children: ReactNode;
   /** Domain accent for the card's ambient corner glow (matches its chip tone). */
   glow?: ChipTone;
-}) {
+} & Omit<ComponentPropsWithoutRef<"section">, "className" | "children">) {
   return (
     <section
       className={cn(
         "relative flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card bg-gradient-to-b from-white/[0.04] via-white/[0.01] to-transparent p-6 shadow-[var(--shadow-card),inset_0_1px_0_0_rgba(255,255,255,0.06)]",
         className
       )}
+      {...rest}
     >
       {glow && (
         <div
