@@ -19,6 +19,7 @@ import { epley1RM, toLb } from "@/lib/workouts/stats";
 import type {
   ActiveSession,
   ExerciseRef,
+  PlanRef,
   PRKind,
   SessionExercise,
   SessionSet,
@@ -128,7 +129,9 @@ export function sessionFromTemplate(
   };
 }
 
-/** A live session from one day of Chad's training plan. */
+/** A live session from one day of Chad's training plan. `planRef` carries
+ * the prescribed session's identity so saving records a completion event
+ * (FIX-28); null for legacy plans whose sessions aren't materialized yet. */
 export function sessionFromPlanDay(
   day: PlanDay,
   resolve: (name: string) => {
@@ -137,12 +140,14 @@ export function sessionFromPlanDay(
     kind: string | null;
   },
   lastSets: Record<string, LastExerciseLog>,
-  unit: WeightUnit
+  unit: WeightUnit,
+  planRef?: PlanRef | null
 ): ActiveSession {
   return {
     id: factoryUid("session"),
     name: day.name,
     templateId: null,
+    planRef: planRef ?? null,
     createdAt: Date.now(),
     timer: newTimer(),
     unit,

@@ -39,6 +39,16 @@ export const saveWorkoutSchema = z.object({
 
 export type SaveWorkoutInput = z.infer<typeof saveWorkoutSchema>;
 
+/** The prescribed plan session a saved workout was started from (FIX-28);
+ * the save action records a PlanSessionCompletion event from it. */
+export const planCompletionRefSchema = z.object({
+  planId: z.string().uuid(),
+  planSessionId: z.string().uuid(),
+  sessionName: z.string().trim().min(1).max(80),
+});
+
+export type PlanCompletionRef = z.infer<typeof planCompletionRefSchema>;
+
 export const updateWorkoutSchema = saveWorkoutSchema.extend({
   id: z.string().uuid(),
 });

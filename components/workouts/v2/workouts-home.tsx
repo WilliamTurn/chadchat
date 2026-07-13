@@ -18,7 +18,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { removeTemplate, syncPlanDays } from "@/app/workouts/actions";
-import type { PlanDay } from "@/lib/validation/plan-days";
+import {
+  type PlanScheduleSession,
+  sessionToPlanDay,
+} from "@/lib/plans/schedule";
 import type { TemplateExercise } from "@/lib/validation/workout-templates";
 import type { LastExerciseLog, WeightUnit } from "@/lib/workouts/stats";
 import {
@@ -335,14 +338,17 @@ export function MyWorkoutsSection({
 export function ChadPlanSection({
   planId,
   planTitle,
-  days,
+  sessions,
   customExercises,
   lastSets,
   unit,
 }: {
   planId: string;
   planTitle: string;
-  days: PlanDay[] | null;
+  /** The resolved plan schedule (FIX-28); null = text-only plan, show the
+   * one-tap extraction. Session ids ride along so saving the workout records
+   * a completion event against the prescribed session. */
+  sessions: PlanScheduleSession[] | null;
   customExercises: CustomExerciseData[];
   lastSets: Record<string, LastExerciseLog>;
   unit: WeightUnit;
@@ -353,7 +359,8 @@ export function ChadPlanSection({
   const busy = Boolean(session);
   const catalog = mergeCatalog(customExercises);
 
-  function startDay(day: PlanDay) {
+  function startDay(planSessionRow: PlanScheduleSession) {
+    const day = sessionToPlanDay(planSessionRow);
     const sessionFromDay = sessionFromPlanDay(
       day,
       (name) => {
@@ -365,7 +372,14 @@ export function ChadPlanSection({
         };
       },
       lastSets,
-      unit
+      unit,
+      planSessionRow.id
+        ? {
+            planId,
+            planSessionId: planSessionRow.id,
+            sessionName: planSessionRow.name,
+          }
+        : null
     );
     startSession(sessionFromDay);
     router.push("/workouts/session");
@@ -386,12 +400,12 @@ export function ChadPlanSection({
         </p>
       </div>
 
-      {days ? (
+      {sessions ? (
         /* Plan days go multi-column on desktop, same card grid as My
            Workouts (LAY-1); explicit grid-cols-1 + min-w-0 cards. Columns
            start at lg (768 content is too narrow beside the sidebar). */
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
-          {days.map((day) => (
+          {sessions.map((day) => (
             <WCard className="flex h-full min-w-0 flex-col p-5" key={day.name}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">

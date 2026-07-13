@@ -9,6 +9,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -586,6 +587,217 @@ export const plan = pgTable("Plan", {
 
 export type Plan = InferSelectModel<typeof plan>;
 
+// --- Structured training plans (FIX-28, P4) ---
+// The normalized schedule behind a training plan: PlanSession (one prescribed
+// session in the rotation) -> PlanSessionExercise -> PlanSessionSet, plus
+// PlanSessionCompletion (the event stream linking logged Workouts back to the
+// prescribed session they completed). Modeled on Hevy's routine schema
+// (set-level prescriptions, exercise-level rest/superset) inside a
+// Boostcamp-style rotation container; see
+// evidence-p34d/benchmark-teardown.md. DEC-06: `Plan.detail` (the raw
+// document) and `Plan.days` (the legacy json) are never rewritten; these
+// tables are materialized FROM them by lib/plans/schedule.ts, lazily, the
+// syncPlanDays idiom. Rows are UPSERTED by (planId, position) so their ids
+// stay stable across plan edits; sessions removed by an edit flip
+// `active=false` rather than being deleted (completion history survives).
+export const planSession = pgTable(
+  "PlanSession",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    planId: uuid("planId")
+      .notNull()
+      .references(() => plan.id),
+    userId: uuid("userId")
+      .notNull()
+      .references(() => user.id),
+    // Rotation order, 0-based. The schedule is a repeating rotation (the
+    // category consensus: a missed Tuesday means the session happens
+    // Wednesday), never calendar-dated rows.
+    position: integer("position").notNull().default(0),
+    // "Day 1: Upper" — the label the member taps to start.
+    name: text("name").notNull(),
+    // 0=Sunday..6=Saturday when a plan pins this session to a weekday
+    // (MacroFactor/Apple pattern). Null = pure rotation (the default; nothing
+    // Chad saves today sets it).
+    weekday: integer("weekday"),
+    // Soft removal: re-materialization never deletes rows, so completion FKs
+    // and P34-E plan-exercise references survive plan edits.
+    active: boolean("active").notNull().default(true),
+    // Hash of the source days json this materialization came from; the
+    // adapter re-materializes when the plan's current source hash differs.
+    sourceHash: text("sourceHash").notNull(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => ({
+    // One row per rotation slot; the materializer upserts on this target so
+    // concurrent lazy materializations cannot double-insert a position.
+    planPositionUnique: uniqueIndex("PlanSession_planId_position_unique").on(
+      table.planId,
+      table.position
+    ),
+  })
+);
+
+export type PlanSession = InferSelectModel<typeof planSession>;
+
+export const planSessionExercise = pgTable("PlanSessionExercise", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  planSessionId: uuid("planSessionId")
+    .notNull()
+    .references(() => planSession.id),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  // Order within the session.
+  position: integer("position").notNull().default(0),
+  // Library-canonical casing (lib/workouts/exercise-library.ts), the same
+  // name-snapshot join the workout log uses. THE join point for P34-E's
+  // exercise-identity work.
+  exerciseName: text("exerciseName").notNull(),
+  // The prescription AS CHAD WROTE IT: working-set count plus the expressive
+  // reps string ("4-6", "8-12", "AMRAP", "45s", "5 per side"). This pair is
+  // the raw/display form; PlanSessionSet below is the structured expansion.
+  sets: integer("sets").notNull(),
+  reps: text("reps").notNull(),
+  // Prescribed load, only when the plan names one.
+  weight: doublePrecision("weight"),
+  unit: varchar("unit", { enum: ["lb", "kg"] }).notNull().default("lb"),
+  // Short cue: "RPE 8", "3 min rest", "slow negative".
+  note: text("note"),
+  // Rest between sets, seconds. Exercise-level like Hevy/Strong, not per set.
+  restSeconds: integer("restSeconds"),
+  // Exercises sharing a non-null group value are one superset (Hevy's
+  // supersets_id pattern). Null = straight sets.
+  supersetGroup: integer("supersetGroup"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+export type PlanSessionExercise = InferSelectModel<
+  typeof planSessionExercise
+>;
+
+// Set-level prescription rows (Hevy RoutineSet shape). Materialized from the
+// per-exercise prescription: "4 x 8-12" becomes four `normal` rows with
+// repRange 8-12. Fields are nullable-everything on purpose so a set can
+// prescribe anything from "just do a set" to "8-12 @ 185 lb, RPE 8"; the
+// unparseable remainder ("5 per side") keeps nulls here and renders from the
+// exercise row's raw reps string.
+export const planSessionSet = pgTable("PlanSessionSet", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  planSessionExerciseId: uuid("planSessionExerciseId")
+    .notNull()
+    .references(() => planSessionExercise.id),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  position: integer("position").notNull().default(0),
+  type: varchar("type", {
+    enum: ["warmup", "normal", "failure", "dropset"],
+  })
+    .notNull()
+    .default("normal"),
+  // Fixed reps OR a rep range, never both (validation-layer invariant).
+  reps: integer("reps"),
+  repRangeStart: integer("repRangeStart"),
+  repRangeEnd: integer("repRangeEnd"),
+  weight: doublePrecision("weight"),
+  // Timed work ("45s" prescriptions), seconds.
+  durationSeconds: integer("durationSeconds"),
+  rpe: doublePrecision("rpe"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+export type PlanSessionSet = InferSelectModel<typeof planSessionSet>;
+
+// The completion EVENT stream: one row when a logged workout completes a
+// prescribed session (the generalization of Hevy's workout.routine_id).
+// Powers adherence (planned-vs-completed, the TrainingPeaks model), Up next
+// (first active session in the rotation without a completion this cycle),
+// and P5/P6 milestone/reward moments (timestamped events). Events are
+// immutable history: a later plan edit never rewrites them (the FIX-07
+// philosophy), and `sessionName` snapshots the label at completion time so
+// history renders honestly even after renames (the WorkoutExercise idiom).
+export const planSessionCompletion = pgTable(
+  "PlanSessionCompletion",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    userId: uuid("userId")
+      .notNull()
+      .references(() => user.id),
+    // Denormalized for cheap per-plan adherence queries.
+    planId: uuid("planId")
+      .notNull()
+      .references(() => plan.id),
+    planSessionId: uuid("planSessionId")
+      .notNull()
+      .references(() => planSession.id),
+    workoutId: uuid("workoutId")
+      .notNull()
+      .references(() => workout.id),
+    sessionName: text("sessionName").notNull(),
+    // The member-local day the completion counts toward (noon-UTC anchor via
+    // lib/date.ts, same convention as every picked day).
+    completedDay: timestamp("completedDay").notNull(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => ({
+    // A logged workout completes at most one prescribed session; the insert
+    // is onConflictDoNothing on this, so a double-submitted save stays one
+    // completion event.
+    workoutUnique: uniqueIndex("PlanSessionCompletion_workoutId_unique").on(
+      table.workoutId
+    ),
+  })
+);
+
+export type PlanSessionCompletion = InferSelectModel<
+  typeof planSessionCompletion
+>;
+
+
+// --- Goal outcomes (FIX-29, P4): a goal linked to N measurable outcomes ---
+// The legacy Goal row carries at most ONE outcome (its `metric` enum). This
+// table lets one goal track several ("lose 15 lb AND bench 225"), each either
+// pinned to a REGISTERED metric from lib/contracts/metrics.ts (the outcome
+// vocabulary; validated in lib/validation/goals.ts, the DB stores text) or
+// explicitly UNSUPPORTED (metricId null + a member-facing label), so a goal
+// never silently pretends the app can measure something it cannot. Legacy
+// single-metric goals are ADAPTED to this shape at read time
+// (lib/goals/outcomes.ts); their rows are never rewritten.
+export const goalOutcome = pgTable("GoalOutcome", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  goalId: uuid("goalId")
+    .notNull()
+    .references(() => goal.id),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id),
+  // Display order; 0 is the goal's primary outcome.
+  position: integer("position").notNull().default(0),
+  // A registered MetricId ("body.weight.trend", "training.exercise.e1rm").
+  // Null = the app cannot measure this outcome; `label` carries the wording
+  // and `currentValue` is member-maintained.
+  metricId: text("metricId"),
+  // The entity the metric refers to when it isn't implied: exercise name for
+  // training.exercise.e1rm, measurement kind for body.measurement.
+  metricRef: text("metricRef"),
+  // Member-facing outcome wording; required when metricId is null.
+  label: text("label"),
+  startValue: doublePrecision("startValue"),
+  targetValue: doublePrecision("targetValue"),
+  // Manual current value for unsupported outcomes only; registered metrics
+  // read their one source module (one-canonical-value law).
+  currentValue: doublePrecision("currentValue"),
+  unit: text("unit"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+export type GoalOutcome = InferSelectModel<typeof goalOutcome>;
+
 // --- Body measurements (a progress dimension beyond bodyweight) ---
 // One row per recorded measurement; a per-metric trend is built from the rows.
 export const bodyMeasurement = pgTable("BodyMeasurement", {
@@ -777,6 +989,7 @@ export const customExercise = pgTable("CustomExercise", {
 });
 
 export type CustomExercise = InferSelectModel<typeof customExercise>;
+
 
 // --- Structured meal plans (Pro) ---
 // A multi-day meal plan Chad (or the user) generates. Unlike the markdown `plan`

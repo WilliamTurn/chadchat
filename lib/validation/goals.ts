@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { METRICS } from "@/lib/contracts/metrics";
 
 // The measurable-target metrics a goal can be pinned to (optional). A `weight`
 // goal renders live progress by reading the latest ProgressEntry; a `lift` goal
@@ -64,3 +65,43 @@ export const updatePlanSchema = createPlanSchema.extend({
 });
 
 export type UpdatePlanInput = z.infer<typeof updatePlanSchema>;
+
+/**
+ * One goal outcome (FIX-29): either pinned to a REGISTERED metric id from
+ * lib/contracts/metrics.ts (the outcome vocabulary; never a free string), or
+ * explicitly unsupported (metricId null), in which case a member-facing
+ * label is required so the goal states what it tracks by hand.
+ */
+export const goalOutcomeSchema = z
+  .object({
+    metricId: z.string().trim().max(80).nullable(),
+    metricRef: z.string().trim().max(120).nullable().optional(),
+    label: z.string().trim().max(120).nullable().optional(),
+    startValue: z.number().finite().nullable().optional(),
+    targetValue: z.number().finite().nullable().optional(),
+    // Manual current value, unsupported outcomes only (supported ones read
+    // their registered source module).
+    currentValue: z.number().finite().nullable().optional(),
+    unit: z.string().trim().max(20).nullable().optional(),
+  })
+  .superRefine((outcome, ctx) => {
+    if (outcome.metricId !== null && !(outcome.metricId in METRICS)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["metricId"],
+        message: "Unknown metric. Pick a registered metric or mark the outcome as tracked manually.",
+      });
+    }
+    if (outcome.metricId === null && !outcome.label?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["label"],
+        message: "Name this outcome so it's clear what you're tracking.",
+      });
+    }
+  });
+
+export type GoalOutcomeInput = z.infer<typeof goalOutcomeSchema>;
+
+/** A goal's full outcome set (replace-style writes; order = display order). */
+export const goalOutcomesSchema = z.array(goalOutcomeSchema).max(8);

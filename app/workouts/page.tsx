@@ -35,8 +35,8 @@ import {
   getWorkoutTemplatesByUserId,
 } from "@/lib/db/queries";
 import type { User } from "@/lib/db/schema";
+import { resolvePlanScheduleView } from "@/lib/db/plan-goal-queries";
 import { weekAnchors } from "@/lib/today/week";
-import { parsePlanDays } from "@/lib/validation/plan-days";
 import { parseTemplateExercises } from "@/lib/validation/workout-templates";
 import { toWorkoutData } from "@/lib/workouts/serialize";
 import {
@@ -150,7 +150,16 @@ async function Home({ user }: { user: User }) {
   });
 
   const trainingPlan = activePlans.find((p) => p.kind === "training") ?? null;
-  const planDays = trainingPlan ? parsePlanDays(trainingPlan.days) : null;
+  // FIX-28: the one resolved schedule (materialized lazily from legacy days
+  // json); document view = text-only plan, the section offers the one-tap
+  // extraction as before.
+  const planScheduleView = trainingPlan
+    ? await resolvePlanScheduleView(trainingPlan)
+    : null;
+  const planSessions =
+    planScheduleView && planScheduleView.kind !== "document"
+      ? planScheduleView.schedule.sessions
+      : null;
 
   const records = computePersonalRecords(workouts)
     .slice(0, 6)
@@ -208,10 +217,10 @@ async function Home({ user }: { user: User }) {
       {trainingPlan && (
         <ChadPlanSection
           customExercises={customExercises}
-          days={planDays}
           lastSets={lastSets}
           planId={trainingPlan.id}
           planTitle={trainingPlan.title}
+          sessions={planSessions}
           unit={unit}
         />
       )}

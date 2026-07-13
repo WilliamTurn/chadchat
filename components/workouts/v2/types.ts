@@ -63,11 +63,22 @@ export type SessionTimer = {
   startedAt: number | null;
 };
 
+/** The prescribed plan session a live session was started from (FIX-28), so
+ * saving records a PlanSessionCompletion event for adherence/Up next. */
+export type PlanRef = {
+  planId: string;
+  planSessionId: string;
+  sessionName: string;
+};
+
 export type ActiveSession = {
   id: string;
   name: string;
   /** The "My Workouts" template this session was started from, if any. */
   templateId: string | null;
+  /** The plan session this was started from, if any (optional: sessions
+   * persisted before FIX-28 simply have none). */
+  planRef?: PlanRef | null;
   createdAt: number;
   timer: SessionTimer;
   unit: WeightUnit;
