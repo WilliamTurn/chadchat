@@ -182,6 +182,8 @@ export const LOG_ACTIONS: { label: string; href: string; icon: LucideIcon }[] =
     { label: "Log a meal", href: "/nutrition#log-meal", icon: UtensilsCrossed },
     { label: "Log water", href: "/hydration", icon: Droplets },
     { label: "Log sleep", href: "/sleep", icon: Moon },
-    { label: "Log a weigh-in", href: "/progress#log-entry", icon: Weight },
+    // FIX-31 (P5, DEC-02): the weigh-in logger lives on the Body category
+    // page now; /progress is the cross-domain overview.
+    { label: "Log a weigh-in", href: "/progress/body#log-entry", icon: Weight },
     { label: "Log a workout", href: "/workouts/new", icon: Dumbbell },
   ];

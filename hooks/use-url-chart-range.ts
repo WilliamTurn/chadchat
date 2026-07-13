@@ -90,7 +90,15 @@ export function useUrlChartWindow<T extends { t: number }>(
  * chart's compact /today mount). */
 export function useUrlChartRange<T extends { t: number }>(
   rows: T[],
-  opts: { minPoints?: number; param?: string; enabled?: boolean } = {}
+  opts: {
+    minPoints?: number;
+    param?: string;
+    enabled?: boolean;
+    /** Caller-computed starting preset when the URL carries none (additive,
+     * P56-A): today-anchored-window charts pick the tightest NON-EMPTY
+     * window themselves; the URL key still wins. */
+    defaultRange?: RangeKey;
+  } = {}
 ): {
   range: RangeKey;
   setRange: (r: RangeKey) => void;
@@ -116,7 +124,7 @@ export function useUrlChartRange<T extends { t: number }>(
 
   const chart = useChartRange(rows, {
     minPoints: opts.minPoints,
-    initialRange: urlKey ?? undefined,
+    initialRange: urlKey ?? opts.defaultRange,
     initialCustom: urlCustom,
   });
 

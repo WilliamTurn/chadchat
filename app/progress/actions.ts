@@ -33,7 +33,7 @@ export type ProgressActionState = { ok: boolean; error?: string };
 /**
  * Resolve the signed-in user and confirm they have Pro features. The progress
  * dashboard (weight history + photos) is a Chad Pro feature, so this is the
- * server-side gate behind the UI — re-checked on every write.
+ * server-side gate behind the UI, re-checked on every write.
  */
 async function requirePro() {
   const session = await auth();
@@ -199,7 +199,7 @@ export type MontageActionResult =
 
 /**
  * Build a fresh progress-photo montage (FEAT-18): Chad's vision read over the
- * member's real photos. Text only comes back from the model — the composite
+ * member's real photos. Text only comes back from the model; the composite
  * image is drawn client-side from the same real photos, never generated.
  * Fair-use capped (lib/montage/limit.ts) like every expensive generator.
  */
@@ -230,7 +230,7 @@ export async function generateMontage(): Promise<MontageActionResult> {
   try {
     const content = await buildMontageVerdict(user, photos);
     await createProgressMontage({ userId: user.id, content });
-    revalidatePath("/progress");
+    revalidatePath("/progress/body");
     return { ok: true, content };
   } catch (_error) {
     return {

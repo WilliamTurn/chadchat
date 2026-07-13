@@ -264,7 +264,9 @@ export const LOGGABLE_DOMAINS: readonly {
   {
     domain: "body",
     primaryMetric: "body.weight.scale",
-    detailRoute: "/progress",
+    // FIX-31 (P5, DEC-02): body detail relocated from /progress to the Body
+    // category route; /progress is the cross-domain overview.
+    detailRoute: "/progress/body",
     sparseBelowPoints: 3,
   },
 ];

@@ -160,7 +160,7 @@ export function MeasurementsSection({
         <Ruler aria-hidden="true" className="size-4 text-muted-foreground/60" />
       </div>
       <p className="mb-4 text-muted-foreground text-sm">
-        The scale lies on a cut or a bulk — the tape doesn't. A shrinking waist
+        The scale lies on a cut or a bulk; the tape doesn't. A shrinking waist
         with a steady scale means you're losing fat and holding muscle. Track
         the spots that matter and watch them move.
       </p>
@@ -308,7 +308,7 @@ export function MeasurementsSection({
       ) : (
         <div className="mt-6 rounded-xl border border-border border-dashed bg-background/40 px-4 py-5 text-center text-muted-foreground text-sm">
           No measurements yet. Start with your{" "}
-          <span className="font-medium text-foreground">waist</span> — it's the
+          <span className="font-medium text-foreground">waist</span>: it's the
           single best non-scale signal of fat loss. Log it weekly and the trend
           shows up here.
         </div>

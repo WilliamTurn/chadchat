@@ -45,14 +45,29 @@ import type { ChartLegendItem } from "./chart-frame";
 
 const RAW_COLOR = "var(--muted-foreground)";
 
-/** The frame legend for a raw + trend drawing (estimated-series law). */
+/**
+ * Tokenized direction glow for the trend line (additive, P56-A; the owner's
+ * reward-glow direction). Derived from the same TREND_TONE tokens as the
+ * stroke via color-mix, so the glow can never disagree with the line color.
+ */
+const TREND_GLOW: Record<TrendTone, string> = {
+  toward:
+    "[filter:drop-shadow(0_0_6px_color-mix(in_oklab,var(--chart-2)_45%,transparent))]",
+  away: "[filter:drop-shadow(0_0_6px_color-mix(in_oklab,var(--chart-5)_55%,transparent))]",
+  neutral:
+    "[filter:drop-shadow(0_0_6px_color-mix(in_oklab,var(--chart-neutral)_35%,transparent))]",
+};
+
+/** The frame legend for a raw + trend drawing (estimated-series law).
+ *  `color` mirrors the TrendChart color override (domain-accent charts). */
 export function trendChartLegend(
   tone: TrendTone,
-  labels: { raw: string; trend: string; goal?: string }
+  labels: { raw: string; trend: string; goal?: string },
+  color?: string
 ): ChartLegendItem[] {
   const items: ChartLegendItem[] = [
     { swatch: "dot", color: RAW_COLOR, label: labels.raw },
-    { swatch: "line", color: TREND_TONE[tone], label: labels.trend },
+    { swatch: "line", color: color ?? TREND_TONE[tone], label: labels.trend },
   ];
   if (labels.goal) {
     items.push({ swatch: "dash", color: "var(--color-goal-line)", label: labels.goal });
@@ -69,6 +84,8 @@ export function TrendChart({
   rawLabel = "Logged",
   trendLabel = "Trend",
   compact = false,
+  glow = false,
+  color,
   tau = 10,
 }: {
   /** FULL history, oldest first ({t, value}); smoothing never restarts at a
@@ -82,11 +99,20 @@ export function TrendChart({
   rawLabel?: string;
   trendLabel?: string;
   compact?: boolean;
+  /** Tone-matched drop-shadow on the trend line (reward-glow moments). */
+  glow?: boolean;
+  /**
+   * Line-color override for DOMAIN-ACCENT charts (Color Law rule 1: a
+   * training-domain series draws in the domain accent, e.g. volume in
+   * blood), where the verdict tones do not apply. Pass the matching value
+   * to trendChartLegend so line and legend cannot disagree.
+   */
+  color?: string;
   tau?: number;
 }) {
   const reveal = useMountReveal();
   const gradientId = useId();
-  const lineColor = TREND_TONE[tone];
+  const lineColor = color ?? TREND_TONE[tone];
 
   const rows = useMemo<TrendRow[]>(
     () =>
@@ -134,7 +160,7 @@ export function TrendChart({
     <ChartContainer className="h-full w-full" config={chartConfig}>
       <ComposedChart
         data={rows}
-        margin={{ top: 8, left: 12, bottom: 0, right: compact ? -16 : -8 }}
+        margin={{ top: 8, left: 12, bottom: 0, right: -8 }}
       >
         <defs>
           <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
@@ -217,6 +243,7 @@ export function TrendChart({
           activeDot={{ r: 4, fill: lineColor, strokeWidth: 0 }}
           animationDuration={750}
           animationEasing="ease-out"
+          className={glow ? TREND_GLOW[tone] : undefined}
           dataKey="trend"
           dot={sparseDots ? { r: 3, fill: lineColor, strokeWidth: 0 } : false}
           fill={`url(#${gradientId})`}

@@ -60,6 +60,7 @@ export function ChartFrame({
   unit,
   goalText,
   range,
+  rangeSlot,
   rangeLabel,
   coverage,
   summary,
@@ -81,8 +82,9 @@ export function ChartFrame({
   state: PanelState;
   /** Pre-formatted headline override (rare; duration strings etc.). */
   headline?: string;
-  /** Label under the headline; REQUIRED wording for estimates ("Trend weight"). */
-  headlineLabel?: string;
+  /** Label under the headline; REQUIRED wording for estimates ("Trend weight").
+   *  ReactNode (additive, P56-A) so a chart can attach a help affordance. */
+  headlineLabel?: ReactNode;
   /** The headline reading; formatted via units.ts. Unlogged reads "Not logged". */
   reading: MetricReading<number>;
   unit: UnitId;
@@ -90,6 +92,13 @@ export function ChartFrame({
   goalText?: string;
   /** Interactive range control (omit for fixed-window charts). */
   range?: ChartRangeState;
+  /**
+   * Custom range control node rendered in the control position instead of the
+   * built-in ChartRangeControl (additive, P56-A): charts whose range grammar
+   * exceeds WindowRangeKey (the DSH-52 custom from/to picker on the weight
+   * trend) supply their own control without forking the frame.
+   */
+  rangeSlot?: ReactNode;
   /** Member phrase for a fixed window ("last 7 days") when `range` is absent. */
   rangeLabel?: string;
   /** Renders the coverage caption when logging is incomplete. */
@@ -231,7 +240,8 @@ export function ChartFrame({
               </p>
             )}
           </div>
-          {range && showPlotChrome && <ChartRangeControl control={range} />}
+          {showPlotChrome &&
+            (rangeSlot ?? (range && <ChartRangeControl control={range} />))}
         </div>
       )}
 

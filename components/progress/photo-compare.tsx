@@ -6,7 +6,7 @@ type Photo = { url: string; date: string };
 
 /**
  * Side-by-side before/after compare. Pick any two dated progress photos to see
- * the change over time — a standard pro-app progress view. Defaults to the
+ * the change over time, a standard pro-app progress view. Defaults to the
  * oldest vs. the newest, the comparison people actually want.
  */
 export function PhotoCompare({ photos }: { photos: Photo[] }) {
@@ -64,7 +64,7 @@ function PickedPhoto({
       <div className="relative">
         {/* biome-ignore lint/performance/noImgElement: user-uploaded blob images, sizes vary */}
         <img
-          alt={`${label} — ${photo.date}`}
+          alt={`${label}, ${photo.date}`}
           className="aspect-square w-full object-cover"
           src={photo.url}
         />

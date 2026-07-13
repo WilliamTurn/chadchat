@@ -81,13 +81,10 @@ export const DOMAINS: Record<DomainId, Domain> = {
   },
   body: {
     id: "body",
-    name: "Progress",
+    name: "Body",
     owns: "weight, trend weight, measurements, progress photos",
-    proposedName: {
-      name: "Body",
-      rationale:
-        "The route named Progress holds body data only. The overhaul's target architecture frees 'Progress' for the cross-domain outcome view (P5 / FIX-31/32) and names this domain Body. Documentation only until P5.",
-    },
+    // Rename APPLIED in P5 (FIX-31, DEC-02 2026-07-13): body data lives at
+    // /progress/body and "Progress" now names the cross-domain overview.
   },
   goals: {
     id: "goals",
@@ -293,11 +290,28 @@ export const ROUTES = {
   "/progress": {
     path: "/progress",
     name: "Progress",
+    domain: "engagement",
+    access: "member",
+    purpose:
+      "The cross-domain outcome overview: goals, body, training, nutrition, sleep, hydration, consistency, milestones, and reports (FIX-32, DEC-02). Member-reachable; Pro-gated categories render the locked treatment inline.",
+    proposedNavGroup: "review",
+  },
+  "/progress/body": {
+    path: "/progress/body",
+    name: "Body",
     domain: "body",
     access: "pro",
-    purpose: "Track weight, trend, measurements, and progress photos.",
+    purpose:
+      "Track weight, trend, measurements, and progress photos (the former /progress page, relocated by FIX-31 per DEC-02).",
     anchors: ["#log-entry"],
-    proposedNavGroup: "review",
+  },
+  "/progress/training": {
+    path: "/progress/training",
+    name: "Training",
+    domain: "training",
+    access: "pro",
+    purpose:
+      "Training outcomes: frequency, completion, volume, strength, PR and milestone timelines (FIX-33).",
   },
   "/goals": {
     path: "/goals",

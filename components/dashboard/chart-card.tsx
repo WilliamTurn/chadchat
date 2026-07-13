@@ -76,15 +76,23 @@ export function ChartCard({
   );
 }
 
+// 44px touch floor at phone widths (a11y law); compact from sm up. P56-A:
+// the segments measured ~25px tall at 390 (round-1 finding).
 const segmentClass = (active: boolean) =>
   cn(
-    "rounded-md px-2.5 py-1 font-medium text-xs transition-colors",
+    "min-h-11 rounded-md px-2.5 py-1 font-medium text-xs transition-colors sm:min-h-0",
     active
       ? "bg-card text-foreground shadow-sm"
       : "text-muted-foreground hover:text-foreground"
   );
 
-function RangeToggle({
+/**
+ * The segmented preset toggle + DSH-52 custom from/to picker. Exported
+ * (additive, P56-A) so charts migrated onto the ChartFrame grammar keep the
+ * custom-window capability via the frame's rangeSlot; ChartCard behavior is
+ * unchanged.
+ */
+export function RangeToggle({
   range,
   setRange,
   presets,

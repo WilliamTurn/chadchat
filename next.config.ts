@@ -23,8 +23,10 @@ const nextConfig: NextConfig = {
     { source: "/chat", destination: "/", permanent: false },
     { source: "/coach", destination: "/", permanent: false },
     { source: "/water", destination: "/hydration", permanent: false },
-    { source: "/weight", destination: "/progress", permanent: false },
-    { source: "/body", destination: "/progress", permanent: false },
+    // FIX-31 (P5, DEC-02): body tracking moved to /progress/body; /progress is
+    // now the cross-domain overview. Legacy body aliases land on the body page.
+    { source: "/weight", destination: "/progress/body", permanent: false },
+    { source: "/body", destination: "/progress/body", permanent: false },
     { source: "/food", destination: "/nutrition", permanent: false },
     { source: "/meals", destination: "/nutrition", permanent: false },
     { source: "/calories", destination: "/nutrition", permanent: false },

@@ -81,7 +81,7 @@ export function LogEntryForm({ defaultUnit }: { defaultUnit: "lb" | "kg" }) {
         const data = await res.json();
         photoUrl = data.url;
       } catch {
-        toast.error("Upload failed — try again.");
+        toast.error("Upload failed. Try again.");
         setUploading(false);
         return;
       }
