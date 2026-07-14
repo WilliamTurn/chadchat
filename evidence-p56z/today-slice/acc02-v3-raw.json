@@ -1,0 +1,1015 @@
+{
+  "rows": [
+    {
+      "card": "(no card)",
+      "top": 0,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Toggle Sidebar"
+      ]
+    },
+    {
+      "card": "(no card)",
+      "top": 8,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "CHAD"
+      ]
+    },
+    {
+      "card": "(no card)",
+      "top": 14,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Toggle Sidebar"
+      ]
+    },
+    {
+      "card": "(no card)",
+      "top": 50,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Toggle Sidebar",
+        "Toggle Sidebar"
+      ]
+    },
+    {
+      "card": "(no card)",
+      "top": 68,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Dashboard"
+      ]
+    },
+    {
+      "card": "(no card)",
+      "top": 116,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Chat"
+      ]
+    },
+    {
+      "card": "CALORIES",
+      "top": 176,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "CALORIES Not logged yet. Log a meal below.",
+        "WATER Not logged yet. One tap below.",
+        "SLEEP Not logged yet. Log last night below.",
+        "TRAINING 0 sessions this week"
+      ]
+    },
+    {
+      "card": "(no card)",
+      "top": 216,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Workouts"
+      ]
+    },
+    {
+      "card": "(no card)",
+      "top": 264,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Calorie Tracker"
+      ]
+    },
+    {
+      "card": "(no card)",
+      "top": 312,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Hydration"
+      ]
+    },
+    {
+      "card": "UP NEXT",
+      "top": 343,
+      "primaryCount": 1,
+      "primaries": [
+        "Log last night"
+      ],
+      "allButtons": [
+        "Sleep trends →",
+        "What does \"How Up next is picked\" mean?",
+        "Ask Chad",
+        "Log last night"
+      ]
+    },
+    {
+      "card": "CONSISTENCY",
+      "top": 343,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Progress →",
+        "What does \"Logging consistency\" mean?"
+      ]
+    },
+    {
+      "card": "(no card)",
+      "top": 360,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Sleep"
+      ]
+    },
+    {
+      "card": "(no card)",
+      "top": 460,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Goals"
+      ]
+    },
+    {
+      "card": "(no card)",
+      "top": 508,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Meal Plan"
+      ]
+    },
+    {
+      "card": "(no card)",
+      "top": 608,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Progress"
+      ]
+    },
+    {
+      "card": "(no card)",
+      "top": 656,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Future You"
+      ]
+    },
+    {
+      "card": "(no card)",
+      "top": 704,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Weekly Report"
+      ]
+    },
+    {
+      "card": "CALORIE TRACKER",
+      "top": 757,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Food diary →",
+        "Log meal"
+      ]
+    },
+    {
+      "card": "WATER",
+      "top": 757,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Hydration history →",
+        "Log water"
+      ]
+    },
+    {
+      "card": "(no card)",
+      "top": 773,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Rate My Kitchen"
+      ]
+    },
+    {
+      "card": "(no card)",
+      "top": 821,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Files"
+      ]
+    },
+    {
+      "card": "(no card)",
+      "top": 848,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Plans & pricing"
+      ]
+    },
+    {
+      "card": "(no card)",
+      "top": 869,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Quit Test"
+      ]
+    },
+    {
+      "card": "(no card)",
+      "top": 917,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Account"
+      ]
+    },
+    {
+      "card": "(no card)",
+      "top": 965,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Help"
+      ]
+    },
+    {
+      "card": "SLEEP",
+      "top": 1059,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Sleep trends →",
+        "Log last night"
+      ]
+    },
+    {
+      "card": "TRAINING TODAY",
+      "top": 1446,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "All plans →",
+        "Start a workout"
+      ]
+    },
+    {
+      "card": "MEAL PLAN TODAY",
+      "top": 1446,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Open meal plan →",
+        "Ask Chad"
+      ]
+    },
+    {
+      "card": "PRIMARY GOAL",
+      "top": 1446,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Goal details →"
+      ]
+    },
+    {
+      "card": "WEIGHT TREND",
+      "top": 2014,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Body progress →",
+        "Ask Chad",
+        "Log weight"
+      ]
+    },
+    {
+      "card": "TRAINING THIS WEEK",
+      "top": 2014,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Training progress →"
+      ]
+    },
+    {
+      "card": "NUTRITION ADHERENCE",
+      "top": 2204,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Nutrition progress →"
+      ]
+    },
+    {
+      "card": "RECOVERY CONSISTENCY",
+      "top": 2204,
+      "primaryCount": 0,
+      "primaries": [],
+      "allButtons": [
+        "Recovery progress →"
+      ]
+    }
+  ],
+  "detail": [
+    {
+      "label": "CHAD",
+      "tag": "A",
+      "card": "(no card)",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(93.04 0 -0.0000238419)",
+      "solid": false
+    },
+    {
+      "label": "Toggle Sidebar",
+      "tag": "BUTTON",
+      "card": "(no card)",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 1,
+      "color": "lab(53.6 0 0)",
+      "solid": false
+    },
+    {
+      "label": "Dashboard",
+      "tag": "A",
+      "card": "(no card)",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(93.04 0 -0.0000238419)",
+      "solid": false
+    },
+    {
+      "label": "Chat",
+      "tag": "A",
+      "card": "(no card)",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(93.04 0 -0.0000238419)",
+      "solid": false
+    },
+    {
+      "label": "Workouts",
+      "tag": "A",
+      "card": "(no card)",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(93.04 0 -0.0000238419)",
+      "solid": false
+    },
+    {
+      "label": "Calorie Tracker",
+      "tag": "A",
+      "card": "(no card)",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(93.04 0 -0.0000238419)",
+      "solid": false
+    },
+    {
+      "label": "Hydration",
+      "tag": "A",
+      "card": "(no card)",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(93.04 0 -0.0000238419)",
+      "solid": false
+    },
+    {
+      "label": "Sleep",
+      "tag": "A",
+      "card": "(no card)",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(93.04 0 -0.0000238419)",
+      "solid": false
+    },
+    {
+      "label": "Goals",
+      "tag": "A",
+      "card": "(no card)",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(93.04 0 -0.0000238419)",
+      "solid": false
+    },
+    {
+      "label": "Meal Plan",
+      "tag": "A",
+      "card": "(no card)",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(93.04 0 -0.0000238419)",
+      "solid": false
+    },
+    {
+      "label": "Progress",
+      "tag": "A",
+      "card": "(no card)",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(93.04 0 -0.0000238419)",
+      "solid": false
+    },
+    {
+      "label": "Future You",
+      "tag": "A",
+      "card": "(no card)",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(93.04 0 -0.0000238419)",
+      "solid": false
+    },
+    {
+      "label": "Weekly Report",
+      "tag": "A",
+      "card": "(no card)",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(93.04 0 -0.0000238419)",
+      "solid": false
+    },
+    {
+      "label": "Rate My Kitchen",
+      "tag": "A",
+      "card": "(no card)",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(93.04 0 -0.0000238419)",
+      "solid": false
+    },
+    {
+      "label": "Files",
+      "tag": "A",
+      "card": "(no card)",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(93.04 0 -0.0000238419)",
+      "solid": false
+    },
+    {
+      "label": "Quit Test",
+      "tag": "A",
+      "card": "(no card)",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(93.04 0 -0.0000238419)",
+      "solid": false
+    },
+    {
+      "label": "Account",
+      "tag": "A",
+      "card": "(no card)",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(93.04 0 -0.0000238419)",
+      "solid": false
+    },
+    {
+      "label": "Help",
+      "tag": "A",
+      "card": "(no card)",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(93.04 0 -0.0000238419)",
+      "solid": false
+    },
+    {
+      "label": "Plans & pricing",
+      "tag": "A",
+      "card": "(no card)",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(93.04 0 -0.0000238419)",
+      "solid": false
+    },
+    {
+      "label": "Toggle Sidebar",
+      "tag": "BUTTON",
+      "card": "(no card)",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(74.48 0 0)",
+      "solid": false
+    },
+    {
+      "label": "Toggle Sidebar",
+      "tag": "BUTTON",
+      "card": "(no card)",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(74.48 0 0)",
+      "solid": false
+    },
+    {
+      "label": "Toggle Sidebar",
+      "tag": "BUTTON",
+      "card": "(no card)",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(74.48 0 0)",
+      "solid": false
+    },
+    {
+      "label": "CALORIES Not logged yet. Log a meal below.",
+      "tag": "A",
+      "card": "CALORIES",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "rgb(213, 219, 230)",
+      "solid": false
+    },
+    {
+      "label": "WATER Not logged yet. One tap below.",
+      "tag": "A",
+      "card": "CALORIES",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "rgb(213, 219, 230)",
+      "solid": false
+    },
+    {
+      "label": "SLEEP Not logged yet. Log last night below.",
+      "tag": "A",
+      "card": "CALORIES",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "rgb(213, 219, 230)",
+      "solid": false
+    },
+    {
+      "label": "TRAINING 0 sessions this week",
+      "tag": "A",
+      "card": "CALORIES",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "rgb(213, 219, 230)",
+      "solid": false
+    },
+    {
+      "label": "Sleep trends →",
+      "tag": "A",
+      "card": "UP NEXT",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": true,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(53.6 0 0)",
+      "solid": false
+    },
+    {
+      "label": "What does \"How Up next is picked\" mean?",
+      "tag": "BUTTON",
+      "card": "UP NEXT",
+      "primary": false,
+      "isHelp": true,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "oklab(0.599999 -0.00000590086 0.0000140369 / 0.5)",
+      "solid": false
+    },
+    {
+      "label": "Ask Chad",
+      "tag": "A",
+      "card": "UP NEXT",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "oklab(0.919944 -0.0111201 -0.0189009 / 0.0305882)",
+      "alpha": 0.031,
+      "light": 0.92,
+      "borderW": 1,
+      "color": "rgb(213, 219, 230)",
+      "solid": false
+    },
+    {
+      "label": "Log last night",
+      "tag": "A",
+      "card": "UP NEXT",
+      "primary": true,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "lab(93.04 0 -0.0000238419)",
+      "alpha": 1,
+      "light": null,
+      "borderW": 1,
+      "color": "lab(6.69783 0 0)",
+      "solid": true
+    },
+    {
+      "label": "Progress →",
+      "tag": "A",
+      "card": "CONSISTENCY",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": true,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(53.6 0 0)",
+      "solid": false
+    },
+    {
+      "label": "What does \"Logging consistency\" mean?",
+      "tag": "BUTTON",
+      "card": "CONSISTENCY",
+      "primary": false,
+      "isHelp": true,
+      "isArrowLink": false,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "oklab(0.599999 -0.00000590086 0.0000140369 / 0.5)",
+      "solid": false
+    },
+    {
+      "label": "Food diary →",
+      "tag": "A",
+      "card": "CALORIE TRACKER",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": true,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(53.6 0 0)",
+      "solid": false
+    },
+    {
+      "label": "Log meal",
+      "tag": "A",
+      "card": "CALORIE TRACKER",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "oklab(0.919944 -0.0111201 -0.0189009 / 0.0305882)",
+      "alpha": 0.031,
+      "light": 0.92,
+      "borderW": 1,
+      "color": "rgb(213, 219, 230)",
+      "solid": false
+    },
+    {
+      "label": "Hydration history →",
+      "tag": "A",
+      "card": "WATER",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": true,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(53.6 0 0)",
+      "solid": false
+    },
+    {
+      "label": "Log water",
+      "tag": "BUTTON",
+      "card": "WATER",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "oklab(0.919944 -0.0111201 -0.0189009 / 0.0305882)",
+      "alpha": 0.031,
+      "light": 0.92,
+      "borderW": 1,
+      "color": "rgb(213, 219, 230)",
+      "solid": false
+    },
+    {
+      "label": "Sleep trends →",
+      "tag": "A",
+      "card": "SLEEP",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": true,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(53.6 0 0)",
+      "solid": false
+    },
+    {
+      "label": "Log last night",
+      "tag": "BUTTON",
+      "card": "SLEEP",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "oklab(0.919944 -0.0111201 -0.0189009 / 0.0305882)",
+      "alpha": 0.031,
+      "light": 0.92,
+      "borderW": 1,
+      "color": "rgb(213, 219, 230)",
+      "solid": false
+    },
+    {
+      "label": "All plans →",
+      "tag": "A",
+      "card": "TRAINING TODAY",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": true,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(53.6 0 0)",
+      "solid": false
+    },
+    {
+      "label": "Start a workout",
+      "tag": "A",
+      "card": "TRAINING TODAY",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "oklab(0.919944 -0.0111201 -0.0189009 / 0.0305882)",
+      "alpha": 0.031,
+      "light": 0.92,
+      "borderW": 1,
+      "color": "rgb(213, 219, 230)",
+      "solid": false
+    },
+    {
+      "label": "Open meal plan →",
+      "tag": "A",
+      "card": "MEAL PLAN TODAY",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": true,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(53.6 0 0)",
+      "solid": false
+    },
+    {
+      "label": "Ask Chad",
+      "tag": "A",
+      "card": "MEAL PLAN TODAY",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "oklab(0.919944 -0.0111201 -0.0189009 / 0.0305882)",
+      "alpha": 0.031,
+      "light": 0.92,
+      "borderW": 1,
+      "color": "rgb(213, 219, 230)",
+      "solid": false
+    },
+    {
+      "label": "Goal details →",
+      "tag": "A",
+      "card": "PRIMARY GOAL",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": true,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(53.6 0 0)",
+      "solid": false
+    },
+    {
+      "label": "Body progress →",
+      "tag": "A",
+      "card": "WEIGHT TREND",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": true,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(53.6 0 0)",
+      "solid": false
+    },
+    {
+      "label": "Ask Chad",
+      "tag": "A",
+      "card": "WEIGHT TREND",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "oklab(0.919944 -0.0111201 -0.0189009 / 0.0305882)",
+      "alpha": 0.031,
+      "light": 0.92,
+      "borderW": 1,
+      "color": "rgb(213, 219, 230)",
+      "solid": false
+    },
+    {
+      "label": "Log weight",
+      "tag": "A",
+      "card": "WEIGHT TREND",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": false,
+      "bg": "oklab(0.919944 -0.0111201 -0.0189009 / 0.0305882)",
+      "alpha": 0.031,
+      "light": 0.92,
+      "borderW": 1,
+      "color": "rgb(213, 219, 230)",
+      "solid": false
+    },
+    {
+      "label": "Training progress →",
+      "tag": "A",
+      "card": "TRAINING THIS WEEK",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": true,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(53.6 0 0)",
+      "solid": false
+    },
+    {
+      "label": "Nutrition progress →",
+      "tag": "A",
+      "card": "NUTRITION ADHERENCE",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": true,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(53.6 0 0)",
+      "solid": false
+    },
+    {
+      "label": "Recovery progress →",
+      "tag": "A",
+      "card": "RECOVERY CONSISTENCY",
+      "primary": false,
+      "isHelp": false,
+      "isArrowLink": true,
+      "bg": "rgba(0, 0, 0, 0)",
+      "alpha": 0,
+      "light": 0,
+      "borderW": 0,
+      "color": "lab(53.6 0 0)",
+      "solid": false
+    }
+  ]
+}

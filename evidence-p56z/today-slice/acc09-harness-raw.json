@@ -1,0 +1,307 @@
+{
+  "390": {
+    "first-run": [
+      {
+        "heading": "CALORIE TRACKER",
+        "height": 326,
+        "svgHeight": 17,
+        "textSnippet": "CALORIE TRACKER Food diary → No meals logged this week. Log a meal and today's calories, protein, carbs, and fat fill in",
+        "buttons": [
+          "Food diary →",
+          "Log meal"
+        ]
+      },
+      {
+        "heading": "WATER",
+        "height": 305,
+        "svgHeight": 17,
+        "textSnippet": "WATER Hydration history → No water logged this week. One tap adds a glass; the week fills in as you go. Su Mo Tu We Th F",
+        "buttons": [
+          "Hydration history →",
+          "Log water"
+        ]
+      },
+      {
+        "heading": "SLEEP",
+        "height": 302,
+        "svgHeight": 17,
+        "textSnippet": "SLEEP Sleep trends → No sleep logged yet. Log last night and the week fills in against your nightly goal. Su Mo Tu We Th",
+        "buttons": [
+          "Sleep trends →",
+          "Log last night"
+        ]
+      }
+    ],
+    "consistent": [
+      {
+        "heading": "CALORIE TRACKER",
+        "height": 379,
+        "svgHeight": 17,
+        "textSnippet": "CALORIE TRACKER Food diary → 2,140 of 2,300 kcal 160 kcal left Protein 145 / 190 g Carbs 214 g Fat 59 g Su Mo Tu We Th F",
+        "buttons": [
+          "Food diary →",
+          "Ask Chad",
+          "More options",
+          "Log meal"
+        ]
+      },
+      {
+        "heading": "WATER",
+        "height": 340,
+        "svgHeight": 17,
+        "textSnippet": "WATER Hydration history → 108 oz of 128 oz goal 85% 20 oz to go Goal hit on 1 of 4 logged days this week Su Mo Tu We Th ",
+        "buttons": [
+          "Hydration history →",
+          "Ask Chad",
+          "More options",
+          "Log water"
+        ]
+      },
+      {
+        "heading": "SLEEP",
+        "height": 445,
+        "svgHeight": 17,
+        "textSnippet": "SLEEP Sleep trends → 7h 10m of 8h goal · 50m short Su Mo Tu We Th Fr Sa Goal met 0 of 4 nights · 1h 50m short this week ",
+        "buttons": [
+          "Sleep trends →",
+          "Ask Chad",
+          "More options",
+          "Edit last night"
+        ]
+      }
+    ],
+    "lapsed": [
+      {
+        "heading": "CALORIE TRACKER",
+        "height": 326,
+        "svgHeight": 17,
+        "textSnippet": "CALORIE TRACKER Food diary → No meals logged this week. Log a meal and today's calories, protein, carbs, and fat fill in",
+        "buttons": [
+          "Food diary →",
+          "Log meal"
+        ]
+      },
+      {
+        "heading": "WATER",
+        "height": 305,
+        "svgHeight": 17,
+        "textSnippet": "WATER Hydration history → No water logged this week. One tap adds a glass; the week fills in as you go. Su Mo Tu We Th F",
+        "buttons": [
+          "Hydration history →",
+          "Log water"
+        ]
+      },
+      {
+        "heading": "SLEEP",
+        "height": 401,
+        "svgHeight": 17,
+        "textSnippet": "SLEEP Sleep trends → 8h last logged Fri, Jun 26 Su Mo Tu We Th Fr Sa Goal: 8h+ a night Ask Chad Log last night",
+        "buttons": [
+          "Sleep trends →",
+          "Ask Chad",
+          "More options",
+          "Log last night"
+        ]
+      }
+    ]
+  },
+  "1440": {
+    "first-run": [
+      {
+        "heading": "CALORIE TRACKER",
+        "height": 278,
+        "svgHeight": 16,
+        "textSnippet": "CALORIE TRACKER Food diary → No meals logged this week. Log a meal and today's calories, protein, carbs, and fat fill in",
+        "buttons": [
+          "Food diary →",
+          "Log meal"
+        ]
+      },
+      {
+        "heading": "WATER",
+        "height": 278,
+        "svgHeight": 16,
+        "textSnippet": "WATER Hydration history → No water logged this week. One tap adds a glass; the week fills in as you go. Su Mo Tu We Th F",
+        "buttons": [
+          "Hydration history →",
+          "Log water"
+        ]
+      },
+      {
+        "heading": "SLEEP",
+        "height": 278,
+        "svgHeight": 16,
+        "textSnippet": "SLEEP Sleep trends → No sleep logged yet. Log last night and the week fills in against your nightly goal. Su Mo Tu We Th",
+        "buttons": [
+          "Sleep trends →",
+          "Log last night"
+        ]
+      }
+    ],
+    "consistent": [
+      {
+        "heading": "CALORIE TRACKER",
+        "height": 347,
+        "svgHeight": 16,
+        "textSnippet": "CALORIE TRACKER Food diary → 2,140 of 2,300 kcal 160 kcal left Protein 145 / 190 g Carbs 214 g Fat 59 g Su Mo Tu We Th F",
+        "buttons": [
+          "Food diary →",
+          "Ask Chad",
+          "More options",
+          "Log meal"
+        ]
+      },
+      {
+        "heading": "WATER",
+        "height": 315,
+        "svgHeight": 16,
+        "textSnippet": "WATER Hydration history → 108 oz of 128 oz goal 85% 20 oz to go Goal hit on 1 of 4 logged days this week Su Mo Tu We Th ",
+        "buttons": [
+          "Hydration history →",
+          "Ask Chad",
+          "More options",
+          "Log water"
+        ]
+      },
+      {
+        "heading": "SLEEP",
+        "height": 319,
+        "svgHeight": 16,
+        "textSnippet": "SLEEP Sleep trends → 7h 10m of 8h goal · 50m short Su Mo Tu We Th Fr Sa Goal met 0 of 4 nights · 1h 50m short this week ",
+        "buttons": [
+          "Sleep trends →",
+          "Ask Chad",
+          "More options",
+          "Edit last night"
+        ]
+      }
+    ],
+    "lapsed": [
+      {
+        "heading": "CALORIE TRACKER",
+        "height": 278,
+        "svgHeight": 16,
+        "textSnippet": "CALORIE TRACKER Food diary → No meals logged this week. Log a meal and today's calories, protein, carbs, and fat fill in",
+        "buttons": [
+          "Food diary →",
+          "Log meal"
+        ]
+      },
+      {
+        "heading": "WATER",
+        "height": 278,
+        "svgHeight": 16,
+        "textSnippet": "WATER Hydration history → No water logged this week. One tap adds a glass; the week fills in as you go. Su Mo Tu We Th F",
+        "buttons": [
+          "Hydration history →",
+          "Log water"
+        ]
+      },
+      {
+        "heading": "SLEEP",
+        "height": 319,
+        "svgHeight": 16,
+        "textSnippet": "SLEEP Sleep trends → 8h last logged Fri, Jun 26 Su Mo Tu We Th Fr Sa Goal: 8h+ a night Ask Chad Log last night",
+        "buttons": [
+          "Sleep trends →",
+          "Ask Chad",
+          "More options",
+          "Log last night"
+        ]
+      }
+    ]
+  },
+  "1440_consoleErrors": [
+    "Error: Route \"/dev/fixtures/today-panels\" used `new Date()` inside a Client Component without a Suspense boundary above it. See more info here: https://nextjs.org/docs/messages/next-prerender-current-time-client\n    at todayLocalISO (about://React/Server/C:%5CUsers%5Cjon17%5CDesktop%5Cchadchat%5C.next%5Cdev%5Cserver%5Cchunks%5Cssr%5C_051yzv1._.js?0:8702:15)\n    at LogSleepDialog (about://React/Server/C:%5CUsers%5Cjon17%5CDesktop%5Cchadchat%5C.next%5Cdev%5Cserver%5Cchunks%5Cssr%5C_051yzv1._.js?1:8938:406)\n    at <anonymous> (about://React/Server/C:%5CUsers%5Cjon17%5CDesktop%5Cchadchat%5C.next%5Cdev%5Cserver%5Cchunks%5Cssr%5C%5Broot-of-the-server%5D__0x0spn4._.js?2:2216:407)\n    at Array.map (<anonymous>:1:18)\n    at TodayPanelsFixturePage (about://React/Server/C:%5CUsers%5Cjon17%5CDesktop%5Cchadchat%5C.next%5Cdev%5Cserver%5Cchunks%5Cssr%5C%5Broot-of-the-server%5D__0x0spn4._.js?3:2157:166)\n    at resolveErrorDev (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:1919:105)\n    at getOutlinedModel (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:1469:28)\n    at parseModelString (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:1584:50)\n    at reviveModel (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2522:66)\n    at reviveModel (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2525:61)\n    at reviveModel (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2604:78)\n    at parseModel (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2517:16)\n    at initializeModelChunk (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:1084:25)\n    at resolveModelChunk (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:986:43)\n    at processFullStringRow (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2473:126)\n    at processFullBinaryRow (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2393:9)\n    at processBinaryChunk (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2502:221)\n    at progress (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2689:13)"
+  ],
+  "390_consoleErrors": [
+    "Error: Route \"/dev/fixtures/today-panels\" used `new Date()` inside a Client Component without a Suspense boundary above it. See more info here: https://nextjs.org/docs/messages/next-prerender-current-time-client\n    at todayLocalISO (about://React/Server/C:%5CUsers%5Cjon17%5CDesktop%5Cchadchat%5C.next%5Cdev%5Cserver%5Cchunks%5Cssr%5C_051yzv1._.js?0:8702:15)\n    at LogSleepDialog (about://React/Server/C:%5CUsers%5Cjon17%5CDesktop%5Cchadchat%5C.next%5Cdev%5Cserver%5Cchunks%5Cssr%5C_051yzv1._.js?1:8938:406)\n    at <anonymous> (about://React/Server/C:%5CUsers%5Cjon17%5CDesktop%5Cchadchat%5C.next%5Cdev%5Cserver%5Cchunks%5Cssr%5C%5Broot-of-the-server%5D__0x0spn4._.js?2:2216:407)\n    at Array.map (<anonymous>:1:18)\n    at TodayPanelsFixturePage (about://React/Server/C:%5CUsers%5Cjon17%5CDesktop%5Cchadchat%5C.next%5Cdev%5Cserver%5Cchunks%5Cssr%5C%5Broot-of-the-server%5D__0x0spn4._.js?3:2157:166)\n    at resolveErrorDev (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:1919:105)\n    at getOutlinedModel (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:1469:28)\n    at parseModelString (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:1584:50)\n    at reviveModel (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2522:66)\n    at reviveModel (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2525:61)\n    at reviveModel (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2604:78)\n    at parseModel (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2517:16)\n    at initializeModelChunk (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:1084:25)\n    at resolveModelChunk (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:986:43)\n    at processFullStringRow (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2473:126)\n    at processFullBinaryRow (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2393:9)\n    at processBinaryChunk (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2502:221)\n    at progress (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2689:13)"
+  ],
+  "panelsFirstRun": [
+    {
+      "name": "CALORIES TODAY",
+      "height": 124,
+      "hasSvg": true,
+      "svgHeight": 16,
+      "text": "CALORIES TODAY Nutrition history → No meals logged yet. Log a meal to see today's total.",
+      "buttons": [
+        "Nutrition history →"
+      ]
+    },
+    {
+      "name": "PROGRESS",
+      "height": 124,
+      "hasSvg": true,
+      "svgHeight": 16,
+      "text": "PROGRESS Progress overview → No progress data yet. Log weigh-ins and workouts to see highlights here",
+      "buttons": [
+        "Progress overview →"
+      ]
+    },
+    {
+      "name": "MILESTONE",
+      "height": 164,
+      "hasSvg": true,
+      "svgHeight": 16,
+      "text": "MILESTONE Workout history → No records yet. Log workouts and your first record lands here.",
+      "buttons": [
+        "Workout history →"
+      ]
+    },
+    {
+      "name": "PROTEIN THIS WEEK",
+      "height": 164,
+      "hasSvg": true,
+      "svgHeight": 16,
+      "text": "PROTEIN THIS WEEK No insight yet. Log meals for a few days and observations appear here.",
+      "buttons": []
+    },
+    {
+      "name": "SLEEP",
+      "height": 208,
+      "hasSvg": true,
+      "svgHeight": 16,
+      "text": "SLEEP Sleep trends → No sleep logged yet. Log last night and the week fills in. Su Mo Tu We Th Fr Sa",
+      "buttons": [
+        "Sleep trends →",
+        "Log sleep"
+      ]
+    },
+    {
+      "name": "TODAY'S TRAINING",
+      "height": 208,
+      "hasSvg": true,
+      "svgHeight": 16,
+      "text": "TODAY'S TRAINING Workout plan → No training plan yet. Tell Chad your goal and he builds your first t",
+      "buttons": [
+        "Workout plan →",
+        "Start a workout"
+      ]
+    },
+    {
+      "name": "WATER",
+      "height": 218,
+      "hasSvg": true,
+      "svgHeight": 16,
+      "text": "WATER Hydration history → No water logged yet. One tap adds a glass; the week fills in as you go. Su",
+      "buttons": [
+        "Hydration history →",
+        "Log water"
+      ]
+    },
+    {
+      "name": "WEIGHT TREND",
+      "height": 240,
+      "hasSvg": true,
+      "svgHeight": 16,
+      "text": "WEIGHT TREND Weight trends → No weigh-ins yet. Log at least 3 weigh-ins across a week to unlock your",
+      "buttons": [
+        "Weight trends →",
+        "Log a weigh-in"
+      ]
+    }
+  ],
+  "panelsFirstRun_consoleErrors": [
+    "Error: Route \"/dev/fixtures/panels\": Runtime data such as `cookies()`, `headers()`, `params`, or `searchParams` was accessed outside of `<Suspense>`. This delays the entire page from rendering, resulting in a slow user experience. Learn more: https://nextjs.org/docs/messages/blocking-route\n    at PanelsCompositionPage (about://React/Server/C:%5CUsers%5Cjon17%5CDesktop%5Cchadchat%5C.next%5Cdev%5Cserver%5Cchunks%5Cssr%5C%5Broot-of-the-server%5D__0yn2w4q._.js?0:3733:39)\n    at resolveErrorDev (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:1919:105)\n    at getOutlinedModel (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:1469:28)\n    at parseModelString (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:1584:50)\n    at reviveModel (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2522:66)\n    at reviveModel (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2525:61)\n    at reviveModel (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2604:78)\n    at parseModel (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2517:16)\n    at initializeModelChunk (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:1084:25)\n    at resolveModelChunk (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:986:43)\n    at processFullStringRow (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2473:126)\n    at processFullBinaryRow (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2393:9)\n    at processBinaryChunk (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2502:221)\n    at progress (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2689:13)"
+  ]
+}

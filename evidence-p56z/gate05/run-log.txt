@@ -1,0 +1,110 @@
+auth ready for stellarluxedecor@gmail.com (id=94f4e0c1-c24e-47ae-bf39-95eb04a1ea32)
+
+===== A. BODY PRESERVATION (showcase) =====
+A1: GET /progress/body -> status=200 finalUrl=http://localhost:3601/progress/body react310=false
+  [screenshot] A1-body-desktop-1440.png
+A2 observed body text sample (first 1500 chars):
+CHAD Toggle Sidebar Dashboard Chat TRACK Workouts Calorie Tracker Hydration Sleep PLAN Goals Meal Plan REVIEW Progress Future You Weekly Report Rate My Kitchen Files Quit Test Account Help Plans & pricing Progress S Progress Body Pro feature Track your weight, measurements, and progress photos over time. −6.1 lb Change· last 30 days −1.9 lb/wk Rate 13.8 lb To goal· ~Aug 26 Trending toward your goal: 6.1 lb down over the last month. Ask Chad Weight trend 208.8 lb Trend weight Goal 195 lb · 48% there · at this pace: ~Aug 26 · last 30 days 1W 1M All Jun 20 Jun 26 Jul 2 Jul 8 Jul 13 192 201 210 218 Weighed in Trend (smoothed) Goal 23 of 30 days logged Weight trend, last 30 days: 208.8 lb (estimated). Goal 195 lb. 23 of 30 days logged. Trending toward your goal: 6.1 lb down over the last month. Log an entry Date Mon, Jul 13, 2026 Weight lb lb kg Note (optional) Progress photo (optional) Tap to add a photo JPEG or PNG Log entry Body measurements The scale lies on a cut or a bulk; the tape doesn't. A shrinking waist with a steady scale means you're losing fat and holding muscle. Track the spots that matter and watch them move. Spot Waist Waist Chest Arms Hips Thighs Shoulders Neck Measurement in in cm Date Mon, Jul 13, 2026 Log Waist 36in -2.7 Chest 44in -0.5 Arms 16.25in +0.3 History 7/6/2026205.8 lb Delete 7/5/2026207.1 lb Delete 7/4/2026206.3 lb Delete 7/3/2026208.1 lb Delete 7/2/2026207.8 lb Delete 7/1/2026208.1 lb Delete 6/30/2026208.6 lb Delete 6/29/2026207.6 lb Delete 6/28/20
+A4 capabilities:
+   SEEN — weight chart / trend
+   SEEN — range control
+   SEEN — measurements section
+   SEEN — progress photos section
+   NOT SEEN — methods / how it works
+   SEEN — Ask Chad hook
+   SEEN — data-entry affordance
+A3 deep links:
+   #log-entry: url=http://localhost:3601/progress/body#log-entry scrollY=123 #log-entry-anchor-count=1
+  [screenshot] A3-body-log-entry-anchor.png
+   ?range=3m: url=http://localhost:3601/progress/body?range=3m afterReload=http://localhost:3601/progress/body?range=3m (state survives reload: true)
+  [screenshot] A3-body-range-3m.png
+   ?from&to: url=http://localhost:3601/progress/body?from=2025-01-01&to=2025-06-01 react310=false
+  [screenshot] A3-body-from-to.png
+
+===== B. AUTHENTICATED REDIRECTS =====
+B: GET /weight -> status=200 finalUrl=http://localhost:3601/progress/body hasBodyContent=true react310=false
+  [screenshot] B-redirect-weight.png
+B: GET /body -> status=200 finalUrl=http://localhost:3601/progress/body hasBodyContent=true react310=false
+  [screenshot] B-redirect-body.png
+
+===== C. NINE PROGRESS SECTIONS =====
+C: GET /progress -> status=200 finalUrl=http://localhost:3601/progress react310=false
+  [screenshot] C-progress-desktop-1440.png
+C nine sections presence in page text:
+   PRESENT — Body
+   PRESENT — Training
+   PRESENT — Nutrition
+   PRESENT — Hydration
+   PRESENT — Sleep
+   PRESENT — Consistency
+   PRESENT — Goals
+   PRESENT — Milestones
+   ABSENT — Reports
+C progress text sample (first 2000):
+CHAD Toggle Sidebar Dashboard Chat TRACK Workouts Calorie Tracker Hydration Sleep PLAN Goals Meal Plan REVIEW Progress Future You Weekly Report Rate My Kitchen Files Quit Test Account Help Plans & pricing Progress S Dashboard Progress Your outcomes across every domain, in one place. 1W 1M 3M 6M 1Y Log Ask Chad Goals DROP TO 195 LB Goal details → 48% there Trend weight 208.8 lb / 195 lb Outcomes BODY Body details → 208.8 lb −6.1 lb · last 30 days · Goal 195 lb · 48% there Jun 24 Jul 4 Jul 13 192 207 218 23 of 30 days logged Ask Chad Log a weigh-in TRAINING Training progress → 0 sessions this week 22 personal records Wk of Jun 9 Wk of Jun 16 Wk of Jun 23 Wk of Jun 30 Wk of Jul 7 0 2 4 6 13 sessions · last 30 days Ask Chad Daily habits NUTRITION Nutrition details → 18 of 23 days within target avg 2,292 kcal · last 30 days · calendar shows the last 28 days M W F SLEEP Sleep trends → 7h 29m average last 14 nights shown Tue Fri Mon Thu Sun 0 600 HYDRATION Hydration details → 0 of 23 days at goal last 30 days 0% 99 oz average per logged day Consistency and review CONSISTENCY Dashboard → No active streak 57 of 84 days logged · last 12 weeks M W F MILESTONES Training progress → Barbell Bench Press record 268 lb est. 1RM · Jul 6 WEEKLY REPORT Weekly report → Sent Jul 13 Week 2: One heavy bench, six days missing Training, nutrition, body, and recovery, reviewed together with an eye on next week. 200
+  [screenshot] C-progress-mobile-390.png
+
+===== D. TRAINING ANALYTICS =====
+D1: GET /progress/training -> status=200 finalUrl=http://localhost:3601/progress/training react310=false
+  [screenshot] D1-training-desktop-1440.png
+D1 elements present in text:
+   NOT SEEN — status
+   SEEN — range
+   SEEN — consisten
+   SEEN — calendar
+   SEEN — 7-day|7 day|week
+   SEEN — adherence|plan
+   SEEN — volume
+   SEEN — muscle|focus
+   SEEN — record
+   SEEN — milestone|timeline|PR
+D training text sample (first 2500):
+CHAD Toggle Sidebar Dashboard Chat TRACK Workouts Calorie Tracker Hydration Sleep PLAN Goals Meal Plan REVIEW Progress Future You Weekly Report Rate My Kitchen Files Quit Test Account Help Plans & pricing Progress S Progress Training Pro feature Your training outcomes: frequency, volume, strength, records, and milestones. Workouts logged 32 This week · 4 planned 0 Volume this week 0 lb Next milestone · 50th workout 18 to go 13 sessions in the last 30 days 1W 1M All Training consistency 13 sessions in range last 30 days M W F Su Mo Tu We Th Fr Sa 13 of 30 days logged Training consistency, last 30 days: 13. 13 of 30 days logged. Calendar of training days; 13 of 30 days trained. Plan adherence 0 of 4 planned this week Plan: 4 sessions a week · this week 0/4 THIS WEEK This week A full ring is a perfect plan week. Plan adherence, this week: 0. 0 of 7 days logged. 0 of 4 planned sessions completed. 0 perfect weeks in the last 1. Training volume 23,533 lb Latest day last 30 days Jun 20 Jun 26 Jul 2 Jul 8 Jul 13 11k 26k 41k 55k Daily volume Trend (smoothed) 13 of 30 days logged Training volume, last 30 days: 23,533 lb. 13 of 30 days logged. Muscle focus 589 working sets, all loaded history Legs 199 sets · 34% Back 119 sets · 20% Chest 95 sets · 16% Shoulders 86 sets · 15% Arms 48 sets · 8% Glutes 21 sets · 4% Other 21 sets · 4% Muscle focus, all loaded history: 589. Legs 199 sets. Back 119 sets. Chest 95 sets. STRENGTH AND RECORDS Exercise library Leg Press Top set 535lb × 12 749lb EST. 1RM Hip Thrust Top set 385lb × 10 513lb EST. 1RM Deadlift Top set 415lb × 3 457lb EST. 1RM Calf Raise Top set 265lb × 12 371lb EST. 1RM Barbell Back Squat Top set 315lb × 5 368lb EST. 1RM Romanian Deadlift Top set 275lb × 8 348lb EST. 1RM Barbell Bench Press Top set 230lb × 5 268lb EST. 1RM Barbell Row Top set 210lb × 8 266lb EST. 1RM RECORDS AND MILESTONES 52 record sets in the last 30 days · 110 all time New record: Face Pull 57.5 lb × 15 · beat 55 lb · 6 days ago View the workout New record: Incline Dumbbell Press 77.5 lb × 10 · beat 75 lb Jul 6 New record: Lat Pulldown 172.5 lb × 10 · beat 170 lb Jul 6 New record: Overhead Press 132.5 lb × 8 · beat 130 lb Jul 6 New record: Barbell Row 210 lb × 8 · beat 205 lb Jul 6 New record: Barbell Bench Press 230 lb × 5 · beat 225 lb Jul 6 New record: Bulgarian Split Squat 62.5 lb × 10 · beat 60 lb Jul 5 New record: Hip Thrust 385 lb × 10 · beat 375 lb Jul 5 New record: Front Squat 195 lb × 6 · beat 190 lb Jul 5 Show all 55 Start a workout 
+  [screenshot] D1-training-mobile-390.png
+D2 canonical exercise-name check (in training page text):
+   canon="Hip Thrust" present=true ; split-dup="Barbell Hip Thrust" present-as-separate=false
+   canon="Barbell Back Squat" present=true ; split-dup="Back Squat" present-as-separate=false
+   canon="Barbell Bench Press" present=true ; split-dup="Bench Press" present-as-separate=false
+   canon="Calf Raise" present=true ; split-dup="Standing Calf Raise" present-as-separate=false
+   canon="Leg Curl" present=false ; split-dup="Seated Leg Curl" present-as-separate=false
+D2 record-area text nodes:
+   [rec0] @font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url(/_next/static/media/2c55a0e60120577a-s.0bjc5tiuqdqro.woff2)format("woff2");unicode-range:U+460-52F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F}@font-face{font-family:Inter;font-style:normal;font-weight:100 900;font-display:swap;src:url(/_next/static/media/9c72aa0f40e4eef8-s.0m6w47a4e5dy9.woff2)f
+   [rec1] self.__next_f.push([1,"7:[\"$\",\"$9\",\"c\",{\"children\":[[\"$\",\"$L3\",null,{\"children\":[[\"$\",\"$L4\",null,{\"active\":\"/progress\"}],[\"$\",\"div\",null,{\"className\":\"mx-auto flex w-full flex-1 flex-col px-4 pt-6 pb-10 sm:px-6 sm:pt-8 sm:pb-12 max-w-[var(--container-content)]\",\"children\":[[\"$\",\"$L1f\",null,{\"position\":\"top-center\",\"richColors\":true,\"theme\":\"system\"}],[
+   [rec2] CHADToggle SidebarDashboardChatTrackWorkoutsCalorie TrackerHydrationSleepPlanGoalsMeal PlanReviewProgressFuture YouWeekly ReportRate My KitchenFilesQuit TestAccountHelpPlans & pricingCHADProgressSProgressTrainingPro featureYour training outcomes: frequency, volume, strength, records, and milestones.Workouts logged32This week · 4 planned0Volume this week0 lbNext milestone · 50th workout18 to go13 s
+D3 source-linked PR:
+   candidate source-workout links found: 13
+      /workouts  "Workouts"
+      /workouts/exercises  "Exercise library"
+      /workouts/history/a09442cd-6a3f-427f-b4bb-706e08ebebc2  "View the workout"
+      /workouts/history/a09442cd-6a3f-427f-b4bb-706e08ebebc2  "New record: Incline Dumbbell Press77.5 lb × 10 · beat 75 lbJ"
+      /workouts/history/a09442cd-6a3f-427f-b4bb-706e08ebebc2  "New record: Lat Pulldown172.5 lb × 10 · beat 170 lbJul 6"
+      /workouts/history/a09442cd-6a3f-427f-b4bb-706e08ebebc2  "New record: Overhead Press132.5 lb × 8 · beat 130 lbJul 6"
+      /workouts/history/a09442cd-6a3f-427f-b4bb-706e08ebebc2  "New record: Barbell Row210 lb × 8 · beat 205 lbJul 6"
+      /workouts/history/a09442cd-6a3f-427f-b4bb-706e08ebebc2  "New record: Barbell Bench Press230 lb × 5 · beat 225 lbJul 6"
+      /workouts/history/4a0f516f-322c-4508-b915-99657a7b924f  "New record: Bulgarian Split Squat62.5 lb × 10 · beat 60 lbJu"
+      /workouts/history/4a0f516f-322c-4508-b915-99657a7b924f  "New record: Hip Thrust385 lb × 10 · beat 375 lbJul 5"
+   clicked source link -> status=200 url=http://localhost:3601/workouts react310=false
+   workout page text sample: CHAD Toggle Sidebar Dashboard Chat TRACK Workouts Calorie Tracker Hydration Sleep PLAN Goals Meal Plan REVIEW Progress Future You Weekly Report Rate My Kitchen Files Quit Test Account Help Plans & pricing Workouts S Dashboard Workouts Pro feature Build your workouts, run them live at the gym, and log every set. Chad tracks your PRs and volume, and holds you to them. HOW THIS WORKS 1 Build a workou
+  [screenshot] D3-source-workout.png
+   went Back -> url=http://localhost:3601/progress/training
+
+Showcase console errors captured (0):
+
+===== E. TODAY DESTINATIONS (Pro test) =====
+auth ready for claude-testing@example.com (id=c073b912-082f-43aa-9e77-da9fffb8b4f1)
+E: GET /today -> status=200 finalUrl=http://localhost:3601/today react310=false
+  [screenshot] E-today-desktop-1440.png
+E progress-links on /today (8):
+   /progress  "Progress"
+   /progress  "Progress →"
+   /progress/body  "Body progress →"
+   /progress/body#log-entry  "Log weight"
+   /progress/training  "Training progress →"
+   /progress  "Nutrition progress →"
+   /progress  "Recovery progress →"
+   /progress  "Progress"
+E: link "Body progress →" (/progress/body) -> status=200 landed=http://localhost:3601/progress/body react310=false
+E: link "Training progress →" (/progress/training) -> status=200 landed=http://localhost:3601/progress/training react310=false
+E: link "Progress" (/progress) -> status=200 landed=http://localhost:3601/progress react310=false
+
+Pro console errors captured (0):

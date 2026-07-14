@@ -1,0 +1,448 @@
+{
+  "generatedAt": "2026-07-14T04:34:42.299Z",
+  "base": "http://localhost:3601",
+  "account": "claude-testing@example.com",
+  "rows": {
+    "ACC01": {
+      "desktop": {
+        "nav": {
+          "status": 200,
+          "url": "http://localhost:3601/today"
+        },
+        "react310": false,
+        "probe": {
+          "vh": 900,
+          "domains": {
+            "Nutrition": {
+              "topPx": 2231,
+              "aboveFold": false,
+              "text": "Nutrition progress →"
+            },
+            "Hydration": {
+              "topPx": 325,
+              "aboveFold": true,
+              "text": "Hydration"
+            },
+            "Sleep": {
+              "topPx": 373,
+              "aboveFold": true,
+              "text": "Sleep"
+            },
+            "Training": {
+              "topPx": 201,
+              "aboveFold": true,
+              "text": "TRAINING"
+            }
+          },
+          "header": [
+            {
+              "top": 0,
+              "t": "Dashboard C"
+            },
+            {
+              "top": 88,
+              "t": "MONDAY, JULY 13 Welcome back PRO Talk to Chad"
+            },
+            {
+              "top": 108,
+              "t": "Welcome back"
+            },
+            {
+              "top": 197,
+              "t": "CALORIES"
+            },
+            {
+              "top": 197,
+              "t": "WATER"
+            },
+            {
+              "top": 197,
+              "t": "SLEEP"
+            },
+            {
+              "top": 197,
+              "t": "TRAINING"
+            }
+          ]
+        },
+        "consoleErrors": []
+      },
+      "phone": {
+        "nav": {
+          "status": 200,
+          "url": "http://localhost:3601/today"
+        },
+        "react310": false,
+        "probe": {
+          "vh": 844,
+          "domains": {
+            "Nutrition": {
+              "topPx": 4042,
+              "aboveFold": false,
+              "text": "NUTRITION ADHERENCE"
+            },
+            "Hydration": {
+              "topPx": 1784,
+              "aboveFold": false,
+              "text": "Hydration history →"
+            },
+            "Sleep": {
+              "topPx": 464,
+              "aboveFold": true,
+              "text": "SLEEP"
+            },
+            "Training": {
+              "topPx": 464,
+              "aboveFold": true,
+              "text": "TRAINING"
+            }
+          },
+          "header": [
+            {
+              "top": 0,
+              "t": "CHAD C"
+            },
+            {
+              "top": 85,
+              "t": "MONDAY, JULY 13 Welcome back PRO Talk to Chad"
+            },
+            {
+              "top": 105,
+              "t": "Welcome back"
+            }
+          ]
+        },
+        "consoleErrors": []
+      }
+    },
+    "ACC02": {
+      "panels": [
+        {
+          "name": "CALORIES",
+          "top": 176,
+          "h": 136,
+          "w": 1136,
+          "primaryCount": 0,
+          "primaries": [],
+          "allButtons": []
+        },
+        {
+          "name": "WATER",
+          "top": 176,
+          "h": 132,
+          "w": 275,
+          "primaryCount": 0,
+          "primaries": [],
+          "allButtons": []
+        },
+        {
+          "name": "SLEEP",
+          "top": 176,
+          "h": 132,
+          "w": 275,
+          "primaryCount": 0,
+          "primaries": [],
+          "allButtons": []
+        },
+        {
+          "name": "TRAINING",
+          "top": 176,
+          "h": 136,
+          "w": 275,
+          "primaryCount": 0,
+          "primaries": [],
+          "allButtons": []
+        },
+        {
+          "name": "UP NEXT",
+          "top": 343,
+          "h": 253,
+          "w": 752,
+          "primaryCount": 0,
+          "primaries": [],
+          "allButtons": [
+            {
+              "label": "What does \"How Up next is picked\" mean?",
+              "filled": false,
+              "looksGhost": true,
+              "looksPrimaryClass": false,
+              "bg": "rgba(0, 0, 0, 0)",
+              "cls": "-m-3 inline-flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground/50 trans"
+            }
+          ]
+        },
+        {
+          "name": "CONSISTENCY",
+          "top": 343,
+          "h": 305,
+          "w": 368,
+          "primaryCount": 0,
+          "primaries": [],
+          "allButtons": [
+            {
+              "label": "What does \"Logging consistency\" mean?",
+              "filled": false,
+              "looksGhost": true,
+              "looksPrimaryClass": false,
+              "bg": "rgba(0, 0, 0, 0)",
+              "cls": "-m-3 inline-flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground/50 trans"
+            }
+          ]
+        },
+        {
+          "name": "Today's log",
+          "top": 680,
+          "h": 657,
+          "w": 1136,
+          "primaryCount": 0,
+          "primaries": [],
+          "allButtons": [
+            {
+              "label": "Log water",
+              "filled": false,
+              "looksGhost": true,
+              "looksPrimaryClass": false,
+              "bg": "oklab(0.919944 -0.0111201 -0.0189009 / 0.0305882)",
+              "cls": "group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whit"
+            },
+            {
+              "label": "Log last night",
+              "filled": false,
+              "looksGhost": true,
+              "looksPrimaryClass": false,
+              "bg": "oklab(0.919944 -0.0111201 -0.0189009 / 0.0305882)",
+              "cls": "group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whit"
+            }
+          ]
+        },
+        {
+          "name": "CALORIE TRACKER",
+          "top": 757,
+          "h": 257,
+          "w": 749,
+          "primaryCount": 0,
+          "primaries": [],
+          "allButtons": []
+        },
+        {
+          "name": "WATER",
+          "top": 757,
+          "h": 278,
+          "w": 363,
+          "primaryCount": 0,
+          "primaries": [],
+          "allButtons": [
+            {
+              "label": "Log water",
+              "filled": false,
+              "looksGhost": true,
+              "looksPrimaryClass": false,
+              "bg": "oklab(0.919944 -0.0111201 -0.0189009 / 0.0305882)",
+              "cls": "group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whit"
+            }
+          ]
+        },
+        {
+          "name": "SLEEP",
+          "top": 1059,
+          "h": 278,
+          "w": 363,
+          "primaryCount": 0,
+          "primaries": [],
+          "allButtons": [
+            {
+              "label": "Log last night",
+              "filled": false,
+              "looksGhost": true,
+              "looksPrimaryClass": false,
+              "bg": "oklab(0.919944 -0.0111201 -0.0189009 / 0.0305882)",
+              "cls": "group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whit"
+            }
+          ]
+        },
+        {
+          "name": "Plans and goals",
+          "top": 1369,
+          "h": 535,
+          "w": 1136,
+          "primaryCount": 0,
+          "primaries": [],
+          "allButtons": []
+        },
+        {
+          "name": "TRAINING TODAY",
+          "top": 1446,
+          "h": 176,
+          "w": 556,
+          "primaryCount": 0,
+          "primaries": [],
+          "allButtons": []
+        },
+        {
+          "name": "MEAL PLAN TODAY",
+          "top": 1446,
+          "h": 458,
+          "w": 266,
+          "primaryCount": 0,
+          "primaries": [],
+          "allButtons": []
+        },
+        {
+          "name": "PRIMARY GOAL",
+          "top": 1446,
+          "h": 301,
+          "w": 266,
+          "primaryCount": 0,
+          "primaries": [],
+          "allButtons": []
+        },
+        {
+          "name": "Progress highlights",
+          "top": 1937,
+          "h": 391,
+          "w": 1136,
+          "primaryCount": 0,
+          "primaries": [],
+          "allButtons": []
+        },
+        {
+          "name": "WEIGHT TREND",
+          "top": 2014,
+          "h": 166,
+          "w": 556,
+          "primaryCount": 0,
+          "primaries": [],
+          "allButtons": []
+        },
+        {
+          "name": "TRAINING THIS WEEK",
+          "top": 2014,
+          "h": 130,
+          "w": 556,
+          "primaryCount": 0,
+          "primaries": [],
+          "allButtons": []
+        },
+        {
+          "name": "NUTRITION ADHERENCE",
+          "top": 2204,
+          "h": 124,
+          "w": 556,
+          "primaryCount": 0,
+          "primaries": [],
+          "allButtons": []
+        },
+        {
+          "name": "RECOVERY CONSISTENCY",
+          "top": 2204,
+          "h": 124,
+          "w": 556,
+          "primaryCount": 0,
+          "primaries": [],
+          "allButtons": []
+        }
+      ],
+      "consoleErrors": []
+    },
+    "ACC11": {
+      "surfaceScan": {
+        "exposedHits": [],
+        "overflowTriggers": [
+          {
+            "label": "Toggle Sidebar",
+            "aria": "Collapse menu",
+            "title": "Collapse menu",
+            "top": 14,
+            "hasHaspopup": null
+          },
+          {
+            "label": "C",
+            "aria": "Account menu",
+            "title": "Account menu",
+            "top": 10,
+            "hasHaspopup": "menu"
+          }
+        ]
+      },
+      "menuContents": [
+        {
+          "trigger": {
+            "label": "Toggle Sidebar",
+            "aria": "Collapse menu",
+            "title": "Collapse menu",
+            "top": 14,
+            "hasHaspopup": null
+          },
+          "opened": false,
+          "items": [
+            "CHAD",
+            "Toggle Sidebar",
+            "Dashboard",
+            "Chat",
+            "Workouts",
+            "Calorie Tracker",
+            "Hydration",
+            "Sleep",
+            "Goals",
+            "Meal Plan",
+            "Progress",
+            "Future You",
+            "Weekly Report",
+            "Rate My Kitchen",
+            "Files",
+            "Quit Test",
+            "Account",
+            "Help",
+            "Plans & pricing",
+            "C",
+            "Talk to Chad",
+            "CALORIES Not logged yet. Log a meal below.",
+            "WATER Not logged yet. One tap below.",
+            "SLEEP Not logged yet. Log last night below.",
+            "TRAINING 0 sessions this week",
+            "Sleep trends →",
+            "What does \"How Up next is picked\" mean?",
+            "Ask Chad",
+            "Log last night",
+            "Progress →",
+            "What does \"Logging consistency\" mean?",
+            "Food diary →",
+            "Log meal",
+            "Hydration history →",
+            "Log water",
+            "All plans →",
+            "Start a workout",
+            "Open meal plan →",
+            "Goal details →",
+            "Body progress →",
+            "Log weight",
+            "Training progress →",
+            "Nutrition progress →",
+            "Recovery progress →",
+            "Today",
+            "Log",
+            "Coach",
+            "More"
+          ]
+        },
+        {
+          "trigger": {
+            "label": "C",
+            "aria": "Account menu",
+            "title": "Account menu",
+            "top": 10,
+            "hasHaspopup": "menu"
+          },
+          "opened": true,
+          "items": [
+            "Plans & pricing",
+            "Account",
+            "Toggle light mode",
+            "Sign out"
+          ]
+        }
+      ],
+      "consoleErrors": []
+    }
+  }
+}

@@ -1,0 +1,322 @@
+{
+  "summary": {
+    "firstLoadJsKb": 519.8,
+    "firstLoadFiles": 30,
+    "lcpDesktopMs": 520,
+    "clsDesktop": 0,
+    "lcpMobileMs": 576,
+    "clsMobile": 0,
+    "react310Any": false,
+    "topChunks": [
+      {
+        "f": "0e_b8mrgavf3w.js",
+        "kb": 99.8
+      },
+      {
+        "f": "0zbg2-5rg69hu.js",
+        "kb": 71.5
+      },
+      {
+        "f": "05tmnoe7uh7ki.js",
+        "kb": 28.4
+      },
+      {
+        "f": "17x5zirr2j9f5.js",
+        "kb": 23
+      },
+      {
+        "f": "0zn9-xhqtwlu_.js",
+        "kb": 22.9
+      },
+      {
+        "f": "007jry-p0sgw7.js",
+        "kb": 21
+      },
+      {
+        "f": "0cz0t11ykstmh.js",
+        "kb": 20.7
+      },
+      {
+        "f": "0icg3f3md7lmi.js",
+        "kb": 15
+      },
+      {
+        "f": "0cwugwjeaf_h-.js",
+        "kb": 14.7
+      },
+      {
+        "f": "0unlxbo6dnm4a.js",
+        "kb": 13.2
+      },
+      {
+        "f": "026g1680pqo58.js",
+        "kb": 13
+      },
+      {
+        "f": "0j5uggvzrkkem.js",
+        "kb": 12.6
+      }
+    ],
+    "allJsOnWireKb": 2782.5,
+    "allJsOnWireFiles": 103,
+    "referencedInDoc": 31
+  },
+  "results": {
+    "desktop": [
+      {
+        "status": 200,
+        "finalUrl": "http://localhost:3601/today",
+        "vitals": {
+          "lcp": 732,
+          "cls": 0,
+          "lcpEntries": 2,
+          "clsEntries": 0,
+          "obsErr": null,
+          "docHeight": 2376,
+          "react310": false
+        },
+        "jsResult": {
+          "firstLoadKb": 519.8,
+          "fileCount": 30,
+          "referencedInDoc": 31,
+          "allJsOnWireKb": 2782.5,
+          "allJsOnWireFiles": 103,
+          "topChunks": [
+            {
+              "f": "0e_b8mrgavf3w.js",
+              "kb": 99.8
+            },
+            {
+              "f": "0zbg2-5rg69hu.js",
+              "kb": 71.5
+            },
+            {
+              "f": "05tmnoe7uh7ki.js",
+              "kb": 28.4
+            },
+            {
+              "f": "17x5zirr2j9f5.js",
+              "kb": 23
+            },
+            {
+              "f": "0zn9-xhqtwlu_.js",
+              "kb": 22.9
+            },
+            {
+              "f": "007jry-p0sgw7.js",
+              "kb": 21
+            },
+            {
+              "f": "0cz0t11ykstmh.js",
+              "kb": 20.7
+            },
+            {
+              "f": "0icg3f3md7lmi.js",
+              "kb": 15
+            },
+            {
+              "f": "0cwugwjeaf_h-.js",
+              "kb": 14.7
+            },
+            {
+              "f": "0unlxbo6dnm4a.js",
+              "kb": 13.2
+            },
+            {
+              "f": "026g1680pqo58.js",
+              "kb": 13
+            },
+            {
+              "f": "0j5uggvzrkkem.js",
+              "kb": 12.6
+            }
+          ]
+        }
+      },
+      {
+        "status": 200,
+        "finalUrl": "http://localhost:3601/today",
+        "vitals": {
+          "lcp": 496,
+          "cls": 0,
+          "lcpEntries": 2,
+          "clsEntries": 0,
+          "obsErr": null,
+          "docHeight": 2376,
+          "react310": false
+        },
+        "jsResult": {
+          "firstLoadKb": 519.8,
+          "fileCount": 30,
+          "referencedInDoc": 31,
+          "allJsOnWireKb": 2782.5,
+          "allJsOnWireFiles": 103,
+          "topChunks": [
+            {
+              "f": "0e_b8mrgavf3w.js",
+              "kb": 99.8
+            },
+            {
+              "f": "0zbg2-5rg69hu.js",
+              "kb": 71.5
+            },
+            {
+              "f": "05tmnoe7uh7ki.js",
+              "kb": 28.4
+            },
+            {
+              "f": "17x5zirr2j9f5.js",
+              "kb": 23
+            },
+            {
+              "f": "0zn9-xhqtwlu_.js",
+              "kb": 22.9
+            },
+            {
+              "f": "007jry-p0sgw7.js",
+              "kb": 21
+            },
+            {
+              "f": "0cz0t11ykstmh.js",
+              "kb": 20.7
+            },
+            {
+              "f": "0icg3f3md7lmi.js",
+              "kb": 15
+            },
+            {
+              "f": "0cwugwjeaf_h-.js",
+              "kb": 14.7
+            },
+            {
+              "f": "0unlxbo6dnm4a.js",
+              "kb": 13.2
+            },
+            {
+              "f": "026g1680pqo58.js",
+              "kb": 13
+            },
+            {
+              "f": "0j5uggvzrkkem.js",
+              "kb": 12.6
+            }
+          ]
+        }
+      },
+      {
+        "status": 200,
+        "finalUrl": "http://localhost:3601/today",
+        "vitals": {
+          "lcp": 520,
+          "cls": 0,
+          "lcpEntries": 2,
+          "clsEntries": 0,
+          "obsErr": null,
+          "docHeight": 2376,
+          "react310": false
+        },
+        "jsResult": {
+          "firstLoadKb": 519.8,
+          "fileCount": 30,
+          "referencedInDoc": 31,
+          "allJsOnWireKb": 2782.5,
+          "allJsOnWireFiles": 103,
+          "topChunks": [
+            {
+              "f": "0e_b8mrgavf3w.js",
+              "kb": 99.8
+            },
+            {
+              "f": "0zbg2-5rg69hu.js",
+              "kb": 71.5
+            },
+            {
+              "f": "05tmnoe7uh7ki.js",
+              "kb": 28.4
+            },
+            {
+              "f": "17x5zirr2j9f5.js",
+              "kb": 23
+            },
+            {
+              "f": "0zn9-xhqtwlu_.js",
+              "kb": 22.9
+            },
+            {
+              "f": "007jry-p0sgw7.js",
+              "kb": 21
+            },
+            {
+              "f": "0cz0t11ykstmh.js",
+              "kb": 20.7
+            },
+            {
+              "f": "0icg3f3md7lmi.js",
+              "kb": 15
+            },
+            {
+              "f": "0cwugwjeaf_h-.js",
+              "kb": 14.7
+            },
+            {
+              "f": "0unlxbo6dnm4a.js",
+              "kb": 13.2
+            },
+            {
+              "f": "026g1680pqo58.js",
+              "kb": 13
+            },
+            {
+              "f": "0j5uggvzrkkem.js",
+              "kb": 12.6
+            }
+          ]
+        }
+      }
+    ],
+    "mobile": [
+      {
+        "status": 200,
+        "finalUrl": "http://localhost:3601/today",
+        "vitals": {
+          "lcp": 524,
+          "cls": 0,
+          "lcpEntries": 2,
+          "clsEntries": 0,
+          "obsErr": null,
+          "docHeight": 4481,
+          "react310": false
+        },
+        "jsResult": null
+      },
+      {
+        "status": 200,
+        "finalUrl": "http://localhost:3601/today",
+        "vitals": {
+          "lcp": 576,
+          "cls": 0,
+          "lcpEntries": 2,
+          "clsEntries": 0,
+          "obsErr": null,
+          "docHeight": 4481,
+          "react310": false
+        },
+        "jsResult": null
+      },
+      {
+        "status": 200,
+        "finalUrl": "http://localhost:3601/today",
+        "vitals": {
+          "lcp": 580,
+          "cls": 0,
+          "lcpEntries": 2,
+          "clsEntries": 0,
+          "obsErr": null,
+          "docHeight": 4481,
+          "react310": false
+        },
+        "jsResult": null
+      }
+    ]
+  }
+}

@@ -1,0 +1,241 @@
+{
+  "generatedAt": "2026-07-14T04:38:08.779Z",
+  "acc01": {
+    "desktop": {
+      "vh": 900,
+      "cells": {
+        "CALORIES": {
+          "cellTopPx": 176,
+          "cellBottomPx": 311,
+          "aboveFold": true,
+          "text": "CALORIES Not logged yet. Log a meal below. WATER Not logged yet. One tap below. SLEEP Not logged yet. Log last night below. TRAINING 0 sessi"
+        },
+        "WATER": {
+          "cellTopPx": 176,
+          "cellBottomPx": 311,
+          "aboveFold": true,
+          "text": "CALORIES Not logged yet. Log a meal below. WATER Not logged yet. One tap below. SLEEP Not logged yet. Log last night below. TRAINING 0 sessi"
+        },
+        "SLEEP": {
+          "cellTopPx": 176,
+          "cellBottomPx": 311,
+          "aboveFold": true,
+          "text": "CALORIES Not logged yet. Log a meal below. WATER Not logged yet. One tap below. SLEEP Not logged yet. Log last night below. TRAINING 0 sessi"
+        },
+        "TRAINING": {
+          "cellTopPx": 176,
+          "cellBottomPx": 311,
+          "aboveFold": true,
+          "text": "CALORIES Not logged yet. Log a meal below. WATER Not logged yet. One tap below. SLEEP Not logged yet. Log last night below. TRAINING 0 sessi"
+        }
+      }
+    },
+    "phone": {
+      "vh": 844,
+      "cells": {
+        "CALORIES": {
+          "cellTopPx": 232,
+          "cellBottomPx": 629,
+          "aboveFold": true,
+          "text": "CALORIES Not logged yet. Log a meal below. WATER Not logged yet. One tap below. SLEEP Not logged yet. Log last night below. TRAINING 0 sessi"
+        },
+        "WATER": {
+          "cellTopPx": 232,
+          "cellBottomPx": 629,
+          "aboveFold": true,
+          "text": "CALORIES Not logged yet. Log a meal below. WATER Not logged yet. One tap below. SLEEP Not logged yet. Log last night below. TRAINING 0 sessi"
+        },
+        "SLEEP": {
+          "cellTopPx": 232,
+          "cellBottomPx": 629,
+          "aboveFold": true,
+          "text": "CALORIES Not logged yet. Log a meal below. WATER Not logged yet. One tap below. SLEEP Not logged yet. Log last night below. TRAINING 0 sessi"
+        },
+        "TRAINING": {
+          "cellTopPx": 232,
+          "cellBottomPx": 629,
+          "aboveFold": true,
+          "text": "CALORIES Not logged yet. Log a meal below. WATER Not logged yet. One tap below. SLEEP Not logged yet. Log last night below. TRAINING 0 sessi"
+        }
+      }
+    }
+  },
+  "acc02": {
+    "rows": [
+      {
+        "card": "(no card)",
+        "top": 0,
+        "primaryCount": 0,
+        "primaries": [],
+        "allButtons": [
+          "Toggle Sidebar"
+        ]
+      },
+      {
+        "card": "(no card)",
+        "top": 10,
+        "primaryCount": 0,
+        "primaries": [],
+        "allButtons": [
+          "C"
+        ]
+      },
+      {
+        "card": "(no card)",
+        "top": 14,
+        "primaryCount": 0,
+        "primaries": [],
+        "allButtons": [
+          "Toggle Sidebar"
+        ]
+      },
+      {
+        "card": "(no card)",
+        "top": 50,
+        "primaryCount": 0,
+        "primaries": [],
+        "allButtons": [
+          "Toggle Sidebar",
+          "Toggle Sidebar"
+        ]
+      },
+      {
+        "card": "UP NEXT",
+        "top": 343,
+        "primaryCount": 0,
+        "primaries": [],
+        "allButtons": [
+          "What does \"How Up next is picked\" mean?"
+        ]
+      },
+      {
+        "card": "CONSISTENCY",
+        "top": 343,
+        "primaryCount": 0,
+        "primaries": [],
+        "allButtons": [
+          "What does \"Logging consistency\" mean?"
+        ]
+      },
+      {
+        "card": "WATER",
+        "top": 757,
+        "primaryCount": 0,
+        "primaries": [],
+        "allButtons": [
+          "Log water"
+        ]
+      },
+      {
+        "card": "SLEEP",
+        "top": 1059,
+        "primaryCount": 0,
+        "primaries": [],
+        "allButtons": [
+          "Log last night"
+        ]
+      }
+    ],
+    "detail": [
+      {
+        "label": "Toggle Sidebar",
+        "card": "(no card)",
+        "primary": false,
+        "bg": "rgba(0, 0, 0, 0)",
+        "light": 0,
+        "alpha": 0,
+        "hasBorder": true,
+        "color": "lab(53.6 0 0)",
+        "kind": "rgb"
+      },
+      {
+        "label": "Toggle Sidebar",
+        "card": "(no card)",
+        "primary": false,
+        "bg": "rgba(0, 0, 0, 0)",
+        "light": 0,
+        "alpha": 0,
+        "hasBorder": false,
+        "color": "lab(74.48 0 0)",
+        "kind": "rgb"
+      },
+      {
+        "label": "Toggle Sidebar",
+        "card": "(no card)",
+        "primary": false,
+        "bg": "rgba(0, 0, 0, 0)",
+        "light": 0,
+        "alpha": 0,
+        "hasBorder": false,
+        "color": "lab(74.48 0 0)",
+        "kind": "rgb"
+      },
+      {
+        "label": "Toggle Sidebar",
+        "card": "(no card)",
+        "primary": false,
+        "bg": "rgba(0, 0, 0, 0)",
+        "light": 0,
+        "alpha": 0,
+        "hasBorder": false,
+        "color": "lab(74.48 0 0)",
+        "kind": "rgb"
+      },
+      {
+        "label": "C",
+        "card": "(no card)",
+        "primary": false,
+        "bg": "rgba(0, 0, 0, 0)",
+        "light": 0,
+        "alpha": 0,
+        "hasBorder": true,
+        "color": "rgb(213, 219, 230)",
+        "kind": "rgb"
+      },
+      {
+        "label": "What does \"How Up next is picked\" mean?",
+        "card": "UP NEXT",
+        "primary": false,
+        "bg": "rgba(0, 0, 0, 0)",
+        "light": 0,
+        "alpha": 0,
+        "hasBorder": false,
+        "color": "oklab(0.599999 -0.00000590086 0.0000140369 / 0.5)",
+        "kind": "rgb"
+      },
+      {
+        "label": "What does \"Logging consistency\" mean?",
+        "card": "CONSISTENCY",
+        "primary": false,
+        "bg": "rgba(0, 0, 0, 0)",
+        "light": 0,
+        "alpha": 0,
+        "hasBorder": false,
+        "color": "oklab(0.599999 -0.00000590086 0.0000140369 / 0.5)",
+        "kind": "rgb"
+      },
+      {
+        "label": "Log water",
+        "card": "WATER",
+        "primary": false,
+        "bg": "oklab(0.919944 -0.0111201 -0.0189009 / 0.0305882)",
+        "light": 0.92,
+        "alpha": 0.031,
+        "hasBorder": true,
+        "color": "rgb(213, 219, 230)",
+        "kind": "oklab"
+      },
+      {
+        "label": "Log last night",
+        "card": "SLEEP",
+        "primary": false,
+        "bg": "oklab(0.919944 -0.0111201 -0.0189009 / 0.0305882)",
+        "light": 0.92,
+        "alpha": 0.031,
+        "hasBorder": true,
+        "color": "rgb(213, 219, 230)",
+        "kind": "oklab"
+      }
+    ]
+  }
+}
