@@ -156,7 +156,7 @@ export function LogWaterDialog({
                     setCustom(e.target.value);
                     setError(null);
                   }}
-                  placeholder={`Up to ${MAX_CUSTOM_OZ} oz, a full gallon`}
+                  placeholder={`Up to ${MAX_CUSTOM_OZ} oz`}
                   size="lg"
                   value={custom}
                 />

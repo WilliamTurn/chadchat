@@ -80,6 +80,7 @@ export function ModuleHeader({
   title,
   viewHref,
   viewLabel = "View all",
+  wrapTitle = false,
 }: {
   icon: ReactNode;
   tone: ChipTone;
@@ -87,12 +88,15 @@ export function ModuleHeader({
   /** The module's history/detail page; the link renders only when set. */
   viewHref?: string;
   viewLabel?: string;
+  /** Opt-in (P56-C): long canonical titles wrap at narrow widths instead of
+   *  truncating; a card's own name must never ellipsize (mobile audit P2). */
+  wrapTitle?: boolean;
 }) {
   return (
     <div className="mb-3 flex items-center justify-between gap-2">
       <h2 className="flex min-w-0 items-center gap-2.5 font-medium text-muted-foreground text-sm uppercase tracking-wide">
         <IconChip tone={tone}>{icon}</IconChip>
-        <span className="truncate">{title}</span>
+        <span className={wrapTitle ? "min-w-0" : "truncate"}>{title}</span>
       </h2>
       {viewHref && (
         <Link

@@ -1,28 +1,30 @@
 "use client";
 
 /**
- * The /sleep "History" list — one row per logged night with edit + delete, so
+ * The /sleep "History" list: one row per logged night with edit + delete, so
  * a fat-fingered entry can finally be corrected or removed (audit P1-3: sleep
  * previously had no correction path anywhere in the app). Mirrors the
  * /progress weigh-in History rows: date + value on the left, quiet Edit /
  * Delete on the right.
+ *
+ * P56-C (FIX-27) brought the rows onto the platform overlays: Edit opens the
+ * shared LogSleepDialog (the FIX-17 AdaptiveDialog; the old popover form was
+ * the banned s168 pattern), and Delete confirms with the NAMED night through
+ * ConfirmActionDialog (destructive confirm-or-undo law; one-tap unrecoverable
+ * deletes are banned, history rows included).
  */
 
 import { Star } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { toast } from "sonner";
-import { removeSleep } from "@/app/today/actions";
+import { logSleep, removeSleep } from "@/app/today/actions";
 import {
-  formatSleepDuration,
-  SleepLogForm,
-} from "@/components/today/sleep-log-form";
+  LogSleepDialog,
+  type SleepLogInput,
+} from "@/components/today/sleep-overlays";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { ConfirmActionDialog } from "@/components/ui/confirm-undo";
+import { toastError, toastReceipt } from "@/components/ui/toast";
+import { formatMinutesAsDuration } from "@/lib/contracts/units";
 import { SLEEP_GOAL_MINUTES } from "@/lib/validation/sleep";
 import { cn } from "@/lib/utils";
 
@@ -34,57 +36,83 @@ export type SleepHistoryEntry = {
   dateLabel: string;
   minutes: number;
   quality: number | null;
+  /** The goal active on that night (FIX-07); falls back to the page goal. */
+  goalMinutes?: number;
 };
 
 function EditNightButton({ entry }: { entry: SleepHistoryEntry }) {
   const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+
+  function save(input: SleepLogInput) {
+    startTransition(async () => {
+      let result: Awaited<ReturnType<typeof logSleep>>;
+      try {
+        result = await logSleep(input);
+      } catch {
+        result = { ok: false };
+      }
+      if (!result.ok) {
+        toastError(result.error ?? "We couldn't save that night. Try again.");
+        return;
+      }
+      setOpen(false);
+      toastReceipt(
+        `Sleep updated for ${entry.dateLabel}. ${formatMinutesAsDuration(input.minutes)}.`
+      );
+    });
+  }
+
   return (
-    <Popover onOpenChange={setOpen} open={open}>
-      <PopoverTrigger asChild>
-        {/* min-h-11: 44px touch targets on the row actions (mobile gate). */}
+    <>
+      {/* min-h-11: 44px touch targets on the row actions (mobile gate). */}
+      <Button
+        className="min-h-11 text-muted-foreground"
+        onClick={() => setOpen(true)}
+        size="sm"
+        variant="ghost"
+      >
+        Edit
+      </Button>
+      <LogSleepDialog
+        defaultDate={entry.iso}
+        defaultMinutes={entry.minutes}
+        defaultQuality={entry.quality}
+        key={`${entry.iso}-${entry.minutes}-${entry.quality}`}
+        mode="edit"
+        onOpenChange={setOpen}
+        onSave={save}
+        open={open}
+        pending={pending}
+      />
+    </>
+  );
+}
+
+function DeleteNightButton({ entry }: { entry: SleepHistoryEntry }) {
+  return (
+    <ConfirmActionDialog
+      confirmLabel="Delete night"
+      consequence="Its hours leave your week, trends, and streaks."
+      onConfirm={async () => {
+        const result = await removeSleep(entry.id);
+        if (!result.ok) {
+          toastError(result.error ?? "We couldn't delete that night. Try again.");
+          throw new Error("delete failed");
+        }
+        toastReceipt(`Deleted the night of ${entry.dateLabel}.`);
+      }}
+      title={`Delete the ${entry.dateLabel} night of ${formatMinutesAsDuration(entry.minutes)}?`}
+      trigger={
         <Button
           className="min-h-11 text-muted-foreground"
           size="sm"
           variant="ghost"
         >
-          Edit
+          Delete
         </Button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-72">
-        <SleepLogForm
-          defaultDate={entry.iso}
-          defaultMinutesTotal={entry.minutes}
-          defaultQuality={entry.quality}
-          mode="edit"
-          onDone={() => setOpen(false)}
-        />
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-function DeleteNightButton({ id }: { id: string }) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  return (
-    <Button
-      className="min-h-11 text-muted-foreground"
-      disabled={pending}
-      onClick={() =>
-        startTransition(async () => {
-          const result = await removeSleep(id);
-          if (result.ok) {
-            router.refresh();
-          } else {
-            toast.error(result.error ?? "Couldn't delete that night.");
-          }
-        })
       }
-      size="sm"
-      variant="ghost"
-    >
-      {pending ? "Deleting…" : "Delete"}
-    </Button>
+    />
   );
 }
 
@@ -93,23 +121,28 @@ export function SleepHistory({
   goalMinutes = SLEEP_GOAL_MINUTES,
 }: {
   entries: SleepHistoryEntry[];
-  /** The user's nightly target (DSH-40); defaults to the recommended 7h. */
+  /** The current nightly target (DSH-40); per-night goals override (FIX-07). */
   goalMinutes?: number;
 }) {
-  if (entries.length === 0) {
-    return null;
-  }
   return (
-    <section>
+    // scroll-mt clears the sticky header when the panel's named detail link
+    // deep-links here (#history, the P34-Z anchor pattern). @container: the
+    // section renders inside BOTH the wide frame and the sparse centered
+    // max-w-xl column, so columns follow the CONTAINER, not the viewport
+    // (pre-delivery audit P2: a lone first night was jammed into a 3-column
+    // grid cell inside the centered column).
+    <section className="scroll-mt-20 @container" id="history">
       <h2 className="mb-4 font-medium text-lg">History</h2>
-      {/* Desktop (LAY-1): night rows grid up (2-across from sm, 3 at xl) so
-          weeks of history don't run one narrow column down the wide frame.
-          Explicit grid-cols-1 + min-w-0 children (s182 gotcha: implicit
-          columns size to max-content and overflow-x: clip hides the damage
-          from scrollWidth checks). */}
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+      {entries.length === 0 ? (
+        // Designed empty (never a missing anchor target).
+        <p className="rounded-xl border border-border border-dashed bg-card/50 px-4 py-6 text-muted-foreground text-sm">
+          No nights logged yet. Every night you log lands here with edit and
+          delete.
+        </p>
+      ) : (
+      <div className="grid grid-cols-1 gap-2 @2xl:grid-cols-2 @5xl:grid-cols-3">
         {entries.map((e) => {
-          const hit = e.minutes >= goalMinutes;
+          const hit = e.minutes >= (e.goalMinutes ?? goalMinutes);
           const quality = e.quality;
           return (
             <div
@@ -125,7 +158,7 @@ export function SleepHistory({
                       hit ? "text-emerald-500" : "text-muted-foreground"
                     )}
                   >
-                    {formatSleepDuration(e.minutes)}
+                    {formatMinutesAsDuration(e.minutes)}
                   </span>
                 </div>
                 {quality != null && (
@@ -151,12 +184,13 @@ export function SleepHistory({
                   so a thumb aiming for one can't land on the other. */}
               <div className="flex shrink-0 items-center gap-2">
                 <EditNightButton entry={e} />
-                <DeleteNightButton id={e.id} />
+                <DeleteNightButton entry={e} />
               </div>
             </div>
           );
         })}
       </div>
+      )}
     </section>
   );
 }

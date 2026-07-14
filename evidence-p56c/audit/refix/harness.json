@@ -1,0 +1,49 @@
+[
+  {
+    "step": "ITEM5-title-wrap-320",
+    "item5": {
+      "count": 8,
+      "text": "Calorie Tracker",
+      "className": "min-w-0",
+      "scrollWidth": 103,
+      "clientWidth": 103,
+      "notEllipsized": true,
+      "whiteSpace": "normal",
+      "textOverflow": "clip",
+      "overflow": "visible",
+      "rectHeight": 43,
+      "lineHeight": "21.25px",
+      "rectTop": 485,
+      "rectLeft": 84
+    }
+  },
+  {
+    "step": "ITEM6-gauge-ink-dark",
+    "darkInk": {
+      "labelText": "85%",
+      "className": "font-display font-bold text-xl tabular-nums text-sky-950",
+      "color": "lab(17.8299 -5.31271 -21.1584)",
+      "gaugeAria": "Hydration 85% of goal: 108 oz of 128 oz."
+    }
+  },
+  {
+    "step": "ITEM6-gauge-ink-light",
+    "lightInk": {
+      "labelText": "85%",
+      "className": "font-display font-bold text-xl tabular-nums text-sky-950",
+      "color": "lab(17.8299 -5.31271 -21.1584)",
+      "gaugeAria": "Hydration 85% of goal: 108 oz of 128 oz."
+    }
+  },
+  {
+    "step": "ITEM6-classify",
+    "dark": {
+      "color": "lab(17.8299 -5.31271 -21.1584)",
+      "ok": false
+    },
+    "light": {
+      "color": "lab(17.8299 -5.31271 -21.1584)",
+      "ok": false
+    }
+  }
+]

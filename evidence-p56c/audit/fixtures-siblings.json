@@ -1,0 +1,91 @@
+[
+  {
+    "step": "fixtures-dark",
+    "status": 200,
+    "overflow": false,
+    "loadingSkeletons": 3,
+    "errorBodies": 3,
+    "lockUpgrades": 3,
+    "sectionCount": 32,
+    "consoleErrsSample": [
+      "Error: Route \"/dev/fixtures/today-panels\" used `new Date()` inside a Client Component without a Suspense boundary above it. See more info he"
+    ]
+  },
+  {
+    "step": "fixtures-light",
+    "status": 200,
+    "overflow": false,
+    "loadingSkeletons": 3,
+    "errorBodies": 3,
+    "lockUpgrades": 3,
+    "sectionCount": 32,
+    "consoleErrsSample": [
+      "Error: Route \"/dev/fixtures/today-panels\" used `new Date()` inside a Client Component without a Suspense boundary above it. See more info he"
+    ]
+  },
+  {
+    "step": "fixtures-light-contrast",
+    "contrast": [
+      {
+        "lab": "p0-metric",
+        "ratio": 13.79,
+        "text": "420"
+      },
+      {
+        "lab": "p1-metric",
+        "ratio": 13.79,
+        "text": "30 oz"
+      },
+      {
+        "lab": "p2-metric",
+        "ratio": 13.79,
+        "text": "6h 42m"
+      },
+      {
+        "lab": "p3-metric",
+        "ratio": 13.79,
+        "text": "2,140"
+      },
+      {
+        "lab": "p4-metric",
+        "ratio": 13.79,
+        "text": "108 oz"
+      },
+      {
+        "lab": "p5-metric",
+        "ratio": 13.79,
+        "text": "7h 10m"
+      }
+    ]
+  },
+  {
+    "step": "sibling-nutrition",
+    "overflow": false,
+    "hasReactErr": false,
+    "targetEditorOpens": true
+  },
+  {
+    "step": "sibling-progress",
+    "overflow": false,
+    "hasReactErr": false,
+    "headings": [
+      "Progress",
+      "Goals",
+      "Lose 200 lb and build a strong, muscular body",
+      "Outcomes",
+      "Body",
+      "Training"
+    ]
+  },
+  {
+    "step": "sibling-today",
+    "overflow": false,
+    "hasReactErr": false,
+    "hasWater": true,
+    "hasSleep": true
+  },
+  {
+    "step": "sibling-console-errors",
+    "sample": []
+  }
+]

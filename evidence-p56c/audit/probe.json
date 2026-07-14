@@ -1,0 +1,84 @@
+{
+  "hydration-1440-dark": {
+    "status": 200,
+    "url": "http://localhost:3600/hydration",
+    "title": "Chad — Your AI Fitness Coach",
+    "overflow": false,
+    "scrollW": 1440,
+    "clientW": 1440,
+    "upgrade": false,
+    "hasHistoryAnchor": true,
+    "hasLogPastDayAnchor": true,
+    "headings": [
+      "Hydration",
+      "Water",
+      "Log a past day",
+      "History · last 30 days"
+    ],
+    "detailLinks": [
+      {
+        "text": "Hydration history →",
+        "href": "#history"
+      }
+    ],
+    "bodyStart": "CHAD Toggle Sidebar Dashboard Chat TRACK Workouts Calorie Tracker Hydration Sleep PLAN Goals Meal Plan REVIEW Progress Future You Weekly Report Rate My Kitchen Files Quit Test Account Help Plans & pricing Hydration C Dashboard Hydration Pro feature Log your water with one tap and track it against a daily goal. Chad reads it alongside your food and training. 0 Goal streak 1 Best streak 1 / 30 Days hit goal30d WATER Hydration history → No water logged yet. One tap adds a glass; the week fills in as you go. Su Mo Tu We Th Fr Sa Log water Log a past day Missed logging? Add the water you drank to a"
+  },
+  "sleep-1440-dark": {
+    "status": 200,
+    "url": "http://localhost:3600/sleep",
+    "title": "Chad — Your AI Fitness Coach",
+    "overflow": false,
+    "scrollW": 1440,
+    "clientW": 1440,
+    "upgrade": false,
+    "hasHistoryAnchor": false,
+    "hasLogPastDayAnchor": false,
+    "headings": [
+      "Sleep",
+      "Sleep"
+    ],
+    "detailLinks": [
+      {
+        "text": "Sleep trends →",
+        "href": "#history"
+      }
+    ],
+    "bodyStart": "CHAD Toggle Sidebar Dashboard Chat TRACK Workouts Calorie Tracker Hydration Sleep PLAN Goals Meal Plan REVIEW Progress Future You Weekly Report Rate My Kitchen Files Quit Test Account Help Plans & pricing Sleep C Dashboard Sleep Pro feature Log how you sleep each night and Chad factors recovery into your training. See it next to your weight and lifts on Progress. SLEEP Sleep trends → No sleep logged yet. Log last night and the week fills in against your nightly goal. Su Mo Tu We Th Fr Sa Log last night"
+  },
+  "today-1440-dark": {
+    "status": 200,
+    "url": "http://localhost:3600/today",
+    "title": "Chad — Your AI Fitness Coach",
+    "overflow": false,
+    "scrollW": 1440,
+    "clientW": 1440,
+    "upgrade": false,
+    "hasHistoryAnchor": false,
+    "hasLogPastDayAnchor": false,
+    "headings": [
+      "Welcome back",
+      "Calories",
+      "Water",
+      "Sleep",
+      "Training",
+      "Up next",
+      "Consistency",
+      "Today's log",
+      "Calorie Tracker",
+      "Water",
+      "Sleep",
+      "Your plans"
+    ],
+    "detailLinks": [
+      {
+        "text": "View all →",
+        "href": "/nutrition#history"
+      },
+      {
+        "text": "View all →",
+        "href": "/workouts#history"
+      }
+    ],
+    "bodyStart": "CHAD Toggle Sidebar Dashboard Chat TRACK Workouts Calorie Tracker Hydration Sleep PLAN Goals Meal Plan REVIEW Progress Future You Weekly Report Rate My Kitchen Files Quit Test Account Help Plans & pricing Dashboard C MONDAY, JULY 13 Welcome back PRO Talk to Chad CALORIES No meals yet. Log a meal to see today's total. WATER Not logged yet. One tap on the water panel adds a glass. SLEEP Last night isn't logged. Log it on the sleep panel below. TRAINING 0 sessions this week UP NEXT Sleep trends → Log last night's sleep Last night's sleep isn't logged yet. Ask Chad Log last night CONSISTENCY Progr"
+  }
+}

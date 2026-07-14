@@ -1,0 +1,22 @@
+[
+  {
+    "step": "fixtures-light-htmlClass",
+    "cls": "inter_2fe1ab3d-module__-T-KAq__variable archivo_2343fd72-module__8YhNJG__variable jetbrains_mono_5f0647e3-module__UHGtKW__variable light"
+  },
+  {
+    "step": "fixtures-light-contrast",
+    "min": null,
+    "belowAA": [],
+    "all": []
+  },
+  {
+    "step": "hydration-light",
+    "cls": "inter_2fe1ab3d-module__-T-KAq__variable archivo_2343fd72-module__8YhNJG__variable jetbrains_mono_5f0647e3-module__UHGtKW__variable light",
+    "overflow": false
+  },
+  {
+    "step": "sleep-light",
+    "cls": "inter_2fe1ab3d-module__-T-KAq__variable archivo_2343fd72-module__8YhNJG__variable jetbrains_mono_5f0647e3-module__UHGtKW__variable light",
+    "overflow": false
+  }
+]

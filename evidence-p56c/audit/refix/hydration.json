@@ -1,0 +1,103 @@
+[
+  {
+    "step": "hyd-initial",
+    "initial": {
+      "bodyHas136": true,
+      "bodyHas8": false,
+      "historyDayLabels": [
+        "Sat, Jul 11136 oz"
+      ],
+      "hasHistoryId": true
+    }
+  },
+  {
+    "step": "ITEM2-hyd-anchor",
+    "item2": {
+      "hasHistoryId": true,
+      "linkFound": true,
+      "linkHref": "#history",
+      "linkResolves": true
+    }
+  },
+  {
+    "step": "ITEM2-hyd-scroll",
+    "hydScroll": {
+      "hash": "#history",
+      "scrollY": 152,
+      "historyTop": 758,
+      "inView": true
+    }
+  },
+  {
+    "step": "ITEM3-alignment",
+    "item3": {
+      "viewport": 1440,
+      "tiles": {
+        "left": 560,
+        "right": 1136,
+        "width": 576
+      },
+      "tilesClass": "mx-auto grid w-full max-w-xl grid-cols-1 gap-3 sm:grid-cols-3",
+      "panelCol": {
+        "left": 560,
+        "right": 1136,
+        "width": 576
+      },
+      "panelColClass": "flex min-w-0 flex-col gap-6",
+      "history": {
+        "left": 560,
+        "right": 1136,
+        "width": 576
+      },
+      "sparse": true,
+      "leftSpread": 0,
+      "rightSpread": 0,
+      "aligned": true
+    }
+  },
+  {
+    "step": "logwater-open",
+    "open": true
+  },
+  {
+    "step": "toast-present-after-add",
+    "hasUndo": true
+  },
+  {
+    "step": "toast-after-wait",
+    "hasUndo": false
+  },
+  {
+    "step": "today-row-found",
+    "rowCount": 1
+  },
+  {
+    "step": "ITEM4-expanded",
+    "expanded": {
+      "expanded": true,
+      "entryText": "5:18 PM8 ozDelete",
+      "hasEntryDelete": true,
+      "entryDeleteLabel": "Delete"
+    }
+  },
+  {
+    "step": "ITEM4-confirm-dialog",
+    "confirm": {
+      "present": true,
+      "title": "Delete the Mon, Jul 13 entry of 8 oz?",
+      "namesAmount": true,
+      "namesEntry": true,
+      "full": "Delete the Mon, Jul 13 entry of 8 oz?Its ounces leave this day's total, your streaks, and your trend.CancelDelete entry"
+    }
+  },
+  {
+    "step": "ITEM4-after-delete",
+    "after": {
+      "todayRowPresent": false,
+      "bodyHas136": true,
+      "historyDayLabels": [
+        "Sat, Jul 11136 oz"
+      ]
+    }
+  }
+]

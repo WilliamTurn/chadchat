@@ -1,0 +1,20 @@
+[
+  {
+    "step": "hyd-bottomscroll-open",
+    "tag": "hyd",
+    "present": true,
+    "inViewport": true,
+    "top": 244,
+    "bottom": 656,
+    "scrollY": 136
+  },
+  {
+    "step": "slp-bottomscroll-open",
+    "tag": "slp",
+    "present": true,
+    "inViewport": true,
+    "top": 239,
+    "bottom": 661,
+    "scrollY": 0
+  }
+]

@@ -1,0 +1,482 @@
+{
+  "dark-390": {
+    "overflow": {
+      "sw": 390,
+      "cw": 390,
+      "has": false
+    },
+    "viewport": "width=device-width, initial-scale=1, interactive-widget=resizes-content",
+    "smallTargets": [],
+    "tinyText": [],
+    "calTitle": {
+      "clientW": 142,
+      "scrollW": 146,
+      "cut": true,
+      "fs": "14.875px"
+    },
+    "mutedTitle": {
+      "rgb": [
+        128,
+        128,
+        128
+      ],
+      "bg": [
+        11,
+        15,
+        23
+      ],
+      "ratio": 4.86,
+      "fs": "14.875px"
+    },
+    "gauges": [
+      {
+        "val": "?%",
+        "numFs": null,
+        "numWeight": null,
+        "textRGB": [
+          213,
+          219,
+          230
+        ],
+        "fills": [
+          "lab(70.687 -23.6078 -45.9483)"
+        ],
+        "ratios": [
+          1.57
+        ]
+      },
+      {
+        "val": "?%",
+        "numFs": null,
+        "numWeight": null,
+        "textRGB": [
+          255,
+          255,
+          255
+        ],
+        "fills": [
+          "lab(70.687 -23.6078 -45.9483)"
+        ],
+        "ratios": [
+          2.18
+        ]
+      },
+      {
+        "val": "?%",
+        "numFs": null,
+        "numWeight": null,
+        "textRGB": [
+          255,
+          255,
+          255
+        ],
+        "fills": [
+          "lab(70.687 -23.6078 -45.9483)"
+        ],
+        "ratios": [
+          2.18
+        ]
+      }
+    ]
+  },
+  "dark-360": {
+    "overflow": {
+      "sw": 360,
+      "cw": 360,
+      "has": false
+    },
+    "viewport": "width=device-width, initial-scale=1, interactive-widget=resizes-content",
+    "smallTargets": [],
+    "tinyText": [],
+    "calTitle": {
+      "clientW": 112,
+      "scrollW": 146,
+      "cut": true,
+      "fs": "14.875px"
+    },
+    "mutedTitle": {
+      "rgb": [
+        128,
+        128,
+        128
+      ],
+      "bg": [
+        11,
+        15,
+        23
+      ],
+      "ratio": 4.86,
+      "fs": "14.875px"
+    },
+    "gauges": [
+      {
+        "val": "?%",
+        "numFs": null,
+        "numWeight": null,
+        "textRGB": [
+          213,
+          219,
+          230
+        ],
+        "fills": [
+          "lab(70.687 -23.6078 -45.9483)"
+        ],
+        "ratios": [
+          1.57
+        ]
+      },
+      {
+        "val": "?%",
+        "numFs": null,
+        "numWeight": null,
+        "textRGB": [
+          255,
+          255,
+          255
+        ],
+        "fills": [
+          "lab(70.687 -23.6078 -45.9483)"
+        ],
+        "ratios": [
+          2.18
+        ]
+      },
+      {
+        "val": "?%",
+        "numFs": null,
+        "numWeight": null,
+        "textRGB": [
+          255,
+          255,
+          255
+        ],
+        "fills": [
+          "lab(70.687 -23.6078 -45.9483)"
+        ],
+        "ratios": [
+          2.18
+        ]
+      }
+    ]
+  },
+  "dark-320": {
+    "overflow": {
+      "sw": 320,
+      "cw": 320,
+      "has": false
+    },
+    "viewport": "width=device-width, initial-scale=1, interactive-widget=resizes-content",
+    "smallTargets": [],
+    "tinyText": [],
+    "calTitle": {
+      "clientW": 72,
+      "scrollW": 146,
+      "cut": true,
+      "fs": "14.875px"
+    },
+    "mutedTitle": {
+      "rgb": [
+        128,
+        128,
+        128
+      ],
+      "bg": [
+        11,
+        15,
+        23
+      ],
+      "ratio": 4.86,
+      "fs": "14.875px"
+    },
+    "gauges": [
+      {
+        "val": "?%",
+        "numFs": null,
+        "numWeight": null,
+        "textRGB": [
+          213,
+          219,
+          230
+        ],
+        "fills": [
+          "lab(70.687 -23.6078 -45.9483)"
+        ],
+        "ratios": [
+          1.57
+        ]
+      },
+      {
+        "val": "?%",
+        "numFs": null,
+        "numWeight": null,
+        "textRGB": [
+          255,
+          255,
+          255
+        ],
+        "fills": [
+          "lab(70.687 -23.6078 -45.9483)"
+        ],
+        "ratios": [
+          2.18
+        ]
+      },
+      {
+        "val": "?%",
+        "numFs": null,
+        "numWeight": null,
+        "textRGB": [
+          255,
+          255,
+          255
+        ],
+        "fills": [
+          "lab(70.687 -23.6078 -45.9483)"
+        ],
+        "ratios": [
+          2.18
+        ]
+      }
+    ]
+  },
+  "light-390": {
+    "overflow": {
+      "sw": 390,
+      "cw": 390,
+      "has": false
+    },
+    "viewport": "width=device-width, initial-scale=1, interactive-widget=resizes-content",
+    "smallTargets": [],
+    "tinyText": [],
+    "calTitle": {
+      "clientW": 142,
+      "scrollW": 146,
+      "cut": true,
+      "fs": "14.875px"
+    },
+    "mutedTitle": {
+      "rgb": [
+        108,
+        108,
+        108
+      ],
+      "bg": [
+        255,
+        255,
+        255
+      ],
+      "ratio": 5.25,
+      "fs": "14.875px"
+    },
+    "gauges": [
+      {
+        "val": "?%",
+        "numFs": null,
+        "numWeight": null,
+        "textRGB": [
+          6,
+          6,
+          6
+        ],
+        "fills": [
+          "lab(70.687 -23.6078 -45.9483)"
+        ],
+        "ratios": [
+          9.3
+        ]
+      },
+      {
+        "val": "?%",
+        "numFs": null,
+        "numWeight": null,
+        "textRGB": [
+          255,
+          255,
+          255
+        ],
+        "fills": [
+          "lab(70.687 -23.6078 -45.9483)"
+        ],
+        "ratios": [
+          2.18
+        ]
+      },
+      {
+        "val": "?%",
+        "numFs": null,
+        "numWeight": null,
+        "textRGB": [
+          255,
+          255,
+          255
+        ],
+        "fills": [
+          "lab(70.687 -23.6078 -45.9483)"
+        ],
+        "ratios": [
+          2.18
+        ]
+      }
+    ]
+  },
+  "light-360": {
+    "overflow": {
+      "sw": 360,
+      "cw": 360,
+      "has": false
+    },
+    "viewport": "width=device-width, initial-scale=1, interactive-widget=resizes-content",
+    "smallTargets": [],
+    "tinyText": [],
+    "calTitle": {
+      "clientW": 112,
+      "scrollW": 146,
+      "cut": true,
+      "fs": "14.875px"
+    },
+    "mutedTitle": {
+      "rgb": [
+        108,
+        108,
+        108
+      ],
+      "bg": [
+        255,
+        255,
+        255
+      ],
+      "ratio": 5.25,
+      "fs": "14.875px"
+    },
+    "gauges": [
+      {
+        "val": "?%",
+        "numFs": null,
+        "numWeight": null,
+        "textRGB": [
+          6,
+          6,
+          6
+        ],
+        "fills": [
+          "lab(70.687 -23.6078 -45.9483)"
+        ],
+        "ratios": [
+          9.3
+        ]
+      },
+      {
+        "val": "?%",
+        "numFs": null,
+        "numWeight": null,
+        "textRGB": [
+          255,
+          255,
+          255
+        ],
+        "fills": [
+          "lab(70.687 -23.6078 -45.9483)"
+        ],
+        "ratios": [
+          2.18
+        ]
+      },
+      {
+        "val": "?%",
+        "numFs": null,
+        "numWeight": null,
+        "textRGB": [
+          255,
+          255,
+          255
+        ],
+        "fills": [
+          "lab(70.687 -23.6078 -45.9483)"
+        ],
+        "ratios": [
+          2.18
+        ]
+      }
+    ]
+  },
+  "light-320": {
+    "overflow": {
+      "sw": 320,
+      "cw": 320,
+      "has": false
+    },
+    "viewport": "width=device-width, initial-scale=1, interactive-widget=resizes-content",
+    "smallTargets": [],
+    "tinyText": [],
+    "calTitle": {
+      "clientW": 72,
+      "scrollW": 146,
+      "cut": true,
+      "fs": "14.875px"
+    },
+    "mutedTitle": {
+      "rgb": [
+        108,
+        108,
+        108
+      ],
+      "bg": [
+        255,
+        255,
+        255
+      ],
+      "ratio": 5.25,
+      "fs": "14.875px"
+    },
+    "gauges": [
+      {
+        "val": "?%",
+        "numFs": null,
+        "numWeight": null,
+        "textRGB": [
+          6,
+          6,
+          6
+        ],
+        "fills": [
+          "lab(70.687 -23.6078 -45.9483)"
+        ],
+        "ratios": [
+          9.3
+        ]
+      },
+      {
+        "val": "?%",
+        "numFs": null,
+        "numWeight": null,
+        "textRGB": [
+          255,
+          255,
+          255
+        ],
+        "fills": [
+          "lab(70.687 -23.6078 -45.9483)"
+        ],
+        "ratios": [
+          2.18
+        ]
+      },
+      {
+        "val": "?%",
+        "numFs": null,
+        "numWeight": null,
+        "textRGB": [
+          255,
+          255,
+          255
+        ],
+        "fills": [
+          "lab(70.687 -23.6078 -45.9483)"
+        ],
+        "ratios": [
+          2.18
+        ]
+      }
+    ]
+  }
+}

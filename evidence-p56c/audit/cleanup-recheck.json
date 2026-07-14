@@ -1,0 +1,70 @@
+[
+  {
+    "step": "cleanup-water",
+    "iterations": 0,
+    "bodyHas8oz": false,
+    "todayLogPresent": false
+  },
+  {
+    "step": "cleanup-sleep",
+    "iterations": 0,
+    "historyPresent": false,
+    "bodyEmpty": true
+  },
+  {
+    "step": "mob-sleep-escape-retry",
+    "stillOpen": false
+  },
+  {
+    "step": "mob-sleep-X",
+    "hadX": true,
+    "stillOpen": false
+  },
+  {
+    "step": "mob-sleep-backdrop",
+    "stillOpen": false
+  },
+  {
+    "step": "mob-hyd-X",
+    "hadX": true,
+    "stillOpen": false
+  },
+  {
+    "step": "mob-hyd-backdrop",
+    "stillOpen": false
+  },
+  {
+    "step": "mob-hyd-relog",
+    "bodyHas8oz": true
+  },
+  {
+    "step": "mob-hyd-delete-confirm",
+    "confInfo": {
+      "present": true,
+      "role": "alertdialog",
+      "title": "Delete the 4:47 PM entry of 8 oz?",
+      "buttons": [
+        "Cancel",
+        "Delete entry"
+      ],
+      "inViewport": true,
+      "w": 340
+    }
+  },
+  {
+    "step": "mob-hyd-final-clean",
+    "bodyHas8oz": true,
+    "todayLogPresent": false
+  },
+  {
+    "step": "FINAL-DB-STATE",
+    "finalHyd": {
+      "todayLog": false,
+      "has8oz": false
+    },
+    "finalSleep": {
+      "history": false,
+      "empty": true
+    }
+  }
+]

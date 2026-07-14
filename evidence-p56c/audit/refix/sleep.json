@@ -1,0 +1,94 @@
+[
+  {
+    "step": "sleep-initial",
+    "initial": {
+      "bodyEmpty": true,
+      "historyRowCount": 1,
+      "hasHistoryId": true
+    }
+  },
+  {
+    "step": "logdialog-open",
+    "open": true
+  },
+  {
+    "step": "date-picked",
+    "datePicked": true,
+    "triggerText": "Wed, Jul 8, 2026"
+  },
+  {
+    "step": "ITEM1-single-night-layout",
+    "item1": {
+      "rowCount": 1,
+      "section": {
+        "left": 560,
+        "right": 1136,
+        "width": 576
+      },
+      "grid": {
+        "left": 560,
+        "right": 1136,
+        "width": 576
+      },
+      "row": {
+        "left": 560,
+        "right": 1136,
+        "width": 576
+      },
+      "rowWidthRatio": 1,
+      "dateText": "Wed, Jul 87h 30m",
+      "dateHeight": 20,
+      "dateLineHeight": 20,
+      "dateOnOneLine": true,
+      "buttons": [
+        {
+          "label": "Edit",
+          "left": 991,
+          "right": 1042,
+          "top": 603,
+          "bottom": 647
+        },
+        {
+          "label": "Delete",
+          "left": 1050,
+          "right": 1119,
+          "top": 603,
+          "bottom": 647
+        }
+      ],
+      "buttonsOverlap": false
+    }
+  },
+  {
+    "step": "sleep-delete-confirm",
+    "confirm": {
+      "present": true,
+      "title": "Delete the Wed, Jul 8 night of 7h 30m?"
+    }
+  },
+  {
+    "step": "sleep-deleted",
+    "sleepDeleted": true
+  },
+  {
+    "step": "ITEM2-sleep-anchors",
+    "item2sleep": {
+      "hasHistoryId": true,
+      "emptyCopy": "HistoryNo nights logged yet. Every night you log lands here with edit and delete.",
+      "designedEmpty": true,
+      "linkFound": true,
+      "linkHref": "#history",
+      "linkResolves": true
+    }
+  },
+  {
+    "step": "ITEM2-sleep-scroll",
+    "sleepScroll": {
+      "hash": "#history",
+      "scrollY": 0,
+      "historyTop": 505,
+      "inView": true,
+      "scrolledFrom": 0
+    }
+  }
+]

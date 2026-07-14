@@ -7,11 +7,14 @@ import { Kpi } from "@/components/dashboard/kpi";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
+import { HydrationPanel } from "@/components/today/hydration-panel";
 import { WaterBackfill } from "@/components/today/water-backfill";
-import { WaterHistory } from "@/components/today/water-history";
+import {
+  WaterHistory,
+  type WaterHistoryDay,
+} from "@/components/today/water-history";
 import { WaterTodayLog } from "@/components/today/water-today-log";
 import { RewardProvider } from "@/components/dashboard/reward";
-import { WaterTracker } from "@/components/today/water-tracker";
 import { WaterTrendChart } from "@/components/today/water-trend-chart";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,12 +22,18 @@ import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import {
   getUserById,
   getWaterDailyTotals,
+  getWaterGoalMlByDay,
   getWaterLogsSince,
 } from "@/lib/db/queries";
-import { resolveTimezone, todayAnchorInTz, todayStartInTz } from "@/lib/date";
+import {
+  calendarDayAnchorInTz,
+  resolveTimezone,
+  todayAnchorInTz,
+  todayStartInTz,
+} from "@/lib/date";
+import { getHydrationPanelData } from "@/lib/today/panel-data";
 import { computeWaterStats } from "@/lib/today/water-stats";
 import { DEFAULT_WATER_GOAL_ML, formatOz } from "@/lib/today/water-units";
-import { buildWaterWeek } from "@/lib/today/week";
 
 /**
  * The dedicated Hydration page, water's ONE deep surface (audit rule 3 /
@@ -93,24 +102,54 @@ async function HydrationContent() {
   }
 
   const timezone = user.timezone;
-  // Today's individual increments back BOTH the counter (summed) and the
-  // itemized "Today's log" below (LC-11) — one query, one source of truth.
-  const [todayEntries, waterDaily] = await Promise.all([
-    getWaterLogsSince(user.id, todayStartInTz(timezone)),
-    getWaterDailyTotals(user.id, timezone),
-  ]);
-  const waterMl = todayEntries.reduce((sum, e) => sum + e.amountMl, 0);
-  const todayLog = todayEntries.map((e) => ({
-    id: e.id,
-    timeLabel: e.recordedAt.toLocaleTimeString("en-US", {
+  // The panel's numbers come from the canonical assembler (P56-C, FIX-26:
+  // one source for every mount, per-day FIX-07 goals included); the page's
+  // deep surfaces (itemized log, trend, history) keep their own queries.
+  // History entries (last 30 days) power the per-entry delete rows.
+  const [panelData, todayEntries, waterDaily, historyEntries] =
+    await Promise.all([
+      getHydrationPanelData(user),
+      getWaterLogsSince(user.id, todayStartInTz(timezone)),
+      getWaterDailyTotals(user.id, timezone),
+      getWaterLogsSince(user.id, new Date(Date.now() - 30 * 86_400_000)),
+    ]);
+  const timeLabelOf = (at: Date) =>
+    at.toLocaleTimeString("en-US", {
       timeZone: resolveTimezone(timezone),
       hour: "numeric",
       minute: "2-digit",
-    }),
+    });
+  const todayLog = todayEntries.map((e) => ({
+    id: e.id,
+    timeLabel: timeLabelOf(e.recordedAt),
     amountLabel: formatOz(e.amountMl),
   }));
 
-  const waterGoalMl = user.waterGoalMl ?? DEFAULT_WATER_GOAL_ML;
+  // Each history day grades against the goal active on THAT day (FIX-07) and
+  // carries its individual entries for the per-entry confirmed delete.
+  const historyGoals = await getWaterGoalMlByDay(
+    user.id,
+    waterDaily.map((d) => new Date(d.t))
+  );
+  const entriesByDay = new Map<number, WaterHistoryDay["entries"]>();
+  for (const e of historyEntries) {
+    const t = calendarDayAnchorInTz(e.recordedAt, timezone).getTime();
+    const list = entriesByDay.get(t) ?? [];
+    list.push({
+      id: e.id,
+      timeLabel: timeLabelOf(e.recordedAt),
+      amountLabel: formatOz(e.amountMl),
+    });
+    entriesByDay.set(t, list);
+  }
+  const historyDays: WaterHistoryDay[] = waterDaily.map((d, i) => ({
+    t: d.t,
+    ml: d.ml,
+    goalMl: historyGoals[i] ?? DEFAULT_WATER_GOAL_ML,
+    entries: entriesByDay.get(d.t) ?? [],
+  }));
+
+  const waterGoalMl = panelData.goalMl;
   const showTrend = waterDaily.length >= 2;
   const stats = computeWaterStats(waterDaily, waterGoalMl, timezone);
   // Anything for the data column? Without it the 2-col grid would strand a
@@ -170,11 +209,17 @@ async function HydrationContent() {
         }
       >
         <div className="flex min-w-0 flex-col gap-6">
-          <WaterTracker
-            goalMl={waterGoalMl}
-            totalMl={waterMl}
-            week={buildWaterWeek(waterDaily, timezone)}
-            weekChart={!showTrend}
+          {/* The FIX-26 typed panel (P56-C): strip AND chart in every state
+              (owner law s181; the one-chart-per-page VF-2 note yielded to the
+              panel role contract), quick-log overlay, exact-entry Undo. */}
+          <HydrationPanel
+            backfillHref="#log-past-day"
+            goalMl={panelData.goalMl}
+            totalMl={panelData.totalMl}
+            // Already on the deep surface: the named detail link points at
+            // this page's own history section instead of itself.
+            viewHref="#history"
+            week={panelData.week}
           />
           <WaterBackfill />
         </div>
@@ -191,7 +236,11 @@ async function HydrationContent() {
           </div>
         )}
       </div>
-      <WaterHistory days={waterDaily} goalMl={waterGoalMl} />
+      {/* Sections share one alignment (pre-delivery audit P2: with only the
+          centered column above, a full-width History stranded a dead band). */}
+      <div className={hasDataColumn ? undefined : "mx-auto w-full max-w-xl"}>
+        <WaterHistory days={historyDays} />
+      </div>
     </div>
     </RewardProvider>
   );

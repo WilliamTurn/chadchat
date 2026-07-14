@@ -1,0 +1,184 @@
+[
+  {
+    "step": "hyd-logwater-open-top",
+    "tag": "logwater-top",
+    "present": true,
+    "inViewport": true,
+    "rect": {
+      "top": 244,
+      "left": 496,
+      "bottom": 656,
+      "w": 448,
+      "h": 412
+    },
+    "vh": 900,
+    "bg": "rgb(4, 7, 13)",
+    "bgAlpha": 1,
+    "title": "Log water",
+    "activeEl": "DIV",
+    "activeIsInput": false,
+    "hasCloseBtn": true
+  },
+  {
+    "step": "hyd-logwater-escape",
+    "open": false
+  },
+  {
+    "step": "hyd-logwater-X",
+    "hadClose": true,
+    "open": false
+  },
+  {
+    "step": "hyd-logwater-backdrop",
+    "open": false
+  },
+  {
+    "step": "hyd-editgoal",
+    "ERROR": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'More options' }).first()\u001b[22m\n"
+  },
+  {
+    "step": "hyd-after-log-glass",
+    "afterLog": {
+      "hasTodayLog": true,
+      "todayLogText": "Today's log8 oz4:36 PMDelete",
+      "bodyHas8oz": true,
+      "goalStreak": "Goal streak\n1",
+      "panelSnippet": "WATER Hydration history → 8 oz of 128 oz goal 6% 120 oz to go Logged 1 of 2 days this"
+    }
+  },
+  {
+    "step": "today-after-hyd-log",
+    "todayWater": {
+      "url": "http://localhost:3600/today",
+      "snippet": "WATER 8 oz of 128 oz · 120 oz left 6% SLEEP Not logged yet. Log last night below. TRAINING 0 sessions this week UP NEXT Sleep trends → Log last nigh"
+    }
+  },
+  {
+    "step": "hyd-cleanup-delete-count",
+    "n": 1
+  },
+  {
+    "step": "hyd-delete-confirm",
+    "tag": "water-del",
+    "present": true,
+    "inViewport": true,
+    "rect": {
+      "top": 369,
+      "left": 560,
+      "bottom": 531,
+      "w": 320,
+      "h": 162
+    },
+    "vh": 900,
+    "bg": "rgb(4, 7, 13)",
+    "bgAlpha": 1,
+    "title": "Delete the 4:36 PM entry of 8 oz?",
+    "activeEl": "BUTTON",
+    "activeIsInput": false,
+    "hasCloseBtn": false
+  },
+  {
+    "step": "hyd-after-cleanup",
+    "bodyHas8oz": false,
+    "hasTodayLog": false
+  },
+  {
+    "step": "sleep-trends-link-EMPTY",
+    "sleepTrendLinkEmpty": {
+      "href": "#history",
+      "targetExists": false
+    }
+  },
+  {
+    "step": "sleep-loglast-open",
+    "tag": "sleep-log",
+    "present": true,
+    "inViewport": true,
+    "rect": {
+      "top": 239,
+      "left": 496,
+      "bottom": 661,
+      "w": 448,
+      "h": 422
+    },
+    "vh": 900,
+    "bg": "rgb(4, 7, 13)",
+    "bgAlpha": 1,
+    "title": "Log sleep",
+    "activeEl": "DIV",
+    "activeIsInput": false,
+    "hasCloseBtn": true
+  },
+  {
+    "step": "sleep-loglast-escape",
+    "open": false
+  },
+  {
+    "step": "sleep-loglast-X",
+    "hadClose": true,
+    "open": false
+  },
+  {
+    "step": "sleep-loglast-backdrop",
+    "open": false
+  },
+  {
+    "step": "sleep-editgoal",
+    "ERROR": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'More options' }).first()\u001b[22m\n"
+  },
+  {
+    "step": "sleep-after-log",
+    "after": {
+      "url": "http://localhost:3600/sleep",
+      "hasHistory": true,
+      "historyText": "HistoryMon, Jul 137h 30mEditDelete",
+      "sleepTrendsTargetExists": true,
+      "panelSnippet": "SLEEP Sleep trends → 7h 30m of 7h goal Goal met Su Mo Tu We Th Fr Sa Goal: 7h+ a night Ask Chad Edit last night History Mon, "
+    }
+  },
+  {
+    "step": "sleep-history-edit-open",
+    "tag": "sleep-hist-edit",
+    "present": true,
+    "inViewport": true,
+    "rect": {
+      "top": 293,
+      "left": 496,
+      "bottom": 607,
+      "w": 448,
+      "h": 315
+    },
+    "vh": 900,
+    "bg": "rgb(4, 7, 13)",
+    "bgAlpha": 1,
+    "title": "Edit sleep",
+    "activeEl": "DIV",
+    "activeIsInput": false,
+    "hasCloseBtn": true
+  },
+  {
+    "step": "sleep-history-delete-confirm",
+    "tag": "sleep-del",
+    "present": true,
+    "inViewport": true,
+    "rect": {
+      "top": 345,
+      "left": 560,
+      "bottom": 555,
+      "w": 320,
+      "h": 210
+    },
+    "vh": 900,
+    "bg": "rgb(4, 7, 13)",
+    "bgAlpha": 1,
+    "title": "Delete the Mon, Jul 13 night of 7h 30m?",
+    "activeEl": "BUTTON",
+    "activeIsInput": false,
+    "hasCloseBtn": false
+  },
+  {
+    "step": "sleep-after-cleanup",
+    "bodyEmpty": true,
+    "hasHistory": false
+  }
+]

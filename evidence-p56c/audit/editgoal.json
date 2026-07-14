@@ -1,0 +1,53 @@
+[
+  {
+    "step": "edit-daily-goal",
+    "tag": "water-goal",
+    "present": true,
+    "title": "Daily hydration goal",
+    "inViewport": true,
+    "bgAlpha": 1,
+    "activeIsInput": false,
+    "presets": [
+      "1/2 gallon",
+      "3/4 gallon",
+      "1 gallon",
+      "Save goal",
+      "Close"
+    ]
+  },
+  {
+    "step": "water-clean",
+    "has8oz": false,
+    "todayLog": false
+  },
+  {
+    "step": "sleep-overflow-items",
+    "items": [
+      "Edit nightly goal",
+      "Log a past night"
+    ]
+  },
+  {
+    "step": "edit-nightly-goal",
+    "tag": "sleep-goal",
+    "present": true,
+    "title": "Nightly sleep goal",
+    "inViewport": true,
+    "bgAlpha": 1,
+    "activeIsInput": false,
+    "presets": [
+      "7h",
+      "8h",
+      "9h",
+      "7 h",
+      "0 m",
+      "Save goal",
+      "Close"
+    ]
+  },
+  {
+    "step": "sleep-clean",
+    "empty": true,
+    "history": false
+  }
+]

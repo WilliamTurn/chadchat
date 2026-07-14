@@ -1,0 +1,258 @@
+[
+  {
+    "h": "first-run",
+    "panels": [
+      {
+        "role": "quick-log",
+        "state": "empty",
+        "title": "Su"
+      },
+      {
+        "role": "quick-log",
+        "state": "empty",
+        "title": "Su"
+      },
+      {
+        "role": "quick-log",
+        "state": "empty",
+        "title": null
+      }
+    ]
+  },
+  {
+    "h": "Calorie Tracker",
+    "panels": []
+  },
+  {
+    "h": "Water",
+    "panels": []
+  },
+  {
+    "h": "Sleep",
+    "panels": []
+  },
+  {
+    "h": "sparse",
+    "panels": [
+      {
+        "role": "quick-log",
+        "state": "populated",
+        "title": "Su"
+      },
+      {
+        "role": "quick-log",
+        "state": "populated",
+        "title": "Su"
+      },
+      {
+        "role": "quick-log",
+        "state": "populated",
+        "title": null
+      }
+    ]
+  },
+  {
+    "h": "Calorie Tracker",
+    "panels": []
+  },
+  {
+    "h": "Water",
+    "panels": []
+  },
+  {
+    "h": "Sleep",
+    "panels": []
+  },
+  {
+    "h": "consistent",
+    "panels": [
+      {
+        "role": "quick-log",
+        "state": "populated",
+        "title": "Su"
+      },
+      {
+        "role": "quick-log",
+        "state": "populated",
+        "title": "Su"
+      },
+      {
+        "role": "quick-log",
+        "state": "populated",
+        "title": null
+      }
+    ]
+  },
+  {
+    "h": "Calorie Tracker",
+    "panels": []
+  },
+  {
+    "h": "Water",
+    "panels": []
+  },
+  {
+    "h": "Sleep",
+    "panels": []
+  },
+  {
+    "h": "lapsed",
+    "panels": [
+      {
+        "role": "quick-log",
+        "state": "empty",
+        "title": "Su"
+      },
+      {
+        "role": "quick-log",
+        "state": "empty",
+        "title": "Su"
+      },
+      {
+        "role": "quick-log",
+        "state": "stale",
+        "title": null
+      }
+    ]
+  },
+  {
+    "h": "Calorie Tracker",
+    "panels": []
+  },
+  {
+    "h": "Water",
+    "panels": []
+  },
+  {
+    "h": "Sleep",
+    "panels": []
+  },
+  {
+    "h": "overshoot",
+    "panels": [
+      {
+        "role": "quick-log",
+        "state": "populated",
+        "title": "Su"
+      },
+      {
+        "role": "quick-log",
+        "state": "populated",
+        "title": "Su"
+      },
+      {
+        "role": "quick-log",
+        "state": "populated",
+        "title": null
+      }
+    ]
+  },
+  {
+    "h": "Calorie Tracker",
+    "panels": []
+  },
+  {
+    "h": "Water",
+    "panels": []
+  },
+  {
+    "h": "Sleep",
+    "panels": []
+  },
+  {
+    "h": "locked-basic",
+    "panels": [
+      {
+        "role": "quick-log",
+        "state": "locked",
+        "title": "Upgrade to Pro"
+      },
+      {
+        "role": "quick-log",
+        "state": "locked",
+        "title": "Upgrade to Pro"
+      },
+      {
+        "role": "quick-log",
+        "state": "locked",
+        "title": "Upgrade to Pro"
+      }
+    ]
+  },
+  {
+    "h": "Calorie Tracker",
+    "panels": []
+  },
+  {
+    "h": "Water",
+    "panels": []
+  },
+  {
+    "h": "Sleep",
+    "panels": []
+  },
+  {
+    "h": "fetch layer: loading",
+    "panels": [
+      {
+        "role": "quick-log",
+        "state": "loading",
+        "title": null
+      },
+      {
+        "role": "quick-log",
+        "state": "loading",
+        "title": null
+      },
+      {
+        "role": "quick-log",
+        "state": "loading",
+        "title": null
+      }
+    ]
+  },
+  {
+    "h": "Calorie Tracker",
+    "panels": []
+  },
+  {
+    "h": "Water",
+    "panels": []
+  },
+  {
+    "h": "Sleep",
+    "panels": []
+  },
+  {
+    "h": "fetch layer: error",
+    "panels": [
+      {
+        "role": "quick-log",
+        "state": "error",
+        "title": "Try again"
+      },
+      {
+        "role": "quick-log",
+        "state": "error",
+        "title": "Try again"
+      },
+      {
+        "role": "quick-log",
+        "state": "error",
+        "title": "Try again"
+      }
+    ]
+  },
+  {
+    "h": "Calorie Tracker",
+    "panels": []
+  },
+  {
+    "h": "Water",
+    "panels": []
+  },
+  {
+    "h": "Sleep",
+    "panels": []
+  }
+]

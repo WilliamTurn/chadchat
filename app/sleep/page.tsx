@@ -11,24 +11,24 @@ import {
   SleepHistory,
   type SleepHistoryEntry,
 } from "@/components/today/sleep-history";
-import { SleepTracker } from "@/components/today/sleep-tracker";
+import { SleepPanel } from "@/components/today/sleep-panel";
 import { SleepTrendChart } from "@/components/today/sleep-trend-chart";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
 import {
+  calendarDayAnchorInTz,
   formatCalendarDay,
   toCalendarDayISO,
   todayAnchorInTz,
 } from "@/lib/date";
 import {
-  getLatestSleepEntry,
   getSleepDailyTotals,
   getSleepEntries,
+  getSleepGoalMinutesByDay,
   getUserById,
 } from "@/lib/db/queries";
-import { buildLastNight, buildSleepWeek } from "@/lib/today/week";
-import { SLEEP_GOAL_MINUTES } from "@/lib/validation/sleep";
+import { getSleepPanelData } from "@/lib/today/panel-data";
 
 /**
  * The dedicated Sleep & recovery page (NAV-30) — sleep's ONE deep surface
@@ -104,15 +104,21 @@ async function SleepContent() {
   }
 
   const timezone = user.timezone;
-  const [latestSleep, sleepDaily, sleepEntries] = await Promise.all([
-    getLatestSleepEntry(user.id),
+  // The panel's numbers come from the canonical assembler (P56-C, FIX-27:
+  // one source for every mount, per-night FIX-07 goals included); the page's
+  // deep surfaces (trend chart, history) keep their own queries.
+  const [panelData, sleepDaily, sleepEntries] = await Promise.all([
+    getSleepPanelData(user),
     getSleepDailyTotals(user.id, timezone),
     getSleepEntries(user.id),
   ]);
 
-  const lastNight = buildLastNight(latestSleep, timezone);
-  const sleepWeek = buildSleepWeek(sleepDaily, timezone);
-  const history: SleepHistoryEntry[] = sleepEntries.map((e) => ({
+  // Each history night grades against the goal active on THAT night (FIX-07).
+  const historyGoals = await getSleepGoalMinutesByDay(
+    user.id,
+    sleepEntries.map((e) => calendarDayAnchorInTz(e.recordedAt, timezone))
+  );
+  const history: SleepHistoryEntry[] = sleepEntries.map((e, i) => ({
     id: e.id,
     iso: toCalendarDayISO(e.recordedAt),
     dateLabel: formatCalendarDay(e.recordedAt, {
@@ -122,32 +128,35 @@ async function SleepContent() {
     }),
     minutes: e.minutes,
     quality: e.quality,
+    goalMinutes: historyGoals[i] ?? panelData.goalMinutes,
   }));
 
-  // One sleep chart per page (VF-2): once the full trend chart below has
-  // enough nights to render, the tracker card drops its 7-night strip and
-  // stays the readout + logger.
+  // Enough nights for the full windowed trend chart below?
   const showTrend = sleepDaily.length >= 2;
 
-  // The user's nightly target (DSH-40); null = the recommended 7h default.
-  const goalMinutes = user.sleepGoalMinutes ?? SLEEP_GOAL_MINUTES;
+  // Today's effective-dated goal (FIX-07) from the canonical assembler.
+  const goalMinutes = panelData.goalMinutes;
 
   return (
     <RewardProvider haptics={user.hapticsEnabled} sound={user.soundEnabled}>
       {showTrend ? (
         <div className="flex flex-col gap-6">
-          {/* Desktop (LAY-1): the tracker/logger beside the full trend chart;
-              a single column below xl in the unchanged phone order. Explicit
-              grid-cols-1 + min-w-0 children: without them the implicit column
-              sizes to max-content and phones/tablets get silently clipped by
-              overflow-x: clip (s182 gotcha). */}
+          {/* Desktop (LAY-1): the FIX-27 typed panel (P56-C; strip AND chart
+              in every state per owner law s181, overlay logging, exact-entry
+              Undo) beside the full trend chart; a single column below xl in
+              the unchanged phone order. Explicit grid-cols-1 + min-w-0
+              children: without them the implicit column sizes to max-content
+              and phones/tablets get silently clipped by overflow-x: clip
+              (s182 gotcha). */}
           <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
             <div className="min-w-0">
-              <SleepTracker
-                goalMinutes={goalMinutes}
-                last={lastNight}
-                week={sleepWeek}
-                weekChart={false}
+              <SleepPanel
+                goalMinutes={panelData.goalMinutes}
+                isDefaultGoal={panelData.isDefaultGoal}
+                lastNight={panelData.lastNight}
+                viewHref="#history"
+                viewLabel="Night history"
+                week={panelData.week}
               />
             </div>
             <div className="min-w-0">
@@ -162,13 +171,16 @@ async function SleepContent() {
         </div>
       ) : (
         // Sparse data (fewer than 2 nights): no trend chart yet, so the
-        // tracker (with its in-card week chart) and the at-most-one history
-        // row sit in a centered column instead of stranding on the wide frame.
+        // panel and the at-most-one history row sit in a centered column
+        // instead of stranding on the wide frame.
         <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
-          <SleepTracker
-            goalMinutes={goalMinutes}
-            last={lastNight}
-            week={sleepWeek}
+          <SleepPanel
+            goalMinutes={panelData.goalMinutes}
+            isDefaultGoal={panelData.isDefaultGoal}
+            lastNight={panelData.lastNight}
+            viewHref="#history"
+            viewLabel="Night history"
+            week={panelData.week}
           />
           <SleepHistory entries={history} goalMinutes={goalMinutes} />
         </div>

@@ -1,0 +1,57 @@
+[
+  {
+    "step": "baseline",
+    "bodyPointerEvents": "auto",
+    "htmlPointerEvents": "auto",
+    "moreOptionsVisible": "absent"
+  },
+  {
+    "step": "after-escape",
+    "bodyPointerEvents": "auto",
+    "htmlPointerEvents": "auto",
+    "moreOptionsVisible": "absent"
+  },
+  {
+    "step": "after-escape-clicked-moreoptions",
+    "ok": false,
+    "err": "TimeoutError: locator.click: Timeout 4000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('butto"
+  },
+  {
+    "step": "after-backdrop",
+    "bodyPointerEvents": "auto",
+    "htmlPointerEvents": "auto",
+    "moreOptionsVisible": "absent"
+  },
+  {
+    "step": "after-backdrop-clicked-moreoptions",
+    "ok": false,
+    "err": "TimeoutError: locator.click: Timeout 4000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('butto"
+  },
+  {
+    "step": "fresh-moreoptions",
+    "ok": false,
+    "err": "TimeoutError: locator.click: Timeout 6000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'More op"
+  },
+  {
+    "step": "confirm-dialog-buttons",
+    "confInfo": {
+      "present": true,
+      "buttons": [
+        "Cancel",
+        "Delete entry"
+      ],
+      "title": "Delete the 4:39 PM entry of 8 oz?"
+    }
+  },
+  {
+    "step": "confirm-cancel-keeps-entry",
+    "stillThere": true,
+    "bodyPointerEvents": "auto",
+    "htmlPointerEvents": "auto",
+    "moreOptionsVisible": "present 32x32 pe=auto"
+  },
+  {
+    "step": "cleanup-final",
+    "bodyHas8oz": false
+  }
+]

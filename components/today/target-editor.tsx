@@ -60,6 +60,8 @@ export function TargetEditor({
   carbs,
   fat,
   prominent = false,
+  open: controlledOpen,
+  onOpenChange,
 }: {
   calories: number | null;
   protein: number | null;
@@ -68,9 +70,22 @@ export function TargetEditor({
   /** Render a solid primary button (for the empty-state CTA) vs the default
    *  ghost text button used in card headers. */
   prominent?: boolean;
+  /** Controlled mode (P56-C): the caller owns open state and its own
+   *  trigger (e.g. a panel overflow item); no built-in trigger renders. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const controlled = controlledOpen !== undefined;
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlled ? controlledOpen : uncontrolledOpen;
+  const setOpen = (next: boolean) => {
+    if (controlled) {
+      onOpenChange?.(next);
+    } else {
+      setUncontrolledOpen(next);
+    }
+  };
   const [pending, startTransition] = useTransition();
   const [mode, setMode] = useState<Mode>("grams");
 
@@ -171,19 +186,21 @@ export function TargetEditor({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        {prominent ? (
-          <Button className="gap-1.5" size="sm">
-            <Settings2 className="size-3.5" />
-            {hasAny ? "Edit targets" : "Set your targets"}
-          </Button>
-        ) : (
-          <Button className="gap-1.5 text-xs" size="sm" variant="ghost">
-            <Settings2 className="size-3.5" />
-            {hasAny ? "Edit targets" : "Set targets"}
-          </Button>
-        )}
-      </DialogTrigger>
+      {!controlled && (
+        <DialogTrigger asChild>
+          {prominent ? (
+            <Button className="gap-1.5" size="sm">
+              <Settings2 className="size-3.5" />
+              {hasAny ? "Edit targets" : "Set your targets"}
+            </Button>
+          ) : (
+            <Button className="gap-1.5 text-xs" size="sm" variant="ghost">
+              <Settings2 className="size-3.5" />
+              {hasAny ? "Edit targets" : "Set targets"}
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Daily targets</DialogTitle>

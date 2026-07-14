@@ -92,7 +92,12 @@ export function WaterBackfill() {
   }
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-5">
+    // scroll-mt clears the sticky header when the panels' "Log a past day"
+    // overflow deep-links here (#log-past-day, the P34-Z anchor pattern).
+    <section
+      className="scroll-mt-20 rounded-2xl border border-border bg-card p-5"
+      id="log-past-day"
+    >
       <h2 className="flex items-center gap-2 font-medium text-sm">
         <CalendarDays className="size-4 text-sky-400" />
         Log a past day

@@ -1,0 +1,31 @@
+import { chromium } from "@playwright/test";
+const BASE = "http://localhost:3600";
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const b = await chromium.launch();
+const ctx = await b.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: "dark" });
+await ctx.clearCookies();
+const page = await ctx.newPage();
+await page.goto(`${BASE}/login`, { waitUntil: "domcontentloaded" });
+await sleep(500);
+await page.locator('input[type="email"]').fill("claude-testing@example.com");
+await page.locator('input[autocomplete="current-password"]').fill("12345678");
+await page.getByRole("button", { name: "Sign in" }).click();
+await page.waitForURL((u) => !u.pathname.endsWith("/login"), { timeout: 16000 }).catch(() => {});
+await sleep(1500);
+await page.goto(`${BASE}/hydration`, { waitUntil: "domcontentloaded" });
+await sleep(1800);
+const hyd = await page.evaluate(() => {
+  const p = document.querySelector('[data-panel-role="quick-log"]');
+  const tl = [...document.querySelectorAll("section")].find((s) => /Today's log/.test(s.textContent || ""));
+  return { state: p?.getAttribute("data-panel-state"), todaysLog: !!tl };
+});
+console.log("HYDRATION cleancheck:", JSON.stringify(hyd));
+await page.goto(`${BASE}/sleep`, { waitUntil: "domcontentloaded" });
+await sleep(1800);
+const slp = await page.evaluate(() => {
+  const p = document.querySelector('[data-panel-role="quick-log"]');
+  const h = document.getElementById("history");
+  return { state: p?.getAttribute("data-panel-state"), historyRows: h ? h.querySelectorAll(".font-medium").length : 0 };
+});
+console.log("SLEEP cleancheck:", JSON.stringify(slp));
+await b.close();

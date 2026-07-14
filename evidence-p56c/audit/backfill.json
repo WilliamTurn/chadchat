@@ -1,0 +1,66 @@
+[
+  {
+    "step": "water-history-controls",
+    "histControls": {
+      "present": true,
+      "buttons": [],
+      "heading": "History · last 30 days"
+    }
+  },
+  {
+    "step": "water-backfill-added",
+    "dayField": "Sun, Jul 12, 2026",
+    "afterAdd": {
+      "historyRows": [
+        "Sun, Jul 1220 oz",
+        "Sat, Jul 11136 oz"
+      ],
+      "toastText": [
+        "Added 20 oz to Sun, Jul 12.Undo"
+      ]
+    }
+  },
+  {
+    "step": "water-backfill-undo",
+    "hadUndo": true,
+    "afterUndo": {
+      "rows": [
+        "Sat, Jul 11136 oz"
+      ]
+    }
+  },
+  {
+    "step": "sleep-date-pick",
+    "picked": {
+      "ok": true,
+      "day": "8"
+    },
+    "before": "Mon, Jul 13, 2026",
+    "after": "Wed, Jul 8, 2026"
+  },
+  {
+    "step": "sleep-backfill-added",
+    "sleepAfter": {
+      "historyRows": [
+        "Wed, Jul 87h 30mEditDelete"
+      ],
+      "hasHistory": true
+    }
+  },
+  {
+    "step": "sleep-backfill-delete-confirm-title",
+    "confTitle": "Delete the Wed, Jul 8 night of 7h 30m?"
+  },
+  {
+    "step": "FINAL-CLEAN",
+    "sleep": {
+      "history": false,
+      "empty": true
+    },
+    "waterHistory": {
+      "rows": [
+        "Sat, Jul 11136 oz"
+      ]
+    }
+  }
+]

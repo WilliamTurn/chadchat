@@ -1,0 +1,2084 @@
+{
+  "overflow": [
+    {
+      "theme": "dark",
+      "width": 390,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bodyScrollWidth": 390
+    },
+    {
+      "theme": "dark",
+      "width": 360,
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "bodyScrollWidth": 360
+    },
+    {
+      "theme": "dark",
+      "width": 320,
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "bodyScrollWidth": 320
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bodyScrollWidth": 390
+    },
+    {
+      "theme": "light",
+      "width": 360,
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "bodyScrollWidth": 360
+    },
+    {
+      "theme": "light",
+      "width": 320,
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "bodyScrollWidth": 320
+    }
+  ],
+  "heights": [
+    {
+      "width": 1440,
+      "section": "first-run",
+      "panel": "Nutrition",
+      "state": "empty",
+      "height": 218,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 1440,
+      "section": "first-run",
+      "panel": "Hydration",
+      "state": "empty",
+      "height": 218,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 1440,
+      "section": "first-run",
+      "panel": "Sleep",
+      "state": "empty",
+      "height": 294,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 1440,
+      "section": "sparse",
+      "panel": "Nutrition",
+      "state": "populated",
+      "height": 359,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 1440,
+      "section": "sparse",
+      "panel": "Hydration",
+      "state": "populated",
+      "height": 315,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 1440,
+      "section": "sparse",
+      "panel": "Sleep",
+      "state": "populated",
+      "height": 340,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 1440,
+      "section": "consistent",
+      "panel": "Nutrition",
+      "state": "populated",
+      "height": 359,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 1440,
+      "section": "consistent",
+      "panel": "Hydration",
+      "state": "populated",
+      "height": 315,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 1440,
+      "section": "consistent",
+      "panel": "Sleep",
+      "state": "populated",
+      "height": 360,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 1440,
+      "section": "lapsed",
+      "panel": "Nutrition",
+      "state": "empty",
+      "height": 218,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 1440,
+      "section": "lapsed",
+      "panel": "Hydration",
+      "state": "empty",
+      "height": 218,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 1440,
+      "section": "lapsed",
+      "panel": "Sleep",
+      "state": "stale",
+      "height": 339,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 1440,
+      "section": "overshoot",
+      "panel": "Nutrition",
+      "state": "populated",
+      "height": 359,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 1440,
+      "section": "overshoot",
+      "panel": "Hydration",
+      "state": "populated",
+      "height": 315,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 1440,
+      "section": "overshoot",
+      "panel": "Sleep",
+      "state": "populated",
+      "height": 340,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 1440,
+      "section": "locked-basic",
+      "panel": "Nutrition",
+      "state": "locked",
+      "height": 230,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 1440,
+      "section": "locked-basic",
+      "panel": "Hydration",
+      "state": "locked",
+      "height": 230,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 1440,
+      "section": "locked-basic",
+      "panel": "Sleep",
+      "state": "locked",
+      "height": 230,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 1440,
+      "section": "fetch layer: loading",
+      "panel": "Nutrition",
+      "state": "loading",
+      "height": 230,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 1440,
+      "section": "fetch layer: loading",
+      "panel": "Hydration",
+      "state": "loading",
+      "height": 230,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 1440,
+      "section": "fetch layer: loading",
+      "panel": "Sleep",
+      "state": "loading",
+      "height": 230,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 1440,
+      "section": "fetch layer: error",
+      "panel": "Nutrition",
+      "state": "error",
+      "height": 208,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 1440,
+      "section": "fetch layer: error",
+      "panel": "Hydration",
+      "state": "error",
+      "height": 208,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 1440,
+      "section": "fetch layer: error",
+      "panel": "Sleep",
+      "state": "error",
+      "height": 208,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 768,
+      "section": "first-run",
+      "panel": "Nutrition",
+      "state": "empty",
+      "height": 218,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 768,
+      "section": "first-run",
+      "panel": "Hydration",
+      "state": "empty",
+      "height": 218,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 768,
+      "section": "first-run",
+      "panel": "Sleep",
+      "state": "empty",
+      "height": 294,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 768,
+      "section": "sparse",
+      "panel": "Nutrition",
+      "state": "populated",
+      "height": 359,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 768,
+      "section": "sparse",
+      "panel": "Hydration",
+      "state": "populated",
+      "height": 315,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 768,
+      "section": "sparse",
+      "panel": "Sleep",
+      "state": "populated",
+      "height": 366,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 768,
+      "section": "consistent",
+      "panel": "Nutrition",
+      "state": "populated",
+      "height": 359,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 768,
+      "section": "consistent",
+      "panel": "Hydration",
+      "state": "populated",
+      "height": 315,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 768,
+      "section": "consistent",
+      "panel": "Sleep",
+      "state": "populated",
+      "height": 386,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 768,
+      "section": "lapsed",
+      "panel": "Nutrition",
+      "state": "empty",
+      "height": 218,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 768,
+      "section": "lapsed",
+      "panel": "Hydration",
+      "state": "empty",
+      "height": 218,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 768,
+      "section": "lapsed",
+      "panel": "Sleep",
+      "state": "stale",
+      "height": 339,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 768,
+      "section": "overshoot",
+      "panel": "Nutrition",
+      "state": "populated",
+      "height": 359,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 768,
+      "section": "overshoot",
+      "panel": "Hydration",
+      "state": "populated",
+      "height": 315,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 768,
+      "section": "overshoot",
+      "panel": "Sleep",
+      "state": "populated",
+      "height": 366,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 768,
+      "section": "locked-basic",
+      "panel": "Nutrition",
+      "state": "locked",
+      "height": 254,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 768,
+      "section": "locked-basic",
+      "panel": "Hydration",
+      "state": "locked",
+      "height": 230,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 768,
+      "section": "locked-basic",
+      "panel": "Sleep",
+      "state": "locked",
+      "height": 254,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 768,
+      "section": "fetch layer: loading",
+      "panel": "Nutrition",
+      "state": "loading",
+      "height": 230,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 768,
+      "section": "fetch layer: loading",
+      "panel": "Hydration",
+      "state": "loading",
+      "height": 230,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 768,
+      "section": "fetch layer: loading",
+      "panel": "Sleep",
+      "state": "loading",
+      "height": 230,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 768,
+      "section": "fetch layer: error",
+      "panel": "Nutrition",
+      "state": "error",
+      "height": 208,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 768,
+      "section": "fetch layer: error",
+      "panel": "Hydration",
+      "state": "error",
+      "height": 208,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 768,
+      "section": "fetch layer: error",
+      "panel": "Sleep",
+      "state": "error",
+      "height": 208,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 390,
+      "section": "first-run",
+      "panel": "Nutrition",
+      "state": "empty",
+      "height": 242,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 390,
+      "section": "first-run",
+      "panel": "Hydration",
+      "state": "empty",
+      "height": 242,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 390,
+      "section": "first-run",
+      "panel": "Sleep",
+      "state": "empty",
+      "height": 318,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 390,
+      "section": "sparse",
+      "panel": "Nutrition",
+      "state": "populated",
+      "height": 388,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 390,
+      "section": "sparse",
+      "panel": "Hydration",
+      "state": "populated",
+      "height": 340,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 390,
+      "section": "sparse",
+      "panel": "Sleep",
+      "state": "populated",
+      "height": 448,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 390,
+      "section": "consistent",
+      "panel": "Nutrition",
+      "state": "populated",
+      "height": 388,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 390,
+      "section": "consistent",
+      "panel": "Hydration",
+      "state": "populated",
+      "height": 340,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 390,
+      "section": "consistent",
+      "panel": "Sleep",
+      "state": "populated",
+      "height": 469,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 390,
+      "section": "lapsed",
+      "panel": "Nutrition",
+      "state": "empty",
+      "height": 242,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 390,
+      "section": "lapsed",
+      "panel": "Hydration",
+      "state": "empty",
+      "height": 242,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 390,
+      "section": "lapsed",
+      "panel": "Sleep",
+      "state": "stale",
+      "height": 421,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 390,
+      "section": "overshoot",
+      "panel": "Nutrition",
+      "state": "populated",
+      "height": 388,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 390,
+      "section": "overshoot",
+      "panel": "Hydration",
+      "state": "populated",
+      "height": 340,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 390,
+      "section": "overshoot",
+      "panel": "Sleep",
+      "state": "populated",
+      "height": 448,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 390,
+      "section": "locked-basic",
+      "panel": "Nutrition",
+      "state": "locked",
+      "height": 278,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 390,
+      "section": "locked-basic",
+      "panel": "Hydration",
+      "state": "locked",
+      "height": 254,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 390,
+      "section": "locked-basic",
+      "panel": "Sleep",
+      "state": "locked",
+      "height": 278,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 390,
+      "section": "fetch layer: loading",
+      "panel": "Nutrition",
+      "state": "loading",
+      "height": 244,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 390,
+      "section": "fetch layer: loading",
+      "panel": "Hydration",
+      "state": "loading",
+      "height": 244,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 390,
+      "section": "fetch layer: loading",
+      "panel": "Sleep",
+      "state": "loading",
+      "height": 244,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 390,
+      "section": "fetch layer: error",
+      "panel": "Nutrition",
+      "state": "error",
+      "height": 208,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 390,
+      "section": "fetch layer: error",
+      "panel": "Hydration",
+      "state": "error",
+      "height": 208,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 390,
+      "section": "fetch layer: error",
+      "panel": "Sleep",
+      "state": "error",
+      "height": 208,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 360,
+      "section": "first-run",
+      "panel": "Nutrition",
+      "state": "empty",
+      "height": 263,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 360,
+      "section": "first-run",
+      "panel": "Hydration",
+      "state": "empty",
+      "height": 242,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 360,
+      "section": "first-run",
+      "panel": "Sleep",
+      "state": "empty",
+      "height": 318,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 360,
+      "section": "sparse",
+      "panel": "Nutrition",
+      "state": "populated",
+      "height": 443,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 360,
+      "section": "sparse",
+      "panel": "Hydration",
+      "state": "populated",
+      "height": 395,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 360,
+      "section": "sparse",
+      "panel": "Sleep",
+      "state": "populated",
+      "height": 448,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 360,
+      "section": "consistent",
+      "panel": "Nutrition",
+      "state": "populated",
+      "height": 443,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 360,
+      "section": "consistent",
+      "panel": "Hydration",
+      "state": "populated",
+      "height": 395,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 360,
+      "section": "consistent",
+      "panel": "Sleep",
+      "state": "populated",
+      "height": 469,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 360,
+      "section": "lapsed",
+      "panel": "Nutrition",
+      "state": "empty",
+      "height": 263,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 360,
+      "section": "lapsed",
+      "panel": "Hydration",
+      "state": "empty",
+      "height": 242,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 360,
+      "section": "lapsed",
+      "panel": "Sleep",
+      "state": "stale",
+      "height": 421,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 360,
+      "section": "overshoot",
+      "panel": "Nutrition",
+      "state": "populated",
+      "height": 443,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 360,
+      "section": "overshoot",
+      "panel": "Hydration",
+      "state": "populated",
+      "height": 395,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 360,
+      "section": "overshoot",
+      "panel": "Sleep",
+      "state": "populated",
+      "height": 448,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 360,
+      "section": "locked-basic",
+      "panel": "Nutrition",
+      "state": "locked",
+      "height": 278,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 360,
+      "section": "locked-basic",
+      "panel": "Hydration",
+      "state": "locked",
+      "height": 254,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 360,
+      "section": "locked-basic",
+      "panel": "Sleep",
+      "state": "locked",
+      "height": 278,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 360,
+      "section": "fetch layer: loading",
+      "panel": "Nutrition",
+      "state": "loading",
+      "height": 244,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 360,
+      "section": "fetch layer: loading",
+      "panel": "Hydration",
+      "state": "loading",
+      "height": 244,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 360,
+      "section": "fetch layer: loading",
+      "panel": "Sleep",
+      "state": "loading",
+      "height": 244,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 360,
+      "section": "fetch layer: error",
+      "panel": "Nutrition",
+      "state": "error",
+      "height": 208,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 360,
+      "section": "fetch layer: error",
+      "panel": "Hydration",
+      "state": "error",
+      "height": 208,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 360,
+      "section": "fetch layer: error",
+      "panel": "Sleep",
+      "state": "error",
+      "height": 208,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 320,
+      "section": "first-run",
+      "panel": "Nutrition",
+      "state": "empty",
+      "height": 263,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 320,
+      "section": "first-run",
+      "panel": "Hydration",
+      "state": "empty",
+      "height": 242,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 320,
+      "section": "first-run",
+      "panel": "Sleep",
+      "state": "empty",
+      "height": 339,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 320,
+      "section": "sparse",
+      "panel": "Nutrition",
+      "state": "populated",
+      "height": 460,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 320,
+      "section": "sparse",
+      "panel": "Hydration",
+      "state": "populated",
+      "height": 395,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 320,
+      "section": "sparse",
+      "panel": "Sleep",
+      "state": "populated",
+      "height": 467,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 320,
+      "section": "consistent",
+      "panel": "Nutrition",
+      "state": "populated",
+      "height": 460,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 320,
+      "section": "consistent",
+      "panel": "Hydration",
+      "state": "populated",
+      "height": 395,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 320,
+      "section": "consistent",
+      "panel": "Sleep",
+      "state": "populated",
+      "height": 488,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 320,
+      "section": "lapsed",
+      "panel": "Nutrition",
+      "state": "empty",
+      "height": 263,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 320,
+      "section": "lapsed",
+      "panel": "Hydration",
+      "state": "empty",
+      "height": 242,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 320,
+      "section": "lapsed",
+      "panel": "Sleep",
+      "state": "stale",
+      "height": 421,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 320,
+      "section": "overshoot",
+      "panel": "Nutrition",
+      "state": "populated",
+      "height": 460,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 320,
+      "section": "overshoot",
+      "panel": "Hydration",
+      "state": "populated",
+      "height": 395,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 320,
+      "section": "overshoot",
+      "panel": "Sleep",
+      "state": "populated",
+      "height": 467,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 320,
+      "section": "locked-basic",
+      "panel": "Nutrition",
+      "state": "locked",
+      "height": 278,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 320,
+      "section": "locked-basic",
+      "panel": "Hydration",
+      "state": "locked",
+      "height": 278,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 320,
+      "section": "locked-basic",
+      "panel": "Sleep",
+      "state": "locked",
+      "height": 278,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 320,
+      "section": "fetch layer: loading",
+      "panel": "Nutrition",
+      "state": "loading",
+      "height": 244,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 320,
+      "section": "fetch layer: loading",
+      "panel": "Hydration",
+      "state": "loading",
+      "height": 244,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 320,
+      "section": "fetch layer: loading",
+      "panel": "Sleep",
+      "state": "loading",
+      "height": 244,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 320,
+      "section": "fetch layer: error",
+      "panel": "Nutrition",
+      "state": "error",
+      "height": 208,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 320,
+      "section": "fetch layer: error",
+      "panel": "Hydration",
+      "state": "error",
+      "height": 208,
+      "min": 208,
+      "max": 320
+    },
+    {
+      "width": 320,
+      "section": "fetch layer: error",
+      "panel": "Sleep",
+      "state": "error",
+      "height": 208,
+      "min": 208,
+      "max": 320
+    }
+  ],
+  "targets": [
+    {
+      "panel": "Nutrition",
+      "tag": "a",
+      "role": null,
+      "text": "Nutrition details →",
+      "ariaLabel": null,
+      "w": 129,
+      "h": 47
+    },
+    {
+      "panel": "Nutrition",
+      "tag": "a",
+      "role": null,
+      "text": "Ask Chad",
+      "ariaLabel": null,
+      "w": 117,
+      "h": 47
+    },
+    {
+      "panel": "Nutrition",
+      "tag": "button",
+      "role": null,
+      "text": "",
+      "ariaLabel": "More options",
+      "w": 47,
+      "h": 47
+    },
+    {
+      "panel": "Nutrition",
+      "tag": "a",
+      "role": null,
+      "text": "Log meal",
+      "ariaLabel": null,
+      "w": 92,
+      "h": 47
+    },
+    {
+      "panel": "Hydration",
+      "tag": "a",
+      "role": null,
+      "text": "Hydration history →",
+      "ariaLabel": null,
+      "w": 138,
+      "h": 47
+    },
+    {
+      "panel": "Hydration",
+      "tag": "a",
+      "role": null,
+      "text": "Ask Chad",
+      "ariaLabel": null,
+      "w": 117,
+      "h": 47
+    },
+    {
+      "panel": "Hydration",
+      "tag": "button",
+      "role": null,
+      "text": "",
+      "ariaLabel": "More options",
+      "w": 47,
+      "h": 47
+    },
+    {
+      "panel": "Hydration",
+      "tag": "button",
+      "role": null,
+      "text": "Log water",
+      "ariaLabel": null,
+      "w": 98,
+      "h": 47
+    },
+    {
+      "panel": "Sleep",
+      "tag": "a",
+      "role": null,
+      "text": "Sleep trends →",
+      "ariaLabel": null,
+      "w": 110,
+      "h": 47
+    },
+    {
+      "panel": "Sleep",
+      "tag": "a",
+      "role": null,
+      "text": "Ask Chad",
+      "ariaLabel": null,
+      "w": 117,
+      "h": 47
+    },
+    {
+      "panel": "Sleep",
+      "tag": "button",
+      "role": null,
+      "text": "",
+      "ariaLabel": "More options",
+      "w": 47,
+      "h": 47
+    },
+    {
+      "panel": "Sleep",
+      "tag": "button",
+      "role": null,
+      "text": "Edit last night",
+      "ariaLabel": null,
+      "w": 124,
+      "h": 47
+    }
+  ],
+  "contrast": {
+    "dark": [
+      {
+        "section": "Calorie Tracker",
+        "state": "empty",
+        "text": "No meals logged yet.",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Calorie Tracker",
+        "state": "empty",
+        "text": "We",
+        "fontSize": 12,
+        "weight": 600,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Calorie Tracker",
+        "state": "empty",
+        "text": "Log meal",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "empty",
+        "text": "No water logged yet.",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "empty",
+        "text": "We",
+        "fontSize": 12,
+        "weight": 600,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "empty",
+        "text": "Log water",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Sleep",
+        "state": "empty",
+        "text": "No sleep logged yet.",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Sleep",
+        "state": "empty",
+        "text": "We",
+        "fontSize": 12,
+        "weight": 600,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Sleep",
+        "state": "empty",
+        "text": "Log last night",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Calorie Tracker",
+        "state": "populated",
+        "text": "420",
+        "fontSize": 28,
+        "weight": 700,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": true,
+        "threshold": 3,
+        "pass": true
+      },
+      {
+        "section": "Calorie Tracker",
+        "state": "populated",
+        "text": "1,880",
+        "fontSize": 24,
+        "weight": 700,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": true,
+        "threshold": 3,
+        "pass": true
+      },
+      {
+        "section": "Calorie Tracker",
+        "state": "populated",
+        "text": "We",
+        "fontSize": 12,
+        "weight": 600,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Calorie Tracker",
+        "state": "populated",
+        "text": "Ask Chad",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "populated",
+        "text": "30 oz",
+        "fontSize": 28,
+        "weight": 700,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": true,
+        "threshold": 3,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "populated",
+        "text": "24%",
+        "fontSize": 20,
+        "weight": 700,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": true,
+        "threshold": 3,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "populated",
+        "text": "%",
+        "fontSize": 12,
+        "weight": 600,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "populated",
+        "text": "We",
+        "fontSize": 12,
+        "weight": 600,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "populated",
+        "text": "Ask Chad",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Sleep",
+        "state": "populated",
+        "text": "6h 42m",
+        "fontSize": 28,
+        "weight": 700,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": true,
+        "threshold": 3,
+        "pass": true
+      },
+      {
+        "section": "Sleep",
+        "state": "populated",
+        "text": "We",
+        "fontSize": 12,
+        "weight": 600,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Sleep",
+        "state": "populated",
+        "text": "Ask Chad",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Sleep",
+        "state": "populated",
+        "text": "Edit last night",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Calorie Tracker",
+        "state": "populated",
+        "text": "2,140",
+        "fontSize": 28,
+        "weight": 700,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": true,
+        "threshold": 3,
+        "pass": true
+      },
+      {
+        "section": "Calorie Tracker",
+        "state": "populated",
+        "text": "160",
+        "fontSize": 24,
+        "weight": 700,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": true,
+        "threshold": 3,
+        "pass": true
+      },
+      {
+        "section": "Calorie Tracker",
+        "state": "populated",
+        "text": "We",
+        "fontSize": 12,
+        "weight": 600,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Calorie Tracker",
+        "state": "populated",
+        "text": "Ask Chad",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "populated",
+        "text": "108 oz",
+        "fontSize": 28,
+        "weight": 700,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": true,
+        "threshold": 3,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "populated",
+        "text": "85%",
+        "fontSize": 20,
+        "weight": 700,
+        "color": "rgb(255, 255, 255)",
+        "ratio": 19.18,
+        "large": true,
+        "threshold": 3,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "populated",
+        "text": "%",
+        "fontSize": 12,
+        "weight": 600,
+        "color": "rgb(255, 255, 255)",
+        "ratio": 19.18,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "populated",
+        "text": "We",
+        "fontSize": 12,
+        "weight": 600,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "populated",
+        "text": "Ask Chad",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Sleep",
+        "state": "populated",
+        "text": "7h 10m",
+        "fontSize": 28,
+        "weight": 700,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": true,
+        "threshold": 3,
+        "pass": true
+      },
+      {
+        "section": "Sleep",
+        "state": "populated",
+        "text": "We",
+        "fontSize": 12,
+        "weight": 600,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Sleep",
+        "state": "populated",
+        "text": "Ask Chad",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Sleep",
+        "state": "populated",
+        "text": "Edit last night",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Calorie Tracker",
+        "state": "empty",
+        "text": "No meals logged yet.",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Calorie Tracker",
+        "state": "empty",
+        "text": "We",
+        "fontSize": 12,
+        "weight": 600,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Calorie Tracker",
+        "state": "empty",
+        "text": "Log meal",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "empty",
+        "text": "No water logged yet.",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "empty",
+        "text": "We",
+        "fontSize": 12,
+        "weight": 600,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "empty",
+        "text": "Log water",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Sleep",
+        "state": "stale",
+        "text": "8h",
+        "fontSize": 28,
+        "weight": 700,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": true,
+        "threshold": 3,
+        "pass": true
+      },
+      {
+        "section": "Sleep",
+        "state": "stale",
+        "text": "We",
+        "fontSize": 12,
+        "weight": 600,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Sleep",
+        "state": "stale",
+        "text": "Ask Chad",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Calorie Tracker",
+        "state": "populated",
+        "text": "720",
+        "fontSize": 28,
+        "weight": 700,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": true,
+        "threshold": 3,
+        "pass": true
+      },
+      {
+        "section": "Calorie Tracker",
+        "state": "populated",
+        "text": "1,880",
+        "fontSize": 24,
+        "weight": 700,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": true,
+        "threshold": 3,
+        "pass": true
+      },
+      {
+        "section": "Calorie Tracker",
+        "state": "populated",
+        "text": "We",
+        "fontSize": 12,
+        "weight": 600,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Calorie Tracker",
+        "state": "populated",
+        "text": "Ask Chad",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "populated",
+        "text": "81 oz",
+        "fontSize": 28,
+        "weight": 700,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": true,
+        "threshold": 3,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "populated",
+        "text": "63%",
+        "fontSize": 20,
+        "weight": 700,
+        "color": "rgb(255, 255, 255)",
+        "ratio": 19.18,
+        "large": true,
+        "threshold": 3,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "populated",
+        "text": "%",
+        "fontSize": 12,
+        "weight": 600,
+        "color": "rgb(255, 255, 255)",
+        "ratio": 19.18,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "populated",
+        "text": "We",
+        "fontSize": 12,
+        "weight": 600,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "populated",
+        "text": "Ask Chad",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Sleep",
+        "state": "populated",
+        "text": "7h 40m",
+        "fontSize": 28,
+        "weight": 700,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": true,
+        "threshold": 3,
+        "pass": true
+      },
+      {
+        "section": "Sleep",
+        "state": "populated",
+        "text": "We",
+        "fontSize": 12,
+        "weight": 600,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Sleep",
+        "state": "populated",
+        "text": "Ask Chad",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Sleep",
+        "state": "populated",
+        "text": "Edit last night",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Calorie Tracker",
+        "state": "locked",
+        "text": "Upgrade to Pro",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "locked",
+        "text": "Upgrade to Pro",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Sleep",
+        "state": "locked",
+        "text": "Upgrade to Pro",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Calorie Tracker",
+        "state": "loading",
+        "text": "Loading",
+        "fontSize": 16,
+        "weight": 400,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "loading",
+        "text": "Loading",
+        "fontSize": 16,
+        "weight": 400,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Sleep",
+        "state": "loading",
+        "text": "Loading",
+        "fontSize": 16,
+        "weight": 400,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Calorie Tracker",
+        "state": "error",
+        "text": "Try again",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "error",
+        "text": "Try again",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Sleep",
+        "state": "error",
+        "text": "Try again",
+        "fontSize": 14,
+        "weight": 500,
+        "color": "rgb(213, 219, 230)",
+        "ratio": 13.79,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      }
+    ],
+    "light": [
+      {
+        "section": "Water",
+        "state": "populated",
+        "text": "85%",
+        "fontSize": 20,
+        "weight": 700,
+        "color": "rgb(255, 255, 255)",
+        "ratio": 21,
+        "large": true,
+        "threshold": 3,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "populated",
+        "text": "%",
+        "fontSize": 12,
+        "weight": 600,
+        "color": "rgb(255, 255, 255)",
+        "ratio": 21,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "populated",
+        "text": "63%",
+        "fontSize": 20,
+        "weight": 700,
+        "color": "rgb(255, 255, 255)",
+        "ratio": 21,
+        "large": true,
+        "threshold": 3,
+        "pass": true
+      },
+      {
+        "section": "Water",
+        "state": "populated",
+        "text": "%",
+        "fontSize": 12,
+        "weight": 600,
+        "color": "rgb(255, 255, 255)",
+        "ratio": 21,
+        "large": false,
+        "threshold": 4.5,
+        "pass": true
+      }
+    ]
+  }
+}

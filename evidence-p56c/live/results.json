@@ -1,0 +1,112 @@
+{
+  "results": [
+    {
+      "id": "2",
+      "pass": true,
+      "detail": "overlay opened (title=true); activeElement=DIV, isInput=false"
+    },
+    {
+      "id": "3",
+      "pass": true,
+      "detail": "+8oz Glass: 0 -> 8 (delta 8); Undo toast present"
+    },
+    {
+      "id": "4",
+      "pass": true,
+      "detail": "after Undo: headline 0 (prior 0); exact revert=true"
+    },
+    {
+      "id": "1",
+      "pass": true,
+      "detail": "state=populated; liquid gauge svg=true (wave paths=2), weekBars=7/7, dot strip=7/7, headline metric=true, context=\"8 ozof 128 oz goal\""
+    },
+    {
+      "id": "5",
+      "pass": true,
+      "detail": "overflow lists Edit daily goal=true + Log a past day=true; click -> hash=#log-past-day, #log-past-day in view=true"
+    },
+    {
+      "id": "6",
+      "pass": true,
+      "detail": "backfill toast=\"Added 20 oz to Sun, Jul 12.Undo\" (Undo present); after Undo 'Removed.'=true"
+    },
+    {
+      "id": "7",
+      "pass": true,
+      "detail": "goal overlay (title=true); activeElement=DIV isInput=false; context \"8 ozof 128 oz goal\"->\"8 ozof 128 oz goal\" unchanged=true"
+    },
+    {
+      "id": "8",
+      "pass": true,
+      "detail": "detail link \"Hydration history\" href=\"#history\"; #history exists=true"
+    },
+    {
+      "id": "10",
+      "pass": true,
+      "detail": "AdaptiveDialog=centered dialog=true (drawer=false); title 'Log sleep'=false; activeElement=DIV isInput=false"
+    },
+    {
+      "id": "12",
+      "pass": true,
+      "detail": "after Undo + reload: day 12 present in history=false; removed=true"
+    },
+    {
+      "id": "9",
+      "pass": true,
+      "detail": "state=populated; night columns=7/7, dot strip=7/7, dashed goal line els=7, headline=\"7h 15mof 7h goalGoal met\""
+    },
+    {
+      "id": "11",
+      "pass": true,
+      "detail": "toast=\"Sleep logged for Sun, Jul 12. 7h 15m.Undo\" (replaces-warning=false); day 12 inWeek=true; week column/dot filled=true"
+    },
+    {
+      "id": "13",
+      "pass": true,
+      "detail": "Delete confirm names night=true (\"Delete the Sun, Jul 12 night of 7h 15m?Its hours leave your week, trends, and streaks.Canc\"); Edit centered dialog=true, title 'Edit sleep'=true, seeded=true"
+    },
+    {
+      "id": "14",
+      "pass": true,
+      "detail": "nightly goal overlay (title=true); presets 7h=true 8h=true 9h=true"
+    },
+    {
+      "id": "15",
+      "pass": true,
+      "detail": "hydration log-in-popover=false; sleep log-in-popover=false (forms live in AdaptiveDialog/Drawer)"
+    },
+    {
+      "id": "M2",
+      "pass": true,
+      "detail": "bottom sheet present=true bottomAnchored=true dir=bottom; activeInput=false; noHOverflow=true (390<=390)"
+    },
+    {
+      "id": "M3",
+      "pass": true,
+      "detail": "+8oz glass (tap): 0 -> 8 (delta 8); Undo present"
+    },
+    {
+      "id": "M4",
+      "pass": true,
+      "detail": "after Undo (tap): 0 (prior 0); exact revert=true"
+    },
+    {
+      "id": "M10",
+      "pass": true,
+      "detail": "bottom sheet present=true bottomAnchored=true dir=bottom; activeInput=false; noHOverflow=true"
+    },
+    {
+      "id": "M11",
+      "pass": true,
+      "detail": "mobile day=12 (replaces=false); toast=\"Sleep logged for Sun, Jul 12. 7h 15m.Undo\""
+    },
+    {
+      "id": "M12",
+      "pass": true,
+      "detail": "after Undo+reload: day 12 present=false; removed=true"
+    }
+  ],
+  "created": 7,
+  "cleaned": 7,
+  "cleanupNotes": []
+}

@@ -1,0 +1,90 @@
+[
+  {
+    "step": "hydration-390-load",
+    "overflow": false,
+    "scrollW": 390,
+    "clientW": 390
+  },
+  {
+    "step": "hydration-390-primary-open",
+    "tag": "hydration",
+    "present": true,
+    "rect": {
+      "top": 365,
+      "bottom": 844,
+      "left": 0,
+      "right": 390,
+      "w": 390
+    },
+    "vh": 844,
+    "vw": 390,
+    "inViewport": true,
+    "bg": "rgb(4, 7, 13)",
+    "bgAlpha": 1,
+    "title": "Log water",
+    "activeEl": "DIV",
+    "activeIsInput": false
+  },
+  {
+    "step": "hydration-390-overflow-while-open",
+    "overflow": false,
+    "scrollW": 390,
+    "clientW": 390
+  },
+  {
+    "step": "hydration-390-escape",
+    "open": false
+  },
+  {
+    "step": "sleep-390-load",
+    "overflow": false,
+    "scrollW": 390,
+    "clientW": 390
+  },
+  {
+    "step": "sleep-390-primary-open",
+    "tag": "sleep",
+    "present": true,
+    "rect": {
+      "top": 343,
+      "bottom": 844,
+      "left": 0,
+      "right": 390,
+      "w": 390
+    },
+    "vh": 844,
+    "vw": 390,
+    "inViewport": true,
+    "bg": "rgb(4, 7, 13)",
+    "bgAlpha": 1,
+    "title": "Log sleep",
+    "activeEl": "DIV",
+    "activeIsInput": false
+  },
+  {
+    "step": "sleep-390-overflow-while-open",
+    "overflow": false,
+    "scrollW": 390,
+    "clientW": 390
+  },
+  {
+    "step": "sleep-390-escape",
+    "open": true
+  },
+  {
+    "step": "mob-hyd-after-log",
+    "bodyHas8oz": true,
+    "overflow": false,
+    "scrollW": 390,
+    "clientW": 390
+  },
+  {
+    "step": "mob-hyd-delete-confirm",
+    "tag": "mob-del",
+    "present": false
+  },
+  {
+    "step": "mob-hyd-after-cleanup",
+    "bodyHas8oz": true
+  }
+]

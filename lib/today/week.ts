@@ -93,6 +93,9 @@ export type LastNight = {
   isCurrent: boolean;
   /** "Sun, Jun 29" — when the entry is for, shown for stale entries. */
   dateLabel: string;
+  /** Member-local days since the entry's night (0 = today). Feeds the
+   *  contract staleness resolution (resolvePanelState ageDays; P56-C). */
+  ageDays: number;
 } | null;
 
 /** One day in the hydration card's Sunday-start week strip. */
@@ -127,6 +130,7 @@ export function buildLastNight(
       month: "short",
       day: "numeric",
     }),
+    ageDays: Math.max(diffDays, 0),
   };
 }
 
@@ -186,6 +190,59 @@ export function buildWorkoutWeek(
       dateLabel: weekSlotDateLabel(d),
       count,
       logged: count > 0,
+      isToday: t === todayMs,
+      isFuture: t > todayMs,
+    };
+  });
+}
+
+/** One day in the nutrition panel's Sunday-start week strip (FIX-25). */
+export type MacroDay = {
+  t: number;
+  label: string;
+  /** "Mon, Jun 29": the real date, for tooltips (R2-12). */
+  dateLabel: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  logged: boolean;
+  isToday: boolean;
+  /** Later this week (after today): renders as a quiet upcoming slot. */
+  isFuture: boolean;
+};
+
+/**
+ * The nutrition twin of buildWaterWeek (metric `nutrition.week.daily`): the
+ * member's current Sunday-start week over per-day macro totals from
+ * lib/nutrition/daily-macros.ts dailyMacroTrend. Unlogged days stay hollow
+ * (logged: false), never 0-kcal days; per-day target grading happens at the
+ * consumer against the FIX-07 effective-dated targets (getNutritionTargetsByDay).
+ */
+export function buildMacroWeek(
+  macroDaily: {
+    t: number;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  }[],
+  timezone: string | null
+): MacroDay[] {
+  const { days, todayMs } = weekAnchors(timezone);
+  const byDay = new Map(macroDaily.map((m) => [m.t, m] as const));
+  return days.map((d) => {
+    const t = d.getTime();
+    const entry = byDay.get(t);
+    return {
+      t,
+      label: weekSlotLabel(d),
+      dateLabel: weekSlotDateLabel(d),
+      calories: entry?.calories ?? 0,
+      protein: entry?.protein ?? 0,
+      carbs: entry?.carbs ?? 0,
+      fat: entry?.fat ?? 0,
+      logged: entry != null,
       isToday: t === todayMs,
       isFuture: t > todayMs,
     };

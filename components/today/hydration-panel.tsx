@@ -1,6 +1,7 @@
 "use client";
 
 import { Droplets } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useOptimistic, useState, useTransition } from "react";
 import {
   logWaterAmount,
@@ -8,9 +9,11 @@ import {
   saveWaterGoal,
 } from "@/app/nutrition/actions";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
+import { LiquidGauge } from "@/components/charts/liquid-gauge";
+import { NumberTicker } from "@/components/charts/number-ticker";
 import { useReward } from "@/components/dashboard/reward";
 import { QuickLogPanel } from "@/components/panels/roles";
-import { type DayBar, WeekBars } from "@/components/panels/visuals";
+import { WeekBars } from "@/components/panels/visuals";
 import {
   EditWaterGoalDialog,
   LogWaterDialog,
@@ -23,34 +26,62 @@ import {
   resolvePanelState,
   unloggedReading,
 } from "@/lib/contracts/data-state";
+import { canClaimForMetric, METRICS } from "@/lib/contracts/metrics";
+import { LOGGABLE_DOMAINS } from "@/lib/contracts/panels";
 import { formatQuantity, mlToOz } from "@/lib/contracts/units";
 import { DEFAULT_WATER_GOAL_ML } from "@/lib/today/water-units";
 import type { WaterDay } from "@/lib/today/week";
 
 /**
- * HYDRATION PANEL (P2-Z pilot, DSH-66). The first LIVE panel on the Phase 2
- * system, replacing the old WaterTracker card on /today: QuickLogPanel role
- * (FIX-14/15/16) + the overlay platform (FIX-17) + the form/feedback
- * primitives (FIX-38). The panel shows today's standing; logging happens in
- * the quick-log overlay; every add gets a receipt toast with Undo
- * (undo-after-quick-add, owner confirm-or-undo law s185).
+ * HYDRATION PANEL (P56-C, FIX-26; grew from the P2-Z pilot). The typed
+ * QuickLogPanel for water on the P2 system, now completed to the full
+ * contract: the LiquidGauge signature visual (the WaterMinder/Waterllama
+ * category language; rule-8 teardown in evidence-p56c/benchmark-teardown.md)
+ * beside the week's goal bars, strip AND chart (owner law s181), one primary
+ * logging action in the FIX-17 overlay, exact-entry Undo on every quick-add,
+ * and per-day FIX-07 effective-dated goals: each strip day and bar grades
+ * against the goal active on THAT day, so backfilled water lands under the
+ * right target. This panel replaced the legacy WaterTracker popover card
+ * (the banned s168 pattern) everywhere it mounted.
  *
- * Quick-adds stay optimistic (R2-15): the headline, bars, and strip apply the
- * delta instantly while the server action commits; the actions revalidate
- * /today and /hydration so the totals reconcile when the transition settles.
+ * Quick-adds stay optimistic (R2-15): the headline number rolls, the liquid
+ * rises, and the strip fills instantly while the server action commits; the
+ * FIX-10 receipt fan-out reconciles every dependent surface on settle.
  */
+
+/**
+ * A week day carrying the goal active on that day (FIX-07). `goalMl` is
+ * optional ONLY so the pre-assembler /today mount keeps compiling until
+ * P56-D adopts getHydrationPanelData (lib/today/panel-data.ts); a day
+ * without one grades against today's goal (the pre-FIX-07 behavior).
+ */
+export type HydrationPanelDay = WaterDay & { goalMl?: number };
+
+const HYDRATION_DOMAIN = LOGGABLE_DOMAINS.find((d) => d.domain === "hydration");
+
 export function HydrationPanel({
   totalMl,
   goalMl = DEFAULT_WATER_GOAL_ML,
   week,
   viewHref = "/hydration",
+  backfillHref = "/hydration#log-past-day",
+  locked = false,
+  fetchState = "ready",
 }: {
   totalMl: number;
+  /** The goal active today (ml), FIX-07 effective-dated. */
   goalMl?: number;
-  /** This week's Sunday-start days (buildWaterWeek). */
-  week: WaterDay[];
+  /** This week's Sunday-start days, each with its own effective goal. */
+  week: HydrationPanelDay[];
   viewHref?: string;
+  /** Where "Log a past day" lands (the /hydration backfill card anchor). */
+  backfillHref?: string;
+  /** Entitlement gate: renders the locked teaser (no member data needed). */
+  locked?: boolean;
+  /** Fetch layer for harness/error surfaces; live pages resolve to ready. */
+  fetchState?: "ready" | "loading" | "error";
 }) {
+  const router = useRouter();
   const reward = useReward();
   const [pending, startTransition] = useTransition();
   const [logOpen, setLogOpen] = useState(false);
@@ -63,12 +94,11 @@ export function HydrationPanel({
 
   const safeGoal = goalMl > 0 ? goalMl : DEFAULT_WATER_GOAL_ML;
   const goalOzLabel = formatQuantity(Math.round(mlToOz(safeGoal)), "oz");
+  const reached = optimisticMl >= safeGoal;
 
   // State per the contract resolver: hydration is a daily-status domain
   // (sparseBelowPoints 1, panels.ts), so the panel is populated from the
-  // first log of the day and empty before it. Today's metric never goes
-  // stale, and /today only renders this panel for entitled members with a
-  // resolved fetch.
+  // first log of the day and empty before it.
   const loggedDays = week.filter((d) => d.logged).length;
   const coverage = {
     loggedDays,
@@ -77,28 +107,35 @@ export function HydrationPanel({
     spanDays: 0,
   };
   const state = resolvePanelState({
-    locked: false,
-    fetch: "ready",
+    locked,
+    fetch: fetchState,
     reading:
       optimisticMl > 0
         ? loggedReading(optimisticMl, { coverage })
         : unloggedReading(coverage),
-    staleAfterDays: null,
-    sparseBelow: { points: 1 },
+    staleAfterDays: METRICS["hydration.water.today"].staleAfterDays,
+    sparseBelow: { points: HYDRATION_DOMAIN?.sparseBelowPoints ?? 1 },
   });
 
   /** Today's value with the optimistic delta applied; other days as logged. */
-  function dayMl(day: WaterDay): number | null {
+  function dayMl(day: HydrationPanelDay): number | null {
     if (day.isToday) {
       return optimisticMl > 0 ? optimisticMl : null;
     }
     return day.logged ? day.ml : null;
   }
 
+  /** The goal governing a day (FIX-07 per-day; today includes live edits). */
+  function dayGoal(day: HydrationPanelDay): number {
+    const g = day.isToday ? safeGoal : (day.goalMl ?? safeGoal);
+    return g > 0 ? g : DEFAULT_WATER_GOAL_ML;
+  }
+
   const strip = (
     <WeekStrip
       days={week.map((day) => {
         const ml = dayMl(day);
+        const goal = dayGoal(day);
         return {
           key: day.t,
           label: day.label,
@@ -107,29 +144,34 @@ export function HydrationPanel({
           isFuture: day.isFuture,
           dotClassName:
             ml != null
-              ? ml >= safeGoal
-                ? "bg-sky-400"
-                : "bg-sky-400/40"
+              ? ml >= goal
+                ? "bg-sky-600 dark:bg-sky-400"
+                : "bg-sky-600/40 dark:bg-sky-400/40"
               : "bg-border",
           value:
             ml != null
               ? formatQuantity(Math.round(mlToOz(ml)), "oz")
               : "Not logged",
-          status: ml != null && ml >= safeGoal ? "Goal hit" : undefined,
+          status: ml != null && ml >= goal ? "Goal hit" : undefined,
         };
       })}
     />
   );
 
-  const bars: DayBar[] = week.map((day) => {
-    const ml = dayMl(day);
-    return {
-      key: day.t,
-      fraction: ml != null ? ml / safeGoal : null,
-      isToday: day.isToday,
-      isFuture: day.isFuture,
-    };
-  });
+  // Weekly context beside the gauge: days at goal as an adherence read only
+  // when the claim clears its coverage threshold (claims.ts), else plain
+  // coverage. The strip below carries the per-day detail; no second 7-day
+  // chart competes with it (the P56-C harness audit found the old bars row
+  // redundant and ambiguous next to the dot strip).
+  const daysAtGoal = week.filter(
+    (d) => dayMl(d) != null && (dayMl(d) as number) >= dayGoal(d)
+  ).length;
+  const adherenceAllowed = canClaimForMetric(
+    "hydration.week.daily",
+    "adherence",
+    coverage
+  ).allowed;
+  const remainingMl = Math.max(safeGoal - optimisticMl, 0);
 
   function add(ml: number) {
     // Sensory feedback (DSH-54): a barely-there tick per quick-add, the full
@@ -192,6 +234,13 @@ export function HydrationPanel({
     });
   }
 
+  const gaugeLabel = reached
+    ? `Hydration goal reached: ${formatQuantity(Math.round(mlToOz(optimisticMl)), "oz")} of ${goalOzLabel}.`
+    : `Hydration ${Math.round((optimisticMl / safeGoal) * 100)}% of goal: ${formatQuantity(
+        Math.round(mlToOz(optimisticMl)),
+        "oz"
+      )} of ${goalOzLabel}.`;
+
   return (
     <>
       <QuickLogPanel
@@ -199,9 +248,26 @@ export function HydrationPanel({
         empty={{
           absent: week.some((d) => d.logged)
             ? "Nothing logged yet today."
-            : "No water logged yet.",
+            : // Week-scoped wording: the panel only sees this week, and a
+              // member with older history would read "yet" as contradicting
+              // the page's own stats (pre-delivery audit P3).
+              "No water logged this week.",
           unlock: "One tap adds a glass; the week fills in as you go.",
-          visual: strip,
+          // Designed hollow chart + strip: the same set rhythm as the other
+          // two trackers' empty states (first-run.md).
+          visual: (
+            <div className="flex flex-col gap-3">
+              <WeekBars
+                days={week.map((day) => ({
+                  key: day.t,
+                  fraction: null,
+                  isToday: day.isToday,
+                  isFuture: day.isFuture,
+                }))}
+              />
+              {strip}
+            </div>
+          ),
           action: (
             <Button
               className="min-h-11 sm:min-h-8"
@@ -223,17 +289,53 @@ export function HydrationPanel({
           primary: { label: "Log water", onClick: () => setLogOpen(true) },
           overflow: [
             { label: "Edit daily goal", onClick: () => setGoalOpen(true) },
-            { label: "Log a past day", href: viewHref },
+            { label: "Log a past day", href: backfillHref },
           ],
         }}
-        headline={formatQuantity(Math.round(mlToOz(optimisticMl)), "oz")}
+        headline={
+          <NumberTicker
+            format={(v) => formatQuantity(Math.round(mlToOz(v)), "oz")}
+            value={optimisticMl}
+          />
+        }
         icon={<Droplets className="size-4" />}
         lockedCapability="Pro members log water in one tap and see the week against a daily goal."
+        retryAction={
+          <Button
+            className="min-h-11 sm:min-h-8"
+            onClick={() => router.refresh()}
+            size="sm"
+            variant="outline"
+          >
+            Try again
+          </Button>
+        }
         state={state}
         targetContext={`of ${goalOzLabel} goal`}
         title="Water"
         tone="sky"
-        visual={<WeekBars barClassName="bg-sky-400" days={bars} />}
+        visual={
+          <div className="flex items-center gap-4">
+            <LiquidGauge
+              ariaLabel={gaugeLabel}
+              fraction={optimisticMl / safeGoal}
+              reached={reached}
+              size={88}
+            />
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <span className="font-medium text-body-sm text-foreground">
+                {reached
+                  ? "Goal hit"
+                  : `${formatQuantity(Math.round(mlToOz(remainingMl)), "oz")} to go`}
+              </span>
+              <span className="text-meta text-muted-foreground">
+                {adherenceAllowed
+                  ? `Goal hit on ${daysAtGoal} of ${loggedDays} logged days this week`
+                  : `Logged ${loggedDays} of ${coverage.windowDays} days this week`}
+              </span>
+            </div>
+          </div>
+        }
         weekStrip={strip}
         glow="sky"
       />

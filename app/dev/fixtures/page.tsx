@@ -51,6 +51,19 @@ export default function FixturesIndexPage() {
               resolve to (asserted by tests/unit/contracts.test.ts)
             </span>
           </li>
+          <li>
+            <Link
+              className="underline underline-offset-4"
+              href="/dev/fixtures/today-panels"
+            >
+              Today tracking panels
+            </Link>
+            <span className="text-muted-foreground">
+              {" "}
+              : the REAL FIX-25/26/27 panels (Nutrition, Hydration, Sleep) per
+              persona + forced fetch states (P56-C evidence surface)
+            </span>
+          </li>
         </ul>
       </section>
 
