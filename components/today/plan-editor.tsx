@@ -84,24 +84,24 @@ export function PlanEditor({
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         {variant === "cta" ? (
-          <Button className="gap-1.5" size="sm" variant="outline">
+          <Button className="min-h-11 gap-1.5 sm:min-h-8" size="sm" variant="outline">
             <Plus className="size-3.5" />
             Add a plan
           </Button>
         ) : variant === "add" ? (
-          <Button className="gap-1.5" size="sm" variant="outline">
+          <Button className="min-h-11 gap-1.5 sm:min-h-8" size="sm" variant="outline">
             <Plus className="size-3.5" />
             Add plan
           </Button>
         ) : variant === "button" ? (
-          <Button className="gap-1.5" size="sm" variant="outline">
+          <Button className="min-h-11 gap-1.5 sm:min-h-8" size="sm" variant="outline">
             <Pencil className="size-3.5" />
             Edit
           </Button>
         ) : (
           <Button
             aria-label="Edit plan"
-            className="size-7 text-muted-foreground"
+            className="size-11 text-muted-foreground sm:size-7"
             size="icon"
             variant="ghost"
           >
@@ -109,11 +109,16 @@ export function PlanEditor({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-y-auto">
+      <DialogContent
+        className="max-h-[85vh] overflow-y-auto"
+        // Nothing starts uninvited (owner law): opening the dialog must not
+        // focus the Title input and raise the phone keyboard.
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit plan" : "New plan"}</DialogTitle>
           <DialogDescription>
-            Paste or write the full plan — the whole split or diet, every day.
+            Paste or write the full plan: the whole split or diet, every day.
             Chad sees it in every chat.
           </DialogDescription>
         </DialogHeader>
@@ -172,7 +177,7 @@ export function PlanEditor({
               className="min-h-44"
               id="p-detail"
               onChange={(e) => setDetail(e.target.value)}
-              placeholder="Day 1 — Upper&#10;- Bench press 4×6&#10;- ..."
+              placeholder="Day 1 - Upper&#10;- Bench press 4x6&#10;- ..."
               value={detail}
             />
           </div>

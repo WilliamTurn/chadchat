@@ -11,7 +11,6 @@ import {
   type BodySectionVM,
   ConsistencySection,
   GoalSection,
-  type GoalSectionVM,
   GoalsEmptySection,
   HydrationSection,
   MilestoneSection,
@@ -67,10 +66,13 @@ import {
   getWorkoutsByUserId,
 } from "@/lib/db/queries";
 import { getOutcomesForGoals } from "@/lib/db/plan-goal-queries";
-import type { Goal, User } from "@/lib/db/schema";
+import type { User } from "@/lib/db/schema";
 import { computeGoalProgress } from "@/lib/goals/progress";
 import { isGoalReached } from "@/lib/contracts/claims";
-import { resolveGoalOutcomes } from "@/lib/goals/outcomes";
+import {
+  buildGoalVM,
+  latestMeasurementsByKind,
+} from "@/lib/goals/outcome-values";
 import { dailyMacroTrend } from "@/lib/nutrition/daily-macros";
 import {
   consistencyWindow,
@@ -81,7 +83,6 @@ import {
 } from "@/lib/progress/overview";
 import {
   convertWeight,
-  parseWeightUnit,
   round1,
   weightGoalStart,
   weightGoalTarget,
@@ -91,11 +92,7 @@ import {
   canonicalizeWorkouts,
 } from "@/lib/workouts/exercise-identity";
 import { getCustomExercisesByUserId } from "@/lib/db/queries";
-import {
-  computePersonalRecords,
-  exercise1RMTrend,
-  type WorkoutData,
-} from "@/lib/workouts/stats";
+import { computePersonalRecords } from "@/lib/workouts/stats";
 import { toWorkoutData } from "@/lib/workouts/serialize";
 import { DEFAULT_WATER_GOAL_ML, mlToOz } from "@/lib/today/water-units";
 import { computeStreak } from "@/lib/today/streak";
@@ -601,12 +598,10 @@ async function OverviewContent({ range }: { range: OverviewRangeKey }) {
     goalIds: goals.map((g) => g.id),
     userId: user.id,
   });
-  const latestMeasurementByKind = new Map<string, number>();
-  for (const m of measurements) {
-    if (!latestMeasurementByKind.has(m.kind)) {
-      latestMeasurementByKind.set(m.kind, m.value);
-    }
-  }
+  // Latest reading per kind (rows ascend; the shared helper fixes the
+  // first-wins oldest-reading bug found by P56-E, reconciling goal outcomes
+  // with /progress/body's headline).
+  const latestMeasurementByKind = latestMeasurementsByKind(measurements);
   const goalVMs = goals
     .slice(0, 3)
     .map((g) =>
@@ -681,79 +676,4 @@ async function OverviewContent({ range }: { range: OverviewRangeKey }) {
       </div>
     </div>
   );
-}
-
-/* ---------------------------------------------------- goal outcome values */
-
-function buildGoalVM(
-  goal: Goal,
-  outcomeRows: Parameters<typeof resolveGoalOutcomes>[1],
-  sources: {
-    trendWeight: number | null;
-    trendUnit: "lb" | "kg";
-    canonicalWorkouts: WorkoutData[];
-    latestMeasurementByKind: Map<string, number>;
-  }
-): GoalSectionVM {
-  const outcomes = resolveGoalOutcomes(goal, outcomeRows).map((o) => {
-    // Supported outcomes read their metric's ONE source module; unsupported
-    // outcomes show the member-maintained value, labeled (FIX-29).
-    let current: number | null = null;
-    if (!o.supported) {
-      current = o.currentValue;
-    } else if (o.metricId === "body.weight.trend") {
-      current =
-        sources.trendWeight != null
-          ? round1(
-              convertWeight(
-                sources.trendWeight,
-                sources.trendUnit,
-                parseWeightUnit(o.unit)
-              )
-            )
-          : null;
-    } else if (o.metricId === "training.exercise.e1rm" && o.metricRef) {
-      const trend = exercise1RMTrend(sources.canonicalWorkouts, o.metricRef);
-      current = trend.length > 0 ? trend[trend.length - 1].value : null;
-    } else if (o.metricId === "body.measurement" && o.metricRef) {
-      current =
-        sources.latestMeasurementByKind.get(o.metricRef.toLowerCase()) ?? null;
-    }
-
-    const progress = computeGoalProgress({
-      startValue: o.startValue,
-      targetValue: o.targetValue,
-      current,
-    });
-    const reached =
-      current != null &&
-      o.targetValue != null &&
-      isGoalReached(o.startValue ?? current, o.targetValue, current);
-
-    const unitSuffix = o.unit ? ` ${o.unit}` : "";
-    return {
-      label: o.label,
-      supported: o.supported,
-      currentText: current != null ? `${round1(current)}${unitSuffix}` : null,
-      targetText:
-        o.targetValue != null ? `${o.targetValue}${unitSuffix}` : null,
-      fraction: progress ? Math.min(1, progress.pct / 100) : null,
-      reached,
-    };
-  });
-
-  const primary = outcomes[0];
-  const headline = primary?.reached
-    ? "Reached"
-    : primary?.fraction != null
-      ? `${Math.min(99, Math.round(primary.fraction * 100))}% there`
-      : `${outcomes.length || "No"} outcome${outcomes.length === 1 ? "" : "s"} tracked`;
-
-  return {
-    id: goal.id,
-    title: goal.title,
-    headline,
-    outcomes,
-    state: outcomes.length === 0 ? "empty" : "populated",
-  };
 }

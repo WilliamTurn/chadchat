@@ -342,6 +342,14 @@ export const ROUTES = {
     access: "member",
     purpose: "Change a goal's definition.",
   },
+  "/plans": {
+    path: "/plans",
+    name: "All plans",
+    domain: "plans",
+    access: "member",
+    purpose:
+      "See and manage every saved plan: active, past, add, and reactivate. (P56-E: the /today plan-management card relocated here, FIX-30.)",
+  },
   "/plans/[id]": {
     path: "/plans/[id]",
     name: "Plan details",

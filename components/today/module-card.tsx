@@ -93,7 +93,10 @@ export function ModuleHeader({
   wrapTitle?: boolean;
 }) {
   return (
-    <div className="mb-3 flex items-center justify-between gap-2">
+    // The row may WRAP: a long title and the nowrap link must never paint
+    // over each other in a narrow cell; when space runs out the link drops
+    // to its own right-aligned line instead (P56-E mobile-audit P2).
+    <div className="mb-3 flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
       <h2 className="flex min-w-0 items-center gap-2.5 font-medium text-muted-foreground text-sm uppercase tracking-wide">
         <IconChip tone={tone}>{icon}</IconChip>
         <span className={wrapTitle ? "min-w-0" : "truncate"}>{title}</span>
@@ -103,7 +106,9 @@ export function ModuleHeader({
           // Phone widths: pad the hit area to 44px+ and pull it back with
           // negative margins so the header's visual layout doesn't change
           // (FIX-19; nothing else is interactive in the header row).
-          className="-mx-2 -my-3.5 flex items-center whitespace-nowrap px-2 py-3.5 text-muted-foreground text-xs underline-offset-4 transition-colors hover:text-foreground hover:underline sm:mx-0 sm:my-0 sm:px-0 sm:py-0"
+          // shrink-0 + ml-auto: the link keeps its size and stays on the
+          // right edge when it wraps onto its own line.
+          className="-my-3.5 -mr-2 ml-auto flex shrink-0 items-center whitespace-nowrap px-2 py-3.5 text-muted-foreground text-xs underline-offset-4 transition-colors hover:text-foreground hover:underline sm:my-0 sm:mr-0 sm:px-0 sm:py-0"
           href={viewHref}
         >
           {viewLabel} →

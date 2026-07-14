@@ -101,7 +101,7 @@ function RowDeletePlan({ id }: { id: string }) {
     return (
       <Button
         aria-label="Delete plan"
-        className="size-7 text-muted-foreground"
+        className="size-11 text-muted-foreground sm:size-7"
         onClick={() => setConfirming(true)}
         size="icon"
         variant="ghost"
@@ -180,7 +180,7 @@ function PastPlanItem({ plan }: { plan: EditablePlan }) {
         </Button>
         <Button
           aria-label="Make this the current plan"
-          className="size-7 text-muted-foreground"
+          className="size-11 text-muted-foreground sm:size-7"
           disabled={pending}
           onClick={onReactivate}
           size="icon"

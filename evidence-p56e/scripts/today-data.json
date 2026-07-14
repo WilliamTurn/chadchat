@@ -1,0 +1,131 @@
+{
+  "desktop": {
+    "errs": [],
+    "headings": [
+      "CALORIES",
+      "WATER",
+      "SLEEP",
+      "TRAINING",
+      "UP NEXT",
+      "CONSISTENCY",
+      "Today's log",
+      "CALORIE TRACKER",
+      "WATER",
+      "SLEEP",
+      "Plans and goals",
+      "TRAINING TODAY",
+      "MEAL PLAN TODAY",
+      "PRIMARY GOAL",
+      "Progress highlights",
+      "WEIGHT TREND",
+      "TRAINING THIS WEEK",
+      "NUTRITION ADHERENCE",
+      "RECOVERY CONSISTENCY"
+    ],
+    "bodyText": "CHAD\nToggle Sidebar\nDashboard\nChat\nTRACK\nWorkouts\nCalorie Tracker\nHydration\nSleep\nPLAN\nGoals\nMeal Plan\nREVIEW\nProgress\nFuture You\nWeekly Report\nRate My Kitchen\nFiles\nQuit Test\nAccount\nHelp\nPlans & pricing\nDashboard\nC\n\nMONDAY, JULY 13\n\nWelcome back\nPRO\nTalk to Chad\nCALORIES\n\nNot logged yet. Log a meal below.\n\nWATER\n\nNot logged yet. One tap below.\n\nSLEEP\n\nNot logged yet. Log last night below.\n\nTRAINING\n0\nsessions this week\nUP NEXT\nSleep trends →\nLog last night's sleep\n\nLast night's sleep isn't logged yet.\n\nLast night: not logged. Your first log starts the week's picture.\nAsk Chad\nLog last night\nCONSISTENCY\nProgress →\n0 of 7\ndays logged this week\n0-day streak\n\nNo streak yet. Log anything today to start one.\n\nSu\nMo\nTu\nWe\nTh\nFr\nSa\nToday's log\n\nRecord these every day.\n\nCALORIE TRACKER\nFood diary →\n\nNo meals logged this week. Log a meal and today's calories, protein, carbs, and fat fill in here.\n\nSu\nMo\nTu\nWe\nTh\nFr\nSa\nLog meal\nWATER\nHydration history →\n\nNo water logged this week. One tap adds a glass; the week fills in as you go.\n\nSu\nMo\nTu\nWe\nTh\nFr\nSa\nLog water\nSLEEP\nSleep trends →\n\nNo sleep logged yet. Log last night and the week fills in against your nightly goal.\n\nSu\nMo\nTu\nWe\nTh\nFr\nSa\nLog last night\nPlans and goals\n\nWhat you're committed to, and the next step for each.\n\nTRAINING TODAY\nAll plans →\n\nNo training plan yet. Ask Chad for a split or add one on All plans, and today's session appears here. Freestyle sessions count too.\n\nStart a workout\nMEAL PLAN TODAY\nOpen meal plan →\nEgg whites, whole eggs & toast\nnext meal\n\nFirst of 3 planned meals on Day 3 (day 3 of 3 in your rotation).\n\n670 kcal\nplanned\n55g\nprotein\n2,134 kcal\nDay 3 total\nAsk Chad\nPRIMARY GOAL\nGoal details →\nLose 200 lb and build a strong, muscular body\n1 outcome tracked\nTrend weight\nNot logged / 220 lbs\nProgress highlights\n\nWhat your daily logging adds up to. Every card opens its full progress view.\n\nWEIGHT TREND\nBody progress →\n\nNo weigh-ins yet. Log your weight to see the trend.\n\nAsk Chad\nLog weight\nTRAINING THIS WEEK\nTraining progress →\n\nNo workouts this week yet. Log a session and your training week builds here.\n\nNUTRITION ADHERENCE\nNutrition progress →\n\nNo meals logged this week yet. Log your days and calorie adherence grades here.\n\nRECOVERY CONSISTENCY\nRecovery progress →\n\nNo sleep or water logged this week yet. Log nights and water and your recovery week grades here."
+  },
+  "mobile": {
+    "errs": [],
+    "touchTargets": [
+      {
+        "band": "Plans and goals",
+        "tag": "a",
+        "text": "All plans →",
+        "w": 85,
+        "h": 47,
+        "inlineProse": false,
+        "under44": false
+      },
+      {
+        "band": "Plans and goals",
+        "tag": "a",
+        "text": "Start a workout",
+        "w": 136,
+        "h": 47,
+        "inlineProse": false,
+        "under44": false
+      },
+      {
+        "band": "Plans and goals",
+        "tag": "a",
+        "text": "Open meal plan →",
+        "w": 129,
+        "h": 47,
+        "inlineProse": false,
+        "under44": false
+      },
+      {
+        "band": "Plans and goals",
+        "tag": "a",
+        "text": "Ask Chad",
+        "w": 117,
+        "h": 47,
+        "inlineProse": false,
+        "under44": false
+      },
+      {
+        "band": "Plans and goals",
+        "tag": "a",
+        "text": "Goal details →",
+        "w": 105,
+        "h": 47,
+        "inlineProse": false,
+        "under44": false
+      },
+      {
+        "band": "Progress highlights",
+        "tag": "a",
+        "text": "Body progress →",
+        "w": 122,
+        "h": 47,
+        "inlineProse": false,
+        "under44": false
+      },
+      {
+        "band": "Progress highlights",
+        "tag": "a",
+        "text": "Ask Chad",
+        "w": 117,
+        "h": 47,
+        "inlineProse": false,
+        "under44": false
+      },
+      {
+        "band": "Progress highlights",
+        "tag": "a",
+        "text": "Log weight",
+        "w": 127,
+        "h": 47,
+        "inlineProse": false,
+        "under44": false
+      },
+      {
+        "band": "Progress highlights",
+        "tag": "a",
+        "text": "Training progress →",
+        "w": 140,
+        "h": 47,
+        "inlineProse": false,
+        "under44": false
+      },
+      {
+        "band": "Progress highlights",
+        "tag": "a",
+        "text": "Nutrition progress →",
+        "w": 143,
+        "h": 47,
+        "inlineProse": false,
+        "under44": false
+      },
+      {
+        "band": "Progress highlights",
+        "tag": "a",
+        "text": "Recovery progress →",
+        "w": 148,
+        "h": 47,
+        "inlineProse": false,
+        "under44": false
+      }
+    ]
+  }
+}

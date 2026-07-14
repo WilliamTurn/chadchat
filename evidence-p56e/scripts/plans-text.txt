@@ -1,0 +1,35 @@
+CHAD
+Toggle Sidebar
+Dashboard
+Chat
+TRACK
+Workouts
+Calorie Tracker
+Hydration
+Sleep
+PLAN
+Goals
+Meal Plan
+REVIEW
+Progress
+Future You
+Weekly Report
+Rate My Kitchen
+Files
+Quit Test
+Account
+Help
+Plans & pricing
+C
+Dashboard
+All plans
+
+Every plan you have saved: your current training and diet plans, your past plans, and the tools to add, edit, or bring one back.
+
+YOUR TRAINING
+View all →
+
+No plan on file yet. Ask Chad to build your split, then save it here, or add your own.
+
+Add a plan
+Ask Chad

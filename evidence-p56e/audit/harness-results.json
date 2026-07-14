@@ -1,0 +1,288 @@
+{
+ "sections": {
+  "first-run": [
+   {
+    "role": "plan",
+    "state": "empty",
+    "text": "TRAINING TODAY All plans → No training plan yet. Ask Chad for a split or add one on All plans, and today's session appears here. Freestyle sessions count too. Start a workout"
+   },
+   {
+    "role": "plan",
+    "state": "empty",
+    "text": "MEAL PLAN TODAY Open meal plan → No meal plan yet. Chad builds a structured plan around your macro target. Real foods, exact portions. Build a meal plan"
+   },
+   {
+    "role": "summary",
+    "state": "empty",
+    "text": "PRIMARY GOAL Goals → No active goals. Set a goal and its live progress leads your dashboard from here."
+   },
+   {
+    "role": "summary",
+    "state": "empty",
+    "text": "TRAINING THIS WEEK Training progress → No workouts this week yet. Log a session and your training week builds here."
+   },
+   {
+    "role": "summary",
+    "state": "empty",
+    "text": "NUTRITION ADHERENCE Nutrition progress → No meals logged this week yet. Log your days and calorie adherence grades here."
+   },
+   {
+    "role": "summary",
+    "state": "empty",
+    "text": "RECOVERY CONSISTENCY Recovery progress → No sleep or water logged this week yet. Log nights and water and your recovery week grades here."
+   }
+  ],
+  "sparse": [
+   {
+    "role": "plan",
+    "state": "populated",
+    "text": "TRAINING TODAY Training plan → Day 1: Push Beginner Full Body The first session of your rotation. 0 of 3 plan sessions this week Bench Press 4 x 5 Overhead Press 3 x 8 Incline Dumbbell Press 3 x 10 Triceps Pushdown 3 x 12 +1 more Ask Chad Start workout"
+   },
+   {
+    "role": "plan",
+    "state": "populated",
+    "text": "MEAL PLAN TODAY Open meal plan → Egg scramble & toast next meal First of 4 planned meals on Day 2 (day 2 of 3 in your rotation). 480 kcal planned 38g protein 2,200 kcal Day 2 total Ask Chad"
+   },
+   {
+    "role": "summary",
+    "state": "populated",
+    "text": "PRIMARY GOAL Goal details → Cut to 180 0% there Trend weight 205 lb / 180 lb"
+   },
+   {
+    "role": "summary",
+    "state": "populated",
+    "text": "TRAINING THIS WEEK Training progress → 1 session this week · 3,106 lb moved 0 of 3 plan sessions 0/3"
+   },
+   {
+    "role": "summary",
+    "state": "populated",
+    "text": "NUTRITION ADHERENCE Nutrition progress → 0 of 2 days within calorie target this week"
+   },
+   {
+    "role": "summary",
+    "state": "populated",
+    "text": "RECOVERY CONSISTENCY Recovery progress → 0 of 1 nights at your sleep goal this week Sleep 0 of 1 at goal Hydration 0 of 2 at goal"
+   }
+  ],
+  "consistent": [
+   {
+    "role": "plan",
+    "state": "populated",
+    "text": "TRAINING TODAY Training plan → Day 3: Legs PPL + Upper Your least recent session in the rotation. 2 of 4 plan sessions this week Squat 4 x 5 Romanian Deadlift 3 x 8 Leg Press 3 x 10 Calf Raise 4 x 12 Ask Chad Start workout"
+   },
+   {
+    "role": "plan",
+    "state": "populated",
+    "text": "MEAL PLAN TODAY Open meal plan → Lean beef chili next meal You've logged 2 of 4 planned meals today, so meal 3 on Day 2 (day 2 of 3 in your rotation) is next. 760 kcal planned 52g protein 2,200 kcal Day 2 total Ask Chad"
+   },
+   {
+    "role": "summary",
+    "state": "populated",
+    "text": "PRIMARY GOAL Goal details → Cut to 180 25% there Trend weight 198.7 lb / 180 lb Bench Press est. 1RM 233 lb / 245 lb All goals (2)"
+   },
+   {
+    "role": "summary",
+    "state": "populated",
+    "text": "TRAINING THIS WEEK Training progress → 2 sessions this week · 6,720 lb moved 2 of 4 plan sessions 2/4"
+   },
+   {
+    "role": "summary",
+    "state": "populated",
+    "text": "NUTRITION ADHERENCE Nutrition progress → 4 of 4 days within calorie target this week"
+   },
+   {
+    "role": "summary",
+    "state": "populated",
+    "text": "RECOVERY CONSISTENCY Recovery progress → 0 of 4 nights at your sleep goal this week Sleep 0 of 4 at goal Hydration 1 of 4 at goal"
+   }
+  ],
+  "lapsed": [
+   {
+    "role": "plan",
+    "state": "populated",
+    "text": "TRAINING TODAY Training plan → Day 2: Pull PPL + Upper Your least recent session in the rotation. 0 of 4 plan sessions this week Deadlift 3 x 5 Barbell Row 4 x 8 Lat Pulldown 3 x 10 Face Pull 3 x 15 Ask Chad Start workout"
+   },
+   {
+    "role": "plan",
+    "state": "populated",
+    "text": "MEAL PLAN TODAY Open meal plan → Egg scramble & toast next meal First of 4 planned meals on Day 2 (day 2 of 3 in your rotation). 480 kcal planned 38g protein 2,200 kcal Day 2 total Ask Chad"
+   },
+   {
+    "role": "summary",
+    "state": "populated",
+    "text": "PRIMARY GOAL Goal details → Cut to 180 12% there Trend weight 202.1 lb / 180 lb"
+   },
+   {
+    "role": "summary",
+    "state": "empty",
+    "text": "TRAINING THIS WEEK Training progress → No workouts this week yet. Log a session and your training week builds here."
+   },
+   {
+    "role": "summary",
+    "state": "empty",
+    "text": "NUTRITION ADHERENCE Nutrition progress → No meals logged this week yet. Log your days and calorie adherence grades here."
+   },
+   {
+    "role": "summary",
+    "state": "empty",
+    "text": "RECOVERY CONSISTENCY Recovery progress → No sleep or water logged this week yet. Log nights and water and your recovery week grades here."
+   }
+  ],
+  "overshoot": [
+   {
+    "role": "plan",
+    "state": "populated",
+    "text": "TRAINING TODAY Training plan → Day 3: Legs done PPL + Upper Today's training is in the books. Up next in your rotation: Day 4: Upper. 3 of 4 plan sessions this week Trained today Ask Chad Workout history"
+   },
+   {
+    "role": "plan",
+    "state": "populated",
+    "text": "MEAL PLAN TODAY Open meal plan → Planned meals covered All 4 planned meals on Day 1 (day 1 of 3 in your rotation) are covered by today's logs. Planned meals covered for today Ask Chad"
+   },
+   {
+    "role": "summary",
+    "state": "populated",
+    "text": "PRIMARY GOAL Goal details → Cut to 180 Reached Trend weight 178.6 lb / 180 lb Bench Press est. 1RM 344 lb / 245 lb"
+   },
+   {
+    "role": "summary",
+    "state": "populated",
+    "text": "TRAINING THIS WEEK Training progress → 2 sessions this week · 8,400 lb moved 3 of 4 plan sessions 3/4"
+   },
+   {
+    "role": "summary",
+    "state": "populated",
+    "text": "NUTRITION ADHERENCE Nutrition progress → 0 of 1 days within calorie target this week"
+   },
+   {
+    "role": "summary",
+    "state": "populated",
+    "text": "RECOVERY CONSISTENCY Recovery progress → 0 of 1 nights at your sleep goal this week Sleep 0 of 1 at goal Hydration 0 of 1 at goal"
+   }
+  ],
+  "locked-basic": [
+   {
+    "role": "plan",
+    "state": "populated",
+    "text": "TRAINING TODAY All plans → Coach starter plan This plan is a written document. Open it to read today's work, or prepare it on Workouts to make its days startable. Ask Chad Open plan"
+   },
+   {
+    "role": "plan",
+    "state": "locked",
+    "text": "MEAL PLAN TODAY Open meal plan → Pro members get a structured meal plan and see their next planned meal here. Upgrade to Pro"
+   },
+   {
+    "role": "summary",
+    "state": "populated",
+    "text": "PRIMARY GOAL Goal details → Cut to 180 1 outcome tracked Trend weight Not logged / 180 lb"
+   },
+   {
+    "role": "summary",
+    "state": "locked",
+    "text": "TRAINING THIS WEEK Training progress → Pro members see their training week: sessions, volume, and plan completion. Upgrade to Pro"
+   },
+   {
+    "role": "summary",
+    "state": "locked",
+    "text": "NUTRITION ADHERENCE Nutrition progress → Pro members see how many days landed within their calorie target. Upgrade to Pro"
+   },
+   {
+    "role": "summary",
+    "state": "locked",
+    "text": "RECOVERY CONSISTENCY Recovery progress → Pro members see sleep and hydration graded against their goals each week. Upgrade to Pro"
+   }
+  ]
+ },
+ "consoleErrors": [],
+ "overflow320": {
+  "docOverflowPx": 0,
+  "offenders": [
+   {
+    "tag": "DIV",
+    "cls": "pointer-events-none absolute -top-14 -left-14 size-44 rounde",
+    "right": 146,
+    "text": ""
+   },
+   {
+    "tag": "DIV",
+    "cls": "pointer-events-none absolute -top-14 -left-14 size-44 rounde",
+    "right": 146,
+    "text": ""
+   },
+   {
+    "tag": "DIV",
+    "cls": "pointer-events-none absolute -top-14 -left-14 size-44 rounde",
+    "right": 146,
+    "text": ""
+   },
+   {
+    "tag": "DIV",
+    "cls": "pointer-events-none absolute -top-14 -left-14 size-44 rounde",
+    "right": 146,
+    "text": ""
+   },
+   {
+    "tag": "DIV",
+    "cls": "pointer-events-none absolute -top-14 -left-14 size-44 rounde",
+    "right": 146,
+    "text": ""
+   },
+   {
+    "tag": "DIV",
+    "cls": "pointer-events-none absolute -top-14 -left-14 size-44 rounde",
+    "right": 146,
+    "text": ""
+   },
+   {
+    "tag": "DIV",
+    "cls": "pointer-events-none absolute -top-14 -left-14 size-44 rounde",
+    "right": 146,
+    "text": ""
+   },
+   {
+    "tag": "DIV",
+    "cls": "pointer-events-none absolute -top-14 -left-14 size-44 rounde",
+    "right": 146,
+    "text": ""
+   },
+   {
+    "tag": "DIV",
+    "cls": "pointer-events-none absolute -top-14 -left-14 size-44 rounde",
+    "right": 146,
+    "text": ""
+   },
+   {
+    "tag": "DIV",
+    "cls": "pointer-events-none absolute -top-14 -left-14 size-44 rounde",
+    "right": 146,
+    "text": ""
+   },
+   {
+    "tag": "DIV",
+    "cls": "pointer-events-none absolute -top-14 -left-14 size-44 rounde",
+    "right": 146,
+    "text": ""
+   },
+   {
+    "tag": "DIV",
+    "cls": "pointer-events-none absolute -top-14 -left-14 size-44 rounde",
+    "right": 146,
+    "text": ""
+   },
+   {
+    "tag": "DIV",
+    "cls": "pointer-events-none absolute -top-14 -left-14 size-44 rounde",
+    "right": 146,
+    "text": ""
+   }
+  ]
+ },
+ "consoleErrors320": [],
+ "todayPanels": {
+  "status": 200,
+  "panelCount": 24,
+  "consoleErrors": [
+   "[error] Error: Route \"/dev/fixtures/today-panels\" used `new Date()` inside a Client Component without a Suspense boundary above it. See more info here: https://nextjs.org/docs/messages/next-prerender-current-time-client\n    at todayLocalISO (about://React/Server/C:%5CUsers%5Cjon17%5CDesktop%5Cchadchat%5C.next%5Cdev%5Cserver%5Cchunks%5Cssr%5C_12h64-b._.js?0:354:15)\n    at LogSleepDialog (about://React/Server/C:%5CUsers%5Cjon17%5CDesktop%5Cchadchat%5C.next%5Cdev%5Cserver%5Cchunks%5Cssr%5C_051yzv1._.js?1:8933:406)\n    at <anonymous> (about://React/Server/C:%5CUsers%5Cjon17%5CDesktop%5Cchadchat%5C.next%5Cdev%5Cserver%5Cchunks%5Cssr%5C%5Broot-of-the-server%5D__0x0spn4._.js?2:2211:407)\n    at Array.map (<anonymous>:1:18)\n    at TodayPanelsFixturePage (about://React/Server/C:%5CUsers%5Cjon17%5CDesktop%5Cchadchat%5C.next%5Cdev%5Cserver%5Cchunks%5Cssr%5C%5Broot-of-the-server%5D__0x0spn4._.js?3:2152:166)\n    at resolveErrorDev (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:1919:105)\n    at getOutlinedModel (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:1469:28)\n    at parseModelString (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:1584:50)\n    at reviveModel (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2522:66)\n    at reviveModel (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2525:61)\n    at reviveModel (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2604:78)\n    at parseModel (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2517:16)\n    at initializeModelChunk (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:1084:25)\n    at resolveModelChunk (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:986:43)\n    at processFullStringRow (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2473:126)\n    at processFullBinaryRow (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2393:9)\n    at processBinaryChunk (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2502:221)\n    at progress (http://localhost:3600/_next/static/chunks/0tw2_next_dist_compiled_react-server-dom-turbopack_084z57b._.js:2689:13)"
+  ]
+ }
+}

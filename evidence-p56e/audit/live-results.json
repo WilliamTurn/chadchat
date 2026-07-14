@@ -1,0 +1,560 @@
+[
+ {
+  "page": "today",
+  "theme": "dark",
+  "contrast": [
+   {
+    "label": "body-sm muted (status)",
+    "text": "Not logged yet. Log a meal below.",
+    "ratio": 4.86,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(53.6 0 0)",
+    "bg": "rgb(11,15,23)"
+   },
+   {
+    "label": "body-sm muted (status)",
+    "text": "Not logged yet. One tap below.",
+    "ratio": 4.86,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(53.6 0 0)",
+    "bg": "rgb(11,15,23)"
+   },
+   {
+    "label": "body-sm muted (status)",
+    "text": "Not logged yet. Log last night below.",
+    "ratio": 4.86,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(53.6 0 0)",
+    "bg": "rgb(11,15,23)"
+   },
+   {
+    "label": "body-sm muted (status)",
+    "text": "sessions this week",
+    "ratio": 4.86,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(53.6 0 0)",
+    "bg": "rgb(11,15,23)"
+   },
+   {
+    "label": "body-sm muted (plan)",
+    "text": "Last night's sleep isn't logged yet.",
+    "ratio": 4.86,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(53.6 0 0)",
+    "bg": "rgb(11,15,23)"
+   },
+   {
+    "label": "body-sm muted (plan)",
+    "text": "Last night: not logged. Your first log starts the week's picture.",
+    "ratio": 4.99,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(53.6 0 0)",
+    "bg": "rgb(7,11,19)"
+   },
+   {
+    "label": "text-meta (summary)",
+    "text": "No streak yet. Log anything today to start one.",
+    "ratio": 4.86,
+    "fontPx": 13,
+    "weight": "400",
+    "color": "lab(53.6 0 0)",
+    "bg": "rgb(11,15,23)"
+   },
+   {
+    "label": "body-sm muted (summary)",
+    "text": "days logged this week",
+    "ratio": 4.86,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(53.6 0 0)",
+    "bg": "rgb(11,15,23)"
+   },
+   {
+    "label": "body-sm muted (quick-log)",
+    "text": "No meals logged this week. Log a meal and today's calories, protein, carbs, and ",
+    "ratio": 4.86,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(53.6 0 0)",
+    "bg": "rgb(11,15,23)"
+   },
+   {
+    "label": "body-sm muted (quick-log)",
+    "text": "No water logged this week. One tap adds a glass; the week fills in as you go.",
+    "ratio": 4.86,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(53.6 0 0)",
+    "bg": "rgb(11,15,23)"
+   },
+   {
+    "label": "body-sm muted (quick-log)",
+    "text": "No sleep logged yet. Log last night and the week fills in against your nightly g",
+    "ratio": 4.86,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(53.6 0 0)",
+    "bg": "rgb(11,15,23)"
+   },
+   {
+    "label": "body-sm muted (plan)",
+    "text": "No training plan yet. Ask Chad for a split or add one on All plans, and today's ",
+    "ratio": 4.86,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(53.6 0 0)",
+    "bg": "rgb(11,15,23)"
+   },
+   {
+    "label": "text-meta (plan)",
+    "text": "First of 3 planned meals on Day 3 (day 3 of 3 in your rotation).",
+    "ratio": 4.86,
+    "fontPx": 13,
+    "weight": "400",
+    "color": "lab(53.6 0 0)",
+    "bg": "rgb(11,15,23)"
+   },
+   {
+    "label": "text-meta (plan)",
+    "text": "planned",
+    "ratio": 4.99,
+    "fontPx": 13,
+    "weight": "400",
+    "color": "lab(53.6 0 0)",
+    "bg": "rgb(7,11,19)"
+   },
+   {
+    "label": "text-meta (plan)",
+    "text": "protein",
+    "ratio": 4.99,
+    "fontPx": 13,
+    "weight": "400",
+    "color": "lab(53.6 0 0)",
+    "bg": "rgb(7,11,19)"
+   },
+   {
+    "label": "text-meta (plan)",
+    "text": "Day 3 total",
+    "ratio": 4.99,
+    "fontPx": 13,
+    "weight": "400",
+    "color": "lab(53.6 0 0)",
+    "bg": "rgb(7,11,19)"
+   },
+   {
+    "label": "body-sm muted (plan)",
+    "text": "next meal",
+    "ratio": 4.86,
+    "fontPx": 14,
+    "weight": "700",
+    "color": "lab(53.6 0 0)",
+    "bg": "rgb(11,15,23)"
+   },
+   {
+    "label": "text-meta (summary)",
+    "text": "Not logged / 220 lbs",
+    "ratio": 4.86,
+    "fontPx": 13,
+    "weight": "400",
+    "color": "lab(53.6 0 0)",
+    "bg": "rgb(11,15,23)"
+   },
+   {
+    "label": "body-sm muted (summary)",
+    "text": "No workouts this week yet. Log a session and your training week builds here.",
+    "ratio": 4.86,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(53.6 0 0)",
+    "bg": "rgb(11,15,23)"
+   },
+   {
+    "label": "body-sm muted (summary)",
+    "text": "No meals logged this week yet. Log your days and calorie adherence grades here.",
+    "ratio": 4.86,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(53.6 0 0)",
+    "bg": "rgb(11,15,23)"
+   },
+   {
+    "label": "body-sm muted (summary)",
+    "text": "No sleep or water logged this week yet. Log nights and water and your recovery w",
+    "ratio": 4.86,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(53.6 0 0)",
+    "bg": "rgb(11,15,23)"
+   },
+   {
+    "label": "chip",
+    "text": "Ask Chad",
+    "ratio": 13.79,
+    "fontPx": 14,
+    "weight": "500",
+    "color": "rgb(213, 219, 230)",
+    "bg": "rgb(11,15,23)"
+   },
+   {
+    "label": "chip",
+    "text": "Log last night",
+    "ratio": 1.05,
+    "fontPx": 14,
+    "weight": "500",
+    "color": "lab(6.69783 0 0)",
+    "bg": "rgb(11,15,23)"
+   },
+   {
+    "label": "chip",
+    "text": "Log meal",
+    "ratio": 13.79,
+    "fontPx": 14,
+    "weight": "500",
+    "color": "rgb(213, 219, 230)",
+    "bg": "rgb(11,15,23)"
+   },
+   {
+    "label": "chip",
+    "text": "Log water",
+    "ratio": 13.79,
+    "fontPx": 14,
+    "weight": "500",
+    "color": "rgb(213, 219, 230)",
+    "bg": "rgb(11,15,23)"
+   },
+   {
+    "label": "chip",
+    "text": "Start a workout",
+    "ratio": 13.79,
+    "fontPx": 14,
+    "weight": "500",
+    "color": "rgb(213, 219, 230)",
+    "bg": "rgb(11,15,23)"
+   },
+   {
+    "label": "chip",
+    "text": "planned",
+    "ratio": 4.99,
+    "fontPx": 13,
+    "weight": "400",
+    "color": "lab(53.6 0 0)",
+    "bg": "rgb(7,11,19)"
+   },
+   {
+    "label": "chip",
+    "text": "protein",
+    "ratio": 4.99,
+    "fontPx": 13,
+    "weight": "400",
+    "color": "lab(53.6 0 0)",
+    "bg": "rgb(7,11,19)"
+   },
+   {
+    "label": "chip",
+    "text": "Day 3 total",
+    "ratio": 4.99,
+    "fontPx": 13,
+    "weight": "400",
+    "color": "lab(53.6 0 0)",
+    "bg": "rgb(7,11,19)"
+   }
+  ]
+ },
+ {
+  "page": "today",
+  "theme": "light",
+  "contrast": [
+   {
+    "label": "body-sm muted (status)",
+    "text": "Not logged yet. Log a meal below.",
+    "ratio": 5.25,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(45.48 0 0)",
+    "bg": "rgb(255,255,255)"
+   },
+   {
+    "label": "body-sm muted (status)",
+    "text": "Not logged yet. One tap below.",
+    "ratio": 5.25,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(45.48 0 0)",
+    "bg": "rgb(255,255,255)"
+   },
+   {
+    "label": "body-sm muted (status)",
+    "text": "Not logged yet. Log last night below.",
+    "ratio": 5.25,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(45.48 0 0)",
+    "bg": "rgb(255,255,255)"
+   },
+   {
+    "label": "body-sm muted (status)",
+    "text": "sessions this week",
+    "ratio": 5.25,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(45.48 0 0)",
+    "bg": "rgb(255,255,255)"
+   },
+   {
+    "label": "body-sm muted (plan)",
+    "text": "Last night's sleep isn't logged yet.",
+    "ratio": 5.25,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(45.48 0 0)",
+    "bg": "rgb(255,255,255)"
+   },
+   {
+    "label": "body-sm muted (plan)",
+    "text": "Last night: not logged. Your first log starts the week's picture.",
+    "ratio": 5.16,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(45.48 0 0)",
+    "bg": "rgb(253,253,253)"
+   },
+   {
+    "label": "text-meta (summary)",
+    "text": "No streak yet. Log anything today to start one.",
+    "ratio": 5.25,
+    "fontPx": 13,
+    "weight": "400",
+    "color": "lab(45.48 0 0)",
+    "bg": "rgb(255,255,255)"
+   },
+   {
+    "label": "body-sm muted (summary)",
+    "text": "days logged this week",
+    "ratio": 5.25,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(45.48 0 0)",
+    "bg": "rgb(255,255,255)"
+   },
+   {
+    "label": "body-sm muted (quick-log)",
+    "text": "No meals logged this week. Log a meal and today's calories, protein, carbs, and ",
+    "ratio": 5.25,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(45.48 0 0)",
+    "bg": "rgb(255,255,255)"
+   },
+   {
+    "label": "body-sm muted (quick-log)",
+    "text": "No water logged this week. One tap adds a glass; the week fills in as you go.",
+    "ratio": 5.25,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(45.48 0 0)",
+    "bg": "rgb(255,255,255)"
+   },
+   {
+    "label": "body-sm muted (quick-log)",
+    "text": "No sleep logged yet. Log last night and the week fills in against your nightly g",
+    "ratio": 5.25,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(45.48 0 0)",
+    "bg": "rgb(255,255,255)"
+   },
+   {
+    "label": "body-sm muted (plan)",
+    "text": "No training plan yet. Ask Chad for a split or add one on All plans, and today's ",
+    "ratio": 5.25,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(45.48 0 0)",
+    "bg": "rgb(255,255,255)"
+   },
+   {
+    "label": "text-meta (plan)",
+    "text": "First of 3 planned meals on Day 3 (day 3 of 3 in your rotation).",
+    "ratio": 5.25,
+    "fontPx": 13,
+    "weight": "400",
+    "color": "lab(45.48 0 0)",
+    "bg": "rgb(255,255,255)"
+   },
+   {
+    "label": "text-meta (plan)",
+    "text": "planned",
+    "ratio": 5.16,
+    "fontPx": 13,
+    "weight": "400",
+    "color": "lab(45.48 0 0)",
+    "bg": "rgb(253,253,253)"
+   },
+   {
+    "label": "text-meta (plan)",
+    "text": "protein",
+    "ratio": 5.16,
+    "fontPx": 13,
+    "weight": "400",
+    "color": "lab(45.48 0 0)",
+    "bg": "rgb(253,253,253)"
+   },
+   {
+    "label": "text-meta (plan)",
+    "text": "Day 3 total",
+    "ratio": 5.16,
+    "fontPx": 13,
+    "weight": "400",
+    "color": "lab(45.48 0 0)",
+    "bg": "rgb(253,253,253)"
+   },
+   {
+    "label": "body-sm muted (plan)",
+    "text": "next meal",
+    "ratio": 5.25,
+    "fontPx": 14,
+    "weight": "700",
+    "color": "lab(45.48 0 0)",
+    "bg": "rgb(255,255,255)"
+   },
+   {
+    "label": "text-meta (summary)",
+    "text": "Not logged / 220 lbs",
+    "ratio": 5.25,
+    "fontPx": 13,
+    "weight": "400",
+    "color": "lab(45.48 0 0)",
+    "bg": "rgb(255,255,255)"
+   },
+   {
+    "label": "body-sm muted (summary)",
+    "text": "No workouts this week yet. Log a session and your training week builds here.",
+    "ratio": 5.25,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(45.48 0 0)",
+    "bg": "rgb(255,255,255)"
+   },
+   {
+    "label": "body-sm muted (summary)",
+    "text": "No meals logged this week yet. Log your days and calorie adherence grades here.",
+    "ratio": 5.25,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(45.48 0 0)",
+    "bg": "rgb(255,255,255)"
+   },
+   {
+    "label": "body-sm muted (summary)",
+    "text": "No sleep or water logged this week yet. Log nights and water and your recovery w",
+    "ratio": 5.25,
+    "fontPx": 14,
+    "weight": "400",
+    "color": "lab(45.48 0 0)",
+    "bg": "rgb(255,255,255)"
+   },
+   {
+    "label": "chip",
+    "text": "Ask Chad",
+    "ratio": 20.26,
+    "fontPx": 14,
+    "weight": "500",
+    "color": "lab(1.5609 0 0)",
+    "bg": "rgb(255,255,255)"
+   },
+   {
+    "label": "chip",
+    "text": "Log last night",
+    "ratio": 1.04,
+    "fontPx": 14,
+    "weight": "500",
+    "color": "lab(98.26 0 0)",
+    "bg": "rgb(255,255,255)"
+   },
+   {
+    "label": "chip",
+    "text": "Log meal",
+    "ratio": 20.26,
+    "fontPx": 14,
+    "weight": "500",
+    "color": "lab(1.5609 0 0)",
+    "bg": "rgb(255,255,255)"
+   },
+   {
+    "label": "chip",
+    "text": "Log water",
+    "ratio": 20.26,
+    "fontPx": 14,
+    "weight": "500",
+    "color": "lab(1.5609 0 0)",
+    "bg": "rgb(255,255,255)"
+   },
+   {
+    "label": "chip",
+    "text": "Start a workout",
+    "ratio": 20.26,
+    "fontPx": 14,
+    "weight": "500",
+    "color": "lab(1.5609 0 0)",
+    "bg": "rgb(255,255,255)"
+   },
+   {
+    "label": "chip",
+    "text": "planned",
+    "ratio": 5.16,
+    "fontPx": 13,
+    "weight": "400",
+    "color": "lab(45.48 0 0)",
+    "bg": "rgb(253,253,253)"
+   },
+   {
+    "label": "chip",
+    "text": "protein",
+    "ratio": 5.16,
+    "fontPx": 13,
+    "weight": "400",
+    "color": "lab(45.48 0 0)",
+    "bg": "rgb(253,253,253)"
+   },
+   {
+    "label": "chip",
+    "text": "Day 3 total",
+    "ratio": 5.16,
+    "fontPx": 13,
+    "weight": "400",
+    "color": "lab(45.48 0 0)",
+    "bg": "rgb(253,253,253)"
+   }
+  ]
+ },
+ {
+  "page": "today",
+  "consoleErrors": []
+ },
+ {
+  "page": "plans",
+  "theme": "dark",
+  "contrast": []
+ },
+ {
+  "page": "plans",
+  "theme": "light",
+  "contrast": []
+ },
+ {
+  "page": "plans",
+  "consoleErrors": []
+ },
+ {
+  "page": "today@390",
+  "touchTargets": [],
+  "overflowPx": 0,
+  "consoleErrors": []
+ }
+]

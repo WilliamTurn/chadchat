@@ -70,6 +70,9 @@ const PAGES = {
   // the locked teaser on one page (new images; P56-Z reviews the wave
   // approval).
   training: "/dev/fixtures/training",
+  // P56-E: the FIX-30 plans-and-goals summaries + Progress-highlight tiles,
+  // all personas on one page (new images; P56-Z reviews the wave approval).
+  "plans-goals": "/dev/fixtures/plans-goals",
 };
 
 const WIDTHS = [1440, 1280, 1024, 768, 390, 360, 320];

@@ -264,7 +264,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/progress"],
+    surfaces: ["/today", "/progress"],
   },
 
   /* ---------------------------------------------------------- hydration */
@@ -338,7 +338,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/progress"],
+    surfaces: ["/today", "/progress"],
   },
 
   /* -------------------------------------------------------------- sleep */
@@ -422,7 +422,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/progress"],
+    surfaces: ["/today", "/progress"],
   },
 
   /* --------------------------------------------------------------- body */
@@ -527,6 +527,28 @@ export const METRICS = {
     access: "member",
     precision: 0,
     surfaces: ["/today", "/progress", "/progress/body", "/goals", "/goals/[id]"],
+  },
+
+  /* -------------------------------------------------------------- plans */
+  "plans.mealSlice.today": {
+    domain: "plans",
+    label: "Next planned meal",
+    unit: "kcal",
+    grain: "user-day",
+    source: { module: "lib/plans/meal-slice.ts", symbol: "mealSliceToday" },
+    derivation:
+      "Registered P5 (P56-E batch-register, README list: plan-slice numbers). Deterministic and inspectable, matching the training rotation's positional model: today's plan day = member-local days since the plan's creation day modulo plan length; the next meal = that day's meals in PLAN ORDER advanced by nutrition.meals.today (never re-sorted); every planned meal covered renders the explicit completed state, never a fabricated next meal. Calories/protein shown are the plan document's own designed totals (meal and day), never conflated with the member's live nutrition targets, which stay nutrition.* metrics.",
+    target: {
+      kind: "plan",
+      source:
+        "MealPlan.days[dayIndex].totals: the plan document's designed day.",
+    },
+    allowedClaims: ["current-value"],
+    estimated: false,
+    staleAfterDays: null,
+    access: "pro",
+    precision: 0,
+    surfaces: ["/today"],
   },
 
   /* ----------------------------------------------------------- training */
@@ -666,7 +688,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/workouts", "/progress/training"],
+    surfaces: ["/today", "/workouts", "/progress/training"],
   },
   "training.frequency.weeklyTrend": {
     domain: "training",
@@ -709,7 +731,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/progress/training", "/plans/[id]"],
+    surfaces: ["/today", "/progress/training", "/plans/[id]"],
   },
   "training.plan.adherence.weeklyTrend": {
     domain: "training",

@@ -1,0 +1,162 @@
+CHAD
+Toggle Sidebar
+Dashboard
+Chat
+TRACK
+Workouts
+Calorie Tracker
+Hydration
+Sleep
+PLAN
+Goals
+Meal Plan
+REVIEW
+Progress
+Future You
+Weekly Report
+Rate My Kitchen
+Files
+Quit Test
+Account
+Help
+Plans & pricing
+Meal Plan
+C
+Dashboard
+Meal Plan
+Pro feature
+
+Chad builds you a structured plan around your macro target — real foods, exact portions, accurate numbers from the USDA food database. Logging what you actually ate? Calorie Tracker · Rate My Kitchen.
+
+2,200 cal cut — 3 meals/day
+
+Target 2,200 cal · 180g protein / 220g carbs / 70g fat per day (your daily Calorie Tracker targets, too)
+
+Edit
+PDF
+Ask Chad
+
+Three weeks in and you're still arguing instead of eating right. This plan is dead simple: high protein to protect muscle while you drop fat, whole foods you can't screw up. Weigh every portion on a food scale and log it in the Calorie Tracker — no eyeballing, no 'I think that's about a cup.' Hit these numbers every single day and the scale moves. Don't, and you'll be right back here making excuses.
+
+Day 1
+2,227cal
+Day 2
+2,152cal
+Day 3
+2,134cal
+Day 1
+3 meals
+2,227
+calories planned
+27 cal over target
+2,227
+Planned
+2,200
+Target
+27
+Over
+101%
+of target
+Protein
+181 / 180g
+1g over target
+101%
+181g
+Planned
+180g
+Target
+1g
+Over
+Carbs
+215 / 220g
+5g under target
+98%
+215g
+Planned
+220g
+Target
+5g
+Under
+Fat
+69 / 70g
+1g under target
+99%
+69g
+Planned
+70g
+Target
+1g
+Under
+Breakfast
+Eggs, oats & berries
+788 cal · 55P 73C 31F
+250g
+Whole eggs
+
+USDA: Eggs, Grade A, Large, egg whole
+
+370 cal · 31P 3C 25F
+75g
+Rolled oats
+
+USDA: Oats, raw
+
+284 cal · 10P 51C 5F
+100g
+Blueberries
+
+USDA: Blueberries, raw
+
+57 cal · 1P 15C 0F
+20g
+Whey protein
+
+USDA: Nutritional powder mix (EAS Whey Protein Powder)
+
+77 cal · 13P 4C 1F
+Log as eaten
+Lunch
+Chicken, rice & broccoli
+622 cal · 63P 75C 7F
+170g
+Chicken breast
+
+USDA: Chicken, breast, meat only, cooked, roasted
+
+281 cal · 53P 0C 6F
+225g
+White rice
+
+USDA: Rice, white, cooked, as ingredient
+
+293 cal · 6P 65C 1F
+155g
+Broccoli
+
+USDA: Broccoli, raw
+
+48 cal · 4P 10C 0F
+Log as eaten
+Dinner
+Salmon, potato & green beans
+817 cal · 63P 67C 31F
+250g
+Salmon
+
+USDA: Fish, salmon, Atlantic, farmed, cooked
+
+515 cal · 55P 0C 31F
+255g
+Potato
+
+USDA: Potato, baked, NFS
+
+237 cal · 5P 55C 0F
+155g
+Green beans
+
+USDA: Green beans, cooked, as ingredient
+
+65 cal · 3P 12C 0F
+Log as eaten
+Build a new plan

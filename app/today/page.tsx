@@ -1,13 +1,4 @@
-import {
-  ArrowRight,
-  ChefHat,
-  Droplet,
-  Dumbbell,
-  LineChart,
-  Lock,
-  Moon,
-  Utensils,
-} from "lucide-react";
+import { ArrowRight, LineChart, Lock } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -17,79 +8,74 @@ import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { RewardProvider } from "@/components/dashboard/reward";
 import { PageShell } from "@/components/nav/page-shell";
-import { MacroRings } from "@/components/nutrition/macro-rings";
 import { WeightChartInteractive } from "@/components/progress/weight-chart-interactive";
 import type { DayBar, SparkPoint } from "@/components/panels/visuals";
 import {
   ConsistencyPanel,
   type ConsistencyDomainRow,
 } from "@/components/today/consistency-panel";
-import type { LiftProgress } from "@/components/today/goal-list";
-import { GoalList } from "@/components/today/goal-list";
+import { GoalPrimary } from "@/components/today/goal-primary";
 import { HydrationPanel } from "@/components/today/hydration-panel";
+import { NutritionPanel } from "@/components/today/nutrition-panel";
+import { PlanMealToday } from "@/components/today/plan-meal-today";
+import { PlanTrainingToday } from "@/components/today/plan-training-today";
+import {
+  NutritionHighlight,
+  RecoveryHighlight,
+  TrainingHighlight,
+} from "@/components/today/progress-highlights";
 import {
   ModuleCard,
   ModuleFooter,
   ModuleHeader,
 } from "@/components/today/module-card";
-import { PlanList } from "@/components/today/plan-list";
 import { SectionBand } from "@/components/today/section-band";
-import { SleepTracker } from "@/components/today/sleep-tracker";
+import { SleepPanel } from "@/components/today/sleep-panel";
 import { StatusStrip } from "@/components/today/status-strip";
-import { TargetEditor } from "@/components/today/target-editor";
 import { PlanBadge, TodayHeader } from "@/components/today/today-header";
 import { UpNextPanel } from "@/components/today/up-next-panel";
-import { WeekStrip } from "@/components/today/week-strip";
 import { Button } from "@/components/ui/button";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
-import { sumMacros } from "@/lib/ai/dashboard";
 import { ema } from "@/lib/chart/trend";
 import { LB_PER_KG } from "@/lib/contracts/units";
 import {
   calendarDayAnchorInTz,
-  formatCalendarDay,
   formatDayInTz,
-  formatDayInTzSmartYear,
   toCalendarDayISO,
   todayAnchorInTz,
   todayStartInTz,
 } from "@/lib/date";
 import {
-  getPlanSessionCompletions,
-  resolvePlanScheduleView,
-} from "@/lib/db/plan-goal-queries";
-import {
   getActiveGoalsByUserId,
   getActiveMealPlanByUserId,
   getActivePlansByUserId,
   getActivityDaysSince,
-  getInactiveGoalsByUserId,
-  getInactivePlansByUserId,
-  getLatestSleepEntry,
-  getMealsSince,
-  getNutritionTarget,
   getProgressEntriesByUserId,
-  getSleepDailyTotals,
   getUserById,
   getUserMemory,
-  getWaterDailyTotals,
-  getWaterMlSince,
   getWorkoutsByUserId,
 } from "@/lib/db/queries";
 import type { ProgressEntry } from "@/lib/db/schema";
-import { findCalorieConflict, findOverlapIds } from "@/lib/goals/coherence";
 import { clientField } from "@/lib/memory/client-field";
-import { weeklyPlanAdherence } from "@/lib/plans/adherence";
-import type { CompletionEvent } from "@/lib/plans/up-next";
-import { selectUpNextSession } from "@/lib/plans/up-next";
 import { toPlanStatusSummary } from "@/lib/subscription";
+import {
+  hydrationWeekAtGoal,
+  nutritionWeekAdherence,
+  sleepWeekAtGoal,
+} from "@/lib/today/highlights";
+import {
+  getHydrationPanelData,
+  getNutritionPanelData,
+  getSleepPanelData,
+} from "@/lib/today/panel-data";
+import {
+  getMealSliceForToday,
+  getPrimaryGoalData,
+  getTrainingTodayData,
+} from "@/lib/today/plans-goals-data";
 import { computeStreak } from "@/lib/today/streak";
 import { selectUpNextToday, type UpNextSnapshot } from "@/lib/today/up-next";
-import { DEFAULT_WATER_GOAL_ML } from "@/lib/today/water-units";
 import {
-  buildLastNight,
-  buildSleepWeek,
-  buildWaterWeek,
   buildWorkoutWeek,
   weekAnchors,
   weekSlotDateLabel,
@@ -97,7 +83,7 @@ import {
 } from "@/lib/today/week";
 import { cn } from "@/lib/utils";
 import { toWorkoutData } from "@/lib/workouts/serialize";
-import { exercise1RMTrend, workoutVolumeLb } from "@/lib/workouts/stats";
+import { volumeSinceLb } from "@/lib/workouts/training-analytics";
 
 const DAY_MS = 86_400_000;
 
@@ -105,28 +91,10 @@ function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }
 
-// How much workout history to hydrate for the /today lift-goal trends +
-// last-workout card. Bounded and cheaper than the /workouts page's 200, but
-// plenty for a strength-goal trend line.
+// How much workout history to hydrate for /today (goal e1rm trends + the
+// week's training numbers). Bounded and cheaper than the /workouts page's
+// 200, but plenty for a strength-goal trend line.
 const TODAY_WORKOUT_LIMIT = 60;
-
-/** "Today" / "Yesterday" / "N days ago" / a short date, for the last-workout
- *  card. Day boundaries on the user's own wall clock (FEAT-8). */
-function relativeDay(d: Date, timezone: string | null): string {
-  const today = todayAnchorInTz(timezone);
-  const that = calendarDayAnchorInTz(d, timezone);
-  const diffDays = Math.round((today.getTime() - that.getTime()) / DAY_MS);
-  if (diffDays <= 0) {
-    return "Today";
-  }
-  if (diffDays === 1) {
-    return "Yesterday";
-  }
-  if (diffDays < 7) {
-    return `${diffDays} days ago`;
-  }
-  return formatCalendarDay(d, { month: "short", day: "numeric" });
-}
 
 export default function TodayPage() {
   return (
@@ -183,158 +151,25 @@ async function TodayContent() {
   // Window for the streak / week strip. Long enough that a real streak isn't
   // capped, cheap because each select pulls a single timestamp column.
   const activitySince = new Date(startOfToday.getTime() - 120 * DAY_MS);
-  // Meals for the whole current week (consistency matrix + today's macros);
-  // 7 local days back always covers the Sunday-start week.
-  const mealsSince = new Date(startOfToday.getTime() - 7 * DAY_MS);
 
-  const [
-    memory,
-    entries,
-    weekMeals,
-    target,
-    waterMl,
-    waterDaily,
-    goals,
-    pastGoals,
-    plans,
-    pastPlans,
-    recentWorkouts,
-    activityDays,
-    mealPlan,
-    latestSleep,
-    sleepDaily,
-  ] = await Promise.all([
-    getUserMemory(user.id),
-    isPro ? getProgressEntriesByUserId(user.id) : Promise.resolve([]),
-    isPro ? getMealsSince(user.id, mealsSince) : Promise.resolve([]),
-    isPro ? getNutritionTarget(user.id) : Promise.resolve(undefined),
-    isPro ? getWaterMlSince(user.id, startOfToday) : Promise.resolve(0),
-    isPro ? getWaterDailyTotals(user.id, timezone) : Promise.resolve([]),
-    getActiveGoalsByUserId(user.id),
-    getInactiveGoalsByUserId(user.id),
-    getActivePlansByUserId(user.id),
-    getInactivePlansByUserId(user.id),
-    canAccessProFeatures(user)
-      ? getWorkoutsByUserId(user.id, TODAY_WORKOUT_LIMIT)
-      : Promise.resolve([]),
-    isPro
-      ? getActivityDaysSince(user.id, activitySince)
-      : Promise.resolve<Date[]>([]),
-    isPro ? getActiveMealPlanByUserId(user.id) : Promise.resolve(null),
-    isPro ? getLatestSleepEntry(user.id) : Promise.resolve(null),
-    isPro ? getSleepDailyTotals(user.id, timezone) : Promise.resolve([]),
-  ]);
-
-  // Today's meals from the week fetch: effective day = recordedAt ?? createdAt
-  // (the getMealsSince convention), bounded by the member-local today window.
-  const todaysMeals = weekMeals.filter(
-    (m) => (m.recordedAt ?? m.createdAt) >= startOfToday
-  );
-
-  // Active meal plan summary for the plan card. Targets stay structured so
-  // the card renders them as labeled chips (VF-16). LC-2: the live daily
-  // Calorie-Tracker target wins; the plan snapshot is the fallback.
-  const planTargets =
-    target?.calories != null
-      ? {
-          calories: target.calories,
-          protein: target.protein ?? 0,
-          carbs: target.carbs ?? 0,
-          fat: target.fat ?? 0,
-        }
-      : mealPlan?.targetCalories != null
-        ? {
-            calories: mealPlan.targetCalories,
-            protein: mealPlan.targetProtein ?? 0,
-            carbs: mealPlan.targetCarbs ?? 0,
-            fat: mealPlan.targetFat ?? 0,
-          }
-        : null;
-  const mealPlanSummary = mealPlan
-    ? {
-        title: mealPlan.title,
-        dayCount: Array.isArray(mealPlan.days) ? mealPlan.days.length : 0,
-        targets: planTargets
-          ? ([
-              {
-                value: planTargets.calories.toLocaleString(),
-                label: "cal / day",
-              },
-              { value: `${planTargets.protein}g`, label: "protein" },
-              { value: `${planTargets.carbs}g`, label: "carbs" },
-              { value: `${planTargets.fat}g`, label: "fat" },
-            ] as const)
-          : null,
-      }
-    : null;
-
-  // Most-recent logged workout, summarized for the workout card. Volume is
-  // the card's visual anchor (VF-16).
-  const lastWorkout = recentWorkouts[0]
-    ? {
-        title: recentWorkouts[0].title,
-        performedAt: recentWorkouts[0].performedAt,
-        exerciseCount: recentWorkouts[0].exercises.length,
-        setCount: recentWorkouts[0].exercises.reduce(
-          (sum, ex) => sum + ex.sets.length,
-          0
-        ),
-        volumeLb: Math.round(workoutVolumeLb(toWorkoutData(recentWorkouts[0]))),
-      }
-    : null;
-
-  // Strip the DB rows down to the serializable shape the client cards need.
-  const toGoalItem = (g: (typeof goals)[number]) => ({
-    id: g.id,
-    title: g.title,
-    detail: g.detail,
-    targetDate: g.targetDate,
-    status: g.status,
-    metric: g.metric,
-    metricRef: g.metricRef,
-    startValue: g.startValue,
-    currentValue: g.currentValue,
-    targetValue: g.targetValue,
-    unit: g.unit,
-    // Anchors relative deadlines like "8 weeks" on the card (LC-5).
-    createdAtLabel: formatDayInTzSmartYear(g.createdAt, timezone),
-  });
-  const goalItems = goals.map(toGoalItem);
-  const pastGoalItems = pastGoals.map(toGoalItem);
-
-  // Coherence nudges (P2-4), shared with /goals via lib/goals/coherence.
-  const calorieConflict = findCalorieConflict(goalItems, target?.calories);
-  const overlapIds = findOverlapIds(goalItems);
-
-  // Lift goals (DSH-28): est.-1RM trend per tracked exercise from the logged
-  // workouts, so the goal card shows live progress against real PR data.
-  const workoutData = recentWorkouts.map(toWorkoutData);
-
-  const liftProgress: Record<string, LiftProgress> = {};
-  for (const g of goalItems) {
-    if (g.metric === "lift" && g.metricRef) {
-      const points = exercise1RMTrend(workoutData, g.metricRef);
-      liftProgress[g.id] = {
-        current: points.at(-1)?.value ?? null,
-        first: points[0]?.value ?? null,
-        points,
-      };
-    }
-  }
-  const toPlanItem = (p: (typeof plans)[number]) => ({
-    id: p.id,
-    title: p.title,
-    detail: p.detail,
-    kind: p.kind,
-    status: p.status,
-  });
-  const planItems = plans.map(toPlanItem);
-  const pastPlanItems = pastPlans.map(toPlanItem);
+  const [memory, entries, goals, plans, recentWorkouts, activityDays, mealPlan] =
+    await Promise.all([
+      getUserMemory(user.id),
+      isPro ? getProgressEntriesByUserId(user.id) : Promise.resolve([]),
+      getActiveGoalsByUserId(user.id),
+      getActivePlansByUserId(user.id),
+      isPro
+        ? getWorkoutsByUserId(user.id, TODAY_WORKOUT_LIMIT)
+        : Promise.resolve([]),
+      isPro
+        ? getActivityDaysSince(user.id, activitySince)
+        : Promise.resolve<Date[]>([]),
+      isPro ? getActiveMealPlanByUserId(user.id) : Promise.resolve(null),
+    ]);
 
   const profile = memory?.profile ?? null;
   const nameField = clientField(profile, "Name");
   const firstName = nameField ? nameField.split(/\s+/)[0] : null;
-  const workoutPlan = clientField(profile, "Current workout plan");
 
   // Weight summary (Pro).
   const weighed = entries.filter(
@@ -367,7 +202,7 @@ async function TodayContent() {
 
   // The target from an active weight goal, converted into the displayed unit,
   // so the chart can draw the goal-weight line.
-  const weightGoal = goalItems.find(
+  const weightGoal = goals.find(
     (g) => g.metric === "weight" && g.targetValue != null
   );
   const goalWeight =
@@ -382,18 +217,6 @@ async function TodayContent() {
               ? weightGoal.targetValue
               : weightGoal.targetValue / LB_PER_KG
         );
-
-  // Daily hydration goal (DSH-24): user-set in ml, else one gallon.
-  const waterGoalMl = user.waterGoalMl ?? DEFAULT_WATER_GOAL_ML;
-
-  // Registered source for nutrition.*.today (lib/contracts/metrics.ts): the
-  // one sumMacros in lib/ai/dashboard.ts, never per-card inline reduces.
-  const {
-    calories: caloriesToday,
-    protein: proteinToday,
-    carbs: carbsToday,
-    fat: fatToday,
-  } = sumMacros(todaysMeals);
 
   // Streak + this week's strip from every tracked action (meals, workouts,
   // water, weigh-ins), so engagement on any surface keeps the streak alive.
@@ -412,18 +235,51 @@ async function TodayContent() {
     isToday: d.getTime() === todayMs,
     isFuture: d.getTime() > todayMs,
   }));
+  const weekStartMs = weekDays[0].getTime();
+  const weekEndMs = weekStartMs + 7 * DAY_MS;
+  const todayAnchorMs = todayAnchorInTz(timezone).getTime();
 
-  // Domain week strips: the registered week builders (lib/today/week.ts).
-  const lastNight = buildLastNight(latestSleep, timezone);
-  const sleepWeek = buildSleepWeek(sleepDaily, timezone);
-  const waterWeek = buildWaterWeek(waterDaily, timezone);
+  // ONE concurrent round for everything independent: the canonical tracking
+  // assemblers (P56-C, lib/today/panel-data.ts; every daily-status number on
+  // this page reads these, resolved against FIX-07 effective-dated per-day
+  // targets), the training-plan resolution, and the primary-goal outcomes
+  // (P56-E, lib/today/plans-goals-data.ts). The page never re-derives them.
+  const trainingPlan = plans.find((p) => p.kind === "training") ?? null;
+  const [[nutritionData, hydrationData, sleepData], trainingToday, primaryGoal] =
+    await Promise.all([
+      isPro
+        ? Promise.all([
+            getNutritionPanelData(user),
+            getHydrationPanelData(user),
+            getSleepPanelData(user),
+          ])
+        : Promise.resolve([null, null, null] as const),
+      trainingPlan
+        ? getTrainingTodayData({
+            user,
+            plan: trainingPlan,
+            weekStartMs,
+            weekEndMs,
+            todayAnchorMs,
+          })
+        : Promise.resolve(null),
+      getPrimaryGoalData({
+        user,
+        goals,
+        trendWeight,
+        trendUnit: displayUnit,
+        workouts: recentWorkouts.map(toWorkoutData),
+      }),
+    ]);
+
+  const mealsToday = nutritionData?.mealsToday ?? 0;
+  const lastNight = sleepData?.lastNight ?? null;
+  const sleepGoalMinutes = sleepData?.goalMinutes ?? null;
+
+  // Domain weeks: tracking domains come from the assemblers above; training
+  // buckets through the registered week builder (lib/today/week.ts).
   const workoutWeek = buildWorkoutWeek(
     recentWorkouts.map((w) => w.performedAt),
-    timezone
-  );
-  // Meal days through the same Sunday-start bucketer (consistency matrix).
-  const mealWeek = buildWorkoutWeek(
-    weekMeals.map((m) => m.recordedAt ?? m.createdAt),
     timezone
   );
 
@@ -432,14 +288,18 @@ async function TodayContent() {
     {
       id: "nutrition",
       label: "Nutrition",
-      days: mealWeek.map((d) => d.logged),
+      days: (nutritionData?.week ?? []).map((d) => d.logged),
     },
     {
       id: "hydration",
       label: "Hydration",
-      days: waterWeek.map((d) => d.logged),
+      days: (hydrationData?.week ?? []).map((d) => d.logged),
     },
-    { id: "sleep", label: "Sleep", days: sleepWeek.map((d) => d.logged) },
+    {
+      id: "sleep",
+      label: "Sleep",
+      days: (sleepData?.week ?? []).map((d) => d.logged),
+    },
     {
       id: "training",
       label: "Training",
@@ -447,75 +307,82 @@ async function TodayContent() {
     },
   ];
 
-  // FIX-23: the active training plan's resolved schedule + completions feed
-  // the deterministic Up next selector (P34-D's rotation model; FIX-28).
-  const trainingPlan = plans.find((p) => p.kind === "training") ?? null;
-  let upNextTraining: UpNextSnapshot["training"] = null;
-  let plannedPerWeek: number | null = null;
-  if (isPro && trainingPlan) {
-    const scheduleView = await resolvePlanScheduleView(trainingPlan);
-    if (scheduleView.kind !== "document") {
-      const completionRows = await getPlanSessionCompletions({
-        planId: trainingPlan.id,
-        userId: user.id,
-      });
-      const completions: CompletionEvent[] = completionRows.map((c) => ({
-        planSessionId: c.planSessionId,
-        completedDayMs: c.completedDay.getTime(),
-      }));
-      const weekStartMs = weekDays[0].getTime();
-      const weekEndMs = weekStartMs + 7 * DAY_MS;
-      const todayAnchorMs = todayAnchorInTz(timezone).getTime();
-      const bySession = new Map<string, boolean>();
-      for (const c of completions) {
-        if (c.completedDayMs >= weekStartMs && c.completedDayMs < weekEndMs) {
-          bySession.set(c.planSessionId, true);
+  // FIX-30: training resolved ONCE above; the Training-today card, Up next,
+  // the status strip, and the training highlight all read that one
+  // resolution. The meal slice is pure math over the plan document.
+  const plannedPerWeek = trainingToday?.adherence?.plannedPerWeek ?? null;
+
+  const mealSlice =
+    isPro && mealPlan && nutritionData
+      ? getMealSliceForToday({
+          user,
+          mealPlan,
+          mealsLoggedToday: nutritionData.mealsToday,
+        })
+      : null;
+
+  // FIX-23: Up next consumes the same training resolution (Pro only, as
+  // before: below Pro the training CTA would land on a locked logger).
+  const upNextTraining: UpNextSnapshot["training"] =
+    isPro && trainingToday && trainingToday.kind !== "document"
+      ? {
+          planId: trainingToday.planId,
+          planTitle: trainingToday.planTitle,
+          verdict: trainingToday.verdict,
+          trainedToday: trainingToday.trainedToday,
+          rotation: trainingToday.rotation,
         }
-      }
-      upNextTraining = {
-        planId: trainingPlan.id,
-        planTitle: trainingPlan.title,
-        verdict: selectUpNextSession(scheduleView.schedule, completions),
-        trainedToday: completions.some(
-          (c) => c.completedDayMs === todayAnchorMs
-        ),
-        rotation: [...scheduleView.schedule.sessions]
-          .sort((a, b) => a.position - b.position)
-          .map((s) => ({
-            name: s.name,
-            completedThisWeek:
-              s.id !== null && (bySession.get(s.id) ?? false),
-          })),
-      };
-      plannedPerWeek = weeklyPlanAdherence({
-        schedule: scheduleView.schedule,
-        completions,
-        weekStartMs,
-        weekEndMs,
-      }).plannedPerWeek;
-    }
-  }
+      : null;
 
   const upNext = selectUpNextToday({
     training: upNextTraining,
     lastNightLogged: lastNight?.isCurrent === true,
     hasMealPlan: mealPlan != null,
-    mealsLoggedToday: todaysMeals.length,
+    mealsLoggedToday: mealsToday,
     isPro,
   });
 
-  // Honest per-kind visuals for the Up next panel (real data only).
-  const sleepGoalMinutes = user.sleepGoalMinutes ?? null;
-  const sleepBars: DayBar[] = sleepWeek.map((d) => ({
+  // Honest per-kind visuals for the Up next panel (real data only). Sleep
+  // bars grade each night against ITS OWN effective-dated goal (FIX-07).
+  const sleepBars: DayBar[] = (sleepData?.week ?? []).map((d) => ({
     key: d.t,
     fraction: d.logged
-      ? sleepGoalMinutes
-        ? d.minutes / sleepGoalMinutes
+      ? d.goalMinutes > 0
+        ? d.minutes / d.goalMinutes
         : 1
       : null,
     isToday: d.isToday,
     isFuture: d.isFuture,
   }));
+  // The meal plan's daily targets for the Up next chips (LC-2: the live
+  // daily target wins; the plan snapshot is the fallback).
+  const chipTargets =
+    nutritionData?.target?.calories != null
+      ? {
+          calories: nutritionData.target.calories,
+          protein: nutritionData.target.protein ?? 0,
+          carbs: nutritionData.target.carbs ?? 0,
+          fat: nutritionData.target.fat ?? 0,
+        }
+      : mealPlan?.targetCalories != null
+        ? {
+            calories: mealPlan.targetCalories,
+            protein: mealPlan.targetProtein ?? 0,
+            carbs: mealPlan.targetCarbs ?? 0,
+            fat: mealPlan.targetFat ?? 0,
+          }
+        : null;
+  const mealChips = chipTargets
+    ? [
+        {
+          value: chipTargets.calories.toLocaleString(),
+          label: "cal / day",
+        },
+        { value: `${chipTargets.protein}g`, label: "protein" },
+        { value: `${chipTargets.carbs}g`, label: "carbs" },
+        { value: `${chipTargets.fat}g`, label: "fat" },
+      ]
+    : undefined;
   const sparkSource = trendRows.slice(-10);
   const sparkT0 = sparkSource[0]?.t ?? 0;
   const sparkSpan = (sparkSource.at(-1)?.t ?? 1) - sparkT0 || 1;
@@ -524,12 +391,41 @@ async function TodayContent() {
     value: r.trend,
   }));
 
+  // Progress highlights (P56-E): the week graded through the overview's own
+  // registered source symbols (lib/today/highlights.ts), so these tiles and
+  // /progress can never disagree. Volume sums weight x reps, so exercise
+  // identity resolution cannot change it; the week's sessions sit inside the
+  // 60-workout hydration by construction.
+  const nutritionWeekSummary = nutritionData
+    ? nutritionWeekAdherence(nutritionData.week)
+    : null;
+  const hydrationWeekSummary = hydrationData
+    ? hydrationWeekAtGoal(hydrationData.week)
+    : null;
+  const sleepWeekSummary = sleepData ? sleepWeekAtGoal(sleepData.week) : null;
+  const trainingHighlight = isPro
+    ? {
+        sessionsThisWeek: workoutWeek.reduce((n, d) => n + d.count, 0),
+        volumeWeekLb: volumeSinceLb(
+          recentWorkouts.map(toWorkoutData),
+          weekStartMs,
+          timezone
+        ),
+        week: workoutWeek.map((d) => ({
+          t: d.t,
+          logged: d.logged,
+          isToday: d.isToday,
+          isFuture: d.isFuture,
+        })),
+        completion: trainingToday?.adherence ?? null,
+      }
+    : null;
+
   // First-run: a brand-new member with no profile and nothing logged yet.
   // The header carries the page's ONE dominant action (P1-4); the shell
   // panels (status, Up next, consistency) hold back until there is a day to
   // summarize, and every empty card below stays quiet.
-  const isReturning =
-    Boolean(profile) || entries.length > 0 || todaysMeals.length > 0;
+  const isReturning = Boolean(profile) || entries.length > 0 || mealsToday > 0;
   const firstRun = !isReturning;
 
   // "Sunday, July 13" on the member's own wall clock (R2-11).
@@ -559,20 +455,23 @@ async function TodayContent() {
         />
 
         {/* 2. Four-domain status strip (FIX-22): the day in ten seconds. */}
-        {isPro && !firstRun && (
+        {isPro && !firstRun && nutritionData && hydrationData && (
           <StatusStrip
             data={{
               nutrition: {
-                calories: caloriesToday,
-                target: target?.calories ?? null,
-                mealsToday: todaysMeals.length,
+                calories: nutritionData.calories,
+                target: nutritionData.target?.calories ?? null,
+                mealsToday: nutritionData.mealsToday,
                 macros: {
-                  protein: proteinToday,
-                  carbs: carbsToday,
-                  fat: fatToday,
+                  protein: nutritionData.protein,
+                  carbs: nutritionData.carbs,
+                  fat: nutritionData.fat,
                 },
               },
-              hydration: { ml: waterMl, goalMl: waterGoalMl },
+              hydration: {
+                ml: hydrationData.totalMl,
+                goalMl: hydrationData.goalMl,
+              },
               sleep: { lastNight, goalMinutes: sleepGoalMinutes },
               training: {
                 week: workoutWeek.map((d) => ({
@@ -597,9 +496,7 @@ async function TodayContent() {
               verdict={upNext}
               visual={{
                 sleepBars,
-                mealChips: mealPlanSummary?.targets
-                  ? [...mealPlanSummary.targets]
-                  : undefined,
+                mealChips,
                 weightSpark,
                 weightSparkGoal:
                   goalWeight != null && weightSpark.length > 1
@@ -615,413 +512,90 @@ async function TodayContent() {
           </div>
         )}
 
-        {/* 5. Daily tracking (P56-C's panels mount here at integration; the
-            calorie/sleep cards below are the live stand-ins until their
-            FIX-25/27 panels publish). */}
+        {/* 5. Daily tracking: P56-C's typed panels on their canonical
+            assemblers (FIX-25/26/27 mounted at integration, per the
+            published mount contracts). */}
         <SectionBand
           contentClassName="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3"
           description="Record these every day."
           title="Today's log"
         >
-          {isPro ? (
-            <ModuleCard className="lg:col-span-2" glow="amber">
-              <ModuleHeader
-                icon={<Utensils className="size-4" />}
-                title="Calorie Tracker"
-                tone="amber"
-                viewHref="/nutrition#history"
-                viewLabel="Meal history"
+          <div className="lg:col-span-2">
+            {isPro && nutritionData ? (
+              <NutritionPanel {...nutritionData} />
+            ) : (
+              <NutritionPanel
+                calories={0}
+                carbs={0}
+                fat={0}
+                locked
+                mealsToday={0}
+                protein={0}
+                target={null}
+                week={[]}
               />
-              <div className="mt-2 flex flex-1 flex-col justify-center">
-                <MacroRings
-                  caloriesConsumed={caloriesToday}
-                  caloriesTarget={target?.calories ?? null}
-                  carbsConsumed={carbsToday}
-                  carbsTarget={target?.carbs ?? null}
-                  emptyCta={
-                    // First-run keeps this quiet (P1-4): the header owns the
-                    // one CTA and Chad sets targets from the intro chat.
-                    firstRun ? undefined : (
-                      <TargetEditor
-                        calories={target?.calories ?? null}
-                        carbs={target?.carbs ?? null}
-                        fat={target?.fat ?? null}
-                        prominent
-                        protein={target?.protein ?? null}
-                      />
-                    )
-                  }
-                  fatConsumed={fatToday}
-                  fatTarget={target?.fat ?? null}
-                  proteinConsumed={proteinToday}
-                  proteinTarget={target?.protein ?? null}
-                />
-              </div>
-              <ModuleFooter
-                askChad={
-                  <AskChadButton
-                    className="min-h-11 sm:min-h-8"
-                    prompt="Look at what I've eaten today and how it stacks up against my calorie and macro targets. Am I on track, and what should I eat for the rest of the day?"
-                  />
-                }
-                status={
-                  todaysMeals.length > 0
-                    ? `${todaysMeals.length} meal${todaysMeals.length === 1 ? "" : "s"} logged today`
-                    : "No meals logged yet today."
-                }
-              >
-                <TargetEditor
-                  calories={target?.calories ?? null}
-                  carbs={target?.carbs ?? null}
-                  fat={target?.fat ?? null}
-                  protein={target?.protein ?? null}
-                />
-                <Button
-                  asChild
-                  className="min-h-11 gap-1.5 sm:min-h-8"
-                  size="sm"
-                  variant="outline"
-                >
-                  <Link href="/nutrition#log-meal">
-                    Log a meal
-                    <ArrowRight className="size-3.5" />
-                  </Link>
-                </Button>
-              </ModuleFooter>
-            </ModuleCard>
+            )}
+          </div>
+
+          {isPro && hydrationData ? (
+            <HydrationPanel {...hydrationData} />
           ) : (
-            <LockedCard
-              className="lg:col-span-2"
-              icon={<Utensils className="size-4" />}
-              text="Snap a meal, fridge, or pantry and Chad grades the macros, then tracks your calories and protein against a daily target. Pro only."
-              title="Calorie Tracker"
-            />
+            <HydrationPanel locked totalMl={0} week={[]} />
           )}
 
-          {isPro ? (
-            /* P2-Z pilot: the first live panel on the Phase 2 system. */
-            <HydrationPanel
-              goalMl={waterGoalMl}
-              totalMl={waterMl}
-              viewHref="/hydration"
-              week={waterWeek}
-            />
+          {isPro && sleepData ? (
+            <SleepPanel {...sleepData} />
           ) : (
-            <LockedCard
-              icon={<Droplet className="size-4" />}
-              text="Track your daily water against a goal with one-tap logging. Pro only."
-              title="Hydration"
-            />
-          )}
-
-          {isPro ? (
-            <SleepTracker
-              goalMinutes={user.sleepGoalMinutes ?? undefined}
-              last={lastNight}
-              quiet={firstRun}
-              viewHref="/sleep"
-              week={sleepWeek}
-            />
-          ) : (
-            <LockedCard
-              icon={<Moon className="size-4" />}
-              text="Log how you sleep each night and Chad factors recovery into your training. Pro only."
-              title="Sleep"
+            <SleepPanel
+              goalMinutes={480}
+              lastNight={null}
+              locked
+              week={[]}
             />
           )}
         </SectionBand>
 
-        {/* 6. Plans and goals (P56-E rebuilds these summaries; the workout
-            action card sits with the plans per the target architecture,
-            since training is execution, not a passive daily logger). */}
+        {/* 6. Plans and goals (FIX-30): actionable summaries that tell the
+            member what to do and link to authoritative detail. Plan
+            MANAGEMENT lives at /plans now (relocated, nothing removed);
+            goals keep /goals. The 03-spec 6/3/3 composition on desktop. */}
         <SectionBand
-          contentClassName="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3"
-          description="Set once, update occasionally."
-          title="Your plans"
+          contentClassName="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-12"
+          description="What you're committed to, and the next step for each."
+          title="Plans and goals"
         >
-          <ModuleCard className="lg:col-span-2 xl:col-span-1" glow="blood">
-            <GoalList
-              calorieConflict={calorieConflict}
-              currentWeight={trendWeight}
-              goals={goalItems}
-              liftProgress={liftProgress}
-              memoryGoalHint={clientField(profile, "Primary goal")}
-              overlapIds={overlapIds}
-              pastGoals={pastGoalItems}
-              quiet={firstRun}
-              viewHref="/goals"
-            />
-          </ModuleCard>
-
-          <ModuleCard glow="blood">
-            <PlanList
-              memoryPlanHint={workoutPlan}
-              pastPlans={pastPlanItems}
-              plans={planItems}
-              quiet={firstRun}
-            />
-          </ModuleCard>
-
-          {isPro ? (
-            <ModuleCard glow="amber">
-              <ModuleHeader
-                icon={<ChefHat className="size-4" />}
-                title="Meal Plan"
-                tone="amber"
-                viewHref={mealPlanSummary ? "/meal-plan" : undefined}
-                viewLabel="View plan"
-              />
-              {mealPlanSummary ? (
-                <div className="flex flex-1 flex-col justify-center gap-4">
-                  <div className="flex items-center gap-4">
-                    {/* Plain <img> (proxy serves it on this authed route) */}
-                    <img
-                      alt=""
-                      aria-hidden
-                      className="size-20 shrink-0 select-none rounded-xl object-cover ring-1 ring-border"
-                      src="/today/food-salmon-bowl.png"
-                    />
-                    <div className="min-w-0">
-                      <div className="font-display font-semibold text-lg leading-tight">
-                        {mealPlanSummary.title}
-                      </div>
-                      <div className="mt-0.5 text-muted-foreground text-sm">
-                        {mealPlanSummary.dayCount}-day plan
-                      </div>
-                    </div>
-                  </div>
-                  {mealPlanSummary.targets && (
-                    <div className="flex flex-wrap gap-2">
-                      {mealPlanSummary.targets.map((t) => (
-                        <div
-                          className="flex items-baseline gap-1.5 rounded-xl border border-border bg-background/40 px-3 py-1.5"
-                          key={t.label}
-                        >
-                          <span className="font-display font-semibold text-sm leading-none">
-                            {t.value}
-                          </span>
-                          <span className="text-muted-foreground text-xs">
-                            {t.label}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <p className="text-muted-foreground text-sm">
-                  No meal plan yet. Have Chad build a structured plan around
-                  your macro target. Real foods, exact portions.
-                </p>
-              )}
-              <ModuleFooter
-                askChad={
-                  <AskChadButton
-                    className="min-h-11 sm:min-h-8"
-                    prompt={
-                      mealPlanSummary
-                        ? "Walk me through my meal plan. What am I eating today, and what can I swap if I'm missing something?"
-                        : "Should I be on a structured meal plan for my goal? What would you put in one for me?"
-                    }
-                  />
-                }
-              >
-                <Button
-                  asChild
-                  className="min-h-11 gap-1.5 sm:min-h-8"
-                  size="sm"
-                  variant="outline"
-                >
-                  <Link href="/meal-plan">
-                    {mealPlanSummary ? "Open plan" : "Build a meal plan"}
-                    <ArrowRight className="size-3.5" />
-                  </Link>
-                </Button>
-              </ModuleFooter>
-            </ModuleCard>
-          ) : (
-            <LockedCard
-              icon={<ChefHat className="size-4" />}
-              text="Chad builds a structured meal plan around your macro target. Real foods, exact portions. Pro only."
-              title="Meal Plan"
-            />
-          )}
-
-          {/* Workout log: execution entry point + last-session context,
-              beside the training plan (03 spec section 3). */}
-          {isPro ? (
-            <ModuleCard className="lg:col-span-2 xl:col-span-3" glow="blood">
-              <ModuleHeader
-                icon={<Dumbbell className="size-4" />}
-                title="Workout log"
-                tone="blood"
-                viewHref="/workouts#history"
-                viewLabel="Workout history"
-              />
-              <div className="flex flex-1 flex-col gap-4">
-                <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
-                  {lastWorkout ? (
-                    <div className="min-w-0">
-                      <div className="text-muted-foreground text-xs uppercase tracking-wide">
-                        Last session
-                      </div>
-                      <div className="mt-1 font-display font-semibold text-lg leading-tight">
-                        {lastWorkout.title}
-                      </div>
-                      <div className="mt-0.5 text-muted-foreground text-sm">
-                        {relativeDay(lastWorkout.performedAt, timezone)}
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="max-w-md text-muted-foreground text-sm">
-                      No workouts logged yet. Log your first session and Chad
-                      starts tracking your PRs and volume.
-                    </p>
-                  )}
-                  {/* Shared Sunday-start week-strip treatment (VF-10/VF-11),
-                      workout tone. Always rendered (VF-16). */}
-                  <div className="flex items-center gap-4 rounded-xl border border-border bg-background/40 px-4 py-2.5">
-                    <span className="text-muted-foreground text-xs">
-                      This week
-                    </span>
-                    <WeekStrip
-                      days={workoutWeek.map((day) => ({
-                        key: day.t,
-                        label: day.label,
-                        dateLabel: day.dateLabel,
-                        isToday: day.isToday,
-                        isFuture: day.isFuture,
-                        dotClassName: day.logged
-                          ? "bg-blood shadow-[var(--shadow-glow-blood)]"
-                          : "bg-border",
-                        value: day.logged
-                          ? `${day.count} workout${day.count === 1 ? "" : "s"}`
-                          : "No workout",
-                      }))}
-                    />
-                  </div>
-                </div>
-                {lastWorkout && (
-                  <div className="flex flex-wrap gap-3">
-                    <WorkoutStat
-                      label={lastWorkout.setCount === 1 ? "set" : "sets"}
-                      value={String(lastWorkout.setCount)}
-                    />
-                    <WorkoutStat
-                      label={
-                        lastWorkout.exerciseCount === 1
-                          ? "exercise"
-                          : "exercises"
-                      }
-                      value={String(lastWorkout.exerciseCount)}
-                    />
-                    {lastWorkout.volumeLb > 0 && (
-                      <WorkoutStat
-                        label="lb moved"
-                        value={lastWorkout.volumeLb.toLocaleString()}
-                      />
-                    )}
-                  </div>
-                )}
-              </div>
-              <ModuleFooter
-                askChad={
-                  <AskChadButton
-                    className="min-h-11 sm:min-h-8"
-                    prompt="Look at the workouts card on my dashboard: my last session and this week's training. What's working, what's lagging, and what should I hit next session?"
-                  />
-                }
-              >
-                <Button
-                  asChild
-                  className="min-h-11 gap-1.5 sm:min-h-8"
-                  size="sm"
-                  variant="outline"
-                >
-                  <Link href="/workouts">
-                    Start a workout
-                    <ArrowRight className="size-3.5" />
-                  </Link>
-                </Button>
-              </ModuleFooter>
-            </ModuleCard>
-          ) : (
-            <LockedCard
-              className="lg:col-span-2 xl:col-span-3"
-              icon={<Dumbbell className="size-4" />}
-              text="Log your workouts and Chad tracks your PRs, volume, and what to hit next session. Pro only."
-              title="Workout log"
-            />
-          )}
+          <PlanTrainingToday
+            canStartWorkout={isPro}
+            className="lg:col-span-2 xl:col-span-6"
+            data={trainingToday}
+          />
+          <PlanMealToday
+            className="xl:col-span-3"
+            locked={!isPro}
+            planTitle={mealPlan?.title ?? null}
+            slice={mealSlice}
+          />
+          <GoalPrimary className="xl:col-span-3" data={primaryGoal} />
         </SectionBand>
 
-        {/* 7. Progress highlights (P56-E wires the /progress category links
-            after GATE-05; the weight trend is the live highlight until then).
-            8. The weekly-review + Coach-insight slots land in P7 (FIX-36A/B)
-            per the contracts; deliberately not built here. */}
+        {/* 7. Progress highlights (P56-E): a curated, rewarding week summary;
+            every card opens its named Progress category (the P5 wave's real
+            destinations). 8. The weekly-review + Coach-insight slots land in
+            P7 (FIX-36A/B) per the contracts; deliberately not built here. */}
         <SectionBand
-          description="What your daily logging adds up to over time."
-          title="Results"
+          contentClassName="grid grid-cols-1 items-start lg:grid-cols-2"
+          description="What your daily logging adds up to. Every card opens its full progress view."
+          title="Progress highlights"
         >
           {isPro ? (
-            <ModuleCard glow="violet">
-              <ModuleHeader
-                icon={<LineChart className="size-4" />}
-                title="Weight trend"
-                tone="violet"
-                viewHref="/progress/body"
-                viewLabel="Body progress"
-              />
-              {trendWeight != null && (
-                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                  <span className="font-display font-semibold text-lg leading-none">
-                    {trendWeight} {displayUnit}
-                  </span>
-                  <span className="text-muted-foreground text-xs">
-                    trend weight
-                    {lastWeighIn != null && lastWeighIn !== trendWeight
-                      ? ` · weighed in ${lastWeighIn} ${displayUnit}`
-                      : ""}
-                    {weightChange != null &&
-                      ` · ${weightChange > 0 ? "+" : ""}${weightChange} ${displayUnit} since your first weigh-in`}
-                  </span>
-                </div>
-              )}
-              <div className="mt-2">
-                {points.length > 0 ? (
-                  <WeightChartInteractive
-                    goalWeight={goalWeight}
-                    points={points}
-                    unit={displayUnit}
-                    variant="compact"
-                  />
-                ) : (
-                  <p className="text-muted-foreground text-sm">
-                    No weigh-ins yet. Log your weight to see the trend.
-                  </p>
-                )}
-              </div>
-              <ModuleFooter
-                askChad={
-                  <AskChadButton
-                    className="min-h-11 sm:min-h-8"
-                    prompt="Look at the weight card on my dashboard: my latest weigh-in and the recent trend toward my goal weight. Am I moving in the right direction, and should I change anything?"
-                  />
-                }
-              >
-                <Button
-                  asChild
-                  className="min-h-11 gap-1.5 sm:min-h-8"
-                  size="sm"
-                  variant="outline"
-                >
-                  <Link href="/progress/body#log-entry">
-                    Log weight
-                    <ArrowRight className="size-3.5" />
-                  </Link>
-                </Button>
-              </ModuleFooter>
-            </ModuleCard>
+            <ModuleWeightTrend
+              displayUnit={displayUnit}
+              goalWeight={goalWeight}
+              lastWeighIn={lastWeighIn}
+              points={points}
+              trendWeight={trendWeight}
+              weightChange={weightChange}
+            />
           ) : (
             <LockedCard
               icon={<LineChart className="size-4" />}
@@ -1029,6 +603,17 @@ async function TodayContent() {
               title="Weight trend"
             />
           )}
+
+          <TrainingHighlight data={trainingHighlight} locked={!isPro} />
+          <NutritionHighlight
+            locked={!isPro}
+            summary={nutritionWeekSummary}
+          />
+          <RecoveryHighlight
+            hydration={hydrationWeekSummary}
+            locked={!isPro}
+            sleep={sleepWeekSummary}
+          />
         </SectionBand>
 
         {/* The Quit Test's Today promotion is REMOVED per DEC-03 (the P6
@@ -1039,15 +624,83 @@ async function TodayContent() {
   );
 }
 
-/** Compact stat tile for the Workout log card (VF-16). */
-function WorkoutStat({ value, label }: { value: string; label: string }) {
+/** The Body-trend highlight: the interactive weight trend, linking into
+ *  /progress/body (the P5 Body category). Markup unchanged from the P56-D
+ *  composition; only its band moved under Progress highlights. */
+function ModuleWeightTrend({
+  trendWeight,
+  lastWeighIn,
+  weightChange,
+  displayUnit,
+  points,
+  goalWeight,
+}: {
+  trendWeight: number | null;
+  lastWeighIn: number | null;
+  weightChange: number | null;
+  displayUnit: "lb" | "kg";
+  points: { t: number; weight: number }[];
+  goalWeight: number | null;
+}) {
   return (
-    <div className="flex items-baseline gap-1.5 rounded-xl border border-border bg-background/40 px-3.5 py-2">
-      <span className="font-display font-semibold text-base leading-none">
-        {value}
-      </span>
-      <span className="text-muted-foreground text-xs">{label}</span>
-    </div>
+    <ModuleCard glow="violet">
+      <ModuleHeader
+        icon={<LineChart className="size-4" />}
+        title="Weight trend"
+        tone="violet"
+        viewHref="/progress/body"
+        viewLabel="Body progress"
+      />
+      {trendWeight != null && (
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <span className="font-display font-semibold text-lg leading-none">
+            {trendWeight} {displayUnit}
+          </span>
+          <span className="text-muted-foreground text-xs">
+            trend weight
+            {lastWeighIn != null && lastWeighIn !== trendWeight
+              ? ` · weighed in ${lastWeighIn} ${displayUnit}`
+              : ""}
+            {weightChange != null &&
+              ` · ${weightChange > 0 ? "+" : ""}${weightChange} ${displayUnit} since your first weigh-in`}
+          </span>
+        </div>
+      )}
+      <div className="mt-2">
+        {points.length > 0 ? (
+          <WeightChartInteractive
+            goalWeight={goalWeight}
+            points={points}
+            unit={displayUnit}
+            variant="compact"
+          />
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            No weigh-ins yet. Log your weight to see the trend.
+          </p>
+        )}
+      </div>
+      <ModuleFooter
+        askChad={
+          <AskChadButton
+            className="min-h-11 sm:min-h-8"
+            prompt="Look at the weight card on my dashboard: my latest weigh-in and the recent trend toward my goal weight. Am I moving in the right direction, and should I change anything?"
+          />
+        }
+      >
+        <Button
+          asChild
+          className="min-h-11 gap-1.5 sm:min-h-8"
+          size="sm"
+          variant="outline"
+        >
+          <Link href="/progress/body#log-entry">
+            Log weight
+            <ArrowRight className="size-3.5" />
+          </Link>
+        </Button>
+      </ModuleFooter>
+    </ModuleCard>
   );
 }
 

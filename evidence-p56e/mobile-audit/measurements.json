@@ -1,0 +1,674 @@
+{
+  "today-dark-390": {
+    "overflow": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "hasOverflow": false,
+      "overflowPx": 0
+    },
+    "viewportMeta": "width=device-width, initial-scale=1, interactive-widget=resizes-content",
+    "targets": [],
+    "small": [
+      {
+        "tag": "SPAN",
+        "text": "C",
+        "fontSize": 11
+      }
+    ],
+    "targetCount": 0
+  },
+  "today-dark-360": {
+    "overflow": {
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "hasOverflow": false,
+      "overflowPx": 0
+    },
+    "viewportMeta": "width=device-width, initial-scale=1, interactive-widget=resizes-content",
+    "targets": [],
+    "small": [
+      {
+        "tag": "SPAN",
+        "text": "C",
+        "fontSize": 11
+      }
+    ],
+    "targetCount": 0
+  },
+  "today-dark-320": {
+    "overflow": {
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "hasOverflow": false,
+      "overflowPx": 0
+    },
+    "viewportMeta": "width=device-width, initial-scale=1, interactive-widget=resizes-content",
+    "targets": [],
+    "small": [
+      {
+        "tag": "SPAN",
+        "text": "C",
+        "fontSize": 11
+      }
+    ],
+    "targetCount": 0
+  },
+  "today-light-390": {
+    "overflow": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "hasOverflow": false,
+      "overflowPx": 0
+    },
+    "viewportMeta": "width=device-width, initial-scale=1, interactive-widget=resizes-content",
+    "targets": [],
+    "small": [
+      {
+        "tag": "SPAN",
+        "text": "C",
+        "fontSize": 11
+      }
+    ],
+    "targetCount": 0
+  },
+  "today-light-360": {
+    "overflow": {
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "hasOverflow": false,
+      "overflowPx": 0
+    },
+    "viewportMeta": "width=device-width, initial-scale=1, interactive-widget=resizes-content",
+    "targets": [],
+    "small": [
+      {
+        "tag": "SPAN",
+        "text": "C",
+        "fontSize": 11
+      }
+    ],
+    "targetCount": 0
+  },
+  "today-light-320": {
+    "overflow": {
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "hasOverflow": false,
+      "overflowPx": 0
+    },
+    "viewportMeta": "width=device-width, initial-scale=1, interactive-widget=resizes-content",
+    "targets": [],
+    "small": [
+      {
+        "tag": "SPAN",
+        "text": "C",
+        "fontSize": 11
+      }
+    ],
+    "targetCount": 0
+  },
+  "plans-dark-390": {
+    "overflow": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "hasOverflow": false,
+      "overflowPx": 0
+    },
+    "viewportMeta": "width=device-width, initial-scale=1, interactive-widget=resizes-content",
+    "targets": [],
+    "small": [
+      {
+        "tag": "SPAN",
+        "text": "C",
+        "fontSize": 11
+      }
+    ],
+    "targetCount": 0
+  },
+  "plans-dark-360": {
+    "overflow": {
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "hasOverflow": false,
+      "overflowPx": 0
+    },
+    "viewportMeta": "width=device-width, initial-scale=1, interactive-widget=resizes-content",
+    "targets": [],
+    "small": [
+      {
+        "tag": "SPAN",
+        "text": "C",
+        "fontSize": 11
+      }
+    ],
+    "targetCount": 0
+  },
+  "plans-dark-320": {
+    "overflow": {
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "hasOverflow": false,
+      "overflowPx": 0
+    },
+    "viewportMeta": "width=device-width, initial-scale=1, interactive-widget=resizes-content",
+    "targets": [],
+    "small": [
+      {
+        "tag": "SPAN",
+        "text": "C",
+        "fontSize": 11
+      }
+    ],
+    "targetCount": 0
+  },
+  "plans-light-390": {
+    "overflow": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "hasOverflow": false,
+      "overflowPx": 0
+    },
+    "viewportMeta": "width=device-width, initial-scale=1, interactive-widget=resizes-content",
+    "targets": [],
+    "small": [
+      {
+        "tag": "SPAN",
+        "text": "C",
+        "fontSize": 11
+      }
+    ],
+    "targetCount": 0
+  },
+  "plans-light-360": {
+    "overflow": {
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "hasOverflow": false,
+      "overflowPx": 0
+    },
+    "viewportMeta": "width=device-width, initial-scale=1, interactive-widget=resizes-content",
+    "targets": [],
+    "small": [
+      {
+        "tag": "SPAN",
+        "text": "C",
+        "fontSize": 11
+      }
+    ],
+    "targetCount": 0
+  },
+  "plans-light-320": {
+    "overflow": {
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "hasOverflow": false,
+      "overflowPx": 0
+    },
+    "viewportMeta": "width=device-width, initial-scale=1, interactive-widget=resizes-content",
+    "targets": [],
+    "small": [
+      {
+        "tag": "SPAN",
+        "text": "C",
+        "fontSize": 11
+      }
+    ],
+    "targetCount": 0
+  },
+  "fixtures-dark-390": {
+    "overflow": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "hasOverflow": false,
+      "overflowPx": 0
+    },
+    "viewportMeta": "width=device-width, initial-scale=1, interactive-widget=resizes-content",
+    "targets": [
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Fixture harness",
+        "w": 106,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Tokens",
+        "w": 50,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Panel roles",
+        "w": 77,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Personas",
+        "w": 65,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Panel composition",
+        "w": 129,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Charts",
+        "w": 46,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Overlays",
+        "w": 62,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Forms",
+        "w": 44,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "All goals (2)",
+        "w": 73,
+        "h": 16
+      }
+    ],
+    "small": [],
+    "targetCount": 9
+  },
+  "fixtures-dark-360": {
+    "overflow": {
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "hasOverflow": false,
+      "overflowPx": 0
+    },
+    "viewportMeta": "width=device-width, initial-scale=1, interactive-widget=resizes-content",
+    "targets": [
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Fixture harness",
+        "w": 106,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Tokens",
+        "w": 50,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Panel roles",
+        "w": 77,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Personas",
+        "w": 65,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Panel composition",
+        "w": 129,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Charts",
+        "w": 46,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Overlays",
+        "w": 62,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Forms",
+        "w": 44,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "All goals (2)",
+        "w": 73,
+        "h": 16
+      }
+    ],
+    "small": [],
+    "targetCount": 9
+  },
+  "fixtures-dark-320": {
+    "overflow": {
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "hasOverflow": false,
+      "overflowPx": 0
+    },
+    "viewportMeta": "width=device-width, initial-scale=1, interactive-widget=resizes-content",
+    "targets": [
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Fixture harness",
+        "w": 106,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Tokens",
+        "w": 50,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Panel roles",
+        "w": 77,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Personas",
+        "w": 65,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Panel composition",
+        "w": 129,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Charts",
+        "w": 46,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Overlays",
+        "w": 62,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Forms",
+        "w": 44,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "All goals (2)",
+        "w": 73,
+        "h": 16
+      }
+    ],
+    "small": [],
+    "targetCount": 9
+  },
+  "fixtures-light-390": {
+    "overflow": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "hasOverflow": false,
+      "overflowPx": 0
+    },
+    "viewportMeta": "width=device-width, initial-scale=1, interactive-widget=resizes-content",
+    "targets": [
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Fixture harness",
+        "w": 106,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Tokens",
+        "w": 50,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Panel roles",
+        "w": 77,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Personas",
+        "w": 65,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Panel composition",
+        "w": 129,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Charts",
+        "w": 46,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Overlays",
+        "w": 62,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Forms",
+        "w": 44,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "All goals (2)",
+        "w": 73,
+        "h": 16
+      }
+    ],
+    "small": [],
+    "targetCount": 9
+  },
+  "fixtures-light-360": {
+    "overflow": {
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "hasOverflow": false,
+      "overflowPx": 0
+    },
+    "viewportMeta": "width=device-width, initial-scale=1, interactive-widget=resizes-content",
+    "targets": [
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Fixture harness",
+        "w": 106,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Tokens",
+        "w": 50,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Panel roles",
+        "w": 77,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Personas",
+        "w": 65,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Panel composition",
+        "w": 129,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Charts",
+        "w": 46,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Overlays",
+        "w": 62,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Forms",
+        "w": 44,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "All goals (2)",
+        "w": 73,
+        "h": 16
+      }
+    ],
+    "small": [],
+    "targetCount": 9
+  },
+  "fixtures-light-320": {
+    "overflow": {
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "hasOverflow": false,
+      "overflowPx": 0
+    },
+    "viewportMeta": "width=device-width, initial-scale=1, interactive-widget=resizes-content",
+    "targets": [
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Fixture harness",
+        "w": 106,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Tokens",
+        "w": 50,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Panel roles",
+        "w": 77,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Personas",
+        "w": 65,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Panel composition",
+        "w": 129,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Charts",
+        "w": 46,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Overlays",
+        "w": 62,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "Forms",
+        "w": 44,
+        "h": 21
+      },
+      {
+        "tag": "A",
+        "role": "",
+        "text": "All goals (2)",
+        "w": 73,
+        "h": 16
+      }
+    ],
+    "small": [],
+    "targetCount": 9
+  }
+}
