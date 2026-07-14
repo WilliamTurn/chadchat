@@ -8,6 +8,10 @@ import {
   parseWeightUnit,
   round1,
 } from "@/lib/progress/weight";
+import {
+  resolveExerciseIdentity,
+  type ResolveOptions,
+} from "@/lib/workouts/exercise-identity";
 import { exercise1RMTrend, type WorkoutData } from "@/lib/workouts/stats";
 
 /**
@@ -68,6 +72,14 @@ export type GoalOutcomeSources = {
   trendUnit: "lb" | "kg";
   canonicalWorkouts: WorkoutData[];
   latestMeasurementByKind: Map<string, number>;
+  /**
+   * Identity resolution for the e1rm metricRef: a goal saved with an alias
+   * spelling ("Bench Press") must match the CANONICAL history it is graded
+   * against ("Barbell Bench Press"), or the outcome silently reads as
+   * no-data (P56-Z adversarial finding P1-1). Omitting still folds curated
+   * aliases; pass the member's options wherever canonicalWorkouts used them.
+   */
+  resolveOptions?: ResolveOptions;
 };
 
 export function buildGoalVM(
@@ -93,7 +105,11 @@ export function buildGoalVM(
             )
           : null;
     } else if (o.metricId === "training.exercise.e1rm" && o.metricRef) {
-      const trend = exercise1RMTrend(sources.canonicalWorkouts, o.metricRef);
+      const canonicalRef = resolveExerciseIdentity(
+        o.metricRef,
+        sources.resolveOptions ?? {}
+      ).canonicalName;
+      const trend = exercise1RMTrend(sources.canonicalWorkouts, canonicalRef);
       current = trend.length > 0 ? trend[trend.length - 1].value : null;
     } else if (o.metricId === "body.measurement" && o.metricRef) {
       current =

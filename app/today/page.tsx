@@ -593,6 +593,7 @@ async function TodayContent() {
               goalWeight={goalWeight}
               lastWeighIn={lastWeighIn}
               points={points}
+              todayMs={todayAnchorMs}
               trendWeight={trendWeight}
               weightChange={weightChange}
             />
@@ -634,6 +635,7 @@ function ModuleWeightTrend({
   displayUnit,
   points,
   goalWeight,
+  todayMs,
 }: {
   trendWeight: number | null;
   lastWeighIn: number | null;
@@ -641,6 +643,10 @@ function ModuleWeightTrend({
   displayUnit: "lb" | "kg";
   points: { t: number; weight: number }[];
   goalWeight: number | null;
+  /** Member-local today anchor, so this embed's 30-day window matches
+   *  /progress/body exactly (P56-Z audit P1: the UTC fallback shifted the
+   *  window a day for members behind UTC). */
+  todayMs: number;
 }) {
   return (
     <ModuleCard glow="violet">
@@ -671,6 +677,7 @@ function ModuleWeightTrend({
           <WeightChartInteractive
             goalWeight={goalWeight}
             points={points}
+            todayMs={todayMs}
             unit={displayUnit}
             variant="compact"
           />

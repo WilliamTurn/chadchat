@@ -35,7 +35,8 @@ import type { LastNight } from "@/lib/today/week";
 
 export type StatusStripData = {
   nutrition: {
-    /** sumMacros over the member-local today (registered source). */
+    /** nutrition.calories.today via the panel-data assembler's member-local
+     *  day windows (see the registry derivation's rewiring status). */
     calories: number;
     target: number | null;
     mealsToday: number;

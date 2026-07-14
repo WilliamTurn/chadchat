@@ -60,6 +60,7 @@ export function GoalDoc({
   lift,
   weightChart = null,
   coherence = null,
+  todayMs,
 }: {
   goal: EditableGoal;
   /** Smoothed trend weight in the member's display unit, for weight goals —
@@ -71,6 +72,10 @@ export function GoalDoc({
    *  with the projected finish date (VF-6). */
   weightChart?: GoalWeightChart | null;
   coherence?: GoalCoherence | null;
+  /** Member-local today anchor for the embedded weight chart's window, so
+   *  this page's 30-day stats match /progress/body and /today exactly
+   *  (P56-Z audit P1: the UTC fallback shifted the window a day). */
+  todayMs?: number;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -254,6 +259,7 @@ export function GoalDoc({
           goalStartWeight={weightChart.goalStartWeight}
           goalWeight={weightChart.goalWeight}
           points={weightChart.points}
+          todayMs={todayMs}
           unit={weightChart.unit}
         />
       )}

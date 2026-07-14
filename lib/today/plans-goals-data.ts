@@ -197,8 +197,11 @@ export async function getPrimaryGoalData(args: {
     outcomeRows.some((o) => o.metricId === "body.measurement") ||
     (outcomeRows.length === 0 && legacyKind === "measurement");
 
-  const canonicalWorkouts = needsWorkouts
-    ? canonicalizeWorkouts(workouts, await getResolveOptions(user.id))
+  const resolveOptions = needsWorkouts
+    ? await getResolveOptions(user.id)
+    : undefined;
+  const canonicalWorkouts = resolveOptions
+    ? canonicalizeWorkouts(workouts, resolveOptions)
     : workouts;
   const latestMeasurementByKind = needsMeasurements
     ? latestMeasurementsByKind(await getBodyMeasurementsByUserId(user.id))
@@ -210,6 +213,7 @@ export async function getPrimaryGoalData(args: {
       trendUnit,
       canonicalWorkouts,
       latestMeasurementByKind,
+      resolveOptions,
     }),
     otherActiveGoals: goals.length - 1,
   };

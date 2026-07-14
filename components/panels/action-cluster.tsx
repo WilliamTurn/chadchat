@@ -64,8 +64,11 @@ function warnBannedCopy(context: string, label: string) {
 }
 
 /** 44px touch targets at phone widths (owner accessibility law); the
- *  compact 32px visual returns once a pointer is the likely input. */
-const TOUCH_TARGET = "min-h-11 sm:min-h-8";
+ *  compact 32px visual returns once a pointer is the likely input.
+ *  max-w-full + a truncating label: a long action label (plan-day names)
+ *  ellipsizes inside its panel instead of clipping off-card at 320px
+ *  (P56-Z mobile audit P2-1). */
+const TOUCH_TARGET = "min-h-11 min-w-0 max-w-full shrink sm:min-h-8";
 
 function ActionButton({
   action,
@@ -80,7 +83,7 @@ function ActionButton({
       <Button asChild className={TOUCH_TARGET} size="sm" variant={variant}>
         <Link href={action.href}>
           {action.icon}
-          {action.label}
+          <span className="truncate">{action.label}</span>
         </Link>
       </Button>
     );
@@ -94,7 +97,7 @@ function ActionButton({
       variant={variant}
     >
       {action.icon}
-      {action.label}
+      <span className="truncate">{action.label}</span>
     </Button>
   );
 }
@@ -122,7 +125,7 @@ export function ActionCluster({
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-end gap-2">
+    <div className="flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2">
       {overflow && overflow.length > 0 && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

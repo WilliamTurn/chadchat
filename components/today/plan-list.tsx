@@ -3,12 +3,13 @@
 import { Dumbbell, RotateCcw, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { toast } from "sonner";
 import { removePlan, updatePlanRecord } from "@/app/today/actions";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmActionDialog } from "@/components/ui/confirm-undo";
 import { ModuleFooter, ModuleHeader } from "./module-card";
 import { type EditablePlan, PlanEditor } from "./plan-editor";
 import { PlanStatusBadge } from "./plan-status-badge";
@@ -81,68 +82,46 @@ function PlanItem({ plan }: { plan: EditablePlan }) {
           <Link href={`/plans/${plan.id}`}>View full plan</Link>
         </Button>
         <PlanEditor plan={plan} variant="icon" />
-        <RowDeletePlan id={plan.id} />
+        <RowDeletePlan plan={plan} />
       </div>
     </div>
   );
 }
 
 /**
- * A direct row delete for a plan: a trash icon that flips to an inline
- * Delete/Cancel confirm (matching the workouts list), so deleting doesn't
- * require opening the View dialog (NAV-25).
+ * A direct row delete for a plan, on the shared named-confirm platform:
+ * deleting a member's whole plan names the exact plan and its consequence
+ * (destructive confirm-or-undo law; P56-Z audit P2 replaced the bare inline
+ * Delete/Cancel flip here).
  */
-function RowDeletePlan({ id }: { id: string }) {
+function RowDeletePlan({ plan }: { plan: EditablePlan }) {
   const router = useRouter();
-  const [confirming, setConfirming] = useState(false);
-  const [pending, startTransition] = useTransition();
-
-  if (!confirming) {
-    return (
-      <Button
-        aria-label="Delete plan"
-        className="size-11 text-muted-foreground sm:size-7"
-        onClick={() => setConfirming(true)}
-        size="icon"
-        variant="ghost"
-      >
-        <Trash2 className="size-3.5" />
-      </Button>
-    );
-  }
 
   return (
-    <div className="flex items-center gap-1">
-      <Button
-        className="h-7 px-2 text-xs"
-        disabled={pending}
-        onClick={() =>
-          startTransition(async () => {
-            const result = await removePlan(id);
-            if (result.ok) {
-              toast.success("Plan deleted.");
-              router.refresh();
-            } else {
-              toast.error(result.error ?? "Couldn't delete that plan.");
-              setConfirming(false);
-            }
-          })
+    <ConfirmActionDialog
+      confirmLabel="Delete plan"
+      consequence="It leaves Today and your plans list immediately. Workouts and meals you already logged stay."
+      onConfirm={async () => {
+        const result = await removePlan(plan.id);
+        if (!result.ok) {
+          toast.error(result.error ?? "Couldn't delete that plan.");
+          throw new Error("plan delete failed");
         }
-        size="sm"
-        variant="destructive"
-      >
-        {pending ? "Deleting…" : "Delete"}
-      </Button>
-      <Button
-        className="h-7 px-2 text-xs"
-        disabled={pending}
-        onClick={() => setConfirming(false)}
-        size="sm"
-        variant="ghost"
-      >
-        Cancel
-      </Button>
-    </div>
+        toast.success("Plan deleted.");
+        router.refresh();
+      }}
+      title={`Delete the ${plan.kind === "diet" ? "diet" : "training"} plan "${plan.title}"?`}
+      trigger={
+        <Button
+          aria-label={`Delete plan: ${plan.title}`}
+          className="size-11 text-muted-foreground sm:size-7"
+          size="icon"
+          variant="ghost"
+        >
+          <Trash2 className="size-3.5" />
+        </Button>
+      }
+    />
   );
 }
 

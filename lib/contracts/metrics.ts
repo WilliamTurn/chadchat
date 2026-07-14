@@ -141,7 +141,7 @@ export const METRICS = {
     grain: "user-day",
     source: { module: "lib/ai/dashboard.ts", symbol: "sumMacros" },
     derivation:
-      "Sum over meals with recordedAt/createdAt inside the member-local today window (todayStartInTz). No meals logged = unlogged, never 0 kcal. Phase 2 rewiring note: live cards currently inline-reduce (app/today/page.tsx, app/nutrition/page.tsx); rewire them to this symbol. CAUTION: lib/nutrition/macros.ts exports a DIFFERENT sumMacros (meal-plan domain, other signature); this metric's source is lib/ai/dashboard.ts only.",
+      "Sum over meals with recordedAt/createdAt inside the member-local today window (todayStartInTz). No meals logged = unlogged, never 0 kcal. Rewiring status (P56-Z): /today reads it through lib/today/panel-data.ts + lib/today/week.ts (buildMacroWeek/dailyMacroTrend over the same member-local day windows); app/nutrition/page.tsx still inline-reduces (sumMacro) and remains the LAST unrewired reader, queued in MTL; values agree today, the one-module structure is the open debt. CAUTION: lib/nutrition/macros.ts exports a DIFFERENT sumMacros (meal-plan domain, other signature); this metric's source is lib/ai/dashboard.ts only.",
     target: {
       kind: "user-target",
       source: "NutritionTarget.calories (lib/db/queries.getNutritionTarget)",
@@ -591,7 +591,7 @@ export const METRICS = {
     grain: "session",
     source: { module: "lib/workouts/stats.ts", symbol: "exercise1RMTrend" },
     derivation:
-      "Epley estimate over completed working sets, normalized to lb. Always labeled est.; formula named at detail level.",
+      "Epley estimate over completed working sets, normalized to lb. Always labeled est.; formula named at detail level. CANONICALIZED INPUT (FIX-33/P56-Z): callers pass canonicalizeWorkouts output AND resolve the exercise ref through resolveExerciseIdentity with the member's ResolveOptions before matching, or an alias-spelled goal ref silently misses its merged history (buildGoalVM in lib/goals/outcome-values.ts does this; /goals and /goals/[id] mirror it).",
     target: { kind: "goal", source: "Goal (metric=lift) targetValue" },
     allowedClaims: [
       "current-value",

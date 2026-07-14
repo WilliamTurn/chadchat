@@ -135,9 +135,12 @@ export function ModuleFooter({
       {status ? (
         <div className="min-w-0 text-muted-foreground text-sm">{status}</div>
       ) : null}
-      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+      {/* min-w-0 down this chain so a long primary label can actually
+          truncate inside the card instead of growing the flex ancestors and
+          clipping at the card edge (P56-Z mobile audit P2-1). */}
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <div className="shrink-0">{askChad}</div>
-        <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2">
           {children}
         </div>
       </div>

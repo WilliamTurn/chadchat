@@ -24,13 +24,18 @@ import {
   mentionedCalories,
   overlapTitlesFor,
 } from "@/lib/goals/coherence";
-import { formatDayInTzSmartYear } from "@/lib/date";
+import { formatDayInTzSmartYear, todayAnchorInTz } from "@/lib/date";
 import {
   latestWeightInUnit,
   toDisplayWeight,
   trendWeightInUnit,
   weightPointsInUnit,
 } from "@/lib/goals/latest-weight";
+import { getResolveOptions } from "@/lib/workouts/canonical";
+import {
+  canonicalizeWorkouts,
+  resolveExerciseIdentity,
+} from "@/lib/workouts/exercise-identity";
 import { toWorkoutData } from "@/lib/workouts/serialize";
 import { exercise1RMTrend } from "@/lib/workouts/stats";
 
@@ -181,10 +186,22 @@ async function GoalDocContent({
       }
     : null;
 
-  const workoutData = recentWorkouts.map(toWorkoutData);
+  // Canonical inputs + canonicalized ref: same series as /goals, /today,
+  // and /progress (P56-Z adversarial P1-1).
+  const resolveOptions = needsLift
+    ? await getResolveOptions(user.id)
+    : undefined;
+  const workoutData = canonicalizeWorkouts(
+    recentWorkouts.map(toWorkoutData),
+    resolveOptions ?? {}
+  );
   let lift: LiftProgress | null = null;
   if (needsLift && goal.metricRef) {
-    const points = exercise1RMTrend(workoutData, goal.metricRef);
+    const points = exercise1RMTrend(
+      workoutData,
+      resolveExerciseIdentity(goal.metricRef, resolveOptions ?? {})
+        .canonicalName
+    );
     lift = {
       current: points.at(-1)?.value ?? null,
       first: points[0]?.value ?? null,
@@ -198,6 +215,7 @@ async function GoalDocContent({
       currentWeight={currentWeight}
       goal={goalItem}
       lift={lift}
+      todayMs={todayAnchorInTz(user.timezone).getTime()}
       weightChart={weightChart}
     />
   );

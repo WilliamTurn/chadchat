@@ -20,6 +20,11 @@ import { formatDayInTzSmartYear } from "@/lib/date";
 import { findCalorieConflict, findOverlapIds } from "@/lib/goals/coherence";
 import { trendWeightInUnit } from "@/lib/goals/latest-weight";
 import { clientField } from "@/lib/memory/client-field";
+import { getResolveOptions } from "@/lib/workouts/canonical";
+import {
+  canonicalizeWorkouts,
+  resolveExerciseIdentity,
+} from "@/lib/workouts/exercise-identity";
 import { toWorkoutData } from "@/lib/workouts/serialize";
 import { exercise1RMTrend } from "@/lib/workouts/stats";
 
@@ -121,11 +126,22 @@ async function GoalsContent() {
   const currentWeight =
     trendWeightInUnit(entries, user.weightUnit)?.value ?? null;
 
-  const workoutData = recentWorkouts.map(toWorkoutData);
+  // Canonical inputs + a canonicalized ref, so this page's lift values are
+  // the SAME series /today and /progress read through buildGoalVM (P56-Z
+  // adversarial P1-1: raw-history math here diverged from the canonical
+  // surfaces once FIX-33 landed, and alias-spelled refs missed entirely).
+  const resolveOptions = await getResolveOptions(user.id);
+  const workoutData = canonicalizeWorkouts(
+    recentWorkouts.map(toWorkoutData),
+    resolveOptions
+  );
   const liftProgress: Record<string, LiftProgress> = {};
   for (const g of goalItems) {
     if (g.metric === "lift" && g.metricRef) {
-      const points = exercise1RMTrend(workoutData, g.metricRef);
+      const points = exercise1RMTrend(
+        workoutData,
+        resolveExerciseIdentity(g.metricRef, resolveOptions).canonicalName
+      );
       liftProgress[g.id] = {
         current: points.at(-1)?.value ?? null,
         first: points[0]?.value ?? null,

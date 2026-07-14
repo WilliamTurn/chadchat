@@ -613,6 +613,10 @@ async function OverviewContent({ range }: { range: OverviewRangeKey }) {
           trendUnit: displayUnit,
           canonicalWorkouts,
           latestMeasurementByKind,
+          resolveOptions: {
+            memberCustomNames: customs.map((c) => c.name),
+            memberAliases,
+          },
         }
       )
     );
