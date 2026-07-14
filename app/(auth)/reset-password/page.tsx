@@ -111,8 +111,11 @@ function ResetPasswordForm() {
         Choose a new password for your account.
       </p>
       <Form {...form}>
+        {/* method="post": a pre-hydration native submit must never GET the
+            new password into the URL. */}
         <form
           className="flex flex-col gap-4"
+          method="post"
           noValidate
           onSubmit={form.handleSubmit(onSubmit)}
         >
