@@ -228,7 +228,7 @@ export function buildOverviewDemoVMs(persona: Persona): OverviewDemoVMs {
         : `${nutritionSummary.loggedDays} day${nutritionSummary.loggedDays === 1 ? "" : "s"} logged`,
     context:
       nutritionSummary.average != null
-        ? `avg ${formatQuantity(Math.round(nutritionSummary.average), "kcal")} · ${DEMO_LABEL}`
+        ? `avg ${formatQuantity(Math.round(nutritionSummary.average), "kcal")} · ${DEMO_LABEL} · calendar shows the last 28 days`
         : DEMO_LABEL,
     cells: nutritionSummary.days.slice(-28).map((d) => ({
       t: d.t,

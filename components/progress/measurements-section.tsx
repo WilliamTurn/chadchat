@@ -174,7 +174,7 @@ export function MeasurementsSection({
             }
             value={kind}
           >
-            <SelectTrigger className="h-9 w-fit rounded-lg" id="m-kind">
+            <SelectTrigger className="min-h-11 w-fit rounded-lg sm:h-9 sm:min-h-0" id="m-kind">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -190,7 +190,7 @@ export function MeasurementsSection({
           <Label htmlFor="m-value">Measurement</Label>
           <div className="flex gap-2">
             <Input
-              className="w-24"
+              className="min-h-11 w-24 sm:min-h-9"
               id="m-value"
               inputMode="decimal"
               onChange={(e) => setValue(e.target.value)}
@@ -203,7 +203,7 @@ export function MeasurementsSection({
             >
               <SelectTrigger
                 aria-label="Unit"
-                className="h-9 shrink-0 rounded-lg"
+                className="min-h-11 shrink-0 rounded-lg sm:h-9 sm:min-h-0"
               >
                 <SelectValue />
               </SelectTrigger>
@@ -217,14 +217,14 @@ export function MeasurementsSection({
         <div className="flex flex-col gap-2">
           <Label htmlFor="m-date">Date</Label>
           <DatePicker
-            className="w-40"
+            className="min-h-11 w-40 sm:min-h-9"
             id="m-date"
             max={todayISO()}
             onChange={setDate}
             value={date}
           />
         </div>
-        <Button disabled={pending} type="submit">
+        <Button className="min-h-11 sm:min-h-9" disabled={pending} type="submit">
           {pending ? "Saving…" : "Log"}
         </Button>
       </form>
@@ -291,7 +291,7 @@ export function MeasurementsSection({
                   {latest && (
                     <Button
                       aria-label={`Delete latest ${KIND_LABEL[k]} reading`}
-                      className="size-7 text-muted-foreground"
+                      className="-m-2 size-11 text-muted-foreground sm:m-0 sm:size-7"
                       disabled={pending}
                       onClick={() => onDelete(latest.id)}
                       size="icon"

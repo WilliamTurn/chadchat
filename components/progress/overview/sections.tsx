@@ -67,10 +67,13 @@ function quietAction(label: string, href: string) {
   );
 }
 
-/** Adherence calendar categories: hit / missed, stated without moral tone. */
+/** Adherence calendar categories, stated without moral tone. A logged day
+ * with NO target active that day is its own honest category (FIX-07 makes
+ * this reachable), never colored as a miss. */
 const ADHERENCE_CATEGORIES = [
   { color: "var(--chart-2)", label: "within target" },
   { color: "var(--chart-3)", label: "off target" },
+  { color: "var(--chart-neutral)", label: "logged, no target that day" },
 ] as const;
 
 /* ------------------------------------------------------------------- body */
@@ -456,6 +459,7 @@ export function ReportsSection({ vm }: { vm: ReportsSectionVM }) {
       lockedCapability="The weekly cross-domain report is a Chad Elite feature."
       state={vm.state}
       targetContext={vm.context ?? undefined}
+      lockedCta="Compare plans"
       title="Weekly report"
       tone="sky"
       visual={

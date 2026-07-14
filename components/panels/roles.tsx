@@ -43,6 +43,8 @@ type PanelIdentity = {
   title: string;
   /** One concrete sentence for the locked teaser (first-run.md section 5). */
   lockedCapability: string;
+  /** Locked CTA label override (Elite gates); default "Upgrade to Pro". */
+  lockedCta?: string;
   /**
    * The designed compact empty state (first-run.md). Required by type: a
    * panel without a designed empty variant does not typecheck (FIX-14/15).
@@ -52,6 +54,9 @@ type PanelIdentity = {
   retryAction?: ReactNode;
   glow?: ChipTone;
   className?: string;
+  /** Opt-in (P56-C): a long canonical title wraps at narrow widths instead
+   *  of ellipsizing (a panel's own name must never truncate; mobile audit). */
+  wrapTitle?: boolean;
 };
 
 /** The footer grammar: Ask Chad fixed left, one action cluster right. */
@@ -257,9 +262,11 @@ function frameProps(
     title: props.title,
     detailLink: props.detailLink,
     lockedCapability: props.lockedCapability,
+    lockedCta: props.lockedCta,
     empty: props.empty,
     retryAction: props.retryAction,
     glow: props.glow,
     className: props.className,
+    wrapTitle: props.wrapTitle,
   };
 }

@@ -122,7 +122,13 @@ function EmptyBody({
   );
 }
 
-function LockedBody({ capability }: { capability: string }) {
+function LockedBody({
+  capability,
+  cta,
+}: {
+  capability: string;
+  cta?: string;
+}) {
   return (
     <div className="flex min-w-0 flex-1 flex-col items-start gap-3 pt-1">
       <span className="flex size-8 items-center justify-center rounded-lg bg-muted text-muted-foreground">
@@ -137,7 +143,7 @@ function LockedBody({ capability }: { capability: string }) {
       >
         <Link href="/account">
           <Crown className="size-4" />
-          Upgrade to Pro
+          {cta ?? "Upgrade to Pro"}
         </Link>
       </Button>
     </div>
@@ -187,12 +193,14 @@ export function PanelFrame({
   title,
   detailLink,
   lockedCapability,
+  lockedCta,
   empty,
   retryAction,
   glow,
   className,
   children,
   footer,
+  wrapTitle,
 }: {
   role: PanelRole;
   state: PanelState;
@@ -202,6 +210,8 @@ export function PanelFrame({
   detailLink?: DetailLink;
   /** One concrete sentence naming what this panel does, for the locked teaser. */
   lockedCapability: string;
+  /** Locked CTA label override ("Compare plans" for Elite gates); default "Upgrade to Pro". */
+  lockedCta?: string;
   /** The designed compact empty state; required so it cannot be skipped. */
   empty: PanelEmptySpec;
   /** Retry affordance rendered in the error state. */
@@ -212,6 +222,9 @@ export function PanelFrame({
   children: ReactNode;
   /** Pre-composed footer (roles.tsx builds it); data states only. */
   footer?: ReactNode;
+  /** Opt-in (P56-C): a long canonical title wraps at narrow widths instead
+   *  of ellipsizing (a panel's own name must never truncate; mobile audit). */
+  wrapTitle?: boolean;
 }) {
   devValidate(role, title, detailLink);
   const contract = PANEL_ROLES[role];
@@ -245,8 +258,11 @@ export function PanelFrame({
         tone={tone}
         viewHref={detailLink?.href}
         viewLabel={detailLink?.label}
+        wrapTitle={wrapTitle}
       />
-      {state === "locked" && <LockedBody capability={lockedCapability} />}
+      {state === "locked" && (
+        <LockedBody capability={lockedCapability} cta={lockedCta} />
+      )}
       {state === "loading" && <LoadingBody role={role} />}
       {state === "error" && (
         <ErrorBody retryAction={retryAction} title={title} />

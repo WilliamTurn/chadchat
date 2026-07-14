@@ -416,7 +416,8 @@ async function OverviewContent({ range }: { range: OverviewRangeKey }) {
       nutrition.average != null
         ? `avg ${formatQuantity(Math.round(nutrition.average), "kcal")}`
         : null,
-      days > 28 ? "last 28 days shown" : windowLabel,
+      windowLabel,
+      days > 28 ? "calendar shows the last 28 days" : null,
     ]
       .filter(Boolean)
       .join(" · "),

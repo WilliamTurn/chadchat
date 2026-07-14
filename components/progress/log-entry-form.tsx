@@ -117,6 +117,7 @@ export function LogEntryForm({ defaultUnit }: { defaultUnit: "lb" | "kg" }) {
         <div className="flex flex-col gap-2">
           <Label htmlFor="p-date">Date</Label>
           <DatePicker
+            className="min-h-11 sm:min-h-9"
             id="p-date"
             max={todayISO()}
             onChange={setDate}
@@ -127,6 +128,7 @@ export function LogEntryForm({ defaultUnit }: { defaultUnit: "lb" | "kg" }) {
           <Label htmlFor="p-weight">Weight</Label>
           <div className="flex gap-2">
             <Input
+              className="min-h-11 sm:min-h-9"
               id="p-weight"
               inputMode="decimal"
               onChange={(e) => setWeight(e.target.value)}
@@ -139,7 +141,7 @@ export function LogEntryForm({ defaultUnit }: { defaultUnit: "lb" | "kg" }) {
             >
               <SelectTrigger
                 aria-label="Weight unit"
-                className="h-9 shrink-0 rounded-lg"
+                className="min-h-11 shrink-0 rounded-lg sm:h-9 sm:min-h-0"
               >
                 <SelectValue />
               </SelectTrigger>
@@ -198,7 +200,7 @@ export function LogEntryForm({ defaultUnit }: { defaultUnit: "lb" | "kg" }) {
         />
       </div>
 
-      <Button className="sm:w-auto" disabled={busy} type="submit">
+      <Button className="min-h-11 sm:min-h-9 sm:w-auto" disabled={busy} type="submit">
         {uploading ? "Uploading…" : pending ? "Saving…" : "Log entry"}
       </Button>
     </form>

@@ -100,12 +100,15 @@ export function CalendarHeatmap({
           className="grid shrink-0 grid-rows-7"
           style={{ gap: CELL_GAP }}
         >
+          {/* 12px + full muted-foreground: the a11y floor for caption text
+              (FIX-19); alternating rows keep tall glyphs from colliding when
+              cells run small. */}
           {WEEKDAY_LABELS.map((d, i) => (
             <span
-              className="flex items-center text-muted-foreground/60 leading-none"
+              className="flex items-center text-muted-foreground leading-none"
               // biome-ignore lint/suspicious/noArrayIndexKey: fixed weekday order
               key={i}
-              style={{ fontSize: 9 }}
+              style={{ fontSize: 12 }}
             >
               {i % 2 === 1 ? d : ""}
             </span>
