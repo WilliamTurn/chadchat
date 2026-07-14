@@ -5,6 +5,8 @@ import { HistoryCard } from "@/components/workouts/v2/history-card";
 import { WorkoutPageHeader } from "@/components/workouts/v2/page-header";
 import { WCard } from "@/components/workouts/v2/ui";
 import { getWorkoutsByUserId } from "@/lib/db/queries";
+import { getResolveOptions } from "@/lib/workouts/canonical";
+import { canonicalizeWorkouts } from "@/lib/workouts/exercise-identity";
 import { toWorkoutData } from "@/lib/workouts/serialize";
 import { prCountsByWorkout, type WorkoutData } from "@/lib/workouts/stats";
 import { MAX_WORKOUTS, requireWorkoutsUser } from "../data";
@@ -26,10 +28,16 @@ export default function HistoryPage() {
 
 async function Content() {
   const user = await requireWorkoutsUser();
-  const workouts = (await getWorkoutsByUserId(user.id, MAX_WORKOUTS)).map(
-    toWorkoutData
+  const [rawWorkouts, resolveOptions] = await Promise.all([
+    getWorkoutsByUserId(user.id, MAX_WORKOUTS),
+    getResolveOptions(user.id),
+  ]);
+  const workouts = rawWorkouts.map(toWorkoutData);
+  // FIX-33: PR pills replay canonicalized history so records that merged
+  // across aliases count the same here as everywhere else.
+  const prCounts = prCountsByWorkout(
+    canonicalizeWorkouts(workouts, resolveOptions)
   );
-  const prCounts = prCountsByWorkout(workouts);
 
   const groups: { key: string; items: WorkoutData[] }[] = [];
   for (const workout of workouts) {

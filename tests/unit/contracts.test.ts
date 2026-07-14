@@ -178,9 +178,28 @@ test("only logged-event counts opt into rendering zero", () => {
     (id) => (METRICS[id] as MetricDef).missingRendersAs === "zero"
   );
   assert.deepEqual(zeroMetrics.sort(), [
+    // FIX-32 (P56-A): the overview window summaries are counts of logged,
+    // graded days/nights (days-at-target, days-at-goal, days-logged), where
+    // zero is a truthful observed value; the sections render designed empty
+    // states when nothing is logged at all.
+    "engagement.consistency.window",
+    "hydration.daysAtGoal.window",
+    "nutrition.adherence.window",
     "nutrition.meals.today",
+    "sleep.nightsAtGoal.window",
+    // FIX-33 (P56-B): the training-analytics additions are all counts of
+    // logged events (sessions, plan completions, PR events, milestones,
+    // sets), where zero is a truthful observed value.
+    "training.frequency.weeklyTrend",
+    "training.milestones.timeline",
+    "training.muscle.distribution",
+    "training.plan.adherence.weeklyTrend",
+    "training.plan.completion.week",
+    "training.pr.timeline",
     "training.prs",
     "training.sessions.thisWeek",
+    "training.sessions.total",
+    "training.volume.week",
   ]);
 });
 

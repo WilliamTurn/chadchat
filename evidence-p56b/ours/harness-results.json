@@ -1,0 +1,147 @@
+[
+  {
+    "name": "screenshot dark@1440",
+    "pass": true,
+    "detail": "html class=\"inter_2fe1ab3d-module__-T-KAq__variable archivo_2343fd72-module__8YhNJG__variable jetbrains_mono_5f0647e3-module__UHGtKW__variable dark\""
+  },
+  {
+    "name": "screenshot dark@390",
+    "pass": true,
+    "detail": "html class=\"inter_2fe1ab3d-module__-T-KAq__variable archivo_2343fd72-module__8YhNJG__variable jetbrains_mono_5f0647e3-module__UHGtKW__variable dark\""
+  },
+  {
+    "name": "screenshot light@1440",
+    "pass": true,
+    "detail": "html class=\"inter_2fe1ab3d-module__-T-KAq__variable archivo_2343fd72-module__8YhNJG__variable jetbrains_mono_5f0647e3-module__UHGtKW__variable light\""
+  },
+  {
+    "name": "screenshot light@390",
+    "pass": true,
+    "detail": "html class=\"inter_2fe1ab3d-module__-T-KAq__variable archivo_2343fd72-module__8YhNJG__variable jetbrains_mono_5f0647e3-module__UHGtKW__variable light\""
+  },
+  {
+    "name": "persona section \"first-run\" renders",
+    "pass": true,
+    "detail": "count=1"
+  },
+  {
+    "name": "persona section \"sparse\" renders",
+    "pass": true,
+    "detail": "count=1"
+  },
+  {
+    "name": "persona section \"consistent\" renders",
+    "pass": true,
+    "detail": "count=1"
+  },
+  {
+    "name": "persona section \"lapsed\" renders",
+    "pass": true,
+    "detail": "count=1"
+  },
+  {
+    "name": "persona section \"overshoot\" renders",
+    "pass": true,
+    "detail": "count=1"
+  },
+  {
+    "name": "persona section \"locked-basic\" renders",
+    "pass": true,
+    "detail": "count=1"
+  },
+  {
+    "name": "consistent: adherence 'this week' present",
+    "pass": true,
+    "detail": "matches=6"
+  },
+  {
+    "name": "consistent: 'Training volume' frame present",
+    "pass": true,
+    "detail": "matches=2"
+  },
+  {
+    "name": "consistent: svg visuals render (charts)",
+    "pass": true,
+    "detail": "svgCount=38, heatmapish=2"
+  },
+  {
+    "name": "consistent: celebration hero 'New record: Barbell Bench Press'",
+    "pass": true,
+    "detail": "matches=2"
+  },
+  {
+    "name": "consistent: '10th workout' milestone present",
+    "pass": true,
+    "detail": "matches=1"
+  },
+  {
+    "name": "DEDUP PROOF: exactly one bench card named 'Barbell Bench Press'",
+    "pass": true,
+    "detail": "benchCards=[\"Barbell Bench Press\"] allNames=[\"Barbell Bench Press\",\"Barbell Row\"]"
+  },
+  {
+    "name": "celebration: unicorn SDK requested from cdn.jsdelivr.net/gh/hiunicornstudio",
+    "pass": true,
+    "detail": "requests=[\"https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.2.6/dist/unicornStudio.umd.js\"]"
+  },
+  {
+    "name": "celebration: scene canvas rendered",
+    "pass": true,
+    "detail": "data-us-project=1 canvas=1 dims={\"x\":50,\"y\":315.46875,\"width\":1340,\"height\":96}"
+  },
+  {
+    "name": "WATERMARK: no unicorn.studio watermark visible",
+    "pass": true,
+    "detail": "anchors=0 textMatches=0"
+  },
+  {
+    "name": "celebration: no console errors during scene load",
+    "pass": true,
+    "detail": "errors=[]"
+  },
+  {
+    "name": "REDUCED MOTION: NO unicorn SDK request",
+    "pass": true,
+    "detail": "requests=[]"
+  },
+  {
+    "name": "REDUCED MOTION: scene div NOT mounted (data-us-project absent)",
+    "pass": true,
+    "detail": "data-us-project=0"
+  },
+  {
+    "name": "REDUCED MOTION: hero still reads statically",
+    "pass": true,
+    "detail": "heroMatches=1"
+  },
+  {
+    "name": "mobile 390: no horizontal overflow",
+    "pass": true,
+    "detail": "scrollWidth=390 clientWidth=390 over=0"
+  },
+  {
+    "name": "mobile 390: no input focused on load",
+    "pass": true,
+    "detail": "activeElement=BODY"
+  },
+  {
+    "name": "mobile 360: no horizontal overflow",
+    "pass": true,
+    "detail": "scrollWidth=360 clientWidth=360 over=0"
+  },
+  {
+    "name": "mobile 360: no input focused on load",
+    "pass": true,
+    "detail": "activeElement=BODY"
+  },
+  {
+    "name": "mobile 320: no horizontal overflow",
+    "pass": true,
+    "detail": "scrollWidth=320 clientWidth=320 over=0"
+  },
+  {
+    "name": "mobile 320: no input focused on load",
+    "pass": true,
+    "detail": "activeElement=BODY"
+  }
+]

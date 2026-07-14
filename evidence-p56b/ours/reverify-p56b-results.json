@@ -1,0 +1,164 @@
+{
+  "check1": {
+    "360": {
+      "found": true,
+      "textW": 282,
+      "textTop": 408,
+      "textBottom": 455,
+      "textRight": 321,
+      "headline": "5th workout logged",
+      "btnFound": true,
+      "btnTop": 468,
+      "btnLeft": 39,
+      "below": true,
+      "beside": false
+    },
+    "390": {
+      "found": true,
+      "textW": 235,
+      "textTop": 377,
+      "textBottom": 424,
+      "textRight": 351,
+      "headline": "5th workout logged",
+      "btnFound": true,
+      "btnTop": 439,
+      "btnLeft": 39,
+      "below": true,
+      "beside": false
+    }
+  },
+  "check2": {
+    "workouts": {
+      "found": true,
+      "ticks": []
+    },
+    "progress": {
+      "found": true,
+      "ticks": []
+    }
+  },
+  "check3": {
+    "found": false,
+    "cardCount": 8
+  },
+  "check4": {
+    "320": {
+      "found": true,
+      "label": "Last 5 weeks",
+      "ringCount": 5,
+      "cardRight": 285,
+      "maxRingRight": 258,
+      "allInside": true,
+      "rightmostRight": 258,
+      "rightmostInside": true,
+      "rings": [
+        {
+          "left": 62,
+          "right": 88,
+          "w": 26
+        },
+        {
+          "left": 105,
+          "right": 131,
+          "w": 26
+        },
+        {
+          "left": 147,
+          "right": 173,
+          "w": 26
+        },
+        {
+          "left": 189,
+          "right": 215,
+          "w": 26
+        },
+        {
+          "left": 232,
+          "right": 258,
+          "w": 26
+        }
+      ]
+    },
+    "360": {
+      "found": true,
+      "label": "Last 5 weeks",
+      "ringCount": 5,
+      "cardRight": 325,
+      "maxRingRight": 294,
+      "allInside": true,
+      "rightmostRight": 294,
+      "rightmostInside": true,
+      "rings": [
+        {
+          "left": 66,
+          "right": 92,
+          "w": 26
+        },
+        {
+          "left": 117,
+          "right": 143,
+          "w": 26
+        },
+        {
+          "left": 167,
+          "right": 193,
+          "w": 26
+        },
+        {
+          "left": 217,
+          "right": 243,
+          "w": 26
+        },
+        {
+          "left": 268,
+          "right": 294,
+          "w": 26
+        }
+      ]
+    },
+    "390": {
+      "found": true,
+      "label": "Last 5 weeks",
+      "ringCount": 5,
+      "cardRight": 355,
+      "maxRingRight": 321,
+      "allInside": true,
+      "rightmostRight": 321,
+      "rightmostInside": true,
+      "rings": [
+        {
+          "left": 69,
+          "right": 95,
+          "w": 26
+        },
+        {
+          "left": 126,
+          "right": 152,
+          "w": 26
+        },
+        {
+          "left": 182,
+          "right": 208,
+          "w": 26
+        },
+        {
+          "left": 238,
+          "right": 264,
+          "w": 26
+        },
+        {
+          "left": 295,
+          "right": 321,
+          "w": 26
+        }
+      ]
+    }
+  },
+  "label": {
+    "harness": "Last 5 weeks",
+    "live": {
+      "found": true,
+      "label": null
+    }
+  }
+}

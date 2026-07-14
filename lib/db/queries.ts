@@ -94,7 +94,12 @@ import {
 import { generateHashedPassword } from "./utils";
 
 const client = postgres(process.env.POSTGRES_URL ?? "");
-const db = drizzle(client);
+/**
+ * THE shared db handle. Query modules import this instead of opening their
+ * own postgres() pool (P34-Z auditor note: extra per-module pools waste
+ * connections under Fluid Compute; one pool serves every module).
+ */
+export const db = drizzle(client);
 
 export async function getUser(email: string): Promise<User[]> {
   try {

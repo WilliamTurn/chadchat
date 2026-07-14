@@ -1,8 +1,7 @@
 import "server-only";
 
 import { and, eq, isNull, or } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import { db } from "@/lib/db/queries";
 import { type ExerciseAlias, exerciseAlias } from "@/lib/db/schema";
 
 /**
@@ -10,10 +9,10 @@ import { type ExerciseAlias, exerciseAlias } from "@/lib/db/schema";
  * for the ExerciseAlias table. Only "approved" rows ever participate in
  * resolution; proposing and deciding are separate steps so nothing merges a
  * member's records without an explicit approval on file.
+ *
+ * Uses the shared db handle (FIX-33 consolidation; this module used to open
+ * its own pg pool, the P34-E/P34-Z auditor note).
  */
-
-const client = postgres(process.env.POSTGRES_URL ?? "");
-const db = drizzle(client);
 
 /**
  * The approved alias map a member's stats resolution consumes: global rows

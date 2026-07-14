@@ -38,15 +38,22 @@ import type { User } from "@/lib/db/schema";
 import { resolvePlanScheduleView } from "@/lib/db/plan-goal-queries";
 import { weekAnchors } from "@/lib/today/week";
 import { parseTemplateExercises } from "@/lib/validation/workout-templates";
+import { getApprovedExerciseAliases } from "@/lib/workouts/alias-queries";
+import { canonicalizeWorkouts } from "@/lib/workouts/exercise-identity";
+import { getWorkoutHeaders } from "@/lib/workouts/training-data";
 import { toWorkoutData } from "@/lib/workouts/serialize";
 import {
   computePersonalRecords,
   exercise1RMTrend,
   lastSetsByExercise,
   prCountsByWorkout,
+  prEventsByWorkout,
   volumeTrend,
-  workoutVolumeLb,
 } from "@/lib/workouts/stats";
+import {
+  volumeSinceLb,
+  withAliasKeyEchoes,
+} from "@/lib/workouts/training-analytics";
 import { MAX_WORKOUTS } from "./data";
 
 export default function WorkoutsPage() {
@@ -122,15 +129,39 @@ function UpgradePrompt() {
 }
 
 async function Home({ user }: { user: User }) {
-  const [rawWorkouts, rawTemplates, activePlans, customs] = await Promise.all([
+  const [
+    rawWorkouts,
+    rawTemplates,
+    activePlans,
+    customs,
+    memberAliases,
+    workoutHeaders,
+  ] = await Promise.all([
     getWorkoutsByUserId(user.id, MAX_WORKOUTS),
     getWorkoutTemplatesByUserId(user.id),
     getActivePlansByUserId(user.id),
     getCustomExercisesByUserId(user.id),
+    getApprovedExerciseAliases(user.id),
+    getWorkoutHeaders(user.id),
   ]);
+  // training.sessions.total: the UNCAPPED count, same source as
+  // /progress/training, never the page-capped hydration slice.
+  const totalSessions = workoutHeaders.length;
 
   const workouts = rawWorkouts.map(toWorkoutData);
-  const lastSets = lastSetsByExercise(workouts);
+  // FIX-33: analytics (records, trends, PR counts) read canonicalized
+  // history so aliases merge; ghost/baseline maps echo raw keys so the
+  // logger's raw-name lookups keep hitting (read-time only, no row rewrites).
+  const resolveOptions = {
+    memberCustomNames: customs.map((c) => c.name),
+    memberAliases,
+  };
+  const canonicalWorkouts = canonicalizeWorkouts(workouts, resolveOptions);
+  const lastSets = withAliasKeyEchoes(
+    lastSetsByExercise(canonicalWorkouts),
+    workouts,
+    resolveOptions
+  );
   const customExercises = customs.map(toCustomExerciseData);
   const unit = user.weightUnit === "kg" ? ("kg" as const) : ("lb" as const);
 
@@ -161,26 +192,39 @@ async function Home({ user }: { user: User }) {
       ? planScheduleView.schedule.sessions
       : null;
 
-  const records = computePersonalRecords(workouts)
+  const records = computePersonalRecords(canonicalWorkouts)
     .slice(0, 6)
     .map((r) => ({
       ...r,
-      trend: exercise1RMTrend(workouts, r.exerciseName),
+      trend: exercise1RMTrend(canonicalWorkouts, r.exerciseName),
     }));
-  const trend = volumeTrend(workouts);
-  const prCounts = prCountsByWorkout(workouts);
+  const trend = volumeTrend(canonicalWorkouts, user.timezone);
+  const prCounts = prCountsByWorkout(canonicalWorkouts);
+  // Gold-dot markers for the drill-down chart: est-1RM record sessions from
+  // the SAME replay that backs the history-card pills (one computation).
+  const prMarkers: Record<string, number[]> = {};
+  for (const e of prEventsByWorkout(canonicalWorkouts)) {
+    if (!e.beatE1rm) {
+      continue;
+    }
+    const t = new Date(e.performedAt).getTime();
+    const list = (prMarkers[e.exerciseName] ??= []);
+    if (!list.includes(t)) {
+      list.push(t);
+    }
+  }
 
   // "This week" = the member's current Sunday-start calendar week (LC-10).
-  const weekStartMs = weekAnchors(user.timezone).days[0].getTime();
+  const { days: weekDays, todayMs } = weekAnchors(user.timezone);
+  const weekStartMs = weekDays[0].getTime();
   const weekWorkouts = workouts.filter(
     (w) =>
       calendarDayAnchorInTz(new Date(w.performedAt), user.timezone).getTime() >=
       weekStartMs
   );
-  const weekVolume = weekWorkouts.reduce(
-    (sum, w) => sum + workoutVolumeLb(w),
-    0
-  );
+  // Registered training.volume.week: one symbol here and on Progress >
+  // Training, so the two surfaces can never disagree (FIX-33).
+  const weekVolume = volumeSinceLb(canonicalWorkouts, weekStartMs, user.timezone);
 
   return (
     <div className="flex flex-col gap-8 pb-24">
@@ -195,7 +239,7 @@ async function Home({ user }: { user: User }) {
             className="grid gap-2 sm:grid-cols-3 sm:gap-3"
             key={`${workouts.length}-${weekWorkouts.length}-${weekVolume}`}
           >
-            <StatCard label="Workouts logged" value={String(workouts.length)} />
+            <StatCard label="Workouts logged" value={String(totalSessions)} />
             <StatCard
               help="Sessions you logged this calendar week, Sunday through Saturday, in your time zone. Resets every Sunday."
               label="This week"
@@ -242,7 +286,7 @@ async function Home({ user }: { user: User }) {
               {/* Volume trend */}
               {trend.length >= 2 && (
                 <div className="min-w-0">
-                  <VolumeChart points={trend} />
+                  <VolumeChart points={trend} todayMs={todayMs} />
                 </div>
               )}
 
@@ -260,7 +304,11 @@ async function Home({ user }: { user: User }) {
                       scale. Tap a lift to see its strength trend over time.
                     </KpiHelp>
                   </h2>
-                  <PersonalRecords records={records} />
+                  <PersonalRecords
+                    prMarkers={prMarkers}
+                    records={records}
+                    todayMs={todayMs}
+                  />
                 </section>
               )}
             </div>
@@ -291,8 +339,8 @@ async function Home({ user }: { user: User }) {
               className="mt-3 flex min-h-[52px] items-center justify-center gap-1.5 rounded-xl border border-border bg-card font-semibold text-[14.5px] text-foreground transition hover:bg-muted/50"
               href="/workouts/history"
             >
-              View all history ({workouts.length}{" "}
-              {workouts.length === 1 ? "workout" : "workouts"})
+              View all history ({totalSessions}{" "}
+              {totalSessions === 1 ? "workout" : "workouts"})
               <ChevronRight aria-hidden className="size-4" />
             </Link>
           </section>

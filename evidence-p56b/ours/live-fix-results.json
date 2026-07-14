@@ -1,0 +1,47 @@
+[
+  {
+    "n": "deep-link ?range=1w loads without redirect",
+    "p": true,
+    "d": "url=http://localhost:3600/progress/training?range=1w"
+  },
+  {
+    "n": "range control renders on live page",
+    "p": false,
+    "d": "group=false buttons=null rangeRow=\"6 sessions in the last 7 days\""
+  },
+  {
+    "n": "drill-down: clicking a lift sets ?pr= + opens est.1RM chart",
+    "p": true,
+    "d": "lift=\"Overhead Press\" url=http://localhost:3600/progress/training?range=1w&pr=Overhead+Press est1rm=2"
+  },
+  {
+    "n": "drill-down: Epley formula caption present",
+    "p": true,
+    "d": "epley=1"
+  },
+  {
+    "n": "drill-down: 'View workout' link to /workouts/history/<id>",
+    "p": true,
+    "d": "count=3 href=/workouts/history/5647b75f-b18d-4940-ab98-26de8f9d480a"
+  },
+  {
+    "n": "drill-down: browser Back closes it (?pr removed)",
+    "p": true,
+    "d": "beforeBack=http://localhost:3600/progress/training?range=1w&pr=Overhead+Press afterBack=http://localhost:3600/progress/training?range=1w"
+  },
+  {
+    "n": "timeline: entry links to a real workout page (200)",
+    "p": true,
+    "d": "href=/workouts/history/56ee2c17-a621-4409-b30f-22a6cdae956b status=200 totalLinks=2"
+  },
+  {
+    "n": "console warning 'useActionState' is GLOBAL (also on /today, not FIX-33-specific)",
+    "p": false,
+    "d": "todayErrors=[]"
+  },
+  {
+    "n": "/workouts PR drill-down: est.1RM chart + Epley caption",
+    "p": true,
+    "d": "epley=1 est=2"
+  }
+]

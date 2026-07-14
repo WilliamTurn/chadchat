@@ -1,0 +1,102 @@
+[
+  {
+    "name": "login succeeded",
+    "pass": true,
+    "detail": "url=http://localhost:3600/today"
+  },
+  {
+    "name": "progress/training reachable (not redirected to pricing/login)",
+    "pass": true,
+    "detail": "url=http://localhost:3600/progress/training"
+  },
+  {
+    "name": "Training header renders",
+    "pass": true,
+    "detail": "matches=1"
+  },
+  {
+    "name": "live: status band / content present",
+    "pass": true,
+    "detail": "workoutsLoggedTile=1"
+  },
+  {
+    "name": "live: calendar heatmap height sane (<= 260px)",
+    "pass": false,
+    "detail": "heatmapBox={\"h\":2065,\"w\":588}"
+  },
+  {
+    "name": "live: range control (segmented) exists",
+    "pass": false,
+    "detail": "groups=0"
+  },
+  {
+    "name": "live: opening a lift sets ?pr= and opens drill-down",
+    "pass": false,
+    "detail": "lift=\"\" url=http://localhost:3600/progress/training drillMatches=0"
+  },
+  {
+    "name": "live: drill-down shows Epley formula caption",
+    "pass": false,
+    "detail": "epleyMatches=0"
+  },
+  {
+    "name": "live: record 'View workout' link resolves to real workout page (200)",
+    "pass": true,
+    "detail": "href=/workouts/history/56ee2c17-a621-4409-b30f-22a6cdae956b status=200"
+  },
+  {
+    "name": "live: browser Back closes the drill-down (?pr removed)",
+    "pass": true,
+    "detail": "url=http://localhost:3600/today"
+  },
+  {
+    "name": "live: timeline entry with workout link present",
+    "pass": false,
+    "detail": "no timeline workout links found"
+  },
+  {
+    "name": "live: no console errors",
+    "pass": false,
+    "detail": "errors=[\"An async function with useActionState was called outside of a transition. This is likely not what you intended (for example, isPending will not update correctly). Either call the returned function inside startTransition, or pass it to an `action` or `formAction` prop.\"]"
+  },
+  {
+    "name": "live(390 touch): range control present for touch sizing",
+    "pass": false,
+    "detail": "no range group"
+  },
+  {
+    "name": "/workouts reachable",
+    "pass": true,
+    "detail": "url=http://localhost:3600/workouts"
+  },
+  {
+    "name": "/workouts: 'Training volume' chart in new frame style",
+    "pass": true,
+    "detail": "title=2 headline=1"
+  },
+  {
+    "name": "/workouts: custom-range calendar icon button present",
+    "pass": true,
+    "detail": "count=1"
+  },
+  {
+    "name": "/workouts: custom picker opens with From/To",
+    "pass": true,
+    "detail": "from=1 to=1"
+  },
+  {
+    "name": "/workouts: custom picker closes",
+    "pass": true,
+    "detail": "stillOpenMatches=0"
+  },
+  {
+    "name": "/workouts: PR drill-down shows est. 1RM chart + Epley caption",
+    "pass": false,
+    "detail": "epley=0 est1rm=1"
+  },
+  {
+    "name": "/workouts: no console errors",
+    "pass": false,
+    "detail": "errors=[\"An async function with useActionState was called outside of a transition. This is likely not what you intended (for example, isPending will not update correctly). Either call the returned function inside startTransition, or pass it to an `action` or `formAction` prop.\"]"
+  }
+]

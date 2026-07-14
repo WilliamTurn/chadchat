@@ -1,0 +1,52 @@
+{
+  "harness_1440": {
+    "heat": {
+      "wrapH": 130,
+      "wrapW": 723,
+      "wrapTop": 4033,
+      "wrapBottom": 4163,
+      "cellW": 16,
+      "cellH": 16,
+      "maxCellPx": 16,
+      "weekCols": 5
+    },
+    "cons": {
+      "top": 3913,
+      "bottom": 4292,
+      "height": 379
+    },
+    "vol": {
+      "top": 4324,
+      "bottom": 4738,
+      "height": 415
+    },
+    "overlap": false,
+    "heatInsideCard": true,
+    "docHeight": 9661
+  },
+  "harness_390": {
+    "heat": {
+      "wrapH": 137,
+      "wrapW": 276,
+      "wrapTop": 6418,
+      "wrapBottom": 6555,
+      "cellW": 17,
+      "cellH": 17,
+      "maxCellPx": 17,
+      "weekCols": 5
+    },
+    "cons": {
+      "top": 6299,
+      "bottom": 6675,
+      "height": 375
+    },
+    "vol": {
+      "top": 7079,
+      "bottom": 7515,
+      "height": 436
+    },
+    "overlap": false,
+    "heatInsideCard": true,
+    "docHeight": 15907
+  }
+}

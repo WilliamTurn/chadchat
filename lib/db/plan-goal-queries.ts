@@ -1,8 +1,6 @@
 import "server-only";
 
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
 import { hashPlanDays } from "@/lib/plans/materialize";
 import {
   type PlanSchedule,
@@ -11,6 +9,7 @@ import {
 } from "@/lib/plans/schedule";
 import { parsePlanDays } from "@/lib/validation/plan-days";
 import { ChatbotError } from "../errors";
+import { db } from "./queries";
 import {
   type GoalOutcome,
   goalOutcome,
@@ -25,11 +24,10 @@ import {
 /**
  * Plan-schedule and goal-outcome queries (FIX-28 / FIX-29, P34-D). A NEW
  * module by wave rule: lib/db/queries.ts is P34-C's territory this wave.
- * Same client + error idioms as queries.ts.
+ * Same error idioms as queries.ts; uses the shared db handle (FIX-33
+ * consolidation; this module used to open its own pg pool, the P34-Z
+ * auditor note).
  */
-
-const client = postgres(process.env.POSTGRES_URL ?? "");
-const db = drizzle(client);
 
 /* ------------------------------------------------- structured plans (FIX-28) */
 

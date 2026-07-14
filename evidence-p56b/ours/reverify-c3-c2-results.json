@@ -1,0 +1,28 @@
+{
+  "c2_workouts": {
+    "found": true,
+    "yTicks": [
+      "-190",
+      "3.3k",
+      "6.8k",
+      "9.7k"
+    ]
+  },
+  "c2_progress": {
+    "found": true,
+    "yTicks": [
+      "-190",
+      "3.3k",
+      "6.8k",
+      "9.7k"
+    ]
+  },
+  "c3": {
+    "openCard": "Overhead PressTop set 95",
+    "panelFound": true,
+    "top": 341,
+    "bottom": 844,
+    "vh": 844,
+    "intersects": true
+  }
+}

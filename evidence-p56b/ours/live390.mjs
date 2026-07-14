@@ -1,0 +1,18 @@
+import { chromium } from "@playwright/test";
+const OUT = "C:/Users/jon17/Desktop/chadlatest/chadchat/evidence-p56b/ours";
+const BASE = "http://localhost:3600";
+const b = await chromium.launch();
+const c = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+await c.clearCookies();
+const p = await c.newPage();
+await p.goto(`${BASE}/login`, { waitUntil: "networkidle" });
+await p.fill('input[type="email"]', "claude-testing@example.com");
+await p.fill('input[type="password"]', "12345678");
+await Promise.all([p.waitForNavigation({ waitUntil: "networkidle" }).catch(()=>{}), p.getByRole("button", { name: /sign in/i }).click()]);
+await p.waitForTimeout(1200);
+await p.goto(`${BASE}/progress/training`, { waitUntil: "networkidle" });
+await p.waitForTimeout(2500);
+const ov = await p.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
+console.log("390 live url:", p.url(), "overflow:", JSON.stringify(ov), "over=", ov.sw - ov.cw);
+await p.screenshot({ path: `${OUT}/live-training-dark-390.png`, fullPage: true });
+await c.close(); await b.close();

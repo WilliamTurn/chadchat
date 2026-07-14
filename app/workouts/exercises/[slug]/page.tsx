@@ -14,6 +14,7 @@ import { formatDay, formatWeight } from "@/components/workouts/v2/format";
 import { WorkoutPageHeader } from "@/components/workouts/v2/page-header";
 import { ProgressChart } from "@/components/workouts/v2/progress-chart";
 import { Pill, WButton, WCard } from "@/components/workouts/v2/ui";
+import { resolveExerciseIdentity } from "@/lib/workouts/exercise-identity";
 import { exerciseCue } from "@/lib/workouts/exercise-library";
 import { epley1RM, toLb, type WorkoutData } from "@/lib/workouts/stats";
 import { loadWorkoutContext, requireWorkoutsUser } from "../../data";
@@ -98,8 +99,15 @@ async function Content({ params }: { params: Promise<{ slug: string }> }) {
   const name = decodeURIComponent(slug);
   const catalog = mergeCatalog(context.customExercises);
   const entry = findInCatalog(catalog, name);
+  // FIX-33: an alias URL ("bench press") lands on the canonical identity's
+  // merged history; records and progress read canonicalized workouts so
+  // variants that merged count here too.
+  const analyticsName = resolveExerciseIdentity(
+    name,
+    context.resolveOptions
+  ).canonicalName;
   // History may contain exercises no longer in the catalog, still show them.
-  const loggedHere = pastSessions(context.workouts, name);
+  const loggedHere = pastSessions(context.canonicalWorkouts, analyticsName);
 
   if (!entry && loggedHere.length === 0) {
     return (
@@ -125,7 +133,7 @@ async function Content({ params }: { params: Promise<{ slug: string }> }) {
       )
     : undefined;
   const best = context.prBaseline[displayName.trim().toLowerCase()];
-  const series = e1rmSeries(context.workouts, displayName);
+  const series = e1rmSeries(context.canonicalWorkouts, analyticsName);
 
   return (
     <>

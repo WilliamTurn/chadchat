@@ -46,6 +46,23 @@ import type { ChartLegendItem } from "./chart-frame";
 const RAW_COLOR = "var(--muted-foreground)";
 
 /**
+ * Compact y ticks: 4-5 digit values ("54632") overflow the 40px axis gutter
+ * and clip to misleading fragments ("546"); large quantities abbreviate the
+ * category-standard way ("55k") instead. Values under 1,000 (weight, sleep
+ * hours) render unchanged.
+ */
+function formatCompactTick(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= 10_000) {
+    return `${Math.round(value / 1000)}k`;
+  }
+  if (abs >= 1_000) {
+    return `${Math.round(value / 100) / 10}k`;
+  }
+  return String(value);
+}
+
+/**
  * Tokenized direction glow for the trend line (additive, P56-A; the owner's
  * reward-glow direction). Derived from the same TREND_TONE tokens as the
  * stroke via color-mix, so the glow can never disagree with the line color.
@@ -191,6 +208,7 @@ export function TrendChart({
           tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
           orientation="right"
           tickCount={compact ? 3 : 4}
+          tickFormatter={formatCompactTick}
           tickLine={false}
           tickMargin={4}
           width={40}

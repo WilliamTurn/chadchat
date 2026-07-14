@@ -1,0 +1,305 @@
+- generic [active] [ref=f4e1]:
+  - main [ref=f4e3]:
+    - generic [ref=f4e4]:
+      - link "Chad dashboard" [ref=f4e6] [cursor=pointer]:
+        - /url: /today
+        - generic [ref=f4e14]: CHAD
+      - button "Account menu" [ref=f4e16] [cursor=pointer]:
+        - generic [ref=f4e17]: S
+    - generic [ref=f4e18]:
+      - region "Notifications alt+T"
+      - generic [ref=f4e19]:
+        - link "Dashboard" [ref=f4e20] [cursor=pointer]:
+          - /url: /today
+        - generic [ref=f4e23]:
+          - heading "Workouts" [level=1] [ref=f4e24]
+          - generic [ref=f4e25]: Pro feature
+        - paragraph [ref=f4e26]: Build your workouts, run them live at the gym, and log every set. Chad tracks your PRs and volume, and holds you to them.
+      - generic [ref=f4e72]:
+        - generic [ref=f4e73]:
+          - generic [ref=f4e74]:
+            - button "Dismiss this explainer" [ref=f4e75] [cursor=pointer]
+            - generic [ref=f4e79]: How this works
+            - list [ref=f4e80]:
+              - listitem [ref=f4e81]:
+                - generic [ref=f4e82]: "1"
+                - generic [ref=f4e83]:
+                  - generic [ref=f4e84]: Build a workout
+                  - paragraph [ref=f4e85]: "A workout is your plan: which exercises, how many sets, what reps."
+              - listitem [ref=f4e86]:
+                - generic [ref=f4e87]: "2"
+                - generic [ref=f4e88]:
+                  - generic [ref=f4e89]: Start it at the gym
+                  - paragraph [ref=f4e90]: Press Start, then check off each set as you finish it. Your last numbers are already filled in.
+              - listitem [ref=f4e91]:
+                - generic [ref=f4e92]: "3"
+                - generic [ref=f4e93]:
+                  - generic [ref=f4e94]: It saves to your history
+                  - paragraph [ref=f4e95]: When you press Finish, the session is logged with your records and progress, and Chad sees it.
+          - generic [ref=f4e96]:
+            - generic [ref=f4e97]:
+              - generic [ref=f4e98]: "32"
+              - generic [ref=f4e99]: Workouts logged
+            - generic [ref=f4e100]:
+              - generic [ref=f4e101]: "0"
+              - generic [ref=f4e102]:
+                - text: This week
+                - button "What does \"This week\" mean?" [ref=f4e103] [cursor=pointer]
+            - generic [ref=f4e107]:
+              - generic [ref=f4e108]: "-"
+              - generic [ref=f4e109]:
+                - text: Volume this week
+                - button "What does \"Volume this week\" mean?" [ref=f4e110] [cursor=pointer]
+        - region [ref=f4e114]:
+          - generic [ref=f4e115]:
+            - generic [ref=f4e116]:
+              - heading "My Workouts" [level=2] [ref=f4e117]
+              - paragraph [ref=f4e118]: Reusable workout plans you build once and run any gym day
+            - button "New workout" [ref=f4e119] [cursor=pointer]
+          - generic [ref=f4e121]:
+            - paragraph [ref=f4e122]: Workouts you build will appear here
+            - paragraph [ref=f4e123]: "A workout is your plan: the exercises, sets, and reps you intend to do. Build it once, then start it every time you train."
+            - button "Build your first workout" [ref=f4e124] [cursor=pointer]
+        - region [ref=f4e126]:
+          - generic [ref=f4e127]:
+            - heading "Chad's Training Plan" [level=2] [ref=f4e128]
+            - paragraph [ref=f4e131]: 4-Day Upper/Lower Strength & Shred, written by Chad. Start any day to run it.
+          - generic [ref=f4e132]:
+            - generic [ref=f4e133]:
+              - generic [ref=f4e134]:
+                - generic [ref=f4e135]:
+                  - 'heading "DAY 1: UPPER (HEAVY PUSH FOCUS)" [level=3] [ref=f4e136]'
+                  - paragraph [ref=f4e137]: Barbell Bench Press · Incline Dumbbell Press · Weighted Pull-ups · Seated Cable Rows · Overhead Triceps Extension · Dumbbell Lateral Raises
+                - generic [ref=f4e138]: 6 exercises
+              - 'button "Start DAY 1: UPPER (HEAVY PUSH FOCUS)" [ref=f4e140] [cursor=pointer]'
+            - generic [ref=f4e143]:
+              - generic [ref=f4e144]:
+                - generic [ref=f4e145]:
+                  - 'heading "DAY 2: LOWER (HEAVY SQUAT FOCUS)" [level=3] [ref=f4e146]'
+                  - paragraph [ref=f4e147]: Barbell Back Squat · Romanian Deadlift · Leg Press · Lying Leg Curls · Standing Calf Raises
+                - generic [ref=f4e148]: 5 exercises
+              - 'button "Start DAY 2: LOWER (HEAVY SQUAT FOCUS)" [ref=f4e150] [cursor=pointer]'
+            - generic [ref=f4e153]:
+              - generic [ref=f4e154]:
+                - generic [ref=f4e155]:
+                  - 'heading "DAY 3: UPPER (HEAVY PULL FOCUS)" [level=3] [ref=f4e156]'
+                  - paragraph [ref=f4e157]: Barbell Overhead Press · Lat Pulldowns · Chest-Supported T-Bar Row · Flat Dumbbell Bench Press · Barbell Bicep Curls · Cable Lateral Raises
+                - generic [ref=f4e158]: 6 exercises
+              - 'button "Start DAY 3: UPPER (HEAVY PULL FOCUS)" [ref=f4e160] [cursor=pointer]'
+            - generic [ref=f4e163]:
+              - generic [ref=f4e164]:
+                - generic [ref=f4e165]:
+                  - 'heading "DAY 4: LOWER (HEAVY HINGE FOCUS)" [level=3] [ref=f4e166]'
+                  - paragraph [ref=f4e167]: Deadlift · Bulgarian Split Squats · Leg Extensions · Seated Leg Curls · Seated Calf Raises
+                - generic [ref=f4e168]: 5 exercises
+              - 'button "Start DAY 4: LOWER (HEAVY HINGE FOCUS)" [ref=f4e170] [cursor=pointer]'
+          - paragraph [ref=f4e173]:
+            - text: Ask Chad in
+            - link "chat" [ref=f4e174] [cursor=pointer]:
+              - /url: /
+            - text: to write or change your training plan. It shows up here automatically.
+        - region [ref=f4e175]:
+          - generic [ref=f4e176]:
+            - generic [ref=f4e177]:
+              - heading "No plan today?" [level=2] [ref=f4e178]
+              - paragraph [ref=f4e179]: Start with a blank workout and add exercises as you go.
+            - button "Start an empty workout" [ref=f4e180] [cursor=pointer]
+        - generic [ref=f4e183]:
+          - generic [ref=f4e185]:
+            - link "Ask Chad" [ref=f4e187] [cursor=pointer]:
+              - /url: /?prompt=Look%20at%20my%20training%20volume%20trend%20chart%3A%20total%20weight%20moved%20per%20session%20over%20time.%20Am%20I%20progressively%20overloading%2C%20stalling%2C%20or%20backing%20off%2C%20and%20what%20should%20I%20do%20about%20it%3F
+            - figure "Daily volume Trend (smoothed) 13 of 30 days logged Biggest day 49,550 lb · Jun 30" [ref=f4e188]:
+              - generic [ref=f4e189]:
+                - generic [ref=f4e190]:
+                  - heading "Training volume" [level=3] [ref=f4e191]
+                  - generic [ref=f4e192]:
+                    - generic [ref=f4e193]: 23,533 lb
+                    - generic [ref=f4e194]: Latest day
+                - generic [ref=f4e195]:
+                  - button "1W" [ref=f4e196] [cursor=pointer]
+                  - button "1M" [ref=f4e197] [cursor=pointer]
+                  - button "All" [ref=f4e198] [cursor=pointer]
+                  - button "Pick a custom date range" [ref=f4e199] [cursor=pointer]
+              - 'img "Training volume, last 30 days: 23,533 lb. 13 of 30 days logged. Biggest day 49,550 lb on Jun 30." [ref=f4e203]':
+                - application [ref=f4e207]:
+                  - generic [ref=f4e236]:
+                    - generic [ref=f4e237]:
+                      - generic [ref=f4e238]: Jun 26
+                      - generic [ref=f4e240]: Jul 2
+                      - generic [ref=f4e242]: Jul 13
+                    - generic [ref=f4e244]:
+                      - generic [ref=f4e245]: "10588"
+                      - generic [ref=f4e247]: "25588"
+                      - generic [ref=f4e249]: "40588"
+                      - generic [ref=f4e251]: "54632"
+              - generic [ref=f4e253]:
+                - generic [ref=f4e254]: Daily volume
+                - generic [ref=f4e256]: Trend (smoothed)
+                - generic [ref=f4e258]: 13 of 30 days logged
+                - generic [ref=f4e259]: Biggest day 49,550 lb · Jun 30
+              - paragraph [ref=f4e260]: "Training volume, last 30 days: 23,533 lb. 13 of 30 days logged. Biggest day 49,550 lb on Jun 30."
+          - generic [ref=f4e261]:
+            - heading [level=2] [ref=f4e262]:
+              - text: Personal records
+              - button "What does \"Personal records\" mean?" [ref=f4e269] [cursor=pointer]
+            - generic [ref=f4e273]:
+              - generic [ref=f4e274]:
+                - button "Leg Press Top set 535lb × 12 749lb est. 1RM" [expanded] [ref=f4e275] [cursor=pointer]:
+                  - generic [ref=f4e276]:
+                    - generic [ref=f4e277]: Leg Press
+                    - generic [ref=f4e278]: Top set 535lb × 12
+                  - generic [ref=f4e287]:
+                    - generic [ref=f4e288]: 749lb
+                    - generic [ref=f4e289]: est. 1RM
+                - button "Hip Thrust Top set 385lb × 10 513lb est. 1RM" [ref=f4e293] [cursor=pointer]:
+                  - generic [ref=f4e294]:
+                    - generic [ref=f4e295]: Hip Thrust
+                    - generic [ref=f4e296]: Top set 385lb × 10
+                  - generic [ref=f4e305]:
+                    - generic [ref=f4e306]: 513lb
+                    - generic [ref=f4e307]: est. 1RM
+                - button "Deadlift Top set 415lb × 3 457lb est. 1RM" [ref=f4e311] [cursor=pointer]:
+                  - generic [ref=f4e312]:
+                    - generic [ref=f4e313]: Deadlift
+                    - generic [ref=f4e314]: Top set 415lb × 3
+                  - generic [ref=f4e323]:
+                    - generic [ref=f4e324]: 457lb
+                    - generic [ref=f4e325]: est. 1RM
+                - button "Calf Raise Top set 265lb × 12 371lb est. 1RM" [ref=f4e329] [cursor=pointer]:
+                  - generic [ref=f4e330]:
+                    - generic [ref=f4e331]: Calf Raise
+                    - generic [ref=f4e332]: Top set 265lb × 12
+                  - generic [ref=f4e341]:
+                    - generic [ref=f4e342]: 371lb
+                    - generic [ref=f4e343]: est. 1RM
+                - button "Barbell Back Squat Top set 315lb × 5 368lb est. 1RM" [ref=f4e347] [cursor=pointer]:
+                  - generic [ref=f4e348]:
+                    - generic [ref=f4e349]: Barbell Back Squat
+                    - generic [ref=f4e350]: Top set 315lb × 5
+                  - generic [ref=f4e359]:
+                    - generic [ref=f4e360]: 368lb
+                    - generic [ref=f4e361]: est. 1RM
+                - button "Romanian Deadlift Top set 275lb × 8 348lb est. 1RM" [ref=f4e365] [cursor=pointer]:
+                  - generic [ref=f4e366]:
+                    - generic [ref=f4e367]: Romanian Deadlift
+                    - generic [ref=f4e368]: Top set 275lb × 8
+                  - generic [ref=f4e377]:
+                    - generic [ref=f4e378]: 348lb
+                    - generic [ref=f4e379]: est. 1RM
+              - generic [ref=f4e384]:
+                - generic [ref=f4e385]:
+                  - generic [ref=f4e386]:
+                    - heading "Leg Press" [level=3] [ref=f4e387]
+                    - generic [ref=f4e388]: +119 lb since first
+                  - generic [ref=f4e389]: est. 1RM over time
+                - figure [ref=f4e390]:
+                  - 'img "Leg Press estimated 1RM, all time: 749 lb (estimated). 8 of 62 days logged. 7 record sessions marked with gold dots. All-time best 749 lb." [ref=f4e392]':
+                    - application [ref=f4e396]:
+                      - generic [ref=f4e423]:
+                        - generic [ref=f4e424]:
+                          - generic [ref=f4e425]: May 29
+                          - generic [ref=f4e427]: Jun 14
+                          - generic [ref=f4e429]: Jul 13
+                        - generic [ref=f4e431]:
+                          - generic [ref=f4e432]: "612"
+                          - generic [ref=f4e434]: "652"
+                          - generic [ref=f4e436]: "692"
+                          - generic [ref=f4e438]: "732"
+                          - generic [ref=f4e440]: "767"
+                        - generic [ref=f4e442]: 749 lb
+                  - paragraph [ref=f4e443]: "Leg Press estimated 1RM, all time: 749 lb (estimated). 8 of 62 days logged. 7 record sessions marked with gold dots. All-time best 749 lb."
+                - generic [ref=f4e444]:
+                  - link "Top set 535lb × 12 · View workout" [ref=f4e445] [cursor=pointer]:
+                    - /url: /workouts/history/bf9f2b88-bd2d-4cd6-a953-a1ef6b7a0659
+                    - text: Top set 535lb × 12
+                    - generic [ref=f4e452]: · View workout
+                  - link "All records and history" [ref=f4e456] [cursor=pointer]:
+                    - /url: /workouts/exercises/Leg%20Press
+                - paragraph [ref=f4e460]: "Estimated 1RM: the most we estimate you could lift once, calculated from each set's weight and reps with the Epley formula. Gold dots mark the sessions that set a new record."
+        - generic [ref=f4e461]:
+          - generic [ref=f4e462]:
+            - heading "Recent workouts" [level=2] [ref=f4e463]
+            - link "Ask Chad" [ref=f4e465] [cursor=pointer]:
+              - /url: /?prompt=Review%20my%20Workouts%20page%3A%20my%20logged%20sessions%2C%20weekly%20volume%2C%20training%20plan%2C%20and%20PRs.%20How%20is%20my%20training%20progressing%20overall%2C%20and%20what%20should%20I%20focus%20on%20next%3F
+          - generic [ref=f4e466]:
+            - link [ref=f4e468] [cursor=pointer]:
+              - /url: /workouts/history/a09442cd-6a3f-427f-b4bb-706e08ebebc2
+              - generic [ref=f4e469]:
+                - generic [ref=f4e470]:
+                  - generic [ref=f4e471]:
+                    - heading "Upper A" [level=3] [ref=f4e472]
+                    - paragraph [ref=f4e473]: Mon, Jul 6
+                  - generic [ref=f4e474]: 6 records
+                - generic [ref=f4e481]:
+                  - generic [ref=f4e482]: 1h 11m
+                  - generic [ref=f4e486]: 20 sets
+                  - generic [ref=f4e493]: 23,533 lb moved
+                - paragraph [ref=f4e497]: "Best set: Bench Press 230 lb × 5"
+            - link [ref=f4e499] [cursor=pointer]:
+              - /url: /workouts/history/4a0f516f-322c-4508-b915-99657a7b924f
+              - generic [ref=f4e500]:
+                - generic [ref=f4e501]:
+                  - generic [ref=f4e502]:
+                    - heading "Lower B" [level=3] [ref=f4e503]
+                    - paragraph [ref=f4e504]: Sat, Jul 4
+                  - generic [ref=f4e505]: 4 records
+                - generic [ref=f4e512]:
+                  - generic [ref=f4e513]: 1h 13m
+                  - generic [ref=f4e517]: 15 sets
+                  - generic [ref=f4e524]: 20,198 lb moved
+                - paragraph [ref=f4e528]: "Best set: Barbell Hip Thrust 385 lb × 10"
+            - link [ref=f4e530] [cursor=pointer]:
+              - /url: /workouts/history/d522ba51-397f-4f48-8feb-c20dc08053ce
+              - generic [ref=f4e531]:
+                - generic [ref=f4e532]:
+                  - generic [ref=f4e533]:
+                    - heading "Upper B" [level=3] [ref=f4e534]
+                    - paragraph [ref=f4e535]: Thu, Jul 2
+                  - generic [ref=f4e536]: 9 records
+                - generic [ref=f4e543]:
+                  - generic [ref=f4e544]: 1h 14m
+                  - generic [ref=f4e548]: 21 sets
+                  - generic [ref=f4e555]: 16,813 lb moved
+                - paragraph [ref=f4e559]: "Best set: Seated Cable Row 185 lb × 10"
+            - link [ref=f4e561] [cursor=pointer]:
+              - /url: /workouts/history/bf9f2b88-bd2d-4cd6-a953-a1ef6b7a0659
+              - generic [ref=f4e562]:
+                - generic [ref=f4e563]:
+                  - generic [ref=f4e564]:
+                    - heading "Lower A" [level=3] [ref=f4e565]
+                    - paragraph [ref=f4e566]: Tue, Jun 30
+                  - generic [ref=f4e567]: 5 records
+                - generic [ref=f4e574]:
+                  - generic [ref=f4e575]: 57m
+                  - generic [ref=f4e579]: 17 sets
+                  - generic [ref=f4e586]: 49,550 lb moved
+                - paragraph [ref=f4e590]: "Best set: Leg Press 535 lb × 12"
+            - link [ref=f4e592] [cursor=pointer]:
+              - /url: /workouts/history/5ece9758-a81c-4762-817f-75c8a78f6f45
+              - generic [ref=f4e593]:
+                - generic [ref=f4e594]:
+                  - generic [ref=f4e595]:
+                    - heading "Upper A" [level=3] [ref=f4e596]
+                    - paragraph [ref=f4e597]: Mon, Jun 29
+                  - generic [ref=f4e598]: 1 record
+                - generic [ref=f4e605]:
+                  - generic [ref=f4e606]: 1h 1m
+                  - generic [ref=f4e610]: 20 sets
+                  - generic [ref=f4e617]: 23,715 lb moved
+                - paragraph [ref=f4e621]: "Best set: Bench Press 225 lb × 5"
+          - link "View all history (32 workouts)" [ref=f4e622] [cursor=pointer]:
+            - /url: /workouts/history
+        - link [ref=f4e625] [cursor=pointer]:
+          - /url: /workouts/exercises
+    - navigation "Primary" [ref=f4e48]:
+      - generic [ref=f4e49]:
+        - link "Today" [ref=f4e50] [cursor=pointer]:
+          - /url: /today
+        - button "Log" [ref=f4e57] [cursor=pointer]
+        - link "Progress" [ref=f4e60] [cursor=pointer]:
+          - /url: /progress
+        - link "Coach" [ref=f4e65] [cursor=pointer]:
+          - /url: /
+        - button "More" [ref=f4e69] [cursor=pointer]
+  - alert [ref=f4e71]
+  - generic [ref=f4e635]: "612"

@@ -222,6 +222,50 @@ export const METRICS = {
     precision: 0,
     surfaces: ["/today", "/nutrition"],
   },
+  "nutrition.week.daily": {
+    domain: "nutrition",
+    label: "This week",
+    unit: "kcal",
+    grain: "week",
+    source: { module: "lib/today/week.ts", symbol: "buildMacroWeek" },
+    derivation:
+      "Sunday-start member-local week over dailyMacroTrend day totals (lib/nutrition/daily-macros.ts); unlogged days are hollow slots, never 0-kcal bars. Registered P5 (P56-C batch-register, README list: weekly nutrition adherence cue). Per-day target basis is the FIX-07 effective-dated nutrition target (lib/db/queries.getNutritionTargetsByDay): each day grades against the target active on THAT day, never the current pointer.",
+    target: {
+      kind: "user-target",
+      source:
+        "NutritionTargetVersion via getNutritionTargetsByDay (FIX-07); zero versions fall back to the live NutritionTarget row (pre-FIX-07 behavior).",
+    },
+    allowedClaims: ["current-value", "adherence", "trend-direction"],
+    estimated: false,
+    staleAfterDays: null,
+    access: "pro",
+    precision: 0,
+    surfaces: ["/today", "/nutrition"],
+  },
+  "nutrition.adherence.window": {
+    domain: "nutrition",
+    label: "Days within calorie target",
+    unit: "count",
+    grain: "user-day",
+    source: {
+      module: "lib/progress/overview.ts",
+      symbol: "nutritionAdherenceWindow",
+    },
+    missingRendersAs: "zero",
+    derivation:
+      "P56-A batch-register (README P5 list: weekly nutrition adherence). Over the Progress overview's selected window: logged days whose calorie total lands within CALORIE_TOLERANCE (10%) of THAT day's effective-dated target (FIX-07, getNutritionTargetsByDay); denominator = logged gradable days, never window days (LC-9). Days with no target that day are logged-but-not-gradable, never missed.",
+    target: {
+      kind: "user-target",
+      source:
+        "NutritionTargetVersion via getNutritionTargetsByDay (FIX-07), per day.",
+    },
+    allowedClaims: ["current-value", "adherence"],
+    estimated: false,
+    staleAfterDays: null,
+    access: "pro",
+    precision: 0,
+    surfaces: ["/progress"],
+  },
 
   /* ---------------------------------------------------------- hydration */
   "hydration.water.today": {
@@ -253,7 +297,7 @@ export const METRICS = {
     grain: "week",
     source: { module: "lib/today/week.ts", symbol: "buildWaterWeek" },
     derivation:
-      "Sunday-start member-local week from getWaterDailyTotals; unlogged days are hollow slots, never 0-height bars.",
+      "Sunday-start member-local week from getWaterDailyTotals; unlogged days are hollow slots, never 0-height bars. Per-day goal basis (P5, FIX-07 landed): the effective-dated goal via getWaterGoalMlByDay, so a backfilled day grades against the goal active on that day, never the current pointer.",
     target: { kind: "user-setting", source: "User.waterGoalMl" },
     allowedClaims: ["current-value", "adherence", "trend-direction"],
     estimated: false,
@@ -261,6 +305,40 @@ export const METRICS = {
     access: "pro",
     precision: 0,
     surfaces: ["/today", "/hydration"],
+  },
+  "hydration.avg.window": {
+    domain: "hydration",
+    label: "Average per logged day",
+    unit: "oz",
+    storageUnit: "ml",
+    grain: "user-day",
+    source: { module: "lib/progress/overview.ts", symbol: "hydrationWindow" },
+    derivation:
+      "P56-A batch-register (README P5 list: hydration consistency summary). Mean daily intake over LOGGED days in the Progress overview's selected window (LC-9 denominator); unlogged days never count as zeros. Stored ml, displayed oz (lib/today/water-units.ts).",
+    target: { kind: "user-setting", source: "User.waterGoalMl" },
+    allowedClaims: ["current-value", "adherence"],
+    estimated: false,
+    staleAfterDays: null,
+    access: "pro",
+    precision: 0,
+    surfaces: ["/progress"],
+  },
+  "hydration.daysAtGoal.window": {
+    domain: "hydration",
+    label: "Days at goal",
+    unit: "count",
+    grain: "user-day",
+    source: { module: "lib/progress/overview.ts", symbol: "hydrationWindow" },
+    missingRendersAs: "zero",
+    derivation:
+      "P56-A batch-register. Logged days in the overview window meeting THAT day's effective-dated goal (FIX-07, getWaterGoalMlByDay); denominator = logged days (LC-9).",
+    target: { kind: "user-setting", source: "User.waterGoalMl" },
+    allowedClaims: ["current-value", "adherence"],
+    estimated: false,
+    staleAfterDays: null,
+    access: "pro",
+    precision: 0,
+    surfaces: ["/progress"],
   },
 
   /* -------------------------------------------------------------- sleep */
@@ -303,7 +381,7 @@ export const METRICS = {
     grain: "week",
     source: { module: "lib/today/week.ts", symbol: "buildSleepWeek" },
     derivation:
-      "Sunday-start member-local week from getSleepDailyTotals; missing nights render as gaps, never as 0h.",
+      "Sunday-start member-local week from getSleepDailyTotals; missing nights render as gaps, never as 0h. Per-night goal basis (P5, FIX-07 landed): the effective-dated goal via getSleepGoalMinutesByDay, so a backfilled night grades against the goal active on that night, never the current pointer.",
     target: { kind: "user-setting", source: "User.sleepGoalMinutes" },
     allowedClaims: ["current-value", "adherence", "trend-direction"],
     estimated: false,
@@ -311,6 +389,40 @@ export const METRICS = {
     access: "pro",
     precision: 0,
     surfaces: ["/today", "/sleep"],
+  },
+  "sleep.avg.window": {
+    domain: "sleep",
+    label: "Average sleep",
+    unit: "duration",
+    storageUnit: "minutes",
+    grain: "night",
+    source: { module: "lib/progress/overview.ts", symbol: "sleepWindow" },
+    derivation:
+      "P56-A batch-register (README P5 list: sleep consistency summary). Mean nightly duration over LOGGED nights in the Progress overview's selected window (LC-9); missing nights are never zeros.",
+    target: { kind: "user-setting", source: "User.sleepGoalMinutes" },
+    allowedClaims: ["current-value", "adherence"],
+    estimated: false,
+    staleAfterDays: null,
+    access: "pro",
+    precision: 0,
+    surfaces: ["/progress"],
+  },
+  "sleep.nightsAtGoal.window": {
+    domain: "sleep",
+    label: "Nights at goal",
+    unit: "count",
+    grain: "night",
+    source: { module: "lib/progress/overview.ts", symbol: "sleepWindow" },
+    missingRendersAs: "zero",
+    derivation:
+      "P56-A batch-register. Logged nights in the overview window meeting THAT night's effective-dated goal (FIX-07, getSleepGoalMinutesByDay); denominator = logged nights (LC-9).",
+    target: { kind: "user-setting", source: "User.sleepGoalMinutes" },
+    allowedClaims: ["current-value", "adherence"],
+    estimated: false,
+    staleAfterDays: null,
+    access: "pro",
+    precision: 0,
+    surfaces: ["/progress"],
   },
 
   /* --------------------------------------------------------------- body */
@@ -331,7 +443,7 @@ export const METRICS = {
     staleAfterDays: 10,
     access: "pro",
     precision: 1,
-    surfaces: ["/today", "/progress"],
+    surfaces: ["/today", "/progress/body"],
   },
   "body.weight.trend": {
     domain: "body",
@@ -347,7 +459,7 @@ export const METRICS = {
     staleAfterDays: 10,
     access: "pro",
     precision: 1,
-    surfaces: ["/today", "/progress", "/goals", "/reports"],
+    surfaces: ["/today", "/progress", "/progress/body", "/goals", "/reports"],
   },
   "body.weight.ratePerWeek": {
     domain: "body",
@@ -363,7 +475,7 @@ export const METRICS = {
     staleAfterDays: 10,
     access: "pro",
     precision: 1,
-    surfaces: ["/progress"],
+    surfaces: ["/progress/body"],
   },
   "body.weight.eta": {
     domain: "body",
@@ -379,7 +491,7 @@ export const METRICS = {
     staleAfterDays: 10,
     access: "pro",
     precision: 0,
-    surfaces: ["/progress"],
+    surfaces: ["/progress/body"],
   },
   "body.measurement": {
     domain: "body",
@@ -396,7 +508,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 1,
-    surfaces: ["/progress"],
+    surfaces: ["/progress/body"],
   },
 
   /* -------------------------------------------------------------- goals */
@@ -414,7 +526,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "member",
     precision: 0,
-    surfaces: ["/today", "/progress", "/goals", "/goals/[id]"],
+    surfaces: ["/today", "/progress", "/progress/body", "/goals", "/goals/[id]"],
   },
 
   /* ----------------------------------------------------------- training */
@@ -441,7 +553,7 @@ export const METRICS = {
     grain: "user-day",
     source: { module: "lib/workouts/stats.ts", symbol: "volumeTrend" },
     derivation:
-      "CONTRACT grain is the member-local day, but the pinned source currently buckets by UTC day (its doc says so). That matches noon-UTC-anchored picked days exactly and only drifts for logged-now sessions near local midnight. Moving volumeTrend to calendarDayAnchorInTz bucketing (like buildWorkoutWeek) is a Phase 2 task.",
+      "Member-local day bucketing: pass user.timezone to volumeTrend (calendarDayAnchorInTz, implemented FIX-33/P56-B per the queued note here; the no-timezone call falls back to UTC-day bucketing for legacy callers). Computed over CANONICALIZED workouts so aliases merge.",
     target: { kind: "none" },
     allowedClaims: ["current-value", "trend-direction", "comparison"],
     estimated: false,
@@ -489,7 +601,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/workouts"],
+    surfaces: ["/workouts", "/progress"],
   },
   "training.sessions.thisWeek": {
     domain: "training",
@@ -508,7 +620,177 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/today", "/workouts"],
+    surfaces: ["/today", "/workouts", "/progress"],
+  },
+  /* FIX-33 batch registrations (P5, per the README P5 batch-register list):
+     the Progress > Training analytics numbers. All computed over
+     CANONICALIZED workouts (exercise identities resolved read-time, FIX-34)
+     by lib/workouts/training-data.ts getTrainingAnalytics, the surface's one
+     assembly. They render on the /progress/training category route
+     (registered by P56-A per DEC-02). */
+  "training.sessions.total": {
+    domain: "training",
+    label: "Workouts logged",
+    unit: "count",
+    grain: "session",
+    source: {
+      module: "lib/workouts/training-data.ts",
+      symbol: "getWorkoutHeaders",
+    },
+    missingRendersAs: "zero",
+    derivation:
+      "All-time count of saved workouts from the UNCAPPED header query (rows.length), never from a page-capped hydration slice, so /workouts and /progress/training read the same true number past MAX_WORKOUTS (the P56-B pre-delivery P2-1 fix).",
+    target: { kind: "none" },
+    allowedClaims: ["current-value"],
+    estimated: false,
+    staleAfterDays: null,
+    access: "pro",
+    precision: 0,
+    surfaces: ["/workouts", "/progress/training"],
+  },
+  "training.volume.week": {
+    domain: "training",
+    label: "Volume this week",
+    unit: "lb",
+    grain: "week",
+    source: {
+      module: "lib/workouts/training-analytics.ts",
+      symbol: "volumeSinceLb",
+    },
+    missingRendersAs: "zero",
+    derivation:
+      "Total weight x reps over completed working sets across the member-local current week (sinceDayMs = week start), member-local day attribution, canonicalized workouts. The one symbol behind the /workouts 'Volume this week' tile and the Progress > Training status band.",
+    target: { kind: "none" },
+    allowedClaims: ["current-value", "comparison"],
+    estimated: false,
+    staleAfterDays: null,
+    access: "pro",
+    precision: 0,
+    surfaces: ["/workouts", "/progress/training"],
+  },
+  "training.frequency.weeklyTrend": {
+    domain: "training",
+    label: "Training frequency",
+    unit: "count",
+    grain: "week",
+    source: {
+      module: "lib/workouts/training-analytics.ts",
+      symbol: "weeklyFrequencySlots",
+    },
+    missingRendersAs: "zero",
+    derivation:
+      "Sessions per trailing 7-day bin across the selected window; session days are member-local day anchors (calendarDayAnchorInTz). Zero-session weeks are truthful zero bars (count carve-out).",
+    target: {
+      kind: "plan",
+      source: "Structured training plan sessions/week (rotation size, FIX-28).",
+    },
+    allowedClaims: ["current-value", "trend-direction", "comparison"],
+    estimated: false,
+    staleAfterDays: null,
+    access: "pro",
+    precision: 0,
+    surfaces: ["/progress/training"],
+  },
+  "training.plan.completion.week": {
+    domain: "training",
+    label: "Plan sessions completed",
+    unit: "count",
+    grain: "week",
+    source: { module: "lib/plans/adherence.ts", symbol: "weeklyPlanAdherence" },
+    missingRendersAs: "zero",
+    derivation:
+      "Completions from the immutable PlanSessionCompletion event stream inside the member-local week vs the CURRENT rotation size (the shipped FIX-28 adherence model). NOT the same number as training.sessions.thisWeek: unplanned sessions count there but not here.",
+    target: {
+      kind: "plan",
+      source: "Structured training plan sessions/week (rotation size, FIX-28).",
+    },
+    allowedClaims: ["current-value", "adherence", "comparison"],
+    estimated: false,
+    staleAfterDays: null,
+    access: "pro",
+    precision: 0,
+    surfaces: ["/progress/training", "/plans/[id]"],
+  },
+  "training.plan.adherence.weeklyTrend": {
+    domain: "training",
+    label: "Plan adherence",
+    unit: "count",
+    grain: "week",
+    source: {
+      module: "lib/workouts/training-analytics.ts",
+      symbol: "weeklyAdherenceSeries",
+    },
+    missingRendersAs: "zero",
+    derivation:
+      "Completed-vs-planned per member-local week, composing weeklyPlanAdherence per week (one adherence semantic, never re-derived).",
+    target: {
+      kind: "plan",
+      source: "Structured training plan sessions/week (rotation size, FIX-28).",
+    },
+    allowedClaims: ["current-value", "adherence", "trend-direction"],
+    estimated: false,
+    staleAfterDays: null,
+    access: "pro",
+    precision: 0,
+    surfaces: ["/progress/training"],
+  },
+  "training.pr.timeline": {
+    domain: "training",
+    label: "Record timeline",
+    unit: "lb",
+    grain: "session",
+    source: { module: "lib/workouts/stats.ts", symbol: "prEventsByWorkout" },
+    missingRendersAs: "zero",
+    derivation:
+      "Every record-beating working set, replayed oldest-first over canonicalized history (first-ever sessions are baselines, not records; timed exercises never PR). prCountsByWorkout derives from these events, so history-card pills and the timeline can never disagree. Each event is source-linked to its workout. e1rm components render with the est. label per training.exercise.e1rm.",
+    target: { kind: "none" },
+    allowedClaims: ["current-value", "record"],
+    estimated: false,
+    staleAfterDays: null,
+    access: "pro",
+    precision: 0,
+    surfaces: ["/progress/training", "/workouts"],
+  },
+  "training.milestones.timeline": {
+    domain: "training",
+    label: "Training milestones",
+    unit: "count",
+    grain: "session",
+    source: {
+      module: "lib/workouts/training-analytics.ts",
+      symbol: "mergeMilestoneTimeline",
+    },
+    missingRendersAs: "zero",
+    derivation:
+      "Reached milestones only, newest first: session-count thresholds (from the UNCAPPED workout-header query, truthful past the hydration cap) and perfect plan weeks (from the completion stream). Never projected; the next milestone ahead renders as explicit progress, never as an achievement.",
+    target: { kind: "none" },
+    allowedClaims: ["current-value", "record"],
+    estimated: false,
+    staleAfterDays: null,
+    access: "pro",
+    precision: 0,
+    surfaces: ["/progress/training"],
+  },
+  "training.muscle.distribution": {
+    domain: "training",
+    label: "Muscle focus",
+    unit: "count",
+    grain: "session",
+    coverageWindowDays: 28,
+    source: {
+      module: "lib/workouts/training-analytics.ts",
+      symbol: "muscleGroupDistribution",
+    },
+    missingRendersAs: "zero",
+    derivation:
+      "Completed working sets per muscle group over canonicalized history; rows without a group bucket under the explicit 'unspecified' share. The surface renders the distribution only when specified rows dominate (claims discipline at the call site).",
+    target: { kind: "none" },
+    allowedClaims: ["current-value", "comparison"],
+    estimated: false,
+    staleAfterDays: null,
+    access: "pro",
+    precision: 0,
+    surfaces: ["/progress/training"],
   },
 
   /* --------------------------------------------------------- engagement */
@@ -526,7 +808,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/today"],
+    surfaces: ["/today", "/progress"],
   },
   "engagement.consistency.week": {
     domain: "engagement",
@@ -543,6 +825,24 @@ export const METRICS = {
     access: "pro",
     precision: 0,
     surfaces: ["/today"],
+  },
+  "engagement.consistency.window": {
+    domain: "engagement",
+    label: "Days logged",
+    unit: "count",
+    grain: "user-day",
+    coverageWindowDays: 84,
+    source: { module: "lib/progress/overview.ts", symbol: "consistencyWindow" },
+    missingRendersAs: "zero",
+    derivation:
+      "P56-A batch-register (README P5 list: consistency summary). Member-local days with at least one saved entry in ANY domain over the consistency calendar's fixed 12-week window (84 days); the per-day domain count powers the calendar's intensity scale. Distinct from the streak (consecutive days) and from the Sunday-week count.",
+    target: { kind: "none" },
+    allowedClaims: ["current-value", "comparison"],
+    estimated: false,
+    staleAfterDays: null,
+    access: "pro",
+    precision: 0,
+    surfaces: ["/progress"],
   },
 } as const satisfies Record<string, MetricDef>;
 

@@ -1,0 +1,776 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - navigation [ref=e5]:
+          - link "Fixture harness" [ref=e6] [cursor=pointer]:
+            - /url: /dev/fixtures
+          - link "Tokens" [ref=e7] [cursor=pointer]:
+            - /url: /dev/fixtures/tokens
+          - link "Panel roles" [ref=e8] [cursor=pointer]:
+            - /url: /dev/fixtures/roles
+          - link "Personas" [ref=e9] [cursor=pointer]:
+            - /url: /dev/fixtures/personas
+          - link "Panel composition" [ref=e10] [cursor=pointer]:
+            - /url: /dev/fixtures/panels
+          - link "Charts" [ref=e11] [cursor=pointer]:
+            - /url: /dev/fixtures/charts
+          - link "Overlays" [ref=e12] [cursor=pointer]:
+            - /url: /dev/fixtures/overlays
+          - link "Forms" [ref=e13] [cursor=pointer]:
+            - /url: /dev/fixtures/forms
+        - generic [ref=e14]:
+          - generic [ref=e15]: 390px
+          - button "Switch to light theme" [ref=e16] [cursor=pointer]
+    - main [ref=e23]:
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - heading "Progress > Training matrix" [level=1] [ref=e26]
+          - paragraph [ref=e27]: "The FIX-33 training analytics view for every fixture persona at the fixed anchor (2026-07-08, America/Chicago), computed through the same pure pipeline as the live page: canonicalized workouts (alias dedup), one stats replay, registered metrics only. The consistent persona carries a synthetic, clearly-labeled plan-completion stream so the adherence ring and perfect-week milestones render."
+        - region "first-run" [ref=e28]:
+          - heading "first-run" [level=2] [ref=e29]
+          - paragraph [ref=e30]: Signed up today, finished /welcome, logged nothing. The page must carry ONE dominant CTA and designed empty states everywhere.
+          - generic [ref=e32]:
+            - generic [ref=e33]:
+              - generic [ref=e34]:
+                - generic [ref=e35]:
+                  - text: Workouts logged
+                  - button "What does \"Workouts logged\" mean?" [ref=e36] [cursor=pointer]
+                - generic [ref=e40]: "0"
+              - generic [ref=e41]:
+                - generic [ref=e42]:
+                  - text: This week
+                  - button "What does \"This week\" mean?" [ref=e43] [cursor=pointer]
+                - generic [ref=e47]: "0"
+              - generic [ref=e48]:
+                - generic [ref=e49]:
+                  - text: Volume this week
+                  - button "What does \"Volume this week\" mean?" [ref=e50] [cursor=pointer]
+                - generic [ref=e54]: 0 lb
+              - generic [ref=e55]:
+                - generic [ref=e56]:
+                  - text: Next milestone · 1st workout
+                  - button "What does \"Next milestone · 1st workout\" mean?" [ref=e57] [cursor=pointer]
+                - generic [ref=e61]: 1 to go
+            - paragraph [ref=e66]: No sessions all time
+            - generic [ref=e67]:
+              - figure [ref=e68]:
+                - generic [ref=e70]:
+                  - heading "Training consistency" [level=3] [ref=e71]
+                  - generic [ref=e72]: Not logged
+                - generic [ref=e75]:
+                  - paragraph [ref=e76]: Finish your first workout and your training calendar starts filling in.
+                  - link "Start a workout" [ref=e77] [cursor=pointer]:
+                    - /url: /workouts
+                - paragraph [ref=e78]: "Training consistency, all time: 0. 0 of 7 days logged. Calendar of training days; 0 of 7 days trained."
+              - figure [ref=e79]:
+                - generic [ref=e81]:
+                  - heading "Plan adherence" [level=3] [ref=e82]
+                  - generic [ref=e83]: Not logged
+                - paragraph [ref=e87]: "Adherence unlocks when a structured training plan is active: each week scores your completed sessions against the plan."
+                - paragraph [ref=e88]: "Plan adherence: no structured training plan active."
+            - generic [ref=e89]:
+              - figure [ref=e90]:
+                - generic [ref=e92]:
+                  - heading "Training volume" [level=3] [ref=e93]
+                  - generic [ref=e94]:
+                    - generic [ref=e95]: Not logged
+                    - generic [ref=e96]: Latest day
+                - generic [ref=e98]:
+                  - paragraph [ref=e99]: Log weights in a workout and your volume trend starts here.
+                  - link "Start a workout" [ref=e100] [cursor=pointer]:
+                    - /url: /workouts
+                - paragraph [ref=e101]: "Training volume, all time: not logged yet."
+              - figure [ref=e102]:
+                - generic [ref=e104]:
+                  - heading "Muscle focus" [level=3] [ref=e105]
+                  - generic [ref=e106]:
+                    - generic [ref=e107]: Not logged
+                    - generic [ref=e108]: working sets, all loaded history
+                - paragraph [ref=e111]: Train and your working sets get counted per muscle group here.
+                - paragraph [ref=e112]: "Muscle focus, all loaded history: not logged yet."
+            - generic [ref=e113]:
+              - generic [ref=e114]:
+                - heading [level=2] [ref=e115]:
+                  - text: Strength and records
+                  - button "What does \"Strength and records\" mean?" [ref=e122] [cursor=pointer]
+                - link "Exercise library" [ref=e126] [cursor=pointer]:
+                  - /url: /workouts/exercises
+              - generic [ref=e130]:
+                - paragraph [ref=e131]: "Lift something and your records land here: best sets, estimated 1RM, and the strength trend for every exercise."
+                - link "Start a workout" [ref=e132] [cursor=pointer]:
+                  - /url: /workouts
+            - generic [ref=e133]:
+              - generic [ref=e134]:
+                - heading [level=2] [ref=e135]:
+                  - text: Records and milestones
+                  - button "What does \"Records and milestones\" mean?" [ref=e142] [cursor=pointer]
+                - generic [ref=e146]: 0 record sets all time
+              - generic [ref=e147]:
+                - paragraph [ref=e154]: Beat a personal best or reach a training milestone and it lands here, permanently.
+                - paragraph [ref=e155]: "Next up: your 1st workout, 1 to go."
+            - generic [ref=e156]:
+              - link "Start a workout" [ref=e157] [cursor=pointer]:
+                - /url: /workouts
+              - link "Full workout history" [ref=e158] [cursor=pointer]:
+                - /url: /workouts/history
+        - region "sparse" [ref=e162]:
+          - heading "sparse" [level=2] [ref=e163]
+          - paragraph [ref=e164]: Second day of use. 2 days of partial logs. Panels show honest facts + coverage; trend/adherence/rate claims are all denied.
+          - generic [ref=e166]:
+            - generic [ref=e167]:
+              - generic [ref=e168]:
+                - generic [ref=e169]:
+                  - text: Workouts logged
+                  - button "What does \"Workouts logged\" mean?" [ref=e170] [cursor=pointer]
+                - generic [ref=e174]: "1"
+              - generic [ref=e175]:
+                - generic [ref=e176]:
+                  - text: This week
+                  - button "What does \"This week\" mean?" [ref=e177] [cursor=pointer]
+                - generic [ref=e181]: "1"
+              - generic [ref=e182]:
+                - generic [ref=e183]:
+                  - text: Volume this week
+                  - button "What does \"Volume this week\" mean?" [ref=e184] [cursor=pointer]
+                - generic [ref=e188]: 3,106 lb
+              - generic [ref=e189]:
+                - generic [ref=e190]:
+                  - text: Next milestone · 5th workout
+                  - button "What does \"Next milestone · 5th workout\" mean?" [ref=e191] [cursor=pointer]
+                - generic [ref=e195]: 4 to go
+            - paragraph [ref=e201]: 1 session all time
+            - generic [ref=e202]:
+              - figure "1 of 7 days logged" [ref=e203]:
+                - generic [ref=e205]:
+                  - heading "Training consistency" [level=3] [ref=e206]
+                  - generic [ref=e207]:
+                    - generic [ref=e208]: "1"
+                    - generic [ref=e209]: sessions in range
+                  - paragraph [ref=e210]: all time
+                - 'img "Training consistency, all time: 1. 1 of 7 days logged. Calendar of training days; 1 of 7 days trained." [ref=e212]':
+                  - generic [ref=e213]:
+                    - generic [ref=e215]:
+                      - generic [ref=e217]: M
+                      - generic [ref=e219]: W
+                      - generic [ref=e221]: F
+                    - generic [ref=e256]:
+                      - generic [ref=e257]: S
+                      - generic [ref=e258]: M
+                      - generic [ref=e259]: T
+                      - generic [ref=e260]: W
+                      - generic [ref=e261]: T
+                      - generic [ref=e262]: F
+                      - generic [ref=e263]: S
+                - paragraph [ref=e266]: "Training consistency, all time: 1. 1 of 7 days logged. Calendar of training days; 1 of 7 days trained."
+              - figure [ref=e267]:
+                - generic [ref=e269]:
+                  - heading "Plan adherence" [level=3] [ref=e270]
+                  - generic [ref=e271]: Not logged
+                - paragraph [ref=e275]: "Adherence unlocks when a structured training plan is active: each week scores your completed sessions against the plan."
+                - paragraph [ref=e276]: "Plan adherence: no structured training plan active."
+            - generic [ref=e277]:
+              - figure "Daily volume Trend (smoothed) 1 of 7 days logged" [ref=e278]:
+                - generic [ref=e280]:
+                  - heading "Training volume" [level=3] [ref=e281]
+                  - generic [ref=e282]:
+                    - generic [ref=e283]: 3,106 lb
+                    - generic [ref=e284]: Latest day
+                  - paragraph [ref=e285]: all time
+                - 'img "Training volume, all time: 3,106 lb. 1 of 7 days logged." [ref=e287]':
+                  - application [ref=e1589]:
+                    - generic [ref=e1598]:
+                      - generic [ref=e1599]:
+                        - generic [ref=e1600]: Thu
+                        - generic [ref=e1602]: Sat
+                        - generic [ref=e1604]: Mon
+                        - generic [ref=e1606]: Wed
+                      - generic [ref=e1608]:
+                        - generic [ref=e1609]: "3043"
+                        - generic [ref=e1611]: "3088"
+                        - generic [ref=e1613]: "3133"
+                        - generic [ref=e1615]: "3169"
+                - generic [ref=e319]:
+                  - generic [ref=e320]: Daily volume
+                  - generic [ref=e322]: Trend (smoothed)
+                  - generic [ref=e324]: 1 of 7 days logged
+                - paragraph [ref=e325]: "Training volume, all time: 3,106 lb. 1 of 7 days logged."
+              - figure [ref=e326]:
+                - generic [ref=e328]:
+                  - heading "Muscle focus" [level=3] [ref=e329]
+                  - generic [ref=e330]:
+                    - generic [ref=e331]: "3"
+                    - generic [ref=e332]: working sets, all loaded history
+                - 'img "Muscle focus, all loaded history: 3. Chest 2 sets. Back 1 sets." [ref=e334]':
+                  - generic [ref=e335]:
+                    - generic [ref=e336]:
+                      - generic [ref=e337]: Chest
+                      - generic [ref=e340]: 2 sets · 67%
+                    - generic [ref=e341]:
+                      - generic [ref=e342]: Back
+                      - generic [ref=e345]: 1 set · 33%
+                - paragraph [ref=e346]: "Muscle focus, all loaded history: 3. Chest 2 sets. Back 1 sets."
+            - generic [ref=e347]:
+              - generic [ref=e348]:
+                - heading [level=2] [ref=e349]:
+                  - text: Strength and records
+                  - button "What does \"Strength and records\" mean?" [ref=e356] [cursor=pointer]
+                - link "Exercise library" [ref=e360] [cursor=pointer]:
+                  - /url: /workouts/exercises
+              - generic [ref=e365]:
+                - button "Barbell Bench Press Top set 185lb × 5 216lb est. 1RM" [ref=e366] [cursor=pointer]:
+                  - generic [ref=e367]:
+                    - generic [ref=e368]: Barbell Bench Press
+                    - generic [ref=e369]: Top set 185lb × 5
+                  - generic [ref=e378]:
+                    - generic [ref=e379]: 216lb
+                    - generic [ref=e380]: est. 1RM
+                - button "Barbell Row Top set 157lb × 8 199lb est. 1RM" [ref=e384] [cursor=pointer]:
+                  - generic [ref=e385]:
+                    - generic [ref=e386]: Barbell Row
+                    - generic [ref=e387]: Top set 157lb × 8
+                  - generic [ref=e396]:
+                    - generic [ref=e397]: 199lb
+                    - generic [ref=e398]: est. 1RM
+            - generic [ref=e402]:
+              - generic [ref=e403]:
+                - heading [level=2] [ref=e404]:
+                  - text: Records and milestones
+                  - button "What does \"Records and milestones\" mean?" [ref=e411] [cursor=pointer]
+                - generic [ref=e415]: 0 record sets all time
+              - generic [ref=e419]:
+                - generic [ref=e423]:
+                  - paragraph [ref=e424]: First workout logged
+                  - paragraph [ref=e425]: today
+                - link "View the workout" [ref=e426] [cursor=pointer]:
+                  - /url: /workouts/history/fixture-workout-1
+              - list
+            - generic [ref=e427]:
+              - link "Start a workout" [ref=e428] [cursor=pointer]:
+                - /url: /workouts
+              - link "Full workout history" [ref=e429] [cursor=pointer]:
+                - /url: /workouts/history
+        - region "consistent" [ref=e433]:
+          - heading "consistent" [level=2] [ref=e434]
+          - paragraph [ref=e435]: Four weeks of steady logging, weight trending toward goal, bench climbing. Every claim class is allowed; this is the reference for the rewarding populated treatment.
+          - generic [ref=e437]:
+            - generic [ref=e438]:
+              - generic [ref=e439]:
+                - generic [ref=e440]:
+                  - text: Workouts logged
+                  - button "What does \"Workouts logged\" mean?" [ref=e441] [cursor=pointer]
+                - generic [ref=e445]: "12"
+              - generic [ref=e446]:
+                - generic [ref=e447]:
+                  - text: This week · 3 planned
+                  - button "What does \"This week · 3 planned\" mean?" [ref=e448] [cursor=pointer]
+                - generic [ref=e452]: "2"
+              - generic [ref=e453]:
+                - generic [ref=e454]:
+                  - text: Volume this week
+                  - button "What does \"Volume this week\" mean?" [ref=e455] [cursor=pointer]
+                - generic [ref=e459]: 6,720 lb
+              - generic [ref=e460]:
+                - generic [ref=e461]:
+                  - text: Next milestone · 25th workout
+                  - button "What does \"Next milestone · 25th workout\" mean?" [ref=e462] [cursor=pointer]
+                - generic [ref=e466]: 13 to go
+            - generic [ref=e471]:
+              - paragraph [ref=e472]: 12 sessions all time
+              - group "Time range" [ref=e473]:
+                - button "1W" [ref=e474] [cursor=pointer]
+                - button "All" [pressed] [ref=e475] [cursor=pointer]
+            - generic [ref=e476]:
+              - figure "12 of 26 days logged" [ref=e477]:
+                - generic [ref=e479]:
+                  - heading "Training consistency" [level=3] [ref=e480]
+                  - generic [ref=e481]:
+                    - generic [ref=e482]: "12"
+                    - generic [ref=e483]: sessions in range
+                  - paragraph [ref=e484]: all time
+                - 'img "Training consistency, all time: 12. 12 of 26 days logged. Calendar of training days; 12 of 26 days trained." [ref=e486]':
+                  - generic [ref=e487]:
+                    - generic [ref=e489]:
+                      - generic [ref=e491]: M
+                      - generic [ref=e493]: W
+                      - generic [ref=e495]: F
+                    - generic [ref=e554]:
+                      - generic [ref=e555]: S
+                      - generic [ref=e556]: M
+                      - generic [ref=e557]: T
+                      - generic [ref=e558]: W
+                      - generic [ref=e559]: T
+                      - generic [ref=e560]: F
+                      - generic [ref=e561]: S
+                - paragraph [ref=e564]: "Training consistency, all time: 12. 12 of 26 days logged. Calendar of training days; 12 of 26 days trained."
+              - figure [ref=e565]:
+                - generic [ref=e567]:
+                  - heading "Plan adherence" [level=3] [ref=e568]
+                  - generic [ref=e569]:
+                    - generic [ref=e570]: "2"
+                    - generic [ref=e571]: of 3 planned this week
+                  - paragraph [ref=e572]: "Plan: 3 sessions a week · this week"
+                - 'img "Plan adherence, this week: 2. 2 of 7 days logged. 2 of 3 planned sessions completed. 3 perfect weeks in the last 5." [ref=e574]':
+                  - generic [ref=e575]:
+                    - generic [ref=e581]:
+                      - generic [ref=e582]:
+                        - text: "2"
+                        - generic [ref=e583]: /3
+                      - generic [ref=e584]: this week
+                    - generic [ref=e585]:
+                      - generic [ref=e586]: Last 5 weeks
+                      - generic [ref=e587]:
+                        - 'generic "Week of Jun 7: 1 of 3" [ref=e588]'
+                        - 'generic "Week of Jun 14: 3 of 3" [ref=e594]'
+                        - 'generic "Week of Jun 21: 3 of 3" [ref=e600]'
+                        - 'generic "Week of Jun 28: 3 of 3" [ref=e606]'
+                        - 'generic "Week of Jul 5: 2 of 3" [ref=e612]'
+                      - generic [ref=e618]: A full ring is a perfect plan week.
+                - paragraph [ref=e619]: "Plan adherence, this week: 2. 2 of 7 days logged. 2 of 3 planned sessions completed. 3 perfect weeks in the last 5."
+            - generic [ref=e620]:
+              - figure "Daily volume Trend (smoothed) 12 of 26 days logged" [ref=e621]:
+                - generic [ref=e623]:
+                  - heading "Training volume" [level=3] [ref=e624]
+                  - generic [ref=e625]:
+                    - generic [ref=e626]: 3,360 lb
+                    - generic [ref=e627]: Latest day
+                  - paragraph [ref=e628]: all time
+                - 'img "Training volume, all time: 3,360 lb. 12 of 26 days logged." [ref=e630]':
+                  - application [ref=e1618]:
+                    - generic [ref=e1646]:
+                      - generic [ref=e1647]:
+                        - generic [ref=e1648]: Jun 18
+                        - generic [ref=e1650]: Jun 23
+                        - generic [ref=e1652]: Jun 28
+                        - generic [ref=e1654]: Jul 3
+                        - generic [ref=e1656]: Jul 8
+                      - generic [ref=e1658]:
+                        - generic [ref=e1659]: "3067"
+                        - generic [ref=e1661]: "3217"
+                        - generic [ref=e1663]: "3399"
+                - generic [ref=e683]:
+                  - generic [ref=e684]: Daily volume
+                  - generic [ref=e686]: Trend (smoothed)
+                  - generic [ref=e688]: 12 of 26 days logged
+                - paragraph [ref=e689]: "Training volume, all time: 3,360 lb. 12 of 26 days logged."
+              - figure [ref=e690]:
+                - generic [ref=e692]:
+                  - heading "Muscle focus" [level=3] [ref=e693]
+                  - generic [ref=e694]:
+                    - generic [ref=e695]: "36"
+                    - generic [ref=e696]: working sets, all loaded history
+                - 'img "Muscle focus, all loaded history: 36. Chest 24 sets. Back 12 sets." [ref=e698]':
+                  - generic [ref=e699]:
+                    - generic [ref=e700]:
+                      - generic [ref=e701]: Chest
+                      - generic [ref=e704]: 24 sets · 67%
+                    - generic [ref=e705]:
+                      - generic [ref=e706]: Back
+                      - generic [ref=e709]: 12 sets · 33%
+                - paragraph [ref=e710]: "Muscle focus, all loaded history: 36. Chest 24 sets. Back 12 sets."
+            - generic [ref=e711]:
+              - generic [ref=e712]:
+                - heading [level=2] [ref=e713]:
+                  - text: Strength and records
+                  - button "What does \"Strength and records\" mean?" [ref=e720] [cursor=pointer]
+                - link "Exercise library" [ref=e724] [cursor=pointer]:
+                  - /url: /workouts/exercises
+              - generic [ref=e729]:
+                - button "Barbell Bench Press Top set 200lb × 5 233lb est. 1RM" [ref=e730] [cursor=pointer]:
+                  - generic [ref=e731]:
+                    - generic [ref=e732]: Barbell Bench Press
+                    - generic [ref=e733]: Top set 200lb × 5
+                  - generic [ref=e742]:
+                    - generic [ref=e743]: 233lb
+                    - generic [ref=e744]: est. 1RM
+                - button "Barbell Row Top set 170lb × 8 215lb est. 1RM" [ref=e748] [cursor=pointer]:
+                  - generic [ref=e749]:
+                    - generic [ref=e750]: Barbell Row
+                    - generic [ref=e751]: Top set 170lb × 8
+                  - generic [ref=e760]:
+                    - generic [ref=e761]: 215lb
+                    - generic [ref=e762]: est. 1RM
+            - generic [ref=e766]:
+              - generic [ref=e767]:
+                - heading [level=2] [ref=e768]:
+                  - text: Records and milestones
+                  - button "What does \"Records and milestones\" mean?" [ref=e775] [cursor=pointer]
+                - generic [ref=e779]: 6 record sets all time
+              - generic [ref=e783]:
+                - generic [ref=e791]:
+                  - paragraph [ref=e792]: "New record: Barbell Row"
+                  - paragraph [ref=e793]: 170 lb × 8 · beat 166 lb · 3 days ago
+                - link "View the workout" [ref=e794] [cursor=pointer]:
+                  - /url: /workouts/history/fixture-workout-4
+              - list [ref=e795]:
+                - listitem [ref=e796]:
+                  - 'link "New record: Barbell Bench Press 200 lb × 5 · beat 195 lb Jul 4" [ref=e798] [cursor=pointer]':
+                    - /url: /workouts/history/fixture-workout-4
+                    - generic [ref=e806]:
+                      - generic [ref=e807]: "New record: Barbell Bench Press"
+                      - generic [ref=e808]: 200 lb × 5 · beat 195 lb
+                      - generic [ref=e809]: Jul 4
+                - listitem [ref=e813]:
+                  - link "10th workout logged Jul 4" [ref=e815] [cursor=pointer]:
+                    - /url: /workouts/history/fixture-workout-4
+                    - generic [ref=e819]:
+                      - generic [ref=e820]: 10th workout logged
+                      - generic [ref=e821]: Jul 4
+                - listitem [ref=e825]:
+                  - generic [ref=e831]:
+                    - generic [ref=e832]: Perfect plan week
+                    - generic [ref=e833]: 3 of 3 sessions completed
+                    - generic [ref=e834]: Jun 28
+                - listitem [ref=e835]:
+                  - 'link "New record: Barbell Row 166 lb × 8 · beat 162 lb Jun 27" [ref=e837] [cursor=pointer]':
+                    - /url: /workouts/history/fixture-workout-11
+                    - generic [ref=e845]:
+                      - generic [ref=e846]: "New record: Barbell Row"
+                      - generic [ref=e847]: 166 lb × 8 · beat 162 lb
+                      - generic [ref=e848]: Jun 27
+                - listitem [ref=e852]:
+                  - 'link "New record: Barbell Bench Press 195 lb × 5 · beat 190 lb Jun 27" [ref=e854] [cursor=pointer]':
+                    - /url: /workouts/history/fixture-workout-11
+                    - generic [ref=e862]:
+                      - generic [ref=e863]: "New record: Barbell Bench Press"
+                      - generic [ref=e864]: 195 lb × 5 · beat 190 lb
+                      - generic [ref=e865]: Jun 27
+                - listitem [ref=e869]:
+                  - link "5th workout logged Jun 22" [ref=e871] [cursor=pointer]:
+                    - /url: /workouts/history/fixture-workout-16
+                    - generic [ref=e875]:
+                      - generic [ref=e876]: 5th workout logged
+                      - generic [ref=e877]: Jun 22
+                - listitem [ref=e881]:
+                  - generic [ref=e887]:
+                    - generic [ref=e888]: Perfect plan week
+                    - generic [ref=e889]: 3 of 3 sessions completed
+                    - generic [ref=e890]: Jun 21
+                - listitem [ref=e891]:
+                  - 'link "New record: Barbell Row 162 lb × 8 · beat 157 lb Jun 20" [ref=e893] [cursor=pointer]':
+                    - /url: /workouts/history/fixture-workout-18
+                    - generic [ref=e901]:
+                      - generic [ref=e902]: "New record: Barbell Row"
+                      - generic [ref=e903]: 162 lb × 8 · beat 157 lb
+                      - generic [ref=e904]: Jun 20
+                - listitem [ref=e908]:
+                  - button "Show all 11" [ref=e909] [cursor=pointer]
+            - generic [ref=e910]:
+              - link "Start a workout" [ref=e911] [cursor=pointer]:
+                - /url: /workouts
+              - link "Full workout history" [ref=e912] [cursor=pointer]:
+                - /url: /workouts/history
+        - region "lapsed" [ref=e916]:
+          - heading "lapsed" [level=2] [ref=e917]
+          - paragraph [ref=e918]: Logged well three weeks ago, nothing for 12 days. Values render DATED (never framed as current); the panels prompt one fresh log each.
+          - generic [ref=e920]:
+            - generic [ref=e921]:
+              - generic [ref=e922]:
+                - generic [ref=e923]:
+                  - text: Workouts logged
+                  - button "What does \"Workouts logged\" mean?" [ref=e924] [cursor=pointer]
+                - generic [ref=e928]: "3"
+              - generic [ref=e929]:
+                - generic [ref=e930]:
+                  - text: This week
+                  - button "What does \"This week\" mean?" [ref=e931] [cursor=pointer]
+                - generic [ref=e935]: "0"
+              - generic [ref=e936]:
+                - generic [ref=e937]:
+                  - text: Volume this week
+                  - button "What does \"Volume this week\" mean?" [ref=e938] [cursor=pointer]
+                - generic [ref=e942]: 0 lb
+              - generic [ref=e943]:
+                - generic [ref=e944]:
+                  - text: Next milestone · 5th workout
+                  - button "What does \"Next milestone · 5th workout\" mean?" [ref=e945] [cursor=pointer]
+                - generic [ref=e949]: 2 to go
+            - generic [ref=e954]:
+              - paragraph [ref=e955]: 3 sessions all time
+              - group "Time range" [ref=e956]:
+                - button "1W" [ref=e957] [cursor=pointer]
+                - button "All" [pressed] [ref=e958] [cursor=pointer]
+            - generic [ref=e959]:
+              - figure "3 of 15 days logged" [ref=e960]:
+                - generic [ref=e962]:
+                  - heading "Training consistency" [level=3] [ref=e963]
+                  - generic [ref=e964]:
+                    - generic [ref=e965]: "3"
+                    - generic [ref=e966]: sessions in range
+                  - paragraph [ref=e967]: all time
+                - 'img "Training consistency, all time: 3. 3 of 15 days logged. Calendar of training days; 3 of 15 days trained." [ref=e969]':
+                  - generic [ref=e970]:
+                    - generic [ref=e972]:
+                      - generic [ref=e974]: M
+                      - generic [ref=e976]: W
+                      - generic [ref=e978]: F
+                    - generic [ref=e1021]:
+                      - generic [ref=e1022]: S
+                      - generic [ref=e1023]: M
+                      - generic [ref=e1024]: T
+                      - generic [ref=e1025]: W
+                      - generic [ref=e1026]: T
+                      - generic [ref=e1027]: F
+                      - generic [ref=e1028]: S
+                - paragraph [ref=e1031]: "Training consistency, all time: 3. 3 of 15 days logged. Calendar of training days; 3 of 15 days trained."
+              - figure [ref=e1032]:
+                - generic [ref=e1034]:
+                  - heading "Plan adherence" [level=3] [ref=e1035]
+                  - generic [ref=e1036]: Not logged
+                - paragraph [ref=e1040]: "Adherence unlocks when a structured training plan is active: each week scores your completed sessions against the plan."
+                - paragraph [ref=e1041]: "Plan adherence: no structured training plan active."
+            - generic [ref=e1042]:
+              - figure "Daily volume Trend (smoothed) 3 of 15 days logged" [ref=e1043]:
+                - generic [ref=e1045]:
+                  - heading "Training volume" [level=3] [ref=e1046]
+                  - generic [ref=e1047]:
+                    - generic [ref=e1048]: 4,622 lb
+                    - generic [ref=e1049]: Latest day
+                  - paragraph [ref=e1050]: all time
+                - 'img "Training volume, all time: 4,622 lb. 3 of 15 days logged." [ref=e1052]':
+                  - application [ref=e1666]:
+                    - generic [ref=e1689]:
+                      - generic [ref=e1690]:
+                        - generic [ref=e1691]: Jun 27
+                        - generic [ref=e1693]: Jun 30
+                        - generic [ref=e1695]: Jul 3
+                        - generic [ref=e1697]: Jul 6
+                        - generic [ref=e1699]: Jul 8
+                      - generic [ref=e1701]:
+                        - generic [ref=e1702]: "2982"
+                        - generic [ref=e1704]: "3632"
+                        - generic [ref=e1706]: "4282"
+                        - generic [ref=e1708]: "4836"
+                - generic [ref=e1102]:
+                  - generic [ref=e1103]: Daily volume
+                  - generic [ref=e1105]: Trend (smoothed)
+                  - generic [ref=e1107]: 3 of 15 days logged
+                - paragraph [ref=e1108]: "Training volume, all time: 4,622 lb. 3 of 15 days logged."
+              - figure [ref=e1109]:
+                - generic [ref=e1111]:
+                  - heading "Muscle focus" [level=3] [ref=e1112]
+                  - generic [ref=e1113]:
+                    - generic [ref=e1114]: "9"
+                    - generic [ref=e1115]: working sets, all loaded history
+                - 'img "Muscle focus, all loaded history: 9. Chest 6 sets. Back 3 sets." [ref=e1117]':
+                  - generic [ref=e1118]:
+                    - generic [ref=e1119]:
+                      - generic [ref=e1120]: Chest
+                      - generic [ref=e1123]: 6 sets · 67%
+                    - generic [ref=e1124]:
+                      - generic [ref=e1125]: Back
+                      - generic [ref=e1128]: 3 sets · 33%
+                - paragraph [ref=e1129]: "Muscle focus, all loaded history: 9. Chest 6 sets. Back 3 sets."
+            - generic [ref=e1130]:
+              - generic [ref=e1131]:
+                - heading [level=2] [ref=e1132]:
+                  - text: Strength and records
+                  - button "What does \"Strength and records\" mean?" [ref=e1139] [cursor=pointer]
+                - link "Exercise library" [ref=e1143] [cursor=pointer]:
+                  - /url: /workouts/exercises
+              - generic [ref=e1148]:
+                - button "Barbell Bench Press Top set 275lb × 5 321lb est. 1RM" [ref=e1149] [cursor=pointer]:
+                  - generic [ref=e1150]:
+                    - generic [ref=e1151]: Barbell Bench Press
+                    - generic [ref=e1152]: Top set 275lb × 5
+                  - generic [ref=e1161]:
+                    - generic [ref=e1162]: 321lb
+                    - generic [ref=e1163]: est. 1RM
+                - button "Barbell Row Top set 234lb × 8 296lb est. 1RM" [ref=e1167] [cursor=pointer]:
+                  - generic [ref=e1168]:
+                    - generic [ref=e1169]: Barbell Row
+                    - generic [ref=e1170]: Top set 234lb × 8
+                  - generic [ref=e1179]:
+                    - generic [ref=e1180]: 296lb
+                    - generic [ref=e1181]: est. 1RM
+            - generic [ref=e1185]:
+              - generic [ref=e1186]:
+                - heading [level=2] [ref=e1187]:
+                  - text: Records and milestones
+                  - button "What does \"Records and milestones\" mean?" [ref=e1194] [cursor=pointer]
+                - generic [ref=e1198]: 2 record sets all time
+              - list [ref=e1199]:
+                - listitem [ref=e1200]:
+                  - 'link "New record: Barbell Row 234 lb × 8 · beat 166 lb Jun 26" [ref=e1202] [cursor=pointer]':
+                    - /url: /workouts/history/fixture-workout-12
+                    - generic [ref=e1210]:
+                      - generic [ref=e1211]: "New record: Barbell Row"
+                      - generic [ref=e1212]: 234 lb × 8 · beat 166 lb
+                      - generic [ref=e1213]: Jun 26
+                - listitem [ref=e1217]:
+                  - 'link "New record: Barbell Bench Press 275 lb × 5 · beat 195 lb Jun 26" [ref=e1219] [cursor=pointer]':
+                    - /url: /workouts/history/fixture-workout-12
+                    - generic [ref=e1227]:
+                      - generic [ref=e1228]: "New record: Barbell Bench Press"
+                      - generic [ref=e1229]: 275 lb × 5 · beat 195 lb
+                      - generic [ref=e1230]: Jun 26
+                - listitem [ref=e1234]:
+                  - link "First workout logged Jun 24" [ref=e1235] [cursor=pointer]:
+                    - /url: /workouts/history/fixture-workout-14
+                    - generic [ref=e1239]:
+                      - generic [ref=e1240]: First workout logged
+                      - generic [ref=e1241]: Jun 24
+            - generic [ref=e1245]:
+              - link "Start a workout" [ref=e1246] [cursor=pointer]:
+                - /url: /workouts
+              - link "Full workout history" [ref=e1247] [cursor=pointer]:
+                - /url: /workouts/history
+        - region "overshoot" [ref=e1251]:
+          - heading "overshoot" [level=2] [ref=e1252]
+          - paragraph [ref=e1253]: Started at 205, target 180, now holding ~178.7. Goal standing is REACHED (overshoot is reached); any 'to goal' remainder or 'moving away' banner is the DSH-62 bug.
+          - generic [ref=e1255]:
+            - generic [ref=e1256]:
+              - generic [ref=e1257]:
+                - generic [ref=e1258]:
+                  - text: Workouts logged
+                  - button "What does \"Workouts logged\" mean?" [ref=e1259] [cursor=pointer]
+                - generic [ref=e1263]: "2"
+              - generic [ref=e1264]:
+                - generic [ref=e1265]:
+                  - text: This week
+                  - button "What does \"This week\" mean?" [ref=e1266] [cursor=pointer]
+                - generic [ref=e1270]: "2"
+              - generic [ref=e1271]:
+                - generic [ref=e1272]:
+                  - text: Volume this week
+                  - button "What does \"Volume this week\" mean?" [ref=e1273] [cursor=pointer]
+                - generic [ref=e1277]: 8,400 lb
+              - generic [ref=e1278]:
+                - generic [ref=e1279]:
+                  - text: Next milestone · 5th workout
+                  - button "What does \"Next milestone · 5th workout\" mean?" [ref=e1280] [cursor=pointer]
+                - generic [ref=e1284]: 3 to go
+            - paragraph [ref=e1290]: 2 sessions all time
+            - generic [ref=e1291]:
+              - figure "2 of 7 days logged" [ref=e1292]:
+                - generic [ref=e1294]:
+                  - heading "Training consistency" [level=3] [ref=e1295]
+                  - generic [ref=e1296]:
+                    - generic [ref=e1297]: "2"
+                    - generic [ref=e1298]: sessions in range
+                  - paragraph [ref=e1299]: all time
+                - 'img "Training consistency, all time: 2. 2 of 7 days logged. Calendar of training days; 2 of 7 days trained." [ref=e1301]':
+                  - generic [ref=e1302]:
+                    - generic [ref=e1304]:
+                      - generic [ref=e1306]: M
+                      - generic [ref=e1308]: W
+                      - generic [ref=e1310]: F
+                    - generic [ref=e1345]:
+                      - generic [ref=e1346]: S
+                      - generic [ref=e1347]: M
+                      - generic [ref=e1348]: T
+                      - generic [ref=e1349]: W
+                      - generic [ref=e1350]: T
+                      - generic [ref=e1351]: F
+                      - generic [ref=e1352]: S
+                - paragraph [ref=e1355]: "Training consistency, all time: 2. 2 of 7 days logged. Calendar of training days; 2 of 7 days trained."
+              - figure [ref=e1356]:
+                - generic [ref=e1358]:
+                  - heading "Plan adherence" [level=3] [ref=e1359]
+                  - generic [ref=e1360]: Not logged
+                - paragraph [ref=e1364]: "Adherence unlocks when a structured training plan is active: each week scores your completed sessions against the plan."
+                - paragraph [ref=e1365]: "Plan adherence: no structured training plan active."
+            - generic [ref=e1366]:
+              - figure "Daily volume Trend (smoothed) 2 of 7 days logged" [ref=e1367]:
+                - generic [ref=e1369]:
+                  - heading "Training volume" [level=3] [ref=e1370]
+                  - generic [ref=e1371]:
+                    - generic [ref=e1372]: 4,958 lb
+                    - generic [ref=e1373]: Latest day
+                  - paragraph [ref=e1374]: all time
+                - 'img "Training volume, all time: 4,958 lb. 2 of 7 days logged." [ref=e1376]':
+                  - application [ref=e1711]:
+                    - generic [ref=e1732]:
+                      - generic [ref=e1733]:
+                        - generic [ref=e1734]: Thu
+                        - generic [ref=e1736]: Sat
+                        - generic [ref=e1738]: Mon
+                        - generic [ref=e1740]: Wed
+                      - generic [ref=e1742]:
+                        - generic [ref=e1743]: "3214"
+                        - generic [ref=e1745]: "3914"
+                        - generic [ref=e1747]: "4614"
+                        - generic [ref=e1749]: "5186"
+                - generic [ref=e1422]:
+                  - generic [ref=e1423]: Daily volume
+                  - generic [ref=e1425]: Trend (smoothed)
+                  - generic [ref=e1427]: 2 of 7 days logged
+                - paragraph [ref=e1428]: "Training volume, all time: 4,958 lb. 2 of 7 days logged."
+              - figure [ref=e1429]:
+                - generic [ref=e1431]:
+                  - heading "Muscle focus" [level=3] [ref=e1432]
+                  - generic [ref=e1433]:
+                    - generic [ref=e1434]: "6"
+                    - generic [ref=e1435]: working sets, all loaded history
+                - 'img "Muscle focus, all loaded history: 6. Chest 4 sets. Back 2 sets." [ref=e1437]':
+                  - generic [ref=e1438]:
+                    - generic [ref=e1439]:
+                      - generic [ref=e1440]: Chest
+                      - generic [ref=e1443]: 4 sets · 67%
+                    - generic [ref=e1444]:
+                      - generic [ref=e1445]: Back
+                      - generic [ref=e1448]: 2 sets · 33%
+                - paragraph [ref=e1449]: "Muscle focus, all loaded history: 6. Chest 4 sets. Back 2 sets."
+            - generic [ref=e1450]:
+              - generic [ref=e1451]:
+                - heading [level=2] [ref=e1452]:
+                  - text: Strength and records
+                  - button "What does \"Strength and records\" mean?" [ref=e1459] [cursor=pointer]
+                - link "Exercise library" [ref=e1463] [cursor=pointer]:
+                  - /url: /workouts/exercises
+              - generic [ref=e1468]:
+                - button "Barbell Bench Press Top set 295lb × 5 344lb est. 1RM" [ref=e1469] [cursor=pointer]:
+                  - generic [ref=e1470]:
+                    - generic [ref=e1471]: Barbell Bench Press
+                    - generic [ref=e1472]: Top set 295lb × 5
+                  - generic [ref=e1481]:
+                    - generic [ref=e1482]: 344lb
+                    - generic [ref=e1483]: est. 1RM
+                - button "Barbell Row Top set 251lb × 8 318lb est. 1RM" [ref=e1487] [cursor=pointer]:
+                  - generic [ref=e1488]:
+                    - generic [ref=e1489]: Barbell Row
+                    - generic [ref=e1490]: Top set 251lb × 8
+                  - generic [ref=e1499]:
+                    - generic [ref=e1500]: 318lb
+                    - generic [ref=e1501]: est. 1RM
+            - generic [ref=e1505]:
+              - generic [ref=e1506]:
+                - heading [level=2] [ref=e1507]:
+                  - text: Records and milestones
+                  - button "What does \"Records and milestones\" mean?" [ref=e1514] [cursor=pointer]
+                - generic [ref=e1518]: 2 record sets all time
+              - generic [ref=e1522]:
+                - generic [ref=e1530]:
+                  - paragraph [ref=e1531]: "New record: Barbell Row"
+                  - paragraph [ref=e1532]: 251 lb × 8 · beat 174 lb · today
+                - link "View the workout" [ref=e1533] [cursor=pointer]:
+                  - /url: /workouts/history/fixture-workout-0
+              - list [ref=e1534]:
+                - listitem [ref=e1535]:
+                  - 'link "New record: Barbell Bench Press 295 lb × 5 · beat 205 lb Jul 8" [ref=e1537] [cursor=pointer]':
+                    - /url: /workouts/history/fixture-workout-0
+                    - generic [ref=e1545]:
+                      - generic [ref=e1546]: "New record: Barbell Bench Press"
+                      - generic [ref=e1547]: 295 lb × 5 · beat 205 lb
+                      - generic [ref=e1548]: Jul 8
+                - listitem [ref=e1552]:
+                  - link "First workout logged Jul 6" [ref=e1553] [cursor=pointer]:
+                    - /url: /workouts/history/fixture-workout-2
+                    - generic [ref=e1557]:
+                      - generic [ref=e1558]: First workout logged
+                      - generic [ref=e1559]: Jul 6
+            - generic [ref=e1563]:
+              - link "Start a workout" [ref=e1564] [cursor=pointer]:
+                - /url: /workouts
+              - link "Full workout history" [ref=e1565] [cursor=pointer]:
+                - /url: /workouts/history
+        - region "locked-basic" [ref=e1569]:
+          - heading "locked-basic" [level=2] [ref=e1570]
+          - paragraph [ref=e1571]: "Active Basic subscriber: the designed locked teaser (capability + upgrade path), never an empty or error tone, and no data fetched."
+          - generic [ref=e1573]:
+            - heading "Training analytics are a Pro feature" [level=2] [ref=e1577]
+            - paragraph [ref=e1578]: Upgrade to Pro and this page tracks your training frequency, volume, strength trends, personal records, and milestones, computed from every workout you log.
+            - link "Upgrade to Pro" [ref=e1579] [cursor=pointer]:
+              - /url: /account
+  - alert [ref=e1580]
+  - generic [ref=e1581]: "3214"

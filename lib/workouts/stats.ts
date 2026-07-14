@@ -3,9 +3,18 @@
  * imports so it's usable in server components, the chat-prompt formatter, and
  * client components alike. Mixed lb/kg sets are normalized to lb for any
  * cross-set comparison so a kg PR doesn't beat a heavier lb set by accident.
+ *
+ * EXERCISE IDENTITY (FIX-33/34): every function here groups by the raw
+ * `name.trim().toLowerCase()` key. Analytics surfaces must therefore pass
+ * workouts through `canonicalizeWorkouts` (lib/workouts/exercise-identity.ts,
+ * with the member's ResolveOptions from lib/workouts/canonical.ts) BEFORE
+ * calling in, so records, PRs, volume, and trends deduplicate across aliases
+ * ("Bench Press" vs "Barbell Bench Press"). Resolution is read-time only;
+ * logged rows are never rewritten.
  */
 
 import { LB_PER_KG } from "@/lib/contracts/units";
+import { calendarDayAnchorInTz } from "@/lib/date";
 
 export type WeightUnit = "lb" | "kg";
 export type SetType = "warmup" | "working" | "dropset" | "failure";
@@ -103,6 +112,12 @@ export type PersonalRecord = {
   /** Best single-session volume for this exercise, in lb. */
   bestSessionVolume: number;
   lastPerformed: string; // ISO
+  /** Source workouts (FIX-33: every record taps through to the session that
+   *  set it). Null when the record has no qualifying set. */
+  bestWeightWorkoutId: string | null;
+  bestEst1RMWorkoutId: string | null;
+  bestSessionVolumeWorkoutId: string | null;
+  lastPerformedWorkoutId: string | null;
 };
 
 /**
@@ -118,10 +133,14 @@ export function computePersonalRecords(workouts: WorkoutData[]): PersonalRecord[
       bestWeight: number;
       bestWeightUnit: WeightUnit;
       bestWeightReps: number | null;
+      bestWeightWorkoutId: string | null;
       bestEst1RMLb: number;
+      bestEst1RMWorkoutId: string | null;
       bestReps: number;
       bestSessionVolume: number;
+      bestSessionVolumeWorkoutId: string | null;
       lastPerformed: number;
+      lastPerformedWorkoutId: string | null;
       unitSeen: WeightUnit;
     }
   >();
@@ -151,10 +170,14 @@ export function computePersonalRecords(workouts: WorkoutData[]): PersonalRecord[
           bestWeight: 0,
           bestWeightUnit: "lb",
           bestWeightReps: null,
+          bestWeightWorkoutId: null,
           bestEst1RMLb: 0,
+          bestEst1RMWorkoutId: null,
           bestReps: 0,
           bestSessionVolume: 0,
+          bestSessionVolumeWorkoutId: null,
           lastPerformed: 0,
+          lastPerformedWorkoutId: null,
           unitSeen: "lb",
         };
         byName.set(key, rec);
@@ -162,9 +185,11 @@ export function computePersonalRecords(workouts: WorkoutData[]): PersonalRecord[
 
       if (performed > rec.lastPerformed) {
         rec.lastPerformed = performed;
+        rec.lastPerformedWorkoutId = w.id;
       }
       if (sessionVolume > rec.bestSessionVolume) {
         rec.bestSessionVolume = sessionVolume;
+        rec.bestSessionVolumeWorkoutId = w.id;
       }
 
       for (const s of ex.sets) {
@@ -182,12 +207,14 @@ export function computePersonalRecords(workouts: WorkoutData[]): PersonalRecord[
             rec.bestWeight = s.weight;
             rec.bestWeightUnit = s.unit;
             rec.bestWeightReps = s.reps;
+            rec.bestWeightWorkoutId = w.id;
           }
           const e = epley1RM(s.weight, s.reps);
           if (e != null) {
             const el = toLb(e, s.unit);
             if (el > rec.bestEst1RMLb) {
               rec.bestEst1RMLb = el;
+              rec.bestEst1RMWorkoutId = w.id;
             }
           }
         }
@@ -206,6 +233,10 @@ export function computePersonalRecords(workouts: WorkoutData[]): PersonalRecord[
       bestReps: r.bestReps > 0 ? r.bestReps : null,
       bestSessionVolume: r.bestSessionVolume,
       lastPerformed: new Date(r.lastPerformed).toISOString(),
+      bestWeightWorkoutId: r.bestWeightWorkoutId,
+      bestEst1RMWorkoutId: r.bestEst1RMWorkoutId,
+      bestSessionVolumeWorkoutId: r.bestSessionVolumeWorkoutId,
+      lastPerformedWorkoutId: r.lastPerformedWorkoutId,
     }))
     .sort((a, b) => (b.bestEst1RM ?? 0) - (a.bestEst1RM ?? 0));
 }
@@ -214,11 +245,17 @@ export function computePersonalRecords(workouts: WorkoutData[]): PersonalRecord[
  * Total volume per day over time, oldest first, for the trend chart. Workouts
  * on the same calendar day are summed into one point — so two sessions in a
  * day (e.g. a repeated workout) render as a single bar rather than colliding
- * on an identical timestamp. Bucketed by UTC day to match how date-only
- * `performedAt` values are stored (midnight UTC).
+ * on an identical timestamp.
+ *
+ * Pass `timezone` to bucket by the MEMBER-LOCAL calendar day (the registered
+ * training.volume.dailyTrend contract grain; the FIX-33 fix the registry
+ * queued). Without it, buckets fall back to the UTC day — identical for
+ * noon-UTC-anchored picked days, drifting only for logged-now sessions near
+ * local midnight.
  */
 export function volumeTrend(
-  workouts: WorkoutData[]
+  workouts: WorkoutData[],
+  timezone?: string | null
 ): { t: number; volume: number }[] {
   const byDay = new Map<number, number>();
   for (const w of workouts) {
@@ -227,7 +264,10 @@ export function volumeTrend(
       continue;
     }
     const d = new Date(w.performedAt);
-    const dayKey = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+    const dayKey =
+      timezone === undefined
+        ? Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
+        : calendarDayAnchorInTz(d, timezone).getTime();
     byDay.set(dayKey, (byDay.get(dayKey) ?? 0) + volume);
   }
   return [...byDay.entries()]
@@ -365,22 +405,47 @@ export function prBaselineByExercise(
   return out;
 }
 
+// One record-beating set, in the moment it happened: the atom of the PR
+// timeline (FIX-33). `previous*` carry the pre-set running bests so a
+// timeline entry can state the beaten mark; first-ever sessions emit nothing
+// (a baseline, not a record).
+export type PrEvent = {
+  workoutId: string;
+  workoutTitle: string;
+  /** ISO of the session that set the record. */
+  performedAt: string;
+  exerciseName: string;
+  /** Which running best(s) this set beat. */
+  beatWeight: boolean;
+  beatE1rm: boolean;
+  /** The set as logged. */
+  weight: number;
+  reps: number | null;
+  unit: WeightUnit;
+  /** The set normalized to lb for comparisons/deltas. */
+  weightLb: number;
+  e1rmLb: number | null;
+  /** Running bests BEFORE this set, in lb. */
+  previousWeightLb: number;
+  previousE1rmLb: number;
+};
+
 /**
- * How many personal records each workout set WHEN IT HAPPENED: replay history
- * oldest-first, counting the working sets that beat every prior session's
- * best weight or best est. 1RM for that exercise (first-ever sessions are a
- * baseline, not a record). Keyed by workout id — backs the "2 records" pill
- * on history cards and the celebration screen.
+ * Every record-beating working set across history, oldest first: replay
+ * history, and for each exercise emit an event whenever a set beats every
+ * prior session's best weight or best est. 1RM (first-ever sessions are a
+ * baseline, not a record; timed exercises never PR). THE one PR-event
+ * computation: `prCountsByWorkout` derives from it, so the history-card
+ * pills and the Progress > Training PR timeline can never disagree.
  */
-export function prCountsByWorkout(workouts: WorkoutData[]): Record<string, number> {
+export function prEventsByWorkout(workouts: WorkoutData[]): PrEvent[] {
   const ordered = [...workouts].sort(
     (a, b) =>
       new Date(a.performedAt).getTime() - new Date(b.performedAt).getTime()
   );
   const best = new Map<string, { weightLb: number; e1rmLb: number }>();
-  const counts: Record<string, number> = {};
+  const events: PrEvent[] = [];
   for (const w of ordered) {
-    let count = 0;
     for (const ex of w.exercises) {
       const key = ex.name.trim().toLowerCase();
       if (!key || ex.kind === "timed") {
@@ -396,15 +461,46 @@ export function prCountsByWorkout(workouts: WorkoutData[]): Record<string, numbe
         const wl = toLb(s.weight, s.unit);
         const e = epley1RM(s.weight, s.reps);
         const el = e != null ? toLb(e, s.unit) : 0;
-        if (prior && (wl > sessionBestWeight || el > sessionBestE1rm)) {
-          count++;
+        const beatWeight = prior != null && wl > sessionBestWeight;
+        const beatE1rm = prior != null && el > sessionBestE1rm;
+        if (beatWeight || beatE1rm) {
+          events.push({
+            workoutId: w.id,
+            workoutTitle: w.title,
+            performedAt: w.performedAt,
+            exerciseName: ex.name.trim(),
+            beatWeight,
+            beatE1rm,
+            weight: s.weight,
+            reps: s.reps,
+            unit: s.unit,
+            weightLb: Math.round(wl),
+            e1rmLb: e != null ? Math.round(el) : null,
+            previousWeightLb: Math.round(sessionBestWeight),
+            previousE1rmLb: Math.round(sessionBestE1rm),
+          });
         }
         sessionBestWeight = Math.max(sessionBestWeight, wl);
         sessionBestE1rm = Math.max(sessionBestE1rm, el);
       }
       best.set(key, { weightLb: sessionBestWeight, e1rmLb: sessionBestE1rm });
     }
-    counts[w.id] = count;
+  }
+  return events;
+}
+
+/**
+ * How many personal records each workout set WHEN IT HAPPENED. Keyed by
+ * workout id — backs the "2 records" pill on history cards and the
+ * celebration screen. Derived from `prEventsByWorkout` (one computation).
+ */
+export function prCountsByWorkout(workouts: WorkoutData[]): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const w of workouts) {
+    counts[w.id] = 0;
+  }
+  for (const e of prEventsByWorkout(workouts)) {
+    counts[e.workoutId]++;
   }
   return counts;
 }

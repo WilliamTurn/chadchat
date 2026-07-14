@@ -60,6 +60,16 @@ export const TREND_TONE: Record<TrendTone, string> = {
   neutral: TREND_NEUTRAL,
 };
 
+/**
+ * Reward-moment accents (the owner reward-glow direction, P5/P6; FIX-33).
+ * Gold marks RECORD moments (the amber family: trophy chips, PR dots, the
+ * celebration-hero wash); milestone moments stay on GOAL_EMERALD. Derived
+ * with color-mix from the same tokens so glow and mark can never disagree.
+ */
+export const REWARD_GOLD = "var(--chart-3)";
+export const REWARD_GOLD_WASH =
+  "color-mix(in oklab, var(--chart-3) 14%, transparent)";
+
 /** The macro trio (matches the MacroRings bars: sky / amber / violet).
  *  Theme-aware like DOMAIN (FIX-19). */
 export const MACRO = {

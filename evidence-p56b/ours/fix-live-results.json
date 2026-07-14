@@ -1,0 +1,46 @@
+{
+  "live_training": {
+    "heat": {
+      "wrapH": 130,
+      "wrapBottom": 638,
+      "cellW": 16,
+      "maxCellPx": 16,
+      "weekCols": 2
+    },
+    "cons": {
+      "top": 388,
+      "bottom": 767,
+      "height": 379
+    },
+    "vol": {
+      "top": 799,
+      "bottom": 1214,
+      "height": 415
+    },
+    "overlap": false,
+    "heatInsideCard": true,
+    "docHeight": 1876,
+    "foundConsistency": true,
+    "foundVolume": true
+  },
+  "overview": {
+    "heatmapCount": 2,
+    "heatmaps": [
+      {
+        "idx": 0,
+        "wrapH": 130,
+        "maxCellPx": 16,
+        "cellCount": 35,
+        "overflowsCard": false
+      },
+      {
+        "idx": 1,
+        "wrapH": 130,
+        "maxCellPx": 16,
+        "cellCount": 91,
+        "overflowsCard": false
+      }
+    ],
+    "docHeight": 1545
+  }
+}
