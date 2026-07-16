@@ -1,0 +1,17 @@
+{
+  "__doc__": "Pre-existing defects the surface-smoke gate exposed when it was extended (2026-07-16). Each entry downgrades ONE screen+check combination from failure to a logged warning, so the gate stays adoptable while the defect is owed to a fix wave. RATCHET RULE: entries are only ever REMOVED (when the fix wave clears them; the test logs loudly when a pinned entry starts passing). Never add an entry for a NEW defect you just shipped - fix it instead.",
+  "entries": [
+    {
+      "surface": "/account/appearance",
+      "check": "overflow",
+      "widths": [320, 360, 384, 390, 768, 1280],
+      "reason": "Horizontal overflow at every width (43px at phones, 482px at 768, 392px at 1280; register class cut-off-or-overflow / SYS-08). Found by the extended smoke gate 2026-07-16; owed to the design wave (DSH-70) or an appearance-page fix."
+    },
+    {
+      "surface": "/account/appearance",
+      "check": "clipped",
+      "widths": [768, 1280],
+      "reason": "Controls ('Upload your own', 'Female', 'Account menu') sit partly outside the viewport at tablet/desktop, same root cause as the overflow pin above. Found by the extended smoke gate 2026-07-16."
+    }
+  ]
+}
