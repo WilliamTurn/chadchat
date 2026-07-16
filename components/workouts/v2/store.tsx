@@ -15,6 +15,7 @@ import {
   type ReactNode,
 } from "react";
 import type { SetType } from "@/lib/workouts/stats";
+import { sessionEngaged } from "./format";
 import type {
   ActiveSession,
   BuilderDraft,
@@ -142,8 +143,10 @@ function reducer(state: State, action: Action): State {
       return action.state;
 
     case "start-session":
-      // At most one live session; ignore a second Start.
-      if (state.session) {
+      // At most one ENGAGED live session; a pending one (entered but never
+      // played, no sets done) is replaced instead of locking every Start
+      // button behind "finish your current workout first" (flaws RUN-08).
+      if (state.session && sessionEngaged(state.session)) {
         return state;
       }
       return { ...state, session: action.session, restTimer: null };

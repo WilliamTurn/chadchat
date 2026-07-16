@@ -82,7 +82,9 @@ export function CustomExerciseForm({
       return;
     }
     toast.success(existing ? "Exercise updated." : `"${name.trim()}" added to your exercises.`);
-    router.push(backHref);
+    // replace, not push: the form must not stay in the history between the
+    // picker and the workout (flaws XPK-16/17 back-loop).
+    router.replace(backHref);
     router.refresh();
   }
 
@@ -117,7 +119,7 @@ export function CustomExerciseForm({
             className="h-[56px] w-full rounded-xl border border-input bg-card px-4 font-semibold text-[17px] text-foreground placeholder:text-muted-foreground/60 focus:border-blood/60 focus:outline-none"
             maxLength={120}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Incline Hammer Press (Machine)"
+            placeholder="Enter the name of your exercise"
             type="text"
             value={name}
           />
@@ -199,7 +201,7 @@ export function CustomExerciseForm({
             className="min-h-[88px] w-full rounded-xl border border-input bg-card px-4 py-3 text-[15px] text-foreground placeholder:text-muted-foreground/60 focus:border-blood/60 focus:outline-none"
             maxLength={500}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="e.g. Seat at 4, slow negative"
+            placeholder="Machine settings, cues, anything to remember"
             value={notes}
           />
         </label>

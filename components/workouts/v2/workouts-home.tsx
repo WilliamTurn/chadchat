@@ -30,7 +30,7 @@ import {
   mergeCatalog,
 } from "./catalog";
 import { ConfirmDialog } from "./confirm";
-import { formatDay } from "./format";
+import { formatDay, sessionEngaged } from "./format";
 import {
   emptySession,
   sessionFromPlanDay,
@@ -156,7 +156,7 @@ function TemplateCard({
   const router = useRouter();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const busy = Boolean(session);
+  const busy = sessionEngaged(session);
 
   const names = template.exercises.map((e) => e.name);
   const preview = names.slice(0, 3).join(" · ");
@@ -356,7 +356,7 @@ export function ChadPlanSection({
   const { session, startSession } = useWorkouts();
   const router = useRouter();
   const [syncing, startSync] = useTransition();
-  const busy = Boolean(session);
+  const busy = sessionEngaged(session);
   const catalog = mergeCatalog(customExercises);
 
   function startDay(planSessionRow: PlanScheduleSession) {
@@ -479,7 +479,7 @@ export function ChadPlanSection({
 export function StartEmptySection({ unit }: { unit: WeightUnit }) {
   const { session, startSession } = useWorkouts();
   const router = useRouter();
-  const busy = Boolean(session);
+  const busy = sessionEngaged(session);
   return (
     <section aria-labelledby="freestyle-heading" className="mt-8">
       {/* One panel, text beside the action on desktop: a bare heading +

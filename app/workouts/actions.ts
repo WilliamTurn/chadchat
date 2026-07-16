@@ -12,6 +12,7 @@ import {
   createWorkout,
   createWorkoutTemplate,
   deleteCustomExercise,
+  getCustomExercisesByUserId,
   deleteWorkout,
   deleteWorkoutTemplate,
   getPlanById,
@@ -304,6 +305,17 @@ export async function addCustomExercise(
     };
   }
   const { notes, ...rest } = parsed.data;
+  // Identity is the exercise NAME everywhere downstream (history, records,
+  // the picker), so a second exercise with the same name would be
+  // indistinguishable from the first. Refuse it (flaws XCU-13/XPK-14).
+  const key = rest.name.trim().toLowerCase();
+  const existing = await getCustomExercisesByUserId(user.id);
+  if (existing.some((e) => e.name.trim().toLowerCase() === key)) {
+    return {
+      ok: false,
+      error: `You already have an exercise named "${rest.name.trim()}". Edit that one, or pick a different name.`,
+    };
+  }
   await createCustomExercise({
     userId: user.id,
     ...rest,
@@ -328,6 +340,18 @@ export async function editCustomExercise(
     };
   }
   const { id, notes, ...rest } = parsed.data;
+  const key = rest.name.trim().toLowerCase();
+  const existing = await getCustomExercisesByUserId(user.id);
+  if (
+    existing.some(
+      (e) => e.id !== id && e.name.trim().toLowerCase() === key
+    )
+  ) {
+    return {
+      ok: false,
+      error: `You already have an exercise named "${rest.name.trim()}". Pick a different name.`,
+    };
+  }
   await updateCustomExercise({
     id,
     userId: user.id,

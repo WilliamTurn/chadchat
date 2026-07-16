@@ -74,6 +74,32 @@ export const SYSTEM_COPY_BANNED: readonly BannedPattern[] = [
     reason:
       "System UI does not claim to know intent. State what the data shows.",
   },
+  {
+    id: "we-voice",
+    // "we/us/our" inside a quoted, sentence-like string (must contain a
+    // space). There is no team behind the curtain: the product speaks as
+    // Chad or not at all (flaws SYS-10, owner 2026-07-15).
+    pattern:
+      /(["'`])(?=[^"'`]* )[^"'`]*\bwe(?:'re|'ll|'ve)?\b[^"'`]*\1/i,
+    reason:
+      "Copy never says 'we': it implies an anonymous team judging the member (flaws SYS-10). Attribute estimates and content to Chad, or state them plainly.",
+  },
+  {
+    id: "gym-assumption",
+    pattern: /\b(?:at the gym|your gym'?s|any gym day)\b/i,
+    reason:
+      "Copy never assumes the member trains in a gym (flaws SYS-11). Many train at home.",
+  },
+  {
+    id: "session-vocab",
+    // Quoted, sentence-like strings only (must contain a space), so route
+    // paths ("/workouts/session") and identifiers stay legal. The lookaround
+    // guards skip template-literal interpolations like `${session.name}`.
+    pattern:
+      /(["'`])(?=[^"'`]* )[^"'`]*(?<!\$\{)\bsessions?\b(?![.}\w])[^"'`]*\1/i,
+    reason:
+      "Member-facing vocabulary is 'workout', never 'session' (owner ruling, flaws SYS-14).",
+  },
 ] as const;
 
 /** Scan one system-UI string; returns every violation found. */

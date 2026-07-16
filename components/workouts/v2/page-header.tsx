@@ -24,12 +24,11 @@ export function WorkoutPageHeader({
         <button
           className="-ml-1.5 mb-2 inline-flex min-h-[44px] cursor-pointer items-center gap-1 rounded-lg px-1.5 font-semibold text-[14px] text-muted-foreground transition hover:text-foreground"
           onClick={() => {
-            // Prefer the real back-stack so scroll position is kept.
-            if (window.history.length > 1) {
-              router.back();
-            } else {
-              router.push(back.href);
-            }
+            // The label PROMISES a destination ("Back to your workout"), so
+            // always go there. Walking the history stack instead looped
+            // through the exercise-picker/custom-form round trip (flaws
+            // XPK-16/17: "Back to workout" landed on Add Exercises).
+            router.push(back.href);
           }}
           type="button"
         >

@@ -2,7 +2,6 @@ import { ChevronRight, Dumbbell, Trophy } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { CountUp } from "@/components/dashboard/count-up";
@@ -61,15 +60,6 @@ export default function WorkoutsPage() {
     // Full-width desktop layout (LAY-1): the wide frame, filled with
     // multi-column workout/plan card grids and a paired analytics row.
     <PageShell active="/workouts" className="max-w-[1500px]">
-      <Toaster
-        position="top-center"
-        theme="system"
-        toastOptions={{
-          className:
-            "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
-        }}
-      />
-
       <div className="mb-8">
         <BackToDashboard />
         <div className="flex items-center gap-3">
@@ -77,7 +67,7 @@ export default function WorkoutsPage() {
           <Badge variant="secondary">Pro feature</Badge>
         </div>
         <p className="mt-1 text-muted-foreground text-sm">
-          Build your workouts, run them live at the gym, and log every set.
+          Build your workouts, run them live, and log every set.
           Chad tracks your PRs and volume, and holds you to them.
         </p>
       </div>
@@ -117,7 +107,7 @@ function UpgradePrompt() {
     <div className="rounded-2xl border border-border bg-card p-8 text-center">
       <h2 className="font-medium text-lg">Workouts are a Chad Pro feature</h2>
       <p className="mx-auto mt-2 max-w-md text-muted-foreground text-sm">
-        Upgrade to Pro to build your own workouts, run them live at the gym,
+        Upgrade to Pro to build your own workouts, run them live,
         and watch your strength and volume climb. That's what a real coach
         tracks for you.
       </p>

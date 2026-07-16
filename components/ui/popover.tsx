@@ -1,10 +1,59 @@
 "use client";
 
 import { Popover } from "radix-ui";
+import * as React from "react";
 import { cn } from "@/lib/utils";
 
-function PopoverRoot({ ...props }: React.ComponentProps<typeof Popover.Root>) {
-  return <Popover.Root data-slot="popover" {...props} />;
+function PopoverRoot({
+  open,
+  defaultOpen,
+  onOpenChange,
+  ...props
+}: React.ComponentProps<typeof Popover.Root>) {
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(
+    defaultOpen ?? false
+  );
+  const isOpen = open ?? uncontrolledOpen;
+  const handleOpenChange = React.useCallback(
+    (next: boolean) => {
+      setUncontrolledOpen(next);
+      onOpenChange?.(next);
+    },
+    [onOpenChange]
+  );
+
+  // Dismissal contract (flaws SYS-04): scrolling away closes a popover the
+  // same as tapping away or Escape. Scrolls that start inside the popover's
+  // own content (e.g. a calendar) don't count.
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const onScroll = (event: Event) => {
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest('[data-slot="popover-content"]')
+      ) {
+        return;
+      }
+      handleOpenChange(false);
+    };
+    window.addEventListener("scroll", onScroll, {
+      capture: true,
+      passive: true,
+    });
+    return () => {
+      window.removeEventListener("scroll", onScroll, { capture: true });
+    };
+  }, [isOpen, handleOpenChange]);
+
+  return (
+    <Popover.Root
+      data-slot="popover"
+      {...props}
+      open={isOpen}
+      onOpenChange={handleOpenChange}
+    />
+  );
 }
 
 function PopoverTrigger({ ...props }: React.ComponentProps<typeof Popover.Trigger>) {

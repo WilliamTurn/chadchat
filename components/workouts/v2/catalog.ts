@@ -32,13 +32,25 @@ export function toCustomExerciseData(row: CustomExercise): CustomExerciseData {
  * and sort first (your gym's cable stack beats the generic entry). */
 export function mergeCatalog(customs: CustomExerciseData[]): ExerciseRef[] {
   const taken = new Set(customs.map((c) => c.name.trim().toLowerCase()));
-  const customRefs: ExerciseRef[] = customs.map((c) => ({
-    name: c.name,
-    muscleGroup: c.muscleGroup,
-    equipment: c.equipment,
-    kind: exerciseKind(c),
-    custom: true,
-  }));
+  // Identity = name, so identical-named customs (legacy rows created before
+  // duplicate names were refused) collapse to ONE entry; rendering all three
+  // made selecting one appear to select them all (flaws XPK-14).
+  const seenCustom = new Set<string>();
+  const customRefs: ExerciseRef[] = [];
+  for (const c of customs) {
+    const key = c.name.trim().toLowerCase();
+    if (seenCustom.has(key)) {
+      continue;
+    }
+    seenCustom.add(key);
+    customRefs.push({
+      name: c.name,
+      muscleGroup: c.muscleGroup,
+      equipment: c.equipment,
+      kind: exerciseKind(c),
+      custom: true,
+    });
+  }
   const builtInRefs: ExerciseRef[] = BUILT_IN_EXERCISES.filter(
     (e) => !taken.has(e.name.toLowerCase())
   ).map((e) => ({

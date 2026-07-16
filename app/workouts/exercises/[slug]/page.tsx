@@ -236,7 +236,7 @@ async function Content({ params }: { params: Promise<{ slug: string }> }) {
                         <span className="text-[15px] text-muted-foreground">lb</span>
                       </div>
                       <p className="mt-1.5 text-[12px] text-muted-foreground leading-snug">
-                        The most we estimate you could lift once, based on your best
+                        The most Chad estimates you could lift once, based on your best
                         set.
                       </p>
                     </WCard>

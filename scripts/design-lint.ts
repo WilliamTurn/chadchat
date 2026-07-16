@@ -16,11 +16,25 @@
  *                      components/ui/**. Compose the ui primitives instead.
  *   banned-copy        lib/contracts/copy.ts tripwires (em-dashes, generic
  *                      "View all", snark, moral grading...) in system UI.
+ *   copy-vocabulary    The newer copy.ts vocabulary rules ("we", gym
+ *                      assumptions, "session") under their own baseline key.
+ *   example-placeholder  "e.g." example text in a placeholder prop (SYS-09:
+ *                      it reads as an already-entered value).
+ *   unconfirmed-destructive  onClick calling a remove-/delete- handler in a
+ *                      file with no confirm-or-undo machinery (LAW 7).
+ *   raw-overlay-import Importing recharts Tooltip / radix-ui outside
+ *                      components/ui, bypassing the dismissal contracts.
+ *
+ * New rules grandfather their current counts ONCE (tracked via "__rules__"
+ * in the baseline), then ratchet down like everything else.
  *
  * Grandfathering: scripts/design-lint-baseline.json pins the pre-existing
- * violation count per file+rule. A count above baseline fails; below
- * baseline prints a reminder to shrink it (run with --update to rewrite).
- * The baseline only shrinks: --update refuses to raise any count.
+ * violation count per file+rule. A count above baseline fails. The baseline
+ * only shrinks, and it shrinks AUTOMATICALLY: every run rewrites any entry
+ * whose current count is lower (and drops cleared entries), so an improvement
+ * is locked in the moment it happens — a fixed file can never quietly climb
+ * back up to an old, larger allowance. Commit the baseline change alongside
+ * the fix. (--update is kept as an alias; it no longer does anything extra.)
  */
 
 import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
@@ -47,7 +61,15 @@ const EXCLUDED = [
   "lib/chart/palette.ts",
 ];
 
-type RuleId = "raw-color" | "arbitrary-utility" | "raw-control" | "banned-copy";
+type RuleId =
+  | "raw-color"
+  | "arbitrary-utility"
+  | "raw-control"
+  | "banned-copy"
+  | "copy-vocabulary"
+  | "example-placeholder"
+  | "unconfirmed-destructive"
+  | "raw-overlay-import";
 
 type Violation = { file: string; rule: RuleId; line: number; excerpt: string };
 
@@ -55,6 +77,26 @@ const HEX_RE = /#[0-9a-fA-F]{3,8}(?![0-9a-fA-F])/;
 const FUNC_COLOR_RE = /\b(?:rgba?|oklch|hsla?|color-mix|color)\(/;
 const ARBITRARY_RE = /\b[a-z][a-z0-9-]*-\[(?!var\(--)[^\]]+\]/;
 const RAW_CONTROL_RE = /<(?:button|input|select|textarea)\b/;
+/** "e.g." example text in a placeholder reads as an entered value
+ *  (flaws SYS-09). Placeholders state what to enter, never an example. */
+const EXAMPLE_PLACEHOLDER_RE = /\bplaceholder\s*[=:]\s*.{0,60}?\be\.?g\b/i;
+/** An onClick that calls a remove-/delete- handler in a file that never
+ *  imports the confirm-or-undo machinery (charter LAW 7, flaws SYS-23). */
+const UNCONFIRMED_DELETE_RE = /onClick=\{[^}]*\b(?:remove|delete)[A-Z]\w*\(/;
+const CONFIRM_MACHINERY_RE =
+  /ConfirmActionDialog|ConfirmDialog|toastUndo|confirm-undo/;
+/** Overlay primitives (tooltips/popovers) carry the SYS-03/04 dismissal
+ *  contract in components/ui; importing recharts' Tooltip or radix-ui
+ *  directly anywhere else bypasses it. */
+const RAW_OVERLAY_IMPORT_RE =
+  /(?:\bTooltip\b[^\n]*from\s+["']recharts["']|from\s+["']radix-ui["'])/;
+/** New copy patterns report under their own rule id so the long-standing
+ *  banned-copy baseline keys stay stable. */
+const VOCABULARY_COPY_IDS = new Set([
+  "we-voice",
+  "gym-assumption",
+  "session-vocab",
+]);
 
 function* walk(dir: string): Generator<string> {
   for (const name of readdirSync(dir)) {
@@ -74,6 +116,7 @@ function* walk(dir: string): Generator<string> {
 function lintFile(rel: string, text: string, colorOnly: boolean): Violation[] {
   const out: Violation[] = [];
   const isUiPrimitive = rel.startsWith(`components${sep}ui${sep}`);
+  const hasConfirmMachinery = CONFIRM_MACHINERY_RE.test(text);
   const lines = text.split("\n");
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -92,12 +135,36 @@ function lintFile(rel: string, text: string, colorOnly: boolean): Violation[] {
     if (rel.endsWith(".tsx") && !isUiPrimitive && RAW_CONTROL_RE.test(line)) {
       push("raw-control");
     }
+    if (rel.endsWith(".tsx") && EXAMPLE_PLACEHOLDER_RE.test(line)) {
+      push("example-placeholder");
+    }
+    if (
+      rel.endsWith(".tsx") &&
+      !hasConfirmMachinery &&
+      UNCONFIRMED_DELETE_RE.test(line)
+    ) {
+      push("unconfirmed-destructive");
+    }
+    if (!isUiPrimitive && RAW_OVERLAY_IMPORT_RE.test(line)) {
+      push("raw-overlay-import");
+    }
     if (rel.endsWith(".tsx")) {
+      let sawBanned = false;
+      let sawVocabulary = false;
       for (const rule of SYSTEM_COPY_BANNED) {
         if (rule.pattern.test(line)) {
-          push("banned-copy");
-          break;
+          if (VOCABULARY_COPY_IDS.has(rule.id)) {
+            sawVocabulary = true;
+          } else {
+            sawBanned = true;
+          }
         }
+      }
+      if (sawBanned) {
+        push("banned-copy");
+      }
+      if (sawVocabulary) {
+        push("copy-vocabulary");
       }
     }
   }
@@ -109,7 +176,6 @@ function toPosix(p: string): string {
 }
 
 function main() {
-  const update = process.argv.includes("--update");
   const violations: Violation[] = [];
 
   for (const dir of [...SCAN_DIRS, ...COLOR_ONLY_DIRS]) {
@@ -130,44 +196,109 @@ function main() {
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
 
-  let baseline: Record<string, number> = {};
+  let raw: Record<string, number | string[]> = {};
   try {
-    baseline = JSON.parse(readFileSync(BASELINE_PATH, "utf8"));
+    raw = JSON.parse(readFileSync(BASELINE_PATH, "utf8"));
   } catch {
     // First run: write the grandfather list.
-    baseline = {};
+    raw = {};
+  }
+  // "__rules__" records which rule ids have been grandfathered. Absent (a
+  // baseline predating the marker) means the original four.
+  const RULES_KEY = "__rules__";
+  const baseline: Record<string, number> = {};
+  for (const [k, v] of Object.entries(raw)) {
+    if (k !== RULES_KEY && typeof v === "number") {
+      baseline[k] = v;
+    }
+  }
+  const knownRules = new Set<string>(
+    Array.isArray(raw[RULES_KEY])
+      ? (raw[RULES_KEY] as string[])
+      : ["raw-color", "arbitrary-utility", "raw-control", "banned-copy"]
+  );
+
+  const firstRun = Object.keys(baseline).length === 0;
+  if (firstRun) {
+    const next: Record<string, number> = {};
+    const rules = new Set<string>();
+    for (const [key, n] of [...counts.entries()].sort()) {
+      next[key] = n;
+      rules.add(key.split("::")[1]);
+    }
+    writeFileSync(
+      BASELINE_PATH,
+      `${JSON.stringify({ [RULES_KEY]: [...rules].sort(), ...next }, null, 2)}\n`
+    );
+    console.log(
+      `design-lint: baseline created with ${Object.keys(next).length} grandfathered entries.`
+    );
+    return;
   }
 
-  if (update || Object.keys(baseline).length === 0) {
-    const firstRun = Object.keys(baseline).length === 0;
-    const next: Record<string, number> = {};
-    for (const [key, n] of [...counts.entries()].sort()) {
-      const prior = baseline[key];
-      // The baseline only shrinks: never raise an entry, never add one after
-      // the first run (new violations must be fixed, not grandfathered).
-      if (prior == null) {
-        if (firstRun) {
-          next[key] = n;
-        }
-      } else {
-        next[key] = Math.min(prior, n);
-      }
+  // A rule id the baseline has never seen grandfathers its CURRENT counts
+  // once (so a new gate can land without pre-cleaning the whole tree), then
+  // ratchets down like every other rule. Existing rules never re-grandfather.
+  let newRules = 0;
+  for (const [key, n] of counts.entries()) {
+    const rule = key.split("::")[1];
+    if (!knownRules.has(rule)) {
+      baseline[key] = n;
+      newRules++;
     }
-    writeFileSync(BASELINE_PATH, `${JSON.stringify(next, null, 2)}\n`);
+  }
+  // Record every rule this script version knows (including ones with zero
+  // current hits), so a rule never re-grandfathers on a later run.
+  const ALL_RULES: RuleId[] = [
+    "raw-color",
+    "arbitrary-utility",
+    "raw-control",
+    "banned-copy",
+    "copy-vocabulary",
+    "example-placeholder",
+    "unconfirmed-destructive",
+    "raw-overlay-import",
+  ];
+  for (const rule of ALL_RULES) {
+    knownRules.add(rule);
+  }
+  if (newRules > 0) {
     console.log(
-      `design-lint: baseline ${firstRun ? "created" : "updated"} with ${Object.keys(next).length} grandfathered entries.`
+      `design-lint: grandfathered ${newRules} entr${newRules === 1 ? "y" : "ies"} for newly added rule(s). Commit scripts/design-lint-baseline.json.`
     );
-    if (firstRun) {
-      return;
+  }
+
+  // Auto-shrink: the baseline is min(pinned, current) on every run. Entries
+  // never rise, never get added after the first run (new violations must be
+  // fixed, not grandfathered), and cleared entries are dropped. Writing the
+  // shrunk file here — not behind a flag nobody runs — is what makes the
+  // ratchet one-way: an improvement is pinned the moment the lint sees it.
+  const next: Record<string, number> = {};
+  let shrunk = 0;
+  for (const key of Object.keys(baseline).sort()) {
+    const current = counts.get(key) ?? 0;
+    if (current <= 0) {
+      shrunk++;
+      continue;
     }
+    next[key] = Math.min(baseline[key], current);
+    if (next[key] < baseline[key]) {
+      shrunk++;
+    }
+  }
+  if (shrunk > 0 || newRules > 0) {
+    writeFileSync(
+      BASELINE_PATH,
+      `${JSON.stringify({ [RULES_KEY]: [...knownRules].sort(), ...next }, null, 2)}\n`
+    );
+    console.log(
+      `design-lint: baseline auto-shrunk (${shrunk} entr${shrunk === 1 ? "y" : "ies"} reduced or cleared). Commit scripts/design-lint-baseline.json with your change.`
+    );
   }
 
   let failed = false;
-  let shrinkable = 0;
-  const seen = new Set<string>();
   for (const [key, n] of [...counts.entries()].sort()) {
-    seen.add(key);
-    const allowed = baseline[key] ?? 0;
+    const allowed = next[key] ?? 0;
     if (n > allowed) {
       failed = true;
       console.error(
@@ -178,21 +309,9 @@ function main() {
       )) {
         console.error(`   ${toPosix(v.file)}:${v.line}  ${v.excerpt}`);
       }
-    } else if (n < allowed) {
-      shrinkable++;
-    }
-  }
-  for (const key of Object.keys(baseline)) {
-    if (!seen.has(key) && baseline[key] > 0) {
-      shrinkable++;
     }
   }
 
-  if (shrinkable > 0) {
-    console.log(
-      `design-lint: ${shrinkable} baseline entr${shrinkable === 1 ? "y" : "ies"} can shrink; run \`pnpm lint:design --update\`.`
-    );
-  }
   if (failed) {
     process.exit(1);
   }

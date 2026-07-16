@@ -10,6 +10,7 @@ import {
 } from "@/app/progress/actions";
 import { useReward } from "@/components/dashboard/reward";
 import { Button } from "@/components/ui/button";
+import { ConfirmActionDialog } from "@/components/ui/confirm-undo";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -142,15 +143,15 @@ export function MeasurementsSection({
     });
   }
 
-  function onDelete(id: string) {
-    startTransition(async () => {
-      const result = await removeBodyMeasurement(id);
-      if (result.ok) {
-        router.refresh();
-      } else {
-        toast.error(result.error ?? "Couldn't delete that.");
-      }
-    });
+  // Rejected result → throw, so ConfirmActionDialog stays open for a retry
+  // (charter LAW 7 / flaws BOD-18: no instant, unconfirmed deletes).
+  async function deleteReading(id: string) {
+    const result = await removeBodyMeasurement(id);
+    if (!result.ok) {
+      toast.error(result.error ?? "Couldn't delete that.");
+      throw new Error("delete failed");
+    }
+    router.refresh();
   }
 
   return (
@@ -289,16 +290,23 @@ export function MeasurementsSection({
                     values={list.map((m) => m.value)}
                   />
                   {latest && (
-                    <Button
-                      aria-label={`Delete latest ${KIND_LABEL[k]} reading`}
-                      className="-m-2 size-11 text-muted-foreground sm:m-0 sm:size-7"
-                      disabled={pending}
-                      onClick={() => onDelete(latest.id)}
-                      size="icon"
-                      variant="ghost"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
+                    <ConfirmActionDialog
+                      confirmLabel="Delete reading"
+                      consequence="It will be removed from your measurement history."
+                      onConfirm={() => deleteReading(latest.id)}
+                      title={`Delete the latest ${KIND_LABEL[k]} reading of ${latest.value} ${latest.unit}?`}
+                      trigger={
+                        <Button
+                          aria-label={`Delete latest ${KIND_LABEL[k]} reading`}
+                          className="-m-2 size-11 text-muted-foreground sm:m-0 sm:size-7"
+                          disabled={pending}
+                          size="icon"
+                          variant="ghost"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      }
+                    />
                   )}
                 </div>
               </div>

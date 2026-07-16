@@ -4,11 +4,13 @@
 // countdown and the workout-in-progress mini bar (music-player pattern), so a
 // live session is always one tap away and never silently lost.
 
-import { Play, Timer } from "lucide-react";
+import { Play, Timer, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { formatClock, sessionCompletedSets } from "./format";
+import { Button } from "@/components/ui/button";
+import { ConfirmActionDialog } from "@/components/ui/confirm-undo";
+import { formatClock, sessionCompletedSets, sessionEngaged } from "./format";
 import { useWorkouts } from "./store";
 
 /** Ticks once a second while mounted. Starts at 0 (not the real clock) so
@@ -34,7 +36,7 @@ export function timerElapsedSeconds(
 }
 
 function SessionMiniBar() {
-  const { session, ready } = useWorkouts();
+  const { session, ready, discardSession } = useWorkouts();
   const pathname = usePathname();
   const now = useNowTick();
   // Hidden on the player itself, and on every page with its own fixed
@@ -47,36 +49,62 @@ function SessionMiniBar() {
     pathname.startsWith("/workouts/exercises/new") ||
     pathname.startsWith("/workouts/new") ||
     pathname.endsWith("/edit");
-  if (!(ready && session) || pageHasOwnBottomBar) {
+  // Only an ENGAGED session earns the bar (charter LAW 9; flaws RUN-06):
+  // entering a workout page and backing out must not summon it.
+  if (!(ready && session) || !sessionEngaged(session) || pageHasOwnBottomBar) {
     return null;
   }
   const done = sessionCompletedSets(session.exercises);
   const elapsed = timerElapsedSeconds(session.timer, now);
   return (
-    <Link
-      className="pointer-events-auto flex items-center gap-3 rounded-2xl border border-blood/40 bg-card px-4 py-3 shadow-[0_12px_32px_rgba(0,0,0,0.45)] transition-transform active:scale-[0.99]"
-      href="/workouts/session"
-    >
-      <span className="relative flex size-10 shrink-0 items-center justify-center rounded-xl bg-blood text-white">
-        <Play aria-hidden className="size-5 fill-current" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate font-semibold text-[15px] text-foreground">
-          {session.name}
+    <div className="pointer-events-auto flex items-center gap-1 rounded-2xl border border-blood/40 bg-card py-2 pr-1.5 pl-4 shadow-[var(--shadow-float)]">
+      <Link
+        className="flex min-w-0 flex-1 items-center gap-3 py-1 transition-transform active:scale-[0.99]"
+        href="/workouts/session"
+      >
+        <span className="relative flex size-10 shrink-0 items-center justify-center rounded-xl bg-blood text-white">
+          <Play aria-hidden className="size-5 fill-current" />
         </span>
-        <span className="block text-[12.5px] text-muted-foreground">
-          Workout in progress · {done} {done === 1 ? "set" : "sets"} done
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-semibold text-[15px] text-foreground">
+            {session.name}
+          </span>
+          <span className="block truncate text-[12.5px] text-muted-foreground">
+            Workout in progress · {done} {done === 1 ? "set" : "sets"} done
+          </span>
         </span>
-      </span>
-      <span className="shrink-0 text-right">
-        <span className="block font-mono font-semibold text-[17px] text-blood tabular-nums">
-          {session.timer.running || elapsed > 0 ? formatClock(elapsed) : "-"}
+        <span className="shrink-0 text-right">
+          <span className="block font-mono font-semibold text-[17px] text-blood tabular-nums">
+            {session.timer.running || elapsed > 0 ? formatClock(elapsed) : "-"}
+          </span>
+          <span className="block font-semibold text-[11px] text-blood/70 uppercase tracking-wider">
+            Back to workout
+          </span>
         </span>
-        <span className="block font-semibold text-[11px] text-blood/70 uppercase tracking-wider">
-          Resume
-        </span>
-      </span>
-    </Link>
+      </Link>
+      {/* The one way OUT of a live workout from the bar (flaws RUN-02):
+          confirmed, never silent, since logged sets are unsaved until Finish. */}
+      <ConfirmActionDialog
+        confirmLabel="Discard workout"
+        consequence={
+          done > 0
+            ? `The ${done} ${done === 1 ? "set" : "sets"} you logged will not be saved.`
+            : "Its timer will be cleared. Nothing has been saved yet."
+        }
+        onConfirm={() => discardSession()}
+        title={`Stop and discard "${session.name}"?`}
+        trigger={
+          <Button
+            aria-label="Stop this workout"
+            className="size-11 shrink-0 text-muted-foreground hover:text-foreground"
+            size="icon"
+            variant="ghost"
+          >
+            <X aria-hidden className="size-5" />
+          </Button>
+        }
+      />
+    </div>
   );
 }
 
@@ -189,10 +217,11 @@ function RestTimerDock() {
   );
 }
 
-/** Fixed layer above the bottom edge: rest timer + session mini bar. */
+/** Fixed layer parked above the bottom tab bar, never over it (flaws
+ * RUN-01): rest timer + session mini bar. */
 export function WorkoutDocks() {
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-3 z-40 mx-auto flex w-full max-w-[560px] flex-col gap-2 px-3 md:bottom-5">
+    <div className="bottom-above-tabbar pointer-events-none fixed inset-x-0 z-40 mx-auto flex w-full max-w-[560px] flex-col gap-2 px-3">
       <RestTimerDock />
       <SessionMiniBar />
     </div>

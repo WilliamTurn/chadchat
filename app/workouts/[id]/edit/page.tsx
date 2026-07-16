@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { Toaster } from "sonner";
 import { WorkoutsPageLoading } from "@/components/workouts/v2/loading";
 import { PageShell } from "@/components/nav/page-shell";
 import { WButton } from "@/components/workouts/v2/ui";
@@ -19,7 +18,6 @@ export default function EditWorkoutPage({
   return (
     // Full-width desktop frame (LAY-1); the editor lays itself out inside it.
     <PageShell active="/workouts" className="max-w-[1500px]">
-      <Toaster position="top-center" richColors theme="system" />
       <Suspense fallback={<WorkoutsPageLoading />}>
         <Content params={params} />
       </Suspense>

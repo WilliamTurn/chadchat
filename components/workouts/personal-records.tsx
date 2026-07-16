@@ -218,7 +218,7 @@ export function PersonalRecords({
               </div>
 
               <p className="mt-3 text-meta text-muted-foreground">
-                Estimated 1RM: the most we estimate you could lift once,
+                Estimated 1RM: the most Chad estimates you could lift once,
                 calculated from each set's weight and reps with the Epley
                 formula. Gold dots mark the sessions that set a new record.
               </p>

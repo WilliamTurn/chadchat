@@ -9,6 +9,7 @@ import { Check, ChevronRight, Plus, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { toast } from "sonner";
 import type { LastExerciseLog, PrBaseline } from "@/lib/workouts/stats";
 import { MUSCLE_GROUPS, MUSCLE_GROUP_LABELS } from "@/lib/workouts/exercise-library";
 import {
@@ -101,6 +102,11 @@ export function ExercisePickerPage({
   function applyRefs(refs: ExerciseRef[]) {
     if (target === "draft") {
       addDraftExercises(refs.map(refToDraftExercise));
+      toast.success(
+        refs.length === 1
+          ? `${refs[0].name} added to the workout builder.`
+          : `${refs.length} exercises added to the workout builder.`
+      );
     } else if (target === "replace" && replaceWexId) {
       const old = session?.exercises.find((ex) => ex.id === replaceWexId);
       const ref = refs[0];
@@ -111,11 +117,19 @@ export function ExercisePickerPage({
           id: replaceWexId,
           restSeconds: old?.restSeconds ?? fresh.restSeconds,
         });
+        toast.success(`Swapped in ${ref.name}.`);
       }
     } else {
       addSessionExercises(refs.map((ref) => exerciseFromRef(ref, lastSets)));
+      toast.success(
+        refs.length === 1
+          ? `${refs[0].name} added to your workout.`
+          : `${refs.length} exercises added to your workout.`
+      );
     }
-    router.back();
+    // Land on the workout in ONE tap, whatever the history stack looks like
+    // (flaws XPK-16: router.back() looped through the custom-exercise form).
+    router.replace(target === "draft" ? "/workouts/new" : "/workouts/session");
   }
 
   function toggle(ref: ExerciseRef) {
@@ -214,8 +228,7 @@ export function ExercisePickerPage({
               Create a custom exercise
             </span>
             <span className="block text-[13px] text-muted-foreground">
-              Your gym&apos;s machine or a movement we don&apos;t have. Add it
-              once, use it forever.
+              Add your own custom exercise if you can&apos;t find it here.
             </span>
           </span>
           <ChevronRight aria-hidden className="size-4 shrink-0 text-muted-foreground/70" />

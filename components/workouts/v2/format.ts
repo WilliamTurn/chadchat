@@ -99,6 +99,27 @@ export function sessionVolumeLb(
   return sum;
 }
 
+/** A live session counts as ENGAGED once the member has pressed Play at
+ * least once or completed a set. Merely entering a workout page creates a
+ * session object but does not engage it — the mini bar and the "finish your
+ * current workout first" guard key off engagement, never off existence
+ * (charter LAW 9; flaws SYS-06/RUN-06/RUN-08). */
+export function sessionEngaged(
+  session: {
+    timer: { running: boolean; startedAt: number | null; accumulatedMs: number };
+    exercises: SessionExercise[];
+  } | null
+): boolean {
+  if (!session) {
+    return false;
+  }
+  const t = session.timer;
+  if (t.running || t.startedAt !== null || t.accumulatedMs > 0) {
+    return true;
+  }
+  return session.exercises.some((ex) => ex.sets.some((s) => s.completed));
+}
+
 export function sessionCompletedSets(exercises: SessionExercise[]): number {
   let n = 0;
   for (const ex of exercises) {

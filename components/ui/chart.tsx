@@ -58,10 +58,96 @@ function ChartContainer({
 }) {
   const uniqueId = React.useId()
   const chartId = `chart-${id ?? uniqueId.replace(/:/g, "")}`
+  const containerRef = React.useRef<HTMLDivElement>(null)
+
+  // Tooltip dismissal contract (flaws SYS-03): a chart tooltip must never fire
+  // on a scroll gesture, releases on pointer-up, and dismisses on tap-away,
+  // Escape, and page scroll. Recharts alone keeps a touch-opened tooltip up
+  // until the next chart event, which trapped it on six surfaces.
+  React.useEffect(() => {
+    const node = containerRef.current
+    if (!node) return
+
+    const tooltipVisible = () => {
+      const tip = node.querySelector<HTMLElement>(".recharts-tooltip-wrapper")
+      return tip ? tip.style.visibility !== "hidden" : false
+    }
+    // Recharts hides its tooltip when the chart surface sees the pointer
+    // leave; React synthesizes mouseleave from a bubbled mouseout whose
+    // relatedTarget is outside the wrapper.
+    const clearTooltip = () => {
+      if (!tooltipVisible()) return
+      for (const wrapper of node.querySelectorAll(".recharts-wrapper")) {
+        wrapper.dispatchEvent(
+          new MouseEvent("mouseout", {
+            bubbles: true,
+            relatedTarget: document.body,
+          })
+        )
+      }
+    }
+
+    let startX = 0
+    let startY = 0
+    let scrolling = false
+    const onTouchStart = (event: TouchEvent) => {
+      const touch = event.touches[0]
+      if (!touch) return
+      startX = touch.clientX
+      startY = touch.clientY
+      scrolling = false
+    }
+    const onTouchMove = (event: TouchEvent) => {
+      const touch = event.touches[0]
+      if (!touch) return
+      if (!scrolling) {
+        const dx = Math.abs(touch.clientX - startX)
+        const dy = Math.abs(touch.clientY - startY)
+        if (dy > 10 && dy > dx) scrolling = true
+      }
+      if (scrolling) {
+        // A vertical scroll is never a scrub: keep it from reaching the
+        // Recharts handlers (React listens at the root, so stopping the
+        // native bubble here starves them) and drop any tooltip already up.
+        event.stopPropagation()
+        clearTooltip()
+      }
+    }
+    const onTouchEnd = () => {
+      scrolling = false
+      clearTooltip()
+    }
+    const onDocPointerDown = (event: PointerEvent) => {
+      if (event.target instanceof Node && node.contains(event.target)) return
+      clearTooltip()
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") clearTooltip()
+    }
+    const onScroll = () => clearTooltip()
+
+    node.addEventListener("touchstart", onTouchStart, { passive: true })
+    node.addEventListener("touchmove", onTouchMove, { passive: true })
+    node.addEventListener("touchend", onTouchEnd, { passive: true })
+    node.addEventListener("touchcancel", onTouchEnd, { passive: true })
+    document.addEventListener("pointerdown", onDocPointerDown, true)
+    document.addEventListener("keydown", onKeyDown)
+    window.addEventListener("scroll", onScroll, { passive: true, capture: true })
+    return () => {
+      node.removeEventListener("touchstart", onTouchStart)
+      node.removeEventListener("touchmove", onTouchMove)
+      node.removeEventListener("touchend", onTouchEnd)
+      node.removeEventListener("touchcancel", onTouchEnd)
+      document.removeEventListener("pointerdown", onDocPointerDown, true)
+      document.removeEventListener("keydown", onKeyDown)
+      window.removeEventListener("scroll", onScroll, { capture: true })
+    }
+  }, [])
 
   return (
     <ChartContext.Provider value={{ config }}>
       <div
+        ref={containerRef}
         data-slot="chart"
         data-chart={chartId}
         className={cn(

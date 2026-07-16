@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { ChevronRight, PartyPopper, Trophy } from "lucide-react";
 import Link from "next/link";
-import { Toaster } from "sonner";
 import { WorkoutsPageLoading } from "@/components/workouts/v2/loading";
 import { PageShell } from "@/components/nav/page-shell";
 import { exerciseSlug } from "@/components/workouts/v2/catalog";
@@ -74,7 +73,6 @@ export default function WorkoutDetailPage({
     // Full-width desktop layout (LAY-1): the per-exercise breakdown renders
     // two-across on desktop instead of one stacked column.
     <PageShell active="/workouts" className="max-w-[1500px]">
-      <Toaster position="top-center" richColors theme="system" />
       <Suspense fallback={<WorkoutsPageLoading />}>
         <Content params={params} searchParams={searchParams} />
       </Suspense>

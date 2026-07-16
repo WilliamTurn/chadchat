@@ -637,7 +637,7 @@ function ExerciseCard({
             className="mt-3 min-h-[80px] w-full rounded-xl border border-input bg-background px-3 py-2.5 text-[15px] text-foreground placeholder:text-muted-foreground/60 focus:border-blood/60 focus:outline-none"
             maxLength={1000}
             onChange={(e) => setNoteDraft(e.target.value)}
-            placeholder="e.g. Felt strong, bump the weight next time"
+            placeholder="Add a note for this exercise"
             value={noteDraft}
           />
         </ConfirmDialog>
@@ -886,10 +886,13 @@ export function SessionPlayer({
     <>
       {/* Sticky session header */}
       <div className="-mx-4 sticky top-0 z-30 mb-4 border-border border-b bg-background/95 px-4 pt-2 pb-3 backdrop-blur-xl sm:-mx-6 sm:px-6">
+        {/* Shrink discipline (flaws RUN-68): the back label is the only
+            flexible item, so the timer cluster and the Finish button can
+            never be pushed past the viewport edge. */}
         <div className="flex items-center justify-between gap-2">
           <button
             aria-label="Back to Workouts"
-            className="-ml-1.5 inline-flex min-h-[44px] cursor-pointer items-center gap-1 rounded-lg px-1.5 font-semibold text-[13.5px] text-muted-foreground transition hover:text-foreground"
+            className="-ml-1.5 inline-flex min-h-[44px] min-w-0 shrink cursor-pointer items-center gap-1 rounded-lg px-1.5 font-semibold text-[13.5px] text-muted-foreground transition hover:text-foreground"
             onClick={() => router.push("/workouts")}
             type="button"
           >
@@ -899,7 +902,7 @@ export function SessionPlayer({
           </button>
 
           {/* Session clock: explicit Play / Pause / Reset. Never auto-starts. */}
-          <div className="flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             <span
               aria-label={`Workout time: ${formatClock(elapsed)}${session.timer.running ? ", running" : ", paused"}`}
               className={`font-mono font-semibold text-[16px] tabular-nums max-[359px]:text-[13px] ${
@@ -942,13 +945,14 @@ export function SessionPlayer({
           </div>
 
           <WButton
-            className="min-h-[44px] px-4"
+            className="min-h-[44px] shrink-0 px-4"
             disabled={totalSets === 0}
             onClick={() => {
               setAlsoUpdateTemplate(false);
-              // Nothing checked yet? Ticking "mark all done" is the only way
-              // this save works, so it starts ticked; otherwise opt-in.
-              setCompleteRemaining(doneSets === 0);
+              // ALWAYS opt-in (flaws RUN-72): sets the member never checked
+              // are never marked done by default. With nothing checked and
+              // the box unticked, save is refused with a corrective toast.
+              setCompleteRemaining(false);
               setFinishing(true);
             }}
             size="sm"
@@ -1001,8 +1005,7 @@ export function SessionPlayer({
           )}
           {!timerStarted && (
             <p className="mt-1 text-[12.5px] text-muted-foreground">
-              Press the red play button when you begin. The workout timer is
-              yours to start, pause, and reset.
+              When you are ready to begin the workout, press the play button.
             </p>
           )}
           {totalSets > 0 && (
@@ -1117,7 +1120,7 @@ export function SessionPlayer({
           Discard workout
         </WButton>
         <p className="mt-2 text-center text-[12px] text-muted-foreground/80 sm:text-left">
-          Deletes this session without saving. Your saved workouts and history
+          Deletes this workout without saving. Your saved workouts and history
           are untouched.
         </p>
       </div>
@@ -1157,13 +1160,13 @@ export function SessionPlayer({
       >
         <label className="mt-4 block">
           <span className="mb-1.5 block font-semibold text-[13px] text-muted-foreground">
-            Workout notes (optional, saved with this session)
+            Workout notes (optional, saved with this workout)
           </span>
           <textarea
             className="min-h-[64px] w-full rounded-xl border border-input bg-background px-3 py-2.5 text-[14.5px] text-foreground placeholder:text-muted-foreground/60 focus:border-blood/60 focus:outline-none"
             maxLength={2000}
             onChange={(e) => setSessionNotes(e.target.value)}
-            placeholder="e.g. Slept badly, still hit every set"
+            placeholder="Add a note about how this workout went"
             value={session.notes}
           />
         </label>
@@ -1213,8 +1216,8 @@ export function SessionPlayer({
       <ConfirmDialog
         body={
           doneSets > 0
-            ? `The ${doneSets} ${doneSets === 1 ? "set" : "sets"} you logged in this session will be permanently deleted.`
-            : "This session will be deleted. Nothing has been logged yet."
+            ? `The ${doneSets} ${doneSets === 1 ? "set" : "sets"} you logged in this workout will be permanently deleted.`
+            : "This workout will be deleted. Nothing has been logged yet."
         }
         cancelLabel="Keep lifting"
         confirmLabel="Discard workout"

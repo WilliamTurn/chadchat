@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { Toaster } from "sonner";
 import { WorkoutsPageLoading } from "@/components/workouts/v2/loading";
 import { PageShell } from "@/components/nav/page-shell";
 import { CustomExerciseForm } from "@/components/workouts/v2/custom-exercise-form";
@@ -18,7 +17,6 @@ export default function NewCustomExercisePage({
   return (
     // Full-width desktop frame (LAY-1); the form lays itself out inside it.
     <PageShell active="/workouts" className="max-w-[1500px]">
-      <Toaster position="top-center" richColors theme="system" />
       <Suspense fallback={<WorkoutsPageLoading />}>
         <Content searchParams={searchParams} />
       </Suspense>
@@ -46,7 +44,7 @@ async function Content({
           href: backHref,
           label: params.from === "pick" ? "Add Exercises" : "Exercises",
         }}
-        subtitle="Add a machine or movement we don't have. It joins your exercise picker and gets records, history, and a progress chart like any other exercise."
+        subtitle="Add your own exercise. It appears in your exercise picker and gets records, history, and a progress chart like any other exercise."
         title="New Custom Exercise"
       />
       <CustomExerciseForm backHref={backHref} />

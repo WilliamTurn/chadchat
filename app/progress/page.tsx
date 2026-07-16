@@ -96,7 +96,6 @@ import { computePersonalRecords } from "@/lib/workouts/stats";
 import { toWorkoutData } from "@/lib/workouts/serialize";
 import { DEFAULT_WATER_GOAL_ML, mlToOz } from "@/lib/today/water-units";
 import { computeStreak } from "@/lib/today/streak";
-import { weekAnchors } from "@/lib/today/week";
 
 /** The consistency calendar's fixed window (engagement.consistency.window). */
 const CONSISTENCY_DAYS = 84;
@@ -332,17 +331,18 @@ async function OverviewContent({ range }: { range: OverviewRangeKey }) {
   };
 
   /* --------------------------------------------------------- training VM */
-  const weekStartMs = weekAnchors(timezone).days[0].getTime();
   const sessionAnchors = canonicalWorkouts.map((w) =>
     calendarDayAnchorInTz(new Date(w.performedAt), timezone).getTime()
   );
-  const sessionsThisWeek = sessionAnchors.filter(
-    (t) => t >= weekStartMs
-  ).length;
   const weekSlots = toWeekSlots(
     window,
     sessionAnchors.map((t) => ({ t }))
   );
+  // The headline reads the chart's OWN final bin, so the number and the bars
+  // can never disagree (flaws PRG-27, "5 this week" over a graph showing 10:
+  // the old headline counted a Sunday-start calendar week while the bars bin
+  // rolling 7-day windows).
+  const workoutsLast7 = weekSlots.at(-1)?.value ?? 0;
   const records = computePersonalRecords(canonicalWorkouts);
   const sessionsInWindow = sessionAnchors.filter(
     (t) => t >= window.startMs && t <= window.endMs
@@ -360,14 +360,14 @@ async function OverviewContent({ range }: { range: OverviewRangeKey }) {
         : trainingStale
           ? ("stale" as const)
           : ("populated" as const),
-    headline: `${sessionsThisWeek} session${sessionsThisWeek === 1 ? "" : "s"} this week`,
+    headline: `${workoutsLast7} workout${workoutsLast7 === 1 ? "" : "s"} in the last 7 days`,
     context:
       records.length > 0
         ? `${records.length} personal record${records.length === 1 ? "" : "s"}`
         : null,
     weekSlots,
     target: null,
-    coverageText: `${sessionsInWindow} session${sessionsInWindow === 1 ? "" : "s"} · ${windowLabel}`,
+    coverageText: `${sessionsInWindow} workout${sessionsInWindow === 1 ? "" : "s"} · ${windowLabel}`,
   };
 
   /* -------------------------------------------------------- nutrition VM */

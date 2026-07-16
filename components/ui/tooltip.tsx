@@ -19,9 +19,56 @@ function TooltipProvider({
 }
 
 function Tooltip({
+  open,
+  defaultOpen,
+  onOpenChange,
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Root>) {
-  return <TooltipPrimitive.Root data-slot="tooltip" {...props} />
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(
+    defaultOpen ?? false
+  )
+  const isOpen = open ?? uncontrolledOpen
+  const handleOpenChange = React.useCallback(
+    (next: boolean) => {
+      setUncontrolledOpen(next)
+      onOpenChange?.(next)
+    },
+    [onOpenChange]
+  )
+
+  // Dismissal contract (flaws SYS-03): a tap-opened tooltip must release on
+  // scroll and on tap-away. Stock Radix keeps it up while the trigger stays
+  // focused, which on a phone is until the user taps another control.
+  React.useEffect(() => {
+    if (!isOpen) return
+    const close = () => handleOpenChange(false)
+    const onTouchStart = (event: TouchEvent) => {
+      const target = event.target
+      if (
+        target instanceof Element &&
+        (target.closest('[data-slot="tooltip-trigger"]') ||
+          target.closest('[data-slot="tooltip-content"]'))
+      ) {
+        return
+      }
+      close()
+    }
+    window.addEventListener("scroll", close, { capture: true, passive: true })
+    document.addEventListener("touchstart", onTouchStart, true)
+    return () => {
+      window.removeEventListener("scroll", close, { capture: true })
+      document.removeEventListener("touchstart", onTouchStart, true)
+    }
+  }, [isOpen, handleOpenChange])
+
+  return (
+    <TooltipPrimitive.Root
+      data-slot="tooltip"
+      {...props}
+      open={isOpen}
+      onOpenChange={handleOpenChange}
+    />
+  )
 }
 
 function TooltipTrigger({

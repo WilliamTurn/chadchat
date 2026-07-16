@@ -11,6 +11,7 @@ import { removeWorkout } from "@/app/workouts/actions";
 import type { LastExerciseLog, WeightUnit, WorkoutData } from "@/lib/workouts/stats";
 import { type CustomExerciseData, findInCatalog, mergeCatalog } from "./catalog";
 import { ConfirmDialog } from "./confirm";
+import { sessionEngaged } from "./format";
 import { sessionFromPast } from "./session-factory";
 import { useWorkouts } from "./store";
 import { WButton } from "./ui";
@@ -28,7 +29,7 @@ export function RepeatWorkoutButton({
 }) {
   const { session, startSession } = useWorkouts();
   const router = useRouter();
-  const busy = Boolean(session);
+  const busy = sessionEngaged(session);
   const catalog = mergeCatalog(customExercises);
   return (
     <WButton

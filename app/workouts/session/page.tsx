@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { Toaster } from "sonner";
 import { WorkoutsPageLoading } from "@/components/workouts/v2/loading";
 import { PageShell } from "@/components/nav/page-shell";
 import { SessionPlayer } from "@/components/workouts/v2/session-player";
@@ -18,7 +17,6 @@ export default function SessionPage() {
     // Full-width desktop layout (LAY-1): the live exercise cards render
     // two-across on desktop instead of one stacked column.
     <PageShell active="/workouts" className="max-w-[1500px]">
-      <Toaster position="top-center" richColors theme="system" />
       <Suspense fallback={<WorkoutsPageLoading />}>
         <Content />
       </Suspense>

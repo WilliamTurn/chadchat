@@ -123,8 +123,8 @@ export function ExerciseLibrary({
               Create a custom exercise
             </span>
             <span className="block text-[13px] text-muted-foreground">
-              Your gym&apos;s machine or a movement we don&apos;t have. Add it
-              once, use it forever.
+              Add your own custom exercise if you can&apos;t find it here. Add
+              it once, use it forever.
             </span>
           </span>
           <ChevronRight

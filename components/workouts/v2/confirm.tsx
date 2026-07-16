@@ -61,7 +61,11 @@ export function ConfirmDialog({
   // pages) and its z-index would be trapped below the floating docks.
   return createPortal(
     <div
-      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center"
+      // Centered (owner ruling, flaws RUN-29/RUN-49: never pinned to the
+      // bottom three-quarters), and the panel caps at the small viewport
+      // height with its own scroll, so a tall body or an open software
+      // keyboard can never clip it off-screen (flaws RUN-70/RUN-75..77).
+      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === e.currentTarget && !busy) {
           onCancel();
@@ -72,7 +76,7 @@ export function ConfirmDialog({
       <div
         aria-label={title}
         aria-modal="true"
-        className="w-full max-w-[400px] rounded-2xl border border-input bg-popover p-5 shadow-[0_24px_64px_rgba(0,0,0,0.45)]"
+        className="max-h-dialog w-full max-w-[400px] overflow-y-auto overscroll-contain rounded-2xl border border-input bg-popover p-5 shadow-[0_24px_64px_rgba(0,0,0,0.45)]"
         role="alertdialog"
       >
         <h2 className="font-bold text-[18px] text-foreground">{title}</h2>

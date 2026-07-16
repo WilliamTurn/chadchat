@@ -161,7 +161,10 @@ export function TrendChart({
     const max = Math.max(...vals);
     const spread = max - min;
     const pad = spread > 0 ? spread * 0.15 : Math.max(max * 0.02, 1);
-    return [Math.floor(min - pad), Math.ceil(max + pad)];
+    // Never pad below zero for all-positive data: a volume/weight axis
+    // reading "-1.1K lb" is nonsense (flaws TRN-26).
+    const lo = min >= 0 ? Math.max(0, Math.floor(min - pad)) : Math.floor(min - pad);
+    return [lo, Math.ceil(max + pad)];
   }, [rows, goal]);
 
   const chartConfig = {

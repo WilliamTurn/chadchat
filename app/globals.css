@@ -584,6 +584,26 @@ html[data-vk-open] .pb-tabbar {
   }
 }
 
+/* The floating workout docks (rest timer + mini bar) park ABOVE the tab bar
+   on mobile, never over it (flaws SYS-05/RUN-01). Collapses to a plain
+   bottom offset on md+ where the tab bar is hidden. */
+.bottom-above-tabbar {
+  bottom: calc(3.5rem + env(safe-area-inset-bottom) + 0.75rem);
+}
+
+/* Dialog panels cap at the small viewport height (minus the overlay's p-4)
+   and scroll internally, so a tall body or an open software keyboard can
+   never clip them off-screen (flaws RUN-70/RUN-75..77). */
+.max-h-dialog {
+  max-height: calc(100dvh - 2rem);
+}
+
+@media (min-width: 48rem) {
+  .bottom-above-tabbar {
+    bottom: 1.25rem;
+  }
+}
+
 @utility text-balance {
   text-wrap: balance;
 }
