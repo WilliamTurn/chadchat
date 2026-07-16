@@ -22,6 +22,9 @@
     "stripe:setup": "tsx scripts/stripe-setup.ts",
     "test": "export PLAYWRIGHT=True && pnpm exec playwright test",
     "test:smoke": "export PLAYWRIGHT=True && pnpm exec playwright test tests/e2e/surface-smoke.test.ts",
+    "test:traps": "export PLAYWRIGHT=True && pnpm exec playwright test tests/e2e/s1-traps.test.ts",
+    "test:contracts": "export PLAYWRIGHT=True && pnpm exec playwright test tests/e2e/interaction-contracts.test.ts",
+    "test:gates": "export PLAYWRIGHT=True && pnpm exec playwright test tests/e2e/surface-smoke.test.ts tests/e2e/s1-traps.test.ts tests/e2e/interaction-contracts.test.ts",
     "test:unit": "node --import tsx --test tests/unit/*.test.ts"
   },
   "dependencies": {

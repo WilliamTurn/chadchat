@@ -24,6 +24,18 @@
  *                      file with no confirm-or-undo machinery (LAW 7).
  *   raw-overlay-import Importing recharts Tooltip / radix-ui outside
  *                      components/ui, bypassing the dismissal contracts.
+ *   page-mounted-toaster  <Toaster> mounted in a page.tsx. A toast fired
+ *                      right before a navigation dies with its page (the
+ *                      XPK-15 lost-confirmation class); Toaster mounts once
+ *                      per layout.tsx, never per page.
+ *   silent-truncation  Tailwind `truncate`/`text-ellipsis` in member UI.
+ *                      Silent ellipsis is the SYS-08 class ("Day 1: Legs,
+ *                      Ham, Strin..."): text wraps or downsizes instead.
+ *   native-confirm     window.confirm()/confirm() blocking browser dialogs.
+ *                      Destructive confirms go through ConfirmActionDialog.
+ *   jargon-leak        Internal analysis phrasing shown raw to members
+ *                      ("domain", "trend smoothed", "all loaded history";
+ *                      flaws PRG-03, TRN-24/29).
  *
  * New rules grandfather their current counts ONCE (tracked via "__rules__"
  * in the baseline), then ratchet down like everything else.
@@ -69,7 +81,11 @@ type RuleId =
   | "copy-vocabulary"
   | "example-placeholder"
   | "unconfirmed-destructive"
-  | "raw-overlay-import";
+  | "raw-overlay-import"
+  | "page-mounted-toaster"
+  | "silent-truncation"
+  | "native-confirm"
+  | "jargon-leak";
 
 type Violation = { file: string; rule: RuleId; line: number; excerpt: string };
 
@@ -90,6 +106,16 @@ const CONFIRM_MACHINERY_RE =
  *  directly anywhere else bypasses it. */
 const RAW_OVERLAY_IMPORT_RE =
   /(?:\bTooltip\b[^\n]*from\s+["']recharts["']|from\s+["']radix-ui["'])/;
+/** A Toaster mounted per page dies with the page, taking any toast fired
+ *  just before a navigation with it (the XPK-15 lost-confirmation class).
+ *  The render surface is one <Toaster> per layout.tsx. */
+const TOASTER_MOUNT_RE = /<Toaster\b/;
+/** Silent single-line ellipsis (SYS-08): the member sees "Strin..." and the
+ *  information is simply gone. Wrap or downsize instead. */
+const SILENT_TRUNCATION_RE = /\b(?:truncate|text-ellipsis)\b/;
+/** Native blocking confirm dialogs bypass the designed confirm-or-undo
+ *  machinery entirely. */
+const NATIVE_CONFIRM_RE = /(?:window\.confirm\(|[^.\w]confirm\()/;
 /** New copy patterns report under their own rule id so the long-standing
  *  banned-copy baseline keys stay stable. */
 const VOCABULARY_COPY_IDS = new Set([
@@ -97,6 +123,10 @@ const VOCABULARY_COPY_IDS = new Set([
   "gym-assumption",
   "session-vocab",
 ]);
+/** Internal jargon shown raw to members (flaws PRG-03, TRN-24/29); its own
+ *  rule id so the patterns grandfather once instead of tripping the existing
+ *  copy-vocabulary baseline. */
+const JARGON_COPY_IDS = new Set(["jargon-domain", "jargon-internal-phrase"]);
 
 function* walk(dir: string): Generator<string> {
   for (const name of readdirSync(dir)) {
@@ -117,6 +147,7 @@ function lintFile(rel: string, text: string, colorOnly: boolean): Violation[] {
   const out: Violation[] = [];
   const isUiPrimitive = rel.startsWith(`components${sep}ui${sep}`);
   const hasConfirmMachinery = CONFIRM_MACHINERY_RE.test(text);
+  const isPageFile = rel.endsWith(`${sep}page.tsx`);
   const lines = text.split("\n");
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -148,13 +179,25 @@ function lintFile(rel: string, text: string, colorOnly: boolean): Violation[] {
     if (!isUiPrimitive && RAW_OVERLAY_IMPORT_RE.test(line)) {
       push("raw-overlay-import");
     }
+    if (isPageFile && TOASTER_MOUNT_RE.test(line)) {
+      push("page-mounted-toaster");
+    }
+    if (rel.endsWith(".tsx") && SILENT_TRUNCATION_RE.test(line)) {
+      push("silent-truncation");
+    }
+    if (NATIVE_CONFIRM_RE.test(line)) {
+      push("native-confirm");
+    }
     if (rel.endsWith(".tsx")) {
       let sawBanned = false;
       let sawVocabulary = false;
+      let sawJargon = false;
       for (const rule of SYSTEM_COPY_BANNED) {
         if (rule.pattern.test(line)) {
           if (VOCABULARY_COPY_IDS.has(rule.id)) {
             sawVocabulary = true;
+          } else if (JARGON_COPY_IDS.has(rule.id)) {
+            sawJargon = true;
           } else {
             sawBanned = true;
           }
@@ -165,6 +208,9 @@ function lintFile(rel: string, text: string, colorOnly: boolean): Violation[] {
       }
       if (sawVocabulary) {
         push("copy-vocabulary");
+      }
+      if (sawJargon) {
+        push("jargon-leak");
       }
     }
   }
@@ -258,6 +304,10 @@ function main() {
     "example-placeholder",
     "unconfirmed-destructive",
     "raw-overlay-import",
+    "page-mounted-toaster",
+    "silent-truncation",
+    "native-confirm",
+    "jargon-leak",
   ];
   for (const rule of ALL_RULES) {
     knownRules.add(rule);

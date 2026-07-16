@@ -91,6 +91,21 @@ export const SYSTEM_COPY_BANNED: readonly BannedPattern[] = [
       "Copy never assumes the member trains in a gym (flaws SYS-11). Many train at home.",
   },
   {
+    id: "jargon-domain",
+    // Quoted, sentence-like strings only, so identifiers and route code stay
+    // legal (same shape as session-vocab below).
+    pattern:
+      /(["'`])(?=[^"'`]* )[^"'`]*\bdomains?\b(?![.}\w])[^"'`]*\1/i,
+    reason:
+      "'domain' is internal jargon members do not know (flaws PRG-03). Name the actual areas: training, nutrition, sleep, weight.",
+  },
+  {
+    id: "jargon-internal-phrase",
+    pattern: /\b(?:trend[- ]smoothed|all loaded history)\b/i,
+    reason:
+      "Internal analysis phrasing shown raw to members (flaws TRN-24/TRN-29). Say what it means in plain words.",
+  },
+  {
     id: "session-vocab",
     // Quoted, sentence-like strings only (must contain a space), so route
     // paths ("/workouts/session") and identifiers stay legal. The lookaround
