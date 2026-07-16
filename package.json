@@ -21,6 +21,7 @@
     "db:up": "drizzle-kit up",
     "stripe:setup": "tsx scripts/stripe-setup.ts",
     "test": "export PLAYWRIGHT=True && pnpm exec playwright test",
+    "test:smoke": "export PLAYWRIGHT=True && pnpm exec playwright test tests/e2e/surface-smoke.test.ts",
     "test:unit": "node --import tsx --test tests/unit/*.test.ts"
   },
   "dependencies": {

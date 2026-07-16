@@ -16,7 +16,10 @@ import {
 
 export const user = pgTable("User", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
-  email: varchar("email", { length: 64 }).notNull(),
+  // unique: one account per email, enforced by the database — the register
+  // action's check-then-insert alone has a race window where two concurrent
+  // signups with the same email both pass the check and create twin accounts.
+  email: varchar("email", { length: 64 }).notNull().unique(),
   password: varchar("password", { length: 64 }),
   name: text("name"),
   emailVerified: boolean("emailVerified").notNull().default(false),

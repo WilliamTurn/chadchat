@@ -93,7 +93,9 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: "pnpm dev",
-    url: `${baseURL}/ping`,
+    // /login is a real route; the old /ping health-check URL never existed,
+    // so cold starts only worked when a dev server was already running.
+    url: `${baseURL}/login`,
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
   },

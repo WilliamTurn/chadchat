@@ -14,11 +14,13 @@ import {
   createEmailVerificationToken,
   createPasswordResetToken,
   createUser,
+  EMAIL_TAKEN_CAUSE,
   getUser,
   getUserById,
   markEmailVerified,
   updateUserPassword,
 } from "@/lib/db/queries";
+import { ChatbotError } from "@/lib/errors";
 import {
   sendPasswordResetEmail,
   sendVerificationEmail,
@@ -160,6 +162,12 @@ export const register = async (
   } catch (error) {
     if (error instanceof z.ZodError) {
       return { status: "invalid_data" };
+    }
+    // Concurrent duplicate signup: the pre-check above passed for both
+    // requests, but the loser's insert hit User_email_unique. Same inline
+    // error as the pre-check path.
+    if (error instanceof ChatbotError && error.cause === EMAIL_TAKEN_CAUSE) {
+      return { status: "user_exists" };
     }
 
     return { status: "failed" };

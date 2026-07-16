@@ -112,6 +112,15 @@ export async function getUser(email: string): Promise<User[]> {
   }
 }
 
+/** ChatbotError cause when an insert loses the User_email_unique race. */
+export const EMAIL_TAKEN_CAUSE = "email_taken";
+
+/** Postgres unique_violation, possibly wrapped by the ORM. */
+function isUniqueViolation(error: unknown): boolean {
+  const code = (error as { code?: string; cause?: { code?: string } }) ?? {};
+  return code.code === "23505" || code.cause?.code === "23505";
+}
+
 export async function createUser(email: string, password: string) {
   const hashedPassword = generateHashedPassword(password);
 
@@ -121,7 +130,14 @@ export async function createUser(email: string, password: string) {
     return await db
       .insert(user)
       .values({ email, password: hashedPassword, acceptedTermsAt: new Date() });
-  } catch (_error) {
+  } catch (error) {
+    // Two concurrent signups with the same email both pass the register
+    // action's pre-check; the User_email_unique constraint makes the loser
+    // fail here. Surface it so register can show the same inline error as
+    // the pre-check instead of a generic failure.
+    if (isUniqueViolation(error)) {
+      throw new ChatbotError("bad_request:database", EMAIL_TAKEN_CAUSE);
+    }
     throw new ChatbotError("bad_request:database", "Failed to create user");
   }
 }
