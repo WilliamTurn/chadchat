@@ -224,7 +224,7 @@ export function buildOverviewDemoVMs(persona: Persona): OverviewDemoVMs {
           : "populated",
     headline:
       nutritionSummary.gradableDays > 0
-        ? `${nutritionSummary.daysAtTarget} of ${nutritionSummary.gradableDays} days within target`
+        ? `${nutritionSummary.daysAtTarget} of ${nutritionSummary.gradableDays} logged days within target`
         : `${nutritionSummary.loggedDays} day${nutritionSummary.loggedDays === 1 ? "" : "s"} logged`,
     context:
       nutritionSummary.average != null
@@ -270,7 +270,7 @@ export function buildOverviewDemoVMs(persona: Persona): OverviewDemoVMs {
         : "Not logged",
     context:
       sleepSummary.gradableDays > 0
-        ? `${sleepSummary.daysAtTarget} of ${sleepSummary.gradableDays} nights at goal · last 14 nights shown`
+        ? `${sleepSummary.daysAtTarget} of ${sleepSummary.gradableDays} logged nights at goal · last 14 nights shown`
         : "last 14 nights shown",
     slots: toDaySlots(
       windowEndingAt(todayMs, 14),
@@ -308,7 +308,7 @@ export function buildOverviewDemoVMs(persona: Persona): OverviewDemoVMs {
           : "populated",
     headline:
       hydrationSummary.gradableDays > 0
-        ? `${hydrationSummary.daysAtTarget} of ${hydrationSummary.gradableDays} days at goal`
+        ? `${hydrationSummary.daysAtTarget} of ${hydrationSummary.gradableDays} logged days at goal`
         : `${hydrationSummary.loggedDays} day${hydrationSummary.loggedDays === 1 ? "" : "s"} logged`,
     context: DEMO_LABEL,
     fraction:

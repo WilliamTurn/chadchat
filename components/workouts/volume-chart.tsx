@@ -158,7 +158,7 @@ export function VolumeChart({
         }
         coverage={coverage}
         emptyMessage="Finish a workout with weights logged and your volume trend starts here."
-        headlineLabel="Latest day"
+        headlineLabel="Latest logged day"
         height={240}
         legend={trendChartLegend(
           "neutral",

@@ -201,7 +201,7 @@ export function NutritionHighlight({
       headline={
         summary.gradableDays > 0 ? (
           <span className={cn("tabular-nums", met && "text-positive-text")}>
-            {summary.daysAtTarget} of {summary.gradableDays} days
+            {summary.daysAtTarget} of {summary.gradableDays} logged days
           </span>
         ) : (
           <span className="tabular-nums">
@@ -273,7 +273,7 @@ export function RecoveryHighlight({
       headline={
         sleep.gradableDays > 0 ? (
           <span className="tabular-nums">
-            {sleep.daysAtTarget} of {sleep.gradableDays} nights
+            {sleep.daysAtTarget} of {sleep.gradableDays} logged nights
           </span>
         ) : (
           <span className="tabular-nums">
