@@ -1,8 +1,8 @@
 "use client";
 
-import { Download, ImagePlus, Loader2, Sparkles, X } from "lucide-react";
+import { Download, Loader2, Sparkles, X } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   type ForecastView,
@@ -11,6 +11,7 @@ import {
 } from "@/app/future-you/actions";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { Button } from "@/components/ui/button";
+import { PhotoInput } from "@/components/ui/photo-input";
 import {
   type FutureYouContent,
   type FutureYouFrame,
@@ -109,7 +110,6 @@ function IntakePanel({
   // Chad's photo-check note when he rejects the set (QC), shown in place.
   const [rejectNote, setRejectNote] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const uploading = uploadingCount > 0;
   const ready = photos.length >= MIN_PHOTOS && !uploading;
@@ -137,12 +137,12 @@ function IntakePanel({
     }
   }
 
-  async function handleFiles(list: FileList | null) {
-    if (!list || list.length === 0) {
+  async function handleFiles(list: File[]) {
+    if (list.length === 0) {
       return;
     }
     const room = MAX_PHOTOS - photos.length;
-    const files = [...list].slice(0, room);
+    const files = list.slice(0, room);
     if (list.length > room) {
       toast.error(`${MAX_PHOTOS} photos is the maximum.`);
     }
@@ -261,28 +261,16 @@ function IntakePanel({
                 </span>
               </div>
             ) : null}
-            {photos.length + uploadingCount < MAX_PHOTOS ? (
-              <button
-                className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border border-border border-dashed text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
-                onClick={() => fileInputRef.current?.click()}
-                type="button"
-              >
-                <ImagePlus aria-hidden className="size-5" />
-                <span className="text-xs">Add photo</span>
-              </button>
-            ) : null}
           </div>
-          <input
-            accept="image/jpeg,image/png"
-            className="hidden"
-            multiple
-            onChange={(e) => {
-              handleFiles(e.target.files);
-              e.target.value = "";
-            }}
-            ref={fileInputRef}
-            type="file"
-          />
+          {photos.length + uploadingCount < MAX_PHOTOS ? (
+            <PhotoInput
+              accept="image/jpeg,image/png"
+              className={cn(photos.length + uploadingCount > 0 && "mt-3")}
+              multiple
+              onSelect={handleFiles}
+              variant="buttons"
+            />
+          ) : null}
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-muted-foreground text-xs">

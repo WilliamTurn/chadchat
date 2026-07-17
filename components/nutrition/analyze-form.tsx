@@ -11,7 +11,7 @@ import {
   Search,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useRef, useState, useTransition } from "react";
+import { type FormEvent, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { analyzeMeal, logMealManually } from "@/app/nutrition/actions";
 import { useReward } from "@/components/dashboard/reward";
@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhotoInput } from "@/components/ui/photo-input";
 import { Textarea } from "@/components/ui/textarea";
 import { formatCalendarDay, parseCalendarDay, todayLocalISO } from "@/lib/date";
 import {
@@ -107,7 +108,6 @@ export function AnalyzeForm({
   const [pro, setPro] = useState("");
   const [carb, setCarb] = useState("");
   const [fatG, setFatG] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const busy = pending || uploading;
 
@@ -209,9 +209,6 @@ export function AnalyzeForm({
         resetCommon();
         pick(null);
         setServings("1");
-        if (inputRef.current) {
-          inputRef.current.value = "";
-        }
         router.refresh();
       } else {
         toast.error(result.error ?? "Couldn't analyze that.");
@@ -408,42 +405,17 @@ export function AnalyzeForm({
               ? "Photograph the nutrition facts panel on packaged food. Chad reads the calories and macros straight off the label."
               : "Photograph your plate or meal. Chad identifies the food and estimates the calories and macros."}
           </p>
-          <button
-            className="relative flex min-h-44 w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-border border-dashed bg-background/40 px-4 py-6 text-center transition-colors hover:bg-accent/40"
-            onClick={() => inputRef.current?.click()}
-            type="button"
-          >
-            {preview ? (
-              // biome-ignore lint/performance/noImgElement: local object-URL preview
-              <img
-                alt="Selected"
-                className="max-h-64 w-auto rounded-lg object-contain"
-                src={preview}
-              />
-            ) : (
-              <>
-                {mode === "label" ? (
-                  <ScanLine className="size-7 text-muted-foreground" />
-                ) : (
-                  <Camera className="size-7 text-muted-foreground" />
-                )}
-                <span className="font-medium text-sm">
-                  {mode === "label"
-                    ? "Tap to add a photo of the nutrition label"
-                    : "Tap to add a photo of your food"}
-                </span>
-                <span className="text-muted-foreground text-xs">
-                  JPEG or PNG, up to 5MB
-                </span>
-              </>
-            )}
-          </button>
-          <input
-            accept="image/png,image/jpeg"
-            className="hidden"
-            onChange={(e) => pick(e.target.files?.[0] ?? null)}
-            ref={inputRef}
-            type="file"
+          <PhotoInput
+            hint={
+              mode === "label"
+                ? "Add a photo of the nutrition label"
+                : "Add a photo of your food"
+            }
+            icon={mode === "label" ? ScanLine : Camera}
+            note="JPEG or PNG, up to 5MB"
+            onSelect={(files) => pick(files[0] ?? null)}
+            preview={preview}
+            previewAlt="Selected"
           />
           {mode === "label" && (
             <div className="flex flex-col gap-2">

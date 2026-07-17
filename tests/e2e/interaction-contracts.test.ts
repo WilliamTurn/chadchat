@@ -26,6 +26,11 @@
  *   XPK-15  A toast fired right before a navigation survives it (RC-5:
  *           the one root-layout Toaster is the only render surface), both
  *           inside a feature (picker add) and across route groups.
+ *   RC-4    Every photo affordance offers a one-tap camera AND a gallery
+ *           path (SYS-22/NUT-14/BOD-08): the shared PhotoInput renders both
+ *           buttons on a phone, the camera leg asserted at attribute level
+ *           (Playwright cannot drive a real camera), the gallery leg driven
+ *           by a real file upload through preview and submit.
  *
  * The sibling "?" popover contract (SYS-04) is gated in s1-traps.test.ts on
  * a live surface (Escape, scroll, tap-away). The workouts-feature
@@ -36,6 +41,7 @@
  * provision a Pro user the same way surface-smoke.test.ts does.
  */
 
+import path from "node:path";
 import {
   type Browser,
   type BrowserContext,
@@ -548,6 +554,94 @@ test("a toast survives a bottom-nav navigation to another route group (XPK-15)",
     receipt,
     "the receipt must still be visible after navigating away"
   ).toBeVisible();
+
+  await context.close();
+});
+
+/** The gallery-path fixture: a real 640x480 JPEG under the 5MB limit. */
+const PHOTO_FIXTURE = path.join(__dirname, "fixtures", "photo-fixture.jpg");
+
+test("the photo input offers Take photo and Choose from gallery on a phone (RC-4)", async ({
+  browser,
+}) => {
+  const { context, page } = await openPage(browser, { authed: true });
+
+  // /nutrition: the Food Photo mode drives the shared input.
+  await page.goto("/nutrition");
+  await page.getByRole("button", { name: "Food Photo" }).click();
+  const zone = page.locator("#log-meal");
+  await expect(zone.getByRole("button", { name: "Take photo" })).toBeVisible();
+  await expect(
+    zone.getByRole("button", { name: "Choose from gallery" })
+  ).toBeVisible();
+  // The camera leg is asserted at attribute level (Playwright cannot drive a
+  // real camera): capture="environment" is what opens the rear camera in one
+  // tap, and the gallery input must NOT carry capture, because capture on a
+  // single input forces camera-only on many Android browsers.
+  const cameraInput = zone.locator(
+    'input[type="file"][capture="environment"]'
+  );
+  await expect(cameraInput).toHaveCount(1);
+  await expect(cameraInput).toHaveAttribute("accept", /image\//);
+  await expect(zone.locator('input[type="file"]:not([capture])')).toHaveCount(
+    1
+  );
+
+  // Label scan shares the same input pair.
+  await page.getByRole("button", { name: "Label Photo" }).click();
+  await expect(zone.getByRole("button", { name: "Take photo" })).toBeVisible();
+  await expect(
+    zone.getByRole("button", { name: "Choose from gallery" })
+  ).toBeVisible();
+
+  // /progress/body: the progress-photo form exposes the same two affordances.
+  await page.goto("/progress/body");
+  const entry = page.locator("#log-entry");
+  await expect(entry.getByRole("button", { name: "Take photo" })).toBeVisible();
+  await expect(
+    entry.getByRole("button", { name: "Choose from gallery" })
+  ).toBeVisible();
+  await expect(
+    entry.locator('input[type="file"][capture="environment"]')
+  ).toHaveCount(1);
+
+  await context.close();
+});
+
+test("a gallery photo flows to preview and submit (RC-4)", async ({
+  browser,
+}) => {
+  const { context, page } = await openPage(browser, { authed: true });
+
+  // Nutrition meal photo: a gallery pick must land in the preview and arm
+  // the submit. Stops before the Analyze click on purpose: that leg spends a
+  // real AI analysis per gate run; it is driven manually in wave verification.
+  await page.goto("/nutrition");
+  await page.getByRole("button", { name: "Food Photo" }).click();
+  const zone = page.locator("#log-meal");
+  await zone
+    .locator('input[type="file"]:not([capture])')
+    .setInputFiles(PHOTO_FIXTURE);
+  await expect(zone.getByRole("img", { name: "Selected" })).toBeVisible();
+  await expect(
+    zone.getByRole("button", { name: "Analyze Food Photo" })
+  ).toBeEnabled();
+
+  // Progress photo: the same gallery path end to end, through the real
+  // upload and save (no AI in this flow). Leaves one entry + one small blob
+  // on this run's throwaway @playwright.com user.
+  await page.goto("/progress/body");
+  const entry = page.locator("#log-entry");
+  await entry
+    .locator('input[type="file"]:not([capture])')
+    .setInputFiles(PHOTO_FIXTURE);
+  await expect(
+    entry.getByRole("img", { name: "Selected progress photo" })
+  ).toBeVisible();
+  await entry.getByRole("button", { name: "Log entry" }).click();
+  await expect(page.getByText("Logged.", { exact: true })).toBeVisible({
+    timeout: 30_000,
+  });
 
   await context.close();
 });

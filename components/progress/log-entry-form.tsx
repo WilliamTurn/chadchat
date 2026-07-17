@@ -1,8 +1,7 @@
 "use client";
 
-import { Camera } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useRef, useState, useTransition } from "react";
+import { type FormEvent, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useReward } from "@/components/dashboard/reward";
 import { addProgressEntry } from "@/app/progress/actions";
@@ -10,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhotoInput } from "@/components/ui/photo-input";
 import {
   Select,
   SelectContent,
@@ -33,7 +33,6 @@ export function LogEntryForm({ defaultUnit }: { defaultUnit: "lb" | "kg" }) {
   const [note, setNote] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const busy = pending || uploading;
 
@@ -101,9 +100,6 @@ export function LogEntryForm({ defaultUnit }: { defaultUnit: "lb" | "kg" }) {
         setWeight("");
         setNote("");
         pick(null);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
         router.refresh();
       } else {
         toast.error(result.error ?? "Couldn't save that entry.");
@@ -168,35 +164,13 @@ export function LogEntryForm({ defaultUnit }: { defaultUnit: "lb" | "kg" }) {
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="p-photo">Progress photo (optional)</Label>
-        <button
-          className="relative flex min-h-32 w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-border border-dashed bg-background/40 px-4 py-6 text-center transition-colors hover:bg-accent/40"
-          onClick={() => fileInputRef.current?.click()}
-          type="button"
-        >
-          {preview ? (
-            // biome-ignore lint/performance/noImgElement: local object-URL preview
-            <img
-              alt="Selected progress photo"
-              className="max-h-56 w-auto rounded-lg object-contain"
-              src={preview}
-            />
-          ) : (
-            <>
-              <Camera className="size-6 text-muted-foreground" />
-              <span className="font-medium text-sm">Tap to add a photo</span>
-              <span className="text-muted-foreground text-xs">
-                JPEG or PNG
-              </span>
-            </>
-          )}
-        </button>
-        <input
-          accept="image/png,image/jpeg"
-          className="hidden"
-          id="p-photo"
-          onChange={(e) => pick(e.target.files?.[0] ?? null)}
-          ref={fileInputRef}
-          type="file"
+        <PhotoInput
+          hint="Add a progress photo"
+          inputId="p-photo"
+          note="JPEG or PNG"
+          onSelect={(files) => pick(files[0] ?? null)}
+          preview={preview}
+          previewAlt="Selected progress photo"
         />
       </div>
 

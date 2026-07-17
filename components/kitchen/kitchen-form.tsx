@@ -2,11 +2,12 @@
 
 import { Camera, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useRef, useState, useTransition } from "react";
+import { type FormEvent, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useReward } from "@/components/dashboard/reward";
 import { analyzeMeal } from "@/app/nutrition/actions";
 import { Button } from "@/components/ui/button";
+import { PhotoInput } from "@/components/ui/photo-input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
@@ -35,7 +36,6 @@ export function KitchenForm({
   const [note, setNote] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const busy = pending || uploading;
   const needsPhoto = !file;
@@ -97,9 +97,6 @@ export function KitchenForm({
         reward.celebrate("Chad's verdict is in.");
         setNote("");
         pick(null);
-        if (inputRef.current) {
-          inputRef.current.value = "";
-        }
         router.refresh();
       } else {
         toast.error(result.error ?? "Couldn't analyze that.");
@@ -144,34 +141,12 @@ export function KitchenForm({
       </div>
 
       {/* Photo drop / picker */}
-      <button
-        className="relative flex min-h-44 w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-border border-dashed bg-background/40 px-4 py-6 text-center transition-colors hover:bg-accent/40"
-        onClick={() => inputRef.current?.click()}
-        type="button"
-      >
-        {preview ? (
-          // biome-ignore lint/performance/noImgElement: local object-URL preview
-          <img
-            alt="Selected"
-            className="max-h-64 w-auto rounded-lg object-contain"
-            src={preview}
-          />
-        ) : (
-          <>
-            <Camera className="size-7 text-muted-foreground" />
-            <span className="font-medium text-sm">Tap to add a photo</span>
-            <span className="text-muted-foreground text-xs">
-              JPEG or PNG, up to 5MB
-            </span>
-          </>
-        )}
-      </button>
-      <input
-        accept="image/png,image/jpeg"
-        className="hidden"
-        onChange={(e) => pick(e.target.files?.[0] ?? null)}
-        ref={inputRef}
-        type="file"
+      <PhotoInput
+        hint="Add a photo"
+        note="JPEG or PNG, up to 5MB"
+        onSelect={(files) => pick(files[0] ?? null)}
+        preview={preview}
+        previewAlt="Selected"
       />
 
       <Textarea

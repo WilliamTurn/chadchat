@@ -85,7 +85,8 @@ type RuleId =
   | "page-mounted-toaster"
   | "silent-truncation"
   | "native-confirm"
-  | "jargon-leak";
+  | "jargon-leak"
+  | "raw-photo-input";
 
 type Violation = { file: string; rule: RuleId; line: number; excerpt: string };
 
@@ -116,6 +117,12 @@ const SILENT_TRUNCATION_RE = /\b(?:truncate|text-ellipsis)\b/;
 /** Native blocking confirm dialogs bypass the designed confirm-or-undo
  *  machinery entirely. */
 const NATIVE_CONFIRM_RE = /(?:window\.confirm\(|[^.\w]confirm\()/;
+/** A raw file input outside the shared photo input cannot open the phone
+ *  camera (RC-4: SYS-22, NUT-14, BOD-08). Photo affordances render through
+ *  components/ui/photo-input.tsx, whose capture + gallery input PAIR keeps
+ *  the one-tap camera AND the gallery path working on every platform (a
+ *  single input with capture goes camera-only on many Android browsers). */
+const RAW_PHOTO_INPUT_RE = /type=["']file["']/;
 /** New copy patterns report under their own rule id so the long-standing
  *  banned-copy baseline keys stay stable. */
 const VOCABULARY_COPY_IDS = new Set([
@@ -148,6 +155,7 @@ function lintFile(rel: string, text: string, colorOnly: boolean): Violation[] {
   const isUiPrimitive = rel.startsWith(`components${sep}ui${sep}`);
   const hasConfirmMachinery = CONFIRM_MACHINERY_RE.test(text);
   const isPageFile = rel.endsWith(`${sep}page.tsx`);
+  const isPhotoInputHome = rel === `components${sep}ui${sep}photo-input.tsx`;
   const lines = text.split("\n");
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -187,6 +195,13 @@ function lintFile(rel: string, text: string, colorOnly: boolean): Violation[] {
     }
     if (NATIVE_CONFIRM_RE.test(line)) {
       push("native-confirm");
+    }
+    if (
+      rel.endsWith(".tsx") &&
+      !isPhotoInputHome &&
+      RAW_PHOTO_INPUT_RE.test(line)
+    ) {
+      push("raw-photo-input");
     }
     if (rel.endsWith(".tsx")) {
       let sawBanned = false;
@@ -308,6 +323,7 @@ function main() {
     "silent-truncation",
     "native-confirm",
     "jargon-leak",
+    "raw-photo-input",
   ];
   for (const rule of ALL_RULES) {
     knownRules.add(rule);
