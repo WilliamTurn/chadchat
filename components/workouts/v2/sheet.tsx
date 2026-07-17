@@ -103,7 +103,7 @@ export function ActionSheet({
                 action.danger
                   ? "text-blood hover:bg-blood/10"
                   : action.selected
-                    ? "bg-blood-dim text-foreground"
+                    ? "bg-[var(--go)]/12 text-foreground"
                     : "text-foreground hover:bg-muted/60"
               }`}
               key={action.label}
@@ -132,7 +132,7 @@ export function ActionSheet({
                 )}
               </span>
               {action.selected && (
-                <span className="shrink-0 font-bold text-[12px] text-blood uppercase tracking-wide">
+                <span className="shrink-0 font-bold text-[12px] text-[var(--go)] uppercase tracking-wide">
                   Current
                 </span>
               )}

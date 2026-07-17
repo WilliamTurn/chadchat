@@ -146,8 +146,11 @@ export function BottomNav({
         ? "font-semibold text-foreground"
         : "font-medium text-muted-foreground"
     );
+  // RC-3 (Q-C): the active tab reads through brightness + weight (the label
+  // already goes text-foreground/semibold), NOT through red (red is danger
+  // only). The icon simply inherits the tab's foreground/muted color.
   const iconClass = (isActive: boolean) =>
-    cn("size-5 shrink-0", isActive && "text-blood-text");
+    cn("size-5 shrink-0", isActive && "text-foreground");
 
   return (
     <>
@@ -193,10 +196,12 @@ export function BottomNav({
                   onClick={() => setLogOpen(true)}
                   variant="ghost"
                 >
-                  {/* The logging action gets the brand fill (the m.youtube /
-                      Instagram center-action treatment): it is the bar's one
-                      verb among destinations. */}
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-blood text-white">
+                  {/* GLB-02 (owner): the center Log verb comes off red (red is
+                      danger only). Now that the ACTIVE tab reads as white, the
+                      Log disc recedes to the same faded gray as the inactive
+                      tabs so white stays the "you are here" signal, not two
+                      things at once (owner, 2026-07-17). */}
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
                     <Plus className="size-4" strokeWidth={2.5} />
                   </span>
                   <span className="truncate text-meta">{tab.label}</span>
@@ -299,7 +304,7 @@ export function BottomNav({
                       <Icon
                         className={cn(
                           "size-5",
-                          isActive ? "text-blood-text" : "text-muted-foreground"
+                          isActive ? "text-foreground" : "text-muted-foreground"
                         )}
                       />
                       <span>{link.label}</span>

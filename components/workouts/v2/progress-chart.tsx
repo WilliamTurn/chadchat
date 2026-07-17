@@ -19,7 +19,9 @@ export interface ChartPoint {
 const W = 640;
 const H = 240;
 const PAD = { top: 18, right: 16, bottom: 28, left: 44 };
-const LINE = "#a4161a";
+// RC-3 (RUN-66/TRN-21): a strength-progress line is movement toward a goal,
+// so it draws in the emerald progress token, not blood.
+const LINE = "var(--progress)";
 
 function shortDate(ts: number): string {
   return new Date(ts).toLocaleDateString("en-US", {

@@ -92,8 +92,8 @@ export function PersonalRecords({
           return (
             <button
               aria-expanded={isOpen}
-              className={`flex min-h-11 items-center justify-between gap-3 rounded-xl border bg-card px-4 py-3 text-left transition-colors hover:border-blood/50 ${
-                isOpen ? "border-blood/60" : "border-border"
+              className={`flex min-h-11 items-center justify-between gap-3 rounded-xl border bg-card px-4 py-3 text-left transition-colors hover:border-[var(--go)]/50 ${
+                isOpen ? "border-[var(--go)]/60" : "border-border"
               }`}
               key={r.exerciseName}
               onClick={() =>

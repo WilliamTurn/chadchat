@@ -31,7 +31,6 @@ import {
 } from "@/components/ui/chart";
 import { useMountReveal } from "@/hooks/use-mount-reveal";
 import { formatTick, formatWeekdayTick } from "@/lib/chart/format";
-import { DOMAIN } from "@/lib/chart/palette";
 import {
   type ChartWindow,
   clampToWindow,
@@ -39,7 +38,10 @@ import {
   windowTicks,
 } from "@/lib/chart/window";
 
-const ACCENT = DOMAIN.training; // brand blood red (VF-7: the brand domain)
+// RC-3 (RUN-66/TRN-21): an est-1RM trend is progress toward a goal, so it
+// draws emerald, not blood (owner override of the VF-7 "training = blood" rule
+// for trend lines specifically).
+const ACCENT = "var(--progress)";
 const PR_GOLD = "var(--chart-3)"; // amber: the record marker hue
 
 const chartConfig = {

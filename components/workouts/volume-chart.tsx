@@ -32,7 +32,6 @@ import {
 } from "@/lib/chart/window";
 import type { Coverage } from "@/lib/contracts/data-state";
 import { loggedReading, unloggedReading } from "@/lib/contracts/data-state";
-import { DOMAIN } from "@/lib/chart/palette";
 import { formatQuantity } from "@/lib/contracts/units";
 
 const ASK_CHAD_PROMPT =
@@ -163,7 +162,9 @@ export function VolumeChart({
         legend={trendChartLegend(
           "neutral",
           { raw: "Daily volume", trend: "Trend (smoothed)" },
-          DOMAIN.training
+          // RC-3 (TRN-21): the volume trend is progress toward heavier
+          // training, not a warning; emerald, not blood.
+          "var(--progress)"
         )}
         rangeSlot={<RangeToggle {...control} />}
         reading={reading}
@@ -181,7 +182,7 @@ export function VolumeChart({
           </div>
         ) : (
           <TrendChart
-            color={DOMAIN.training}
+            color="var(--progress)"
             points={points.map((p) => ({ t: p.t, value: p.volume }))}
             rawLabel="Daily volume"
             tone="neutral"

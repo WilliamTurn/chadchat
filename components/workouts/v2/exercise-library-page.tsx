@@ -115,7 +115,7 @@ export function ExerciseLibrary({
           className="flex min-h-[64px] w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition hover:bg-muted/50"
           href="/workouts/exercises/new"
         >
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blood-dim text-blood">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--go)]/12 text-[var(--go)]">
             <Plus aria-hidden className="size-5" />
           </span>
           <span className="min-w-0 flex-1">

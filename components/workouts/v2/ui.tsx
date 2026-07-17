@@ -14,8 +14,11 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "success";
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
+  // RC-3 (Q-C): a primary CTA BEGINS or ADVANCES something (start / finish /
+  // save / add), so it is the go-action green, not blood. Dark ink on the
+  // bright go hue for contrast (mirrors the /design-system .btn-go spec).
   primary:
-    "bg-blood text-white font-semibold shadow-[0_8px_24px_rgba(164,22,26,0.28)] hover:brightness-110 active:scale-[0.98]",
+    "bg-[var(--go)] text-[var(--bg)] font-semibold shadow-[0_8px_24px_-6px_var(--go)] hover:brightness-110 active:scale-[0.98]",
   secondary:
     "bg-card text-foreground border border-input font-semibold hover:bg-muted/60 active:scale-[0.98]",
   ghost:

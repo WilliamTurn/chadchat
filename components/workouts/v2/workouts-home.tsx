@@ -123,20 +123,20 @@ export function ResumeCard() {
   }
   return (
     <Link className="mb-6 block" href="/workouts/session">
-      <WCard className="border-blood/40 p-5 transition hover:brightness-110">
+      <WCard className="border-[var(--go)]/40 p-5 transition hover:brightness-110">
         <div className="flex items-center gap-4">
-          <span className="flex size-12 items-center justify-center rounded-2xl bg-blood text-white">
+          <span className="flex size-12 items-center justify-center rounded-2xl bg-[var(--go)] text-[var(--bg)]">
             <Play aria-hidden className="size-6 fill-current" />
           </span>
           <div className="min-w-0 flex-1">
-            <div className="font-bold text-[12px] text-blood uppercase tracking-wider">
+            <div className="font-bold text-[12px] text-[var(--go)] uppercase tracking-wider">
               Workout in progress
             </div>
             <div className="truncate font-bold text-[17px] text-foreground">
               {session.name}
             </div>
           </div>
-          <ChevronRight aria-hidden className="size-5 shrink-0 text-blood" />
+          <ChevronRight aria-hidden className="size-5 shrink-0 text-[var(--go)]" />
         </div>
       </WCard>
     </Link>
@@ -392,7 +392,7 @@ export function ChadPlanSection({
           className="flex items-center gap-2 font-black font-display text-[17px] text-foreground uppercase tracking-wide"
           id="chad-plan-heading"
         >
-          <Sparkles aria-hidden className="size-4 text-blood" />
+          <Sparkles aria-hidden className="size-4 text-muted-foreground" />
           Chad&apos;s Training Plan
         </h2>
         <p className="text-[12.5px] text-muted-foreground/80">
@@ -416,7 +416,7 @@ export function ChadPlanSection({
                     {day.exercises.map((e) => e.name).join(" · ")}
                   </p>
                 </div>
-                <Pill className="shrink-0" tone="blood">
+                <Pill className="shrink-0" tone="neutral">
                   {day.exercises.length}{" "}
                   {day.exercises.length === 1 ? "exercise" : "exercises"}
                 </Pill>

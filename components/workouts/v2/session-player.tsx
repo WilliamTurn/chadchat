@@ -220,7 +220,7 @@ function SetRow({
         {isNext && !set.completed && (
           <span
             aria-hidden
-            className="-left-2.5 absolute top-1/2 h-8 w-1 -translate-y-1/2 rounded-full bg-blood"
+            className="-left-2.5 absolute top-1/2 h-8 w-1 -translate-y-1/2 rounded-full bg-[var(--go)]"
           />
         )}
 
@@ -300,7 +300,7 @@ function SetRow({
             set.completed
               ? "border-emerald-500 bg-emerald-500 text-white"
               : `bg-background text-muted-foreground hover:text-foreground ${
-                  isNext ? "border-blood/70" : "border-input"
+                  isNext ? "border-[var(--go)]/70" : "border-input"
                 }`
           }`}
           onClick={handleCheck}
@@ -922,7 +922,7 @@ export function SessionPlayer({
               className={`flex size-11 cursor-pointer items-center justify-center rounded-xl transition ${
                 session.timer.running
                   ? "bg-muted/70 text-foreground hover:bg-muted"
-                  : "bg-blood text-white hover:brightness-110"
+                  : "bg-[var(--go)] text-[var(--bg)] hover:brightness-110"
               }`}
               onClick={() => (session.timer.running ? timerPause() : timerPlay())}
               type="button"
@@ -1024,7 +1024,7 @@ export function SessionPlayer({
                 role="progressbar"
               >
                 <div
-                  className="h-full rounded-full bg-blood transition-all duration-300"
+                  className="h-full rounded-full bg-[var(--progress)] transition-all duration-300"
                   style={{
                     width: `${totalSets ? (doneSets / totalSets) * 100 : 0}%`,
                   }}
@@ -1174,7 +1174,7 @@ export function SessionPlayer({
           <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-background p-3.5">
             <input
               checked={completeRemaining}
-              className="mt-0.5 size-5 accent-[#a4161a]"
+              className="mt-0.5 size-5 accent-[var(--go)]"
               onChange={(e) => setCompleteRemaining(e.target.checked)}
               type="checkbox"
             />
@@ -1194,7 +1194,7 @@ export function SessionPlayer({
           <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-background p-3.5">
             <input
               checked={alsoUpdateTemplate}
-              className="mt-0.5 size-5 accent-[#a4161a]"
+              className="mt-0.5 size-5 accent-[var(--go)]"
               onChange={(e) => setAlsoUpdateTemplate(e.target.checked)}
               type="checkbox"
             />

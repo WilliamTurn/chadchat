@@ -213,7 +213,7 @@ export function TrainingAnalyticsView({
           <div className="flex h-full flex-col justify-between gap-4">
             <CalendarHeatmap
               cells={heatmapCells(data, w)}
-              color={DOMAIN.training}
+              color="var(--progress)"
               maxLevel={2}
               tipLabel="sessions"
               todayMs={data.todayMs}
@@ -222,7 +222,7 @@ export function TrainingAnalyticsView({
                 (owner law s181); the calendar is the chart beside it. */}
             <div>
               <WeekBars
-                barClassName="bg-[var(--chart-5)]"
+                barClassName="bg-[var(--progress)]"
                 className="h-8"
                 days={data.week.map((d) => ({
                   key: d.t,
@@ -260,7 +260,7 @@ export function TrainingAnalyticsView({
           legend={trendChartLegend(
             "neutral",
             { raw: "Daily volume", trend: "Trend (smoothed)" },
-            DOMAIN.training
+            "var(--progress)"
           )}
           rangeLabel={control.rangeLabel}
           reading={volumeReading(windowedVolume, coverage, data.todayMs)}
@@ -289,7 +289,7 @@ export function TrainingAnalyticsView({
             </div>
           ) : (
             <TrendChart
-              color={DOMAIN.training}
+              color="var(--progress)"
               points={data.volumePoints.map((p) => ({ t: p.t, value: p.volume }))}
               rawLabel="Daily volume"
               tone="neutral"
@@ -440,7 +440,7 @@ function AdherenceCard({
             color={
               adherence.completedThisWeek >= adherence.plannedPerWeek
                 ? GOAL_EMERALD
-                : DOMAIN.training
+                : "var(--progress)"
             }
             fraction={
               adherence.plannedPerWeek > 0
@@ -478,7 +478,7 @@ function AdherenceCard({
                     title={`Week of ${new Date(week.t).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })}: ${week.completed} of ${week.planned}`}
                   >
                     <RingGauge
-                      color={perfect ? GOAL_EMERALD : DOMAIN.training}
+                      color={perfect ? GOAL_EMERALD : "var(--progress)"}
                       fraction={week.planned > 0 ? week.completed / week.planned : 0}
                       size={26}
                       strokeWidth={4}

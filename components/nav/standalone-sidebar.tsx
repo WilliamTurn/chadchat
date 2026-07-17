@@ -113,8 +113,12 @@ export function StandaloneSidebar() {
                           tooltip={link.label}
                         >
                           <Link href={link.href}>
+                            {/* RC-3 (Q-C): the active nav item reads through
+                                the button's own active treatment + a bright
+                                foreground icon, not red (red is danger only),
+                                matching the bottom nav. */}
                             <Icon
-                              className={active ? "text-blood" : undefined}
+                              className={active ? "text-foreground" : undefined}
                             />
                             <span>{link.label}</span>
                           </Link>
@@ -139,7 +143,7 @@ export function StandaloneSidebar() {
             >
               <Link href="/pricing">
                 <Sparkles
-                  className={path === "/pricing" ? "text-blood" : undefined}
+                  className={path === "/pricing" ? "text-foreground" : undefined}
                 />
                 <span>Plans &amp; pricing</span>
               </Link>

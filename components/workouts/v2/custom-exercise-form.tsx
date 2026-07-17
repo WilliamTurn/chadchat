@@ -168,7 +168,7 @@ export function CustomExerciseForm({
                 aria-pressed={kind === k}
                 className={`flex min-h-[56px] w-full cursor-pointer items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left transition ${
                   kind === k
-                    ? "border-blood/60 bg-blood-dim"
+                    ? "border-[var(--go)]/60 bg-[var(--go)]/12"
                     : "border-input bg-card hover:bg-muted/50"
                 }`}
                 key={k}
@@ -186,7 +186,7 @@ export function CustomExerciseForm({
                 <span
                   aria-hidden
                   className={`size-5 shrink-0 rounded-full border-2 ${
-                    kind === k ? "border-blood bg-blood" : "border-input"
+                    kind === k ? "border-[var(--go)] bg-[var(--go)]" : "border-input"
                   }`}
                 />
               </button>

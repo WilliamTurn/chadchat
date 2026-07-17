@@ -57,12 +57,12 @@ function SessionMiniBar() {
   const done = sessionCompletedSets(session.exercises);
   const elapsed = timerElapsedSeconds(session.timer, now);
   return (
-    <div className="pointer-events-auto flex items-center gap-1 rounded-2xl border border-blood/40 bg-card py-2 pr-1.5 pl-4 shadow-[var(--shadow-float)]">
+    <div className="pointer-events-auto flex items-center gap-1 rounded-2xl border border-[var(--go)]/40 bg-card py-2 pr-1.5 pl-4 shadow-[var(--shadow-float)]">
       <Link
         className="flex min-w-0 flex-1 items-center gap-3 py-1 transition-transform active:scale-[0.99]"
         href="/workouts/session"
       >
-        <span className="relative flex size-10 shrink-0 items-center justify-center rounded-xl bg-blood text-white">
+        <span className="relative flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--go)] text-[var(--bg)]">
           <Play aria-hidden className="size-5 fill-current" />
         </span>
         <span className="min-w-0 flex-1">
@@ -74,10 +74,10 @@ function SessionMiniBar() {
           </span>
         </span>
         <span className="shrink-0 text-right">
-          <span className="block font-mono font-semibold text-[17px] text-blood tabular-nums">
+          <span className="block font-mono font-semibold text-[17px] text-[var(--go)] tabular-nums">
             {session.timer.running || elapsed > 0 ? formatClock(elapsed) : "-"}
           </span>
-          <span className="block font-semibold text-[11px] text-blood/70 uppercase tracking-wider">
+          <span className="block font-semibold text-[11px] text-[var(--go)]/70 uppercase tracking-wider">
             Back to workout
           </span>
         </span>
@@ -167,7 +167,7 @@ function RestTimerDock() {
     >
       <div className="px-3.5 pt-2 pb-2.5">
         <div className="flex items-center gap-1.5 font-semibold text-[11.5px] text-muted-foreground uppercase tracking-wider">
-          <Timer aria-hidden className="size-3.5 text-blood" />
+          <Timer aria-hidden className="size-3.5 text-[var(--progress)]" />
           <span className="truncate">Resting · {restTimer.exerciseName}</span>
         </div>
         <div className="mt-0.5 flex items-center justify-between gap-2">
@@ -206,10 +206,11 @@ function RestTimerDock() {
           </div>
         )}
       </div>
-      {/* Draining track */}
+      {/* Draining track: rest is progress toward the next set (emerald, the
+          same family the "Rest over" flash already uses above). */}
       <div className="h-1 w-full bg-muted/60">
         <div
-          className="h-full bg-blood transition-[width] duration-1000 ease-linear"
+          className="h-full bg-[var(--progress)] transition-[width] duration-1000 ease-linear"
           style={{ width: `${progress * 100}%` }}
         />
       </div>

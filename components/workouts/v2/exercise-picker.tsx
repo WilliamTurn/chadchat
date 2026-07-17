@@ -220,7 +220,7 @@ export function ExercisePickerPage({
           }
           type="button"
         >
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blood-dim text-blood">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--go)]/12 text-[var(--go)]">
             <Plus aria-hidden className="size-5" />
           </span>
           <span className="min-w-0 flex-1">
@@ -266,7 +266,7 @@ export function ExercisePickerPage({
                       inList
                         ? "border-border bg-card opacity-40"
                         : isSelected
-                          ? "border-blood/60 bg-blood-dim"
+                          ? "border-[var(--go)]/60 bg-[var(--go)]/12"
                           : "border-border bg-card hover:border-input hover:bg-muted/30"
                     }`}
                     disabled={inList}
@@ -277,7 +277,7 @@ export function ExercisePickerPage({
                       aria-hidden
                       className={`flex size-6 shrink-0 items-center justify-center rounded-md border transition ${
                         isSelected
-                          ? "border-blood bg-blood text-white"
+                          ? "border-[var(--go)] bg-[var(--go)] text-[var(--bg)]"
                           : "border-input text-transparent"
                       } ${single ? "hidden" : ""}`}
                     >
