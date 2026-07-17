@@ -8,6 +8,7 @@ import { DataStreamProvider } from "@/components/chat/data-stream-provider";
 import { ChatShell } from "@/components/chat/shell";
 import { VerifyEmailBanner } from "@/components/chat/verify-email-banner";
 import { BottomNav } from "@/components/nav/bottom-nav";
+import { NavTracker } from "@/components/nav/nav-tracker";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ActiveChatProvider } from "@/hooks/use-active-chat";
 import { canAccessChad } from "@/lib/admin";
@@ -25,6 +26,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"
         strategy="lazyOnload"
       />
+      {/* RC-1 (SYS-15/16): record chat visits in the shared nav stack so a
+          dashboard → Coach → dashboard round trip still classifies as a
+          return (restoring scroll) and back controls can walk history to
+          chat. Record-only: the chat shell is h-dvh and owns its scroll. */}
+      <Suspense fallback={null}>
+        <NavTracker manageScroll={false} />
+      </Suspense>
       <DataStreamProvider>
         <Suspense fallback={<div className="flex h-dvh bg-sidebar" />}>
           <SidebarShell>{children}</SidebarShell>

@@ -11,6 +11,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import { markFreshNavigation } from "@/components/nav/nav-history";
 import {
   BOTTOM_NAV_TABS,
   isRouteActive,
@@ -169,6 +170,11 @@ export function BottomNav({
                   className={tabClass(isActive)}
                   href={tab.href}
                   key={tab.href}
+                  // RC-1 (SYS-15): the tracker owns scroll on tab
+                  // navigations. A tab RETURN restores the position you
+                  // left instead of flashing the top; a fresh tab visit
+                  // still starts at the top.
+                  scroll={false}
                 >
                   <Icon className={iconClass(isActive)} />
                   <span className="truncate text-meta">{tab.label}</span>
@@ -233,7 +239,12 @@ export function BottomNav({
                   className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 font-medium text-base transition-colors hover:bg-accent/50"
                   href={action.href}
                   key={action.href}
-                  onClick={() => setLogOpen(false)}
+                  onClick={() => {
+                    // RC-1: an explicit logging action always lands on the
+                    // logger (page top / anchor), never on remembered scroll.
+                    markFreshNavigation();
+                    setLogOpen(false);
+                  }}
                 >
                   <Icon className="size-5 text-muted-foreground" />
                   <span>{action.label}</span>

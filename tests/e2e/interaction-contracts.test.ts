@@ -14,11 +14,15 @@
  *   SYS-05  No overlay ever makes the bottom nav unreachable: with the
  *           active-workout dock up, every tab still navigates.
  *   SYS-16  The in-app back control on a detail page returns to the page
- *           you came from. KNOWN OPEN (test.fail): BackToDashboard is a
- *           hardcoded href today; the RC-1 back-button wave fixes it and
- *           flips this gate to a plain test.
- *   SYS-15  Returning to a long page preserves scroll position. KNOWN OPEN
- *           (test.fail): owned by the same RC-1 wave.
+ *           you came from (BackToDashboard is referrer-aware since RC-1).
+ *   SYS-15  Returning to a long page via the bottom nav preserves scroll
+ *           position (the RC-1 NavTracker scroll memory).
+ *   RPT-02  /reports has a back control at all: referrer-aware, labeled
+ *           fallback on a cold entry.
+ *   GOL-05  The goal-detail back control returns to the page you actually
+ *           came from (/progress), not a hardcoded Goals.
+ *   CMP-16  The workout-complete celebration has a top back control like
+ *           every other workout page.
  *
  * The sibling "?" popover contract (SYS-04) is gated in s1-traps.test.ts on
  * a live surface (Escape, scroll, tap-away). The workouts-feature
@@ -41,6 +45,8 @@ import postgres from "postgres";
 const PHONE = { width: 390, height: 844 };
 
 let storageState: Awaited<ReturnType<BrowserContext["storageState"]>>;
+/** A goal owned by the provisioned user, for the GOL-05 back gate. */
+let goalId: string;
 
 test.beforeAll(async ({ browser }, workerInfo) => {
   const email = `contract-${Date.now()}-w${workerInfo.workerIndex}@playwright.com`;
@@ -75,6 +81,16 @@ test.beforeAll(async ({ browser }, workerInfo) => {
     if (updated.length !== 1) {
       throw new Error(`contract setup: provisioning failed for ${email}`);
     }
+    const [goalRow] = await sql`
+      INSERT INTO "Goal" ("userId", "title", "detail")
+      VALUES (
+        ${updated[0].id},
+        'Bench 225 for five reps',
+        'Seeded by the interaction-contract gate (GOL-05).'
+      )
+      RETURNING id
+    `;
+    goalId = goalRow.id as string;
   } finally {
     await sql.end();
   }
@@ -264,21 +280,29 @@ test("bottom nav tabs stay tappable while the active-workout dock is up (SYS-05)
 
 /* --------------------------------------------------------------------------
  * SYS-16 / SYS-15: back returns to the referrer; scroll position survives.
- *
- * BOTH KNOWN OPEN: BackToDashboard is a hardcoded-href link today, and
- * returning to /progress lands at the top (register PRG-47, HYD-16). The
- * RC-1 "back button + scroll memory" wave owns the fix. test.fail() keeps
- * the invariant executable and flips loudly (reported as an error) the
- * moment the fix lands, so RC-1 must promote these to plain tests.
+ * Fixed by the RC-1 wave: BackToDashboard is referrer-aware (reads "Back"
+ * and walks history when the member navigated here in-app) and NavTracker
+ * (PageShell) owns scroll memory per pathname.
  * ------------------------------------------------------------------------ */
 
-test("back from a detail page returns to the referrer (SYS-16) [KNOWN OPEN: RC-1]", async ({
+/** The RC-1 nav stack records a page from a client effect; a test that
+ *  navigates away instantly can outrun it. Wait for the record. */
+function waitForTracked(page: Page, path: string) {
+  return page.waitForFunction((tracked) => {
+    try {
+      const stack = JSON.parse(
+        window.sessionStorage.getItem("nav.stack") ?? "[]"
+      ) as string[];
+      return stack.includes(tracked);
+    } catch {
+      return false;
+    }
+  }, path);
+}
+
+test("back from a detail page returns to the referrer (SYS-16)", async ({
   browser,
 }) => {
-  test.fail(
-    true,
-    "BackToDashboard hardcodes href=/today; RC-1 makes it referrer-aware"
-  );
   const { context, page } = await openPage(browser, { authed: true });
 
   // Arrive at /hydration FROM /progress (not from the dashboard).
@@ -287,24 +311,20 @@ test("back from a detail page returns to the referrer (SYS-16) [KNOWN OPEN: RC-1
   await expect(page).toHaveURL(/\/hydration/, { timeout: 15_000 });
 
   // The in-app back control must return to where the member came from.
-  // (Locator note for RC-1: today this is the BackToDashboard link, whose
-  // accessible name is its visible label.)
+  // With a referrer it reads exactly "Back" (the hardcoded-destination
+  // fallback label only shows on cold entries).
   await page
-    .getByRole("link", { name: /^(?:Back(?: to .+)?|Dashboard)$/ })
-    .first()
+    .locator("main")
+    .getByRole("link", { name: "Back", exact: true })
     .click();
   await expect(page).toHaveURL(/\/progress(?:$|\?)/, { timeout: 10_000 });
 
   await context.close();
 });
 
-test("returning to a long page preserves scroll position (SYS-15) [KNOWN OPEN: RC-1]", async ({
+test("returning to a long page preserves scroll position (SYS-15)", async ({
   browser,
 }) => {
-  test.fail(
-    true,
-    "Returning to /progress resets scroll to the top (PRG-47); RC-1 owns scroll memory"
-  );
   const { context, page } = await openPage(browser, { authed: true });
 
   await page.goto("/progress");
@@ -319,6 +339,18 @@ test("returning to a long page preserves scroll position (SYS-15) [KNOWN OPEN: R
     departedAt,
     "smoke premise: /progress must be long enough to scroll at 390px"
   ).toBeGreaterThan(200);
+  // The scroll save is rAF-throttled; make sure the departure position is
+  // recorded before navigating away.
+  await page.waitForFunction((y) => {
+    try {
+      const map = JSON.parse(
+        window.sessionStorage.getItem("nav.scroll") ?? "{}"
+      ) as Record<string, number>;
+      return (map["/progress"] ?? 0) >= y * 0.9;
+    } catch {
+      return false;
+    }
+  }, departedAt);
 
   // Leave for a detail page, then return the way the register describes:
   // via the bottom nav, the only route back from several pages.
@@ -330,11 +362,116 @@ test("returning to a long page preserves scroll position (SYS-15) [KNOWN OPEN: R
     .click();
   await expect(page).toHaveURL(/\/progress/, { timeout: 15_000 });
 
-  const returnedAt = await page.evaluate(() => window.scrollY);
-  expect(
-    returnedAt,
-    `scroll position must survive the round trip (left at ${departedAt}px, returned at ${returnedAt}px)`
-  ).toBeGreaterThan(departedAt * 0.5);
+  // Restoration tops up while Suspense content streams in, so poll rather
+  // than reading window.scrollY once.
+  await expect
+    .poll(() => page.evaluate(() => window.scrollY), { timeout: 15_000 })
+    .toBeGreaterThan(departedAt * 0.5);
+
+  await context.close();
+});
+
+/* --------------------------------------------------------------------------
+ * RC-1 regression rows: one per back control the wave added.
+ * ------------------------------------------------------------------------ */
+
+test("/reports has a back control: referrer-aware, labeled fallback cold (RPT-02)", async ({
+  browser,
+}) => {
+  // Cold entry: no in-app trail, so the control promises its fallback
+  // destination by name.
+  const cold = await openPage(browser, { authed: true });
+  await cold.page.goto("/reports");
+  await expect(
+    cold.page
+      .locator("main")
+      .getByRole("link", { name: "Dashboard", exact: true })
+  ).toBeVisible({ timeout: 30_000 });
+  await cold.context.close();
+
+  // Arriving from /progress (the register's trap): back returns there.
+  const { context, page } = await openPage(browser, { authed: true });
+  await page.goto("/progress");
+  await waitForTracked(page, "/progress");
+  await page.goto("/reports");
+  await page
+    .locator("main")
+    .getByRole("link", { name: "Back", exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/progress(?:$|\?)/, { timeout: 15_000 });
+  await context.close();
+});
+
+test("goal detail returns to the page you came from (GOL-05)", async ({
+  browser,
+}) => {
+  const { context, page } = await openPage(browser, { authed: true });
+
+  // Arrive at the goal document FROM /progress, not from /goals.
+  await page.goto("/progress");
+  await waitForTracked(page, "/progress");
+  await page.goto(`/goals/${goalId}`);
+  await page
+    .locator("main")
+    .getByRole("link", { name: "Back", exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/progress(?:$|\?)/, { timeout: 15_000 });
+  await context.close();
+
+  // Cold entry still promises the parent listing by name.
+  const cold = await openPage(browser, { authed: true });
+  await cold.page.goto(`/goals/${goalId}`);
+  await expect(
+    cold.page
+      .locator("main")
+      .getByRole("link", { name: "Goals", exact: true })
+  ).toBeVisible({ timeout: 30_000 });
+  await cold.context.close();
+});
+
+test("workout complete has a top back control (CMP-15/16)", async ({
+  browser,
+}) => {
+  const { context, page } = await openPage(browser, { authed: true });
+
+  // Finish a real workout to reach the celebration view (same flow the
+  // s1-traps suite drives).
+  await page.goto("/workouts");
+  await page
+    .getByRole("button", { name: /start an empty workout/i })
+    .first()
+    .click();
+  await page.waitForURL("**/workouts/session**");
+  await page.getByRole("button", { name: "Add your first exercise" }).click();
+  await page.waitForURL("**/exercises/pick**");
+  await page
+    .getByRole("button", { name: /Barbell Bench Press/i })
+    .first()
+    .click();
+  await page.getByRole("button", { name: /Add 1 exercise to/i }).click();
+  await page.waitForURL("**/workouts/session**", { timeout: 15_000 });
+  await page.getByLabel(/Weight in lb for set 1/).fill("100");
+  await page.getByLabel(/Reps for set 1/).fill("5");
+  await page.getByRole("button", { name: /Log set 1 .* as done/ }).click();
+  await page.getByRole("button", { name: "Finish", exact: true }).click();
+  await page
+    .locator('[role="alertdialog"]')
+    .last()
+    .getByRole("button", { name: "Finish and save" })
+    .click();
+  await page.waitForURL("**/workouts/history/**", { timeout: 30_000 });
+  expect(page.url()).toContain("new=1");
+
+  // The celebration header replaces the standard one; CMP-16 is the top
+  // back control it used to lose. Explicit destination (the page behind is
+  // the dead session), same control every other workout page uses.
+  const back = page.getByRole("button", {
+    name: "Back to Workouts",
+    exact: true,
+  });
+  await expect(back).toBeVisible({ timeout: 15_000 });
+  await back.click();
+  await expect(page).toHaveURL(/\/workouts(?:$|\?)/, { timeout: 15_000 });
 
   await context.close();
 });

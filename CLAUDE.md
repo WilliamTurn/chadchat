@@ -18,7 +18,7 @@ This repo previously had no rulebook; sessions shipped unverified work. The work
    The smoke gate asserts, per screen per width: no redirect, `<main>` visible, no horizontal overflow, no console/page errors, and no action control clipped by the viewport edge. `tests/e2e/smoke-known-failures.json` pins pre-existing defects (remove-only: when your fix clears a pinned entry the run tells you to delete it — do so in the same change; never add an entry for a defect you just shipped).
 4. **Look at what you made.** Screenshots at 360px, 390px, and desktop; actually inspect them. Layouts are fluid — never tuned to one width. The owner's phone is about 384px wide.
 
-Known expected failures: `interaction-contracts.test.ts` carries SYS-16 (back to referrer) and SYS-15 (scroll memory) as `test.fail()` pins. When the RC-1 wave fixes navigation, those tests start "failing" loudly — RC-1 deletes the `test.fail(...)` lines in the same change. The old template suites (`api.test.ts`, `model-selector.test.ts`, `chat.test.ts`) are broken (they visit chat unauthenticated) and are NOT part of the gates; bare `pnpm test` is red because of them until the owner decides fix-or-delete.
+Known expected failures: the old template suites (`api.test.ts`, `model-selector.test.ts`, `chat.test.ts`) are broken (they visit chat unauthenticated) and are NOT part of the gates; bare `pnpm test` is red because of them until the owner decides fix-or-delete. (The SYS-15/16 `test.fail()` pins in `interaction-contracts.test.ts` were promoted to plain tests by the RC-1 back-button + scroll-memory wave.)
 
 ## Facts sessions keep getting wrong
 

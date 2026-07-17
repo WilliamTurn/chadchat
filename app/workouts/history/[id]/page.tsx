@@ -14,7 +14,10 @@ import {
   DoneButton,
   RepeatWorkoutButton,
 } from "@/components/workouts/v2/history-actions";
-import { WorkoutPageHeader } from "@/components/workouts/v2/page-header";
+import {
+  WorkoutBackLink,
+  WorkoutPageHeader,
+} from "@/components/workouts/v2/page-header";
 import { Pill, WButton, WCard } from "@/components/workouts/v2/ui";
 import { getWorkoutById } from "@/lib/db/queries";
 import { toWorkoutData } from "@/lib/workouts/serialize";
@@ -123,17 +126,24 @@ async function Content({
     <>
       {isNew ? (
         /* ---- Celebration header (just finished) ---- */
-        <div className="mb-6 animate-in text-center duration-500 slide-in-from-bottom-4">
-          <div className="mx-auto mb-4 flex size-16 animate-in items-center justify-center rounded-3xl bg-blood text-white shadow-[0_16px_48px_rgba(164,22,26,0.35)] zoom-in-75 duration-500">
-            <PartyPopper aria-hidden className="size-8" />
+        <>
+          {/* RC-1 (CMP-15/16): the celebration view replaces the standard
+              header, which used to cost it the top back control every other
+              workout page has. Explicit destination, not history: the page
+              behind this one is the dead just-finished session. */}
+          <WorkoutBackLink href="/workouts" label="Workouts" />
+          <div className="mb-6 animate-in text-center duration-500 slide-in-from-bottom-4">
+            <div className="mx-auto mb-4 flex size-16 animate-in items-center justify-center rounded-3xl bg-blood text-white shadow-[0_16px_48px_rgba(164,22,26,0.35)] zoom-in-75 duration-500">
+              <PartyPopper aria-hidden className="size-8" />
+            </div>
+            <h1 className="font-black font-display text-[32px] text-foreground uppercase leading-none tracking-tight">
+              Workout complete
+            </h1>
+            <p className="mt-2 text-[14.5px] text-muted-foreground">
+              {workout.title} · saved to your history. Chad sees it too.
+            </p>
           </div>
-          <h1 className="font-black font-display text-[32px] text-foreground uppercase leading-none tracking-tight">
-            Workout complete
-          </h1>
-          <p className="mt-2 text-[14.5px] text-muted-foreground">
-            {workout.title} · saved to your history. Chad sees it too.
-          </p>
-        </div>
+        </>
       ) : (
         <WorkoutPageHeader
           back={{ href: "/workouts/history", label: "History" }}

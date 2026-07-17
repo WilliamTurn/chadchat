@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
+import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
 import { ReportActions } from "@/components/reports/report-actions";
 import { ReportDetails } from "./report-details";
@@ -42,6 +43,8 @@ export default function ReportsPage() {
 
 
       <div className="mb-8">
+        {/* RC-1 (RPT-02): /reports had no way back at all. */}
+        <BackToDashboard />
         <div className="flex items-center gap-3">
           <h1 className="font-semibold text-2xl tracking-tight">
             Weekly Report

@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
+import { NavTracker } from "@/components/nav/nav-tracker";
 import { StandaloneHeader } from "@/components/nav/standalone-header";
 import { StandaloneShell } from "@/components/nav/standalone-shell";
 import { cn } from "@/lib/utils";
@@ -41,6 +42,13 @@ export function PageShell({
 }) {
   return (
     <StandaloneShell>
+      {/* RC-1 (SYS-15/16): the nav-stack + scroll-memory tracker, mounted
+          once here so every standalone page gets back-to-referrer and
+          scroll restoration. usePathname is runtime data on dynamic routes
+          under Cache Components, hence the Suspense boundary. */}
+      <Suspense fallback={null}>
+        <NavTracker />
+      </Suspense>
       <StandaloneHeader active={active} />
       {/* SidebarInset is the page's <main>, so this frame is a plain div. */}
       <div
