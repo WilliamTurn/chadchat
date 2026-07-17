@@ -4,8 +4,12 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { auth } from "@/app/(auth)/auth";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
-import { CountUp } from "@/components/dashboard/count-up";
 import { KpiHelp } from "@/components/dashboard/kpi";
+import {
+  MetricValue,
+  type MetricScope,
+} from "@/components/dashboard/metric-value";
+import type { UnitId } from "@/lib/contracts/units";
 import { WorkoutsSkeleton } from "@/components/dashboard/page-skeletons";
 import { BackToDashboard } from "@/components/nav/back-to-dashboard";
 import { PageShell } from "@/components/nav/page-shell";
@@ -229,16 +233,25 @@ async function Home({ user }: { user: User }) {
             className="grid gap-2 sm:grid-cols-3 sm:gap-3"
             key={`${workouts.length}-${weekWorkouts.length}-${weekVolume}`}
           >
-            <StatCard label="Workouts logged" value={String(totalSessions)} />
             <StatCard
-              help="Sessions you logged this calendar week, Sunday through Saturday, in your time zone. Resets every Sunday."
-              label="This week"
-              value={String(weekWorkouts.length)}
+              label="Workouts logged"
+              scope="all time"
+              unit="count"
+              value={totalSessions}
+            />
+            <StatCard
+              help="Workouts you logged this calendar week, Sunday through Saturday, in your time zone. Resets every Sunday."
+              label="Workouts"
+              scope="this week"
+              unit="count"
+              value={weekWorkouts.length}
             />
             <StatCard
               help="Volume is the total weight you moved: weight times reps, added up across every set. This is your total for this calendar week, Sunday through Saturday."
-              label="Volume this week"
-              value={weekVolume > 0 ? `${weekVolume.toLocaleString()} lb` : "-"}
+              label="Volume"
+              scope="this week"
+              unit="lb"
+              value={weekVolume}
             />
           </div>
         )}
@@ -365,24 +378,34 @@ async function Home({ user }: { user: User }) {
   );
 }
 
+/** One workouts-home stat, on the shared scope-required MetricValue (RC-8).
+ *  The bordered tile and its mobile row / desktop column order are unchanged;
+ *  MetricValue supplies the canonically formatted number and its scope. */
 function StatCard({
   label,
   value,
+  unit,
+  scope,
   help,
 }: {
   label: string;
-  value: string;
+  value: number;
+  unit: UnitId;
+  scope: MetricScope;
   help?: string;
 }) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 sm:flex-col sm:items-start sm:justify-start sm:gap-0 sm:py-3.5">
-      <div className="order-2 whitespace-nowrap font-semibold text-lg tracking-tight tabular-nums sm:order-1 sm:text-2xl">
-        <CountUp value={value} />
-      </div>
-      <div className="order-1 flex items-center gap-1 text-muted-foreground text-xs sm:order-2 sm:mt-0.5">
-        {label}
-        {help && <KpiHelp label={label}>{help}</KpiHelp>}
-      </div>
+      <MetricValue
+        captionClassName="order-1 sm:order-2 sm:mt-0.5"
+        help={help}
+        label={label}
+        layout="pieces"
+        scope={scope}
+        unit={unit}
+        value={value}
+        valueClassName="order-2 text-lg sm:order-1 sm:text-2xl"
+      />
     </div>
   );
 }

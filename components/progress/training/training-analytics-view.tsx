@@ -21,12 +21,12 @@ import { CalendarHeatmap } from "@/components/charts/calendar-heatmap";
 import { BreakdownBars } from "@/components/charts/breakdown-bars";
 import { ChartFrame } from "@/components/charts/chart-frame";
 import { ChartRangeControl } from "@/components/charts/chart-range-control";
-import { NumberTicker } from "@/components/charts/number-ticker";
 import { RingGauge } from "@/components/charts/ring-gauge";
 import { TrendChart, trendChartLegend } from "@/components/charts/trend-chart";
 import { useChartWindow } from "@/components/charts/use-chart-window";
 import { PersonalRecords } from "@/components/workouts/personal-records";
 import { KpiHelp } from "@/components/dashboard/kpi";
+import { MetricValue } from "@/components/dashboard/metric-value";
 import { GoalProgressBar, WeekBars } from "@/components/panels/visuals";
 import { Button } from "@/components/ui/button";
 import { useUrlChartWindow } from "@/hooks/use-url-chart-range";
@@ -104,40 +104,45 @@ export function TrainingAnalyticsView({
     <div className="flex flex-col gap-8 pb-24">
       {/* ------------------------------------------------------ status band */}
       <div className="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-4">
-        <StatTile
-          help="Every workout you have ever finished, all time. The header counts real saved sessions, never estimates."
-          label="Workouts logged"
-        >
-          <NumberTicker
-            format={(v) => String(Math.round(v))}
+        <StatTile>
+          <MetricValue
+            captionFirst
+            help="Every workout you have ever finished, all time. The header counts real saved workouts, never estimates."
+            label="Workouts logged"
+            layout="pieces"
+            scope="all time"
+            unit="count"
             value={data.totalSessions}
+            valueClassName="sm:text-2xl"
           />
         </StatTile>
-        <StatTile
-          help="Sessions you logged this calendar week, Sunday through Saturday, in your time zone. Resets every Sunday."
-          label={
-            data.adherence
-              ? `This week · ${data.adherence.plannedPerWeek} planned`
-              : "This week"
-          }
-        >
-          <NumberTicker
-            format={(v) => String(Math.round(v))}
+        <StatTile>
+          <MetricValue
+            captionFirst
+            help="Workouts you logged this calendar week, Sunday through Saturday, in your time zone. Resets every Sunday."
+            label={
+              data.adherence
+                ? `Workouts · ${data.adherence.plannedPerWeek} planned`
+                : "Workouts"
+            }
+            layout="pieces"
+            scope="this week"
+            unit="count"
             value={data.sessionsThisWeek}
+            valueClassName="sm:text-2xl"
           />
         </StatTile>
-        <StatTile
-          help="Volume is the total weight you moved: weight times reps, added up across every set. This is your total for this calendar week."
-          label="Volume this week"
-        >
-          {data.volumeThisWeek > 0 ? (
-            <NumberTicker
-              format={(v) => `${Math.round(v).toLocaleString()} lb`}
-              value={data.volumeThisWeek}
-            />
-          ) : (
-            <span className="text-muted-foreground">0 lb</span>
-          )}
+        <StatTile>
+          <MetricValue
+            captionFirst
+            help="Volume is the total weight you moved: weight times reps, added up across every set. This is your total for this calendar week."
+            label="Volume"
+            layout="pieces"
+            scope="this week"
+            unit="lb"
+            value={data.volumeThisWeek}
+            valueClassName="sm:text-2xl"
+          />
         </StatTile>
         <StatTile
           help="Session-count milestones are earned at real thresholds (10th, 25th, 50th workout and up). This is your progress toward the next one."
@@ -147,22 +152,25 @@ export function TrainingAnalyticsView({
               : "Milestones"
           }
         >
-          {data.nextMilestone ? (
-            <div className="flex w-full flex-col gap-1.5">
-              <span className="tabular-nums">
-                {data.nextMilestone.remaining} to go
-              </span>
-              <GoalProgressBar
-                className="bg-[var(--chart-3)]"
-                fraction={
-                  (data.nextMilestone.threshold - data.nextMilestone.remaining) /
-                  data.nextMilestone.threshold
-                }
-              />
-            </div>
-          ) : (
-            <span className="tabular-nums">{data.milestones.length}</span>
-          )}
+          <div className="font-semibold text-xl tracking-tight tabular-nums sm:text-2xl">
+            {data.nextMilestone ? (
+              <div className="flex w-full flex-col gap-1.5">
+                <span className="tabular-nums">
+                  {data.nextMilestone.remaining} to go
+                </span>
+                <GoalProgressBar
+                  className="bg-[var(--chart-3)]"
+                  fraction={
+                    (data.nextMilestone.threshold -
+                      data.nextMilestone.remaining) /
+                    data.nextMilestone.threshold
+                  }
+                />
+              </div>
+            ) : (
+              <span className="tabular-nums">{data.milestones.length}</span>
+            )}
+          </div>
         </StatTile>
       </div>
 
@@ -247,7 +255,7 @@ export function TrainingAnalyticsView({
           coverage={coverage}
           emptyMessage="Log weights in a workout and your volume trend starts here."
           emptyAction={<StartWorkoutButton />}
-          headlineLabel="Latest day"
+          headlineLabel="Latest logged day"
           height={240}
           legend={trendChartLegend(
             "neutral",
@@ -538,13 +546,13 @@ function MuscleFocusCard({
           ? "Train and your working sets get counted per muscle group here."
           : "Not enough muscle-tagged sets yet to show a trustworthy split. Pick exercises from the library and this fills in."
       }
-      headlineLabel="working sets, all loaded history"
+      headlineLabel="working sets, all time"
       height={200}
       reading={reading}
       state={supported ? "populated" : "empty"}
       summary={buildChartSummary({
         title: "Muscle focus",
-        rangeLabel: "all loaded history",
+        rangeLabel: "all time",
         reading,
         unit: "count",
         extra: specified
@@ -574,24 +582,27 @@ function MuscleFocusCard({
 
 /* ---------------------------------------------------------------- helpers */
 
+/** The status-band tile shell. Numeric tiles pass a scope-required
+ *  {@link MetricValue} (RC-8) as their only child; the milestone tile, which
+ *  renders a progress bar rather than a single number, keeps `label`/`help`. */
 function StatTile({
   label,
   help,
   children,
 }: {
-  label: string;
+  label?: string;
   help?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col justify-between gap-1 rounded-xl border border-border bg-surface-card px-4 py-3.5">
-      <div className="flex items-center gap-1 text-muted-foreground text-xs">
-        {label}
-        {help && <KpiHelp label={label}>{help}</KpiHelp>}
-      </div>
-      <div className="font-semibold text-xl tracking-tight tabular-nums sm:text-2xl">
-        {children}
-      </div>
+      {label != null && (
+        <div className="flex items-center gap-1 text-muted-foreground text-xs">
+          {label}
+          {help && <KpiHelp label={label}>{help}</KpiHelp>}
+        </div>
+      )}
+      {children}
     </div>
   );
 }

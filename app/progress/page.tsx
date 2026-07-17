@@ -404,7 +404,7 @@ async function OverviewContent({ range }: { range: OverviewRangeKey }) {
           : ("populated" as const),
     headline:
       nutrition.gradableDays > 0
-        ? `${nutrition.daysAtTarget} of ${nutrition.gradableDays} days within target`
+        ? `${nutrition.daysAtTarget} of ${nutrition.gradableDays} logged days within target`
         : `${nutrition.loggedDays} day${nutrition.loggedDays === 1 ? "" : "s"} logged`,
     context: [
       nutrition.average != null
@@ -448,7 +448,7 @@ async function OverviewContent({ range }: { range: OverviewRangeKey }) {
           : ("populated" as const),
     headline:
       hydration.gradableDays > 0
-        ? `${hydration.daysAtTarget} of ${hydration.gradableDays} days at goal`
+        ? `${hydration.daysAtTarget} of ${hydration.gradableDays} logged days at goal`
         : `${hydration.loggedDays} day${hydration.loggedDays === 1 ? "" : "s"} logged`,
     context: windowLabel,
     fraction:
@@ -495,7 +495,7 @@ async function OverviewContent({ range }: { range: OverviewRangeKey }) {
         : "Not logged",
     context: [
       sleep.gradableDays > 0
-        ? `${sleep.daysAtTarget} of ${sleep.gradableDays} nights at goal`
+        ? `${sleep.daysAtTarget} of ${sleep.gradableDays} logged nights at goal`
         : null,
       days > 14 ? "last 14 nights shown" : windowLabel,
     ]

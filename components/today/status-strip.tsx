@@ -334,7 +334,7 @@ export function StatusStrip({ data }: { data: StatusStripData }) {
               />
             ),
           }}
-          headline={String(training.sessionsThisWeek)}
+          headline={formatQuantity(training.sessionsThisWeek, "count")}
           icon={<Dumbbell className="size-4" />}
           lockedCapability="Pro members log workouts and see the training week at a glance."
           // A zero week is a truthful zero (metrics.ts missingRendersAs), so
@@ -342,8 +342,8 @@ export function StatusStrip({ data }: { data: StatusStripData }) {
           state="populated"
           targetContext={
             training.plannedPerWeek != null
-              ? `of ${training.plannedPerWeek} planned this week${planMet ? " · Done" : ""}`
-              : `session${training.sessionsThisWeek === 1 ? "" : "s"} this week`
+              ? `of ${training.plannedPerWeek} workout${training.plannedPerWeek === 1 ? "" : "s"} planned this week${planMet ? " · Done" : ""}`
+              : `workout${training.sessionsThisWeek === 1 ? "" : "s"} this week`
           }
           title="Training"
           tone="blood"
