@@ -69,6 +69,13 @@ const EXCLUDED = [
   "app/globals.css",
   // The token specimen sheet displays the measured hex values on purpose.
   "app/dev/fixtures/tokens/page.tsx",
+  // The approved design-system reference sheet (dev-only, prod-404): a 1:1
+  // reproduction of chadlatest's /design-system, whose specimen/atmosphere
+  // literals (star field, SVG gradients, mock-sampled hues) are the sheet's
+  // content, exactly like the tokens fixture above. The TOKENS it proves
+  // live in app/globals.css.
+  "app/dev/design-system/page.tsx",
+  "app/dev/design-system/ds-sheet.css",
   // The canonical chart color home (the Color Law module).
   "lib/chart/palette.ts",
 ];

@@ -74,6 +74,12 @@ export default function FixturesLayout({ children }: { children: ReactNode }) {
             >
               Forms
             </Link>
+            <Link
+              className="shrink-0 text-muted-foreground text-sm hover:text-foreground"
+              href="/dev/design-system"
+            >
+              Design system
+            </Link>
           </nav>
           <FixtureChrome />
         </div>

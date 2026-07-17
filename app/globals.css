@@ -285,6 +285,126 @@
   --chart-fat: #a78bfa;
 }
 
+/* ----------------------------------------------------------------------
+ * APPROVED DESIGN-SYSTEM TOKENS (owner approval 2026-07-17, wave0 Q-DS).
+ * Ported 1:1 from chadlatest/app/design-system/ds.css — the canonical
+ * token home per chadlatest CLAUDE.md §8. Rendered reference: the
+ * /dev/design-system fixture in THIS repo (and chadlatest's /design-system
+ * sheet, the original). Values are theme-independent by design: the
+ * approved system is the dark editorial canvas; there is no light variant.
+ *
+ * RAILS ONLY (design-system-port session): no member-facing surface reads
+ * these yet, and the shadcn/FIX-13 variables below are NOT repointed at
+ * them — that migration is the design waves' own owner-approved work.
+ *
+ * MAPPING — what each token will eventually replace or feed, so the
+ * design waves can migrate deliberately instead of rediscovering it:
+ *   --bg          → --background (.dark #04070d) and the sidebar/canvas hexes
+ *   --ink         → the bright tier of --foreground / --primary (headline +
+ *                   serif-numeral ink; today oklch(0.94..) white)
+ *   --ink-soft    → --foreground body text (.dark #d5dbe6)
+ *   --mute        → --muted-foreground (labels, captions)
+ *   --faint       → the de-emphasis/placeholder tier of --muted-foreground
+ *   --hairline    → --border (.dark rgba(216,231,242,.08)); --hairline-2 → --input
+ *   --danger      → --destructive, --critical, --critical-text (Q-C: red off
+ *                   every non-destructive use; brand-blood usage is a
+ *                   separate owner decision)
+ *   --go          → the go-action fill (today's white --primary on
+ *                   start/save buttons)
+ *   --progress    → --positive / --positive-text / --color-goal-line
+ *   --reward      → celebration accents (today ad hoc; nearest existing is
+ *                   the --attention gold in dark)
+ *   --energy,--energy-deep → --chart-3 / --attention family /
+ *                   --color-nutrition-text (calories + training effort)
+ *   --carbs       → --chart-carbs
+ *   --fat         → --chart-fat
+ *   --hydro,--hydro-soft → --chart-1 / --info / --info-text /
+ *                   --color-hydration-text
+ *   --sleep,--sleep-soft → --chart-4 / --sleep-text / --color-sleep-text
+ *   --f-display,--f-playfair → NEW display faces (Bodoni Moda / Playfair);
+ *                   take over the numeral/headline roles now on
+ *                   --font-display (Archivo). --ds-bodoni / --ds-playfair
+ *                   are registered by next/font ONLY inside the
+ *                   /dev/design-system fixture until the waves land
+ *                   (app/dev/design-system/fonts.ts). CSS gotcha: var()
+ *                   inside a custom property substitutes at the DECLARING
+ *                   element, so these two (and --f-instrument) compute to
+ *                   invalid at :root until the font registrations move to
+ *                   app/layout.tsx — harmless (nothing reads them yet);
+ *                   the fixture re-declares them on its own .ds2 scope.
+ *   --f-label,--f-body → --font-sans (Inter, same face, role names)
+ *   --f-spec      → --font-mono (JetBrains Mono)
+ *   --t-hero..--t-micro → replace the FIX-13 fixed type ramp
+ *                   (text-page-title/-metric/-body/... utilities) with the
+ *                   fluid editorial scale
+ *   --sp-1..--sp-9,--zone-gap,--gutter → replace the FIX-13 spacing
+ *                   utilities (px-gutter, gap-card, gap-section) and the
+ *                   4-40px ladder
+ *   --r-control   → --radius (controls move 10px → 12px)
+ * -------------------------------------------------------------------- */
+
+:root {
+  /* ---- canvas & ink ---- */
+  --bg: #06070c;
+  --ink: #fbfafa;                       /* neutral white: serif numerals, headlines (mock R=G=B) */
+  --ink-soft: rgba(251, 250, 250, 0.8); /* body text, units */
+  --mute: rgba(205, 203, 221, 0.6);     /* labels, captions */
+  --faint: rgba(205, 203, 221, 0.36);   /* de-emphasized, targets */
+  --hairline: rgba(233, 238, 255, 0.09);
+  --hairline-2: rgba(233, 238, 255, 0.16);
+
+  /* ---- semantic (Q-C, fixed meanings) ---- */
+  --danger: #ff4f43;   /* destructive + warning ONLY */
+  --go: #2fd478;       /* begin / advance actions */
+  --progress: #3ce6a4; /* movement toward a goal, may glow */
+  --reward: #f5c95c;   /* celebrations only, glows */
+
+  /* ---- atmosphere families (zone + data) ---- */
+  --energy: #ffa14f;
+  --energy-deep: #ff7a38;
+  --carbs: #3fe3cb;
+  --fat: #b78bff;
+  --hydro: #46c2ff;
+  --hydro-soft: #9bd6ff;
+  --sleep: #a68bfa;
+  --sleep-soft: #cdbcff;
+
+  /* ---- type roles ---- */
+  --f-display: var(--ds-bodoni), "Bodoni MT", Georgia, serif;
+  --f-playfair: var(--ds-playfair), Georgia, serif;
+  --f-instrument: var(--font-instrument), Georgia, serif;
+  --f-label: var(--font-inter), system-ui, sans-serif;
+  --f-body: var(--font-inter), system-ui, sans-serif;
+  --f-spec: var(--font-jetbrains), ui-monospace, monospace;
+
+  /* ---- fluid type scale (the proposal for real surfaces) ---- */
+  --t-hero: clamp(3.5rem, 1.9rem + 7.6vw, 6.75rem);
+  --t-display: clamp(3.25rem, 1.9rem + 6.4vw, 5.75rem);
+  --t-stat-lg: clamp(2.125rem, 1.45rem + 3vw, 3.375rem);
+  --t-stat: clamp(1.625rem, 1.2rem + 1.9vw, 2.375rem);
+  --t-headline: clamp(1.375rem, 1.08rem + 1.3vw, 2rem);
+  --t-value: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
+  --t-body: 0.9375rem;
+  --t-label-lg: 0.8125rem;
+  --t-label: 0.6875rem;
+  --t-micro: 0.625rem;
+
+  /* ---- spacing (4px base) ---- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+  --sp-9: 96px;
+  --zone-gap: clamp(3.5rem, 9vw, 6rem);
+  --gutter: clamp(1.5rem, 6vw, 3rem);
+
+  --r-control: 12px;
+}
+
 /* FIX-19 reduced-motion law: looping utility animations stop too (state
    stays conveyed by aria-busy/labels, not motion). Recharts reveals and the
    motion/react springs already honor the preference themselves. UNLAYERED on

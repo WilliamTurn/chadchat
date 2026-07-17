@@ -1,0 +1,643 @@
+/* ============================================================
+   Chad design system · reference sheet styles (dev fixture)
+   Ported 1:1 from chadlatest/app/design-system/ds.css (proposal 2,
+   owner-approved 2026-07-17) with ONE deliberate difference: the
+   token custom-property block is NOT redefined here — the .ds2
+   rules below resolve every token (--bg, --ink, --danger, the
+   --t- and --sp- scales, …) from app/globals.css :root,
+   chadchat's own token layer. That is the
+   proof the port is faithful: if a token were missing there, this
+   sheet would visibly break.
+   Literal colors below are the sheet's own specimen/atmosphere
+   content (star field, SVG gradients, mock-sampled hues), same as
+   the original; the file is design-lint-excluded the way the
+   tokens fixture is (scripts/design-lint.ts EXCLUDED).
+   ============================================================ */
+
+.ds2 {
+  /* Display-face roles re-declared HERE (not just :root) because var()
+     inside a custom property substitutes at the DECLARING element: at
+     :root, --ds-bodoni / --ds-playfair don't exist yet (next/font puts
+     them on this element only, app/dev/design-system/fonts.ts), so the
+     :root copies compute to invalid. The moment the design waves move
+     the font registrations to app/layout.tsx, the :root copies in
+     globals.css resolve app-wide and these two lines become redundant.
+     --f-instrument: chadchat doesn't self-host Instrument Serif (it is
+     not part of the approved system; chadlatest-only), so the sheet's
+     comparison row renders the chain's Georgia fallback here. */
+  --f-display: var(--ds-bodoni), "Bodoni MT", Georgia, serif;
+  --f-playfair: var(--ds-playfair), Georgia, serif;
+  --f-instrument: var(--font-instrument, Georgia), Georgia, serif;
+
+  background: var(--bg);
+  color: var(--ink-soft);
+  font-family: var(--f-body);
+  font-size: var(--t-body);
+  line-height: 1.55;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.ds2 * { box-sizing: border-box; margin: 0; padding: 0; }
+
+.ds2-wrap {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: clamp(2.5rem, 7vw, 5rem) var(--gutter) var(--sp-9);
+}
+
+/* ============ shared text roles ============ */
+
+.t-serif { font-family: var(--f-display); font-weight: 400; color: var(--ink); }
+.t-label {
+  font-family: var(--f-label);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-weight: 500;
+}
+.t-spec {
+  font-family: var(--f-spec);
+  font-size: var(--t-micro);
+  letter-spacing: 0.08em;
+  color: var(--faint);
+  text-transform: uppercase;
+}
+.glow { text-shadow: 0 0 28px rgba(255, 255, 255, 0.26), 0 0 6px rgba(255, 255, 255, 0.1); }
+
+/* ============ sheet chrome ============ */
+
+.sheet-head { max-width: 62ch; }
+.sheet-kicker { margin-bottom: var(--sp-4); }
+.sheet-title {
+  font-family: var(--f-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(2rem, 1.4rem + 2.8vw, 3.25rem);
+  line-height: 1.1;
+  color: var(--ink);
+}
+.sheet-intro { margin-top: var(--sp-4); color: var(--mute); }
+
+.band { margin-top: clamp(4.5rem, 11vw, 7.5rem); }
+.band-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-3);
+}
+.band-head::after { content: ""; flex: 1; border-top: 1px solid var(--hairline); align-self: center; }
+.band-title {
+  font-family: var(--f-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--t-headline);
+  color: var(--ink);
+  margin-bottom: var(--sp-2);
+}
+.band-note { color: var(--mute); max-width: 62ch; margin-bottom: var(--sp-6); }
+
+/* ============================================================
+   01 · THE REFERENCE, REBUILT IN CODE
+   A container-query stage so the phone composition keeps the
+   mock's exact proportions at every viewport width.
+   ============================================================ */
+
+.stage-outer { display: flex; justify-content: center; }
+.stage {
+  container-type: inline-size;
+  width: 100%;
+  max-width: 430px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #05060b 0%, #060510 55%, #080611 100%), #05060b;
+}
+@media (min-width: 640px) {
+  .stage { outline: 1px solid var(--hairline); border-radius: 4px; }
+}
+
+/* --- atmosphere layers (CSS glows; filament/particle art = future assets) --- */
+.stage-atmo { position: absolute; inset: 0; pointer-events: none; }
+.atmo-ember {
+  position: absolute; top: 0; right: 0; width: 100%; height: 34%;
+  background:
+    radial-gradient(58cqw 44cqw at 92% 26%, rgba(255, 108, 44, 0.22), transparent 65%),
+    radial-gradient(30cqw 22cqw at 82% 22%, rgba(255, 168, 100, 0.16), transparent 70%);
+}
+.atmo-hydro {
+  position: absolute; top: 33%; left: 0; width: 100%; height: 32%;
+  background:
+    radial-gradient(60cqw 48cqw at 22% 50%, rgba(56, 140, 255, 0.17), transparent 68%),
+    radial-gradient(34cqw 26cqw at 30% 62%, rgba(110, 200, 255, 0.1), transparent 70%);
+}
+.atmo-sleep {
+  position: absolute; bottom: 0; left: 0; width: 100%; height: 40%;
+  background:
+    radial-gradient(84cqw 56cqw at 66% 60%, rgba(116, 76, 214, 0.28), transparent 72%),
+    radial-gradient(104cqw 72cqw at 50% 100%, rgba(88, 60, 170, 0.2), transparent 78%),
+    linear-gradient(180deg, transparent 60%, rgba(2, 2, 6, 0.5) 100%);
+}
+.wisps { position: absolute; width: 100%; filter: blur(1.5px); }
+.wisps-soft { position: absolute; width: 100%; filter: blur(7px); opacity: 0.5; }
+.star { position: absolute; border-radius: 50%; pointer-events: none; }
+
+.stage-inner { position: relative; padding: 6.8cqw 6.6cqw 0; }
+
+/* --- editorial header --- */
+.m-date {
+  font-size: max(2.7cqw, 10px);
+  letter-spacing: 0.24em;
+  line-height: 1.2;
+  color: #c98d76;
+}
+.m-headline {
+  font-family: var(--f-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 5.9cqw;
+  line-height: 1.15;
+  color: var(--ink);
+  margin-top: 1cqw;
+}
+.m-hero {
+  font-family: var(--f-display);
+  /* owner's bar: the 4's diagonal as thick as the mock's (2px at 390 stage).
+     opsz drives the diagonal (wght only moves stems): opsz 12 = mock's exact
+     diagonal + hairline; wght 500 seats the stems at the mock's weight */
+  font-weight: 500;
+  font-variation-settings: "opsz" 12;
+  font-size: 18.8cqw; /* digit ink 132px943 */
+  letter-spacing: 0.05em; /* mock inter-glyph gaps 10-14% of digit height */
+  line-height: 1;
+  color: var(--ink);
+  margin-top: 0;
+}
+.m-subline {
+  display: flex; gap: 1.8cqw; align-items: baseline;
+  font-size: max(2.75cqw, 10px);
+  letter-spacing: 0.2em;
+  line-height: 1.2;
+  color: var(--mute);
+  margin-top: 1.4cqw;
+}
+.m-subline .left { color: var(--energy); }
+.m-subline .dot { color: var(--faint); letter-spacing: 0; }
+
+/* --- macro band ---
+   Full-bleed grid so the hairline dividers land at EXACT thirds of the
+   stage (mock: x = 33% / 66%); every cell gets the same 4cqw inset so
+   each bar floats centered, text aligned to the bar's left edge. */
+.m-macros {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  margin-top: 5.9cqw;
+  margin-inline: -6.6cqw;
+}
+.m-macro { padding-inline: 4cqw; }
+/* mock: column 1 stays on the page gutter's alignment line */
+.m-macro:first-child { padding-left: 6.6cqw; }
+.m-macro + .m-macro { border-left: 1px solid var(--hairline); }
+.m-macro .label { font-size: max(2.5cqw, 9px); letter-spacing: 0.2em; line-height: 1.2; }
+.m-macro .num {
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: 6.8cqw;
+  color: var(--ink);
+  line-height: 1;
+  margin-top: 0.8cqw;
+}
+.m-macro .num .unit {
+  font-size: 4.2cqw;
+  color: var(--c);
+  margin-left: 0.5cqw;
+}
+.m-track {
+  position: relative;
+  height: max(1.05cqw, 3px);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.13);
+  margin-top: 2.4cqw;
+}
+.m-fill {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--c) 40%, #05060b), var(--c));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--c) 45%, transparent);
+}
+.m-knob {
+  position: absolute; top: 50%;
+  width: max(2.3cqw, 7px); height: max(2.3cqw, 7px);
+  border-radius: 50%;
+  background: var(--c);
+  transform: translate(-50%, -50%);
+  /* dark knockout ring floats the dot clear of fill and track */
+  box-shadow: 0 0 0 2px #05060b, 0 0 8px var(--c), 0 0 18px color-mix(in srgb, var(--c) 70%, transparent);
+}
+.m-tick {
+  position: absolute; right: max(-1cqw, -4px); top: 50%;
+  width: 2px; height: max(2.8cqw, 9px);
+  border-radius: 2px;
+  background: var(--c);
+  transform: translateY(-50%);
+  opacity: 0.9;
+}
+.m-macro .target { font-size: max(2.9cqw, 10px); color: var(--mute); line-height: 1.2; margin-top: 2.9cqw; }
+.m-macro .pct { font-size: max(3.3cqw, 11px); font-weight: 600; color: var(--c); line-height: 1.2; margin-top: 0; }
+
+/* --- hydration scene --- */
+.m-hydro {
+  display: grid;
+  grid-template-columns: 48% 1fr;
+  gap: 7cqw;
+  align-items: center;
+  margin-top: 2.7cqw;
+  position: relative;
+}
+.jug-slot {
+  position: relative;
+  aspect-ratio: 42 / 52;
+  display: flex; align-items: center; justify-content: center;
+}
+.jug-slot .halo {
+  position: absolute; inset: -12%;
+  background: radial-gradient(closest-side, rgba(96, 180, 255, 0.14), transparent 72%);
+}
+.jug-slot .slot-label {
+  position: relative;
+  text-align: center;
+  line-height: 1.8;
+  opacity: 0.55;
+}
+.jug-ripples { position: absolute; bottom: -2%; left: 8%; width: 84%; filter: blur(1px); }
+/* energy wave: from the jug's right edge (x=48% of stage) to the stage edge,
+   riding the gap between "of 80 oz" and the goal line (C3) */
+.m-wave {
+  position: absolute;
+  left: 41.4cqw;            /* 48cqw of stage minus the 6.6cqw gutter */
+  width: 52cqw;
+  height: 10cqw;
+  bottom: 10cqw;
+  filter: blur(0.5px) drop-shadow(0 0 7px rgba(70, 194, 255, 0.85)) drop-shadow(0 0 16px rgba(70, 194, 255, 0.4));
+  pointer-events: none;
+}
+.m-hydro-data { position: relative; }
+.m-hydro-data .head { display: flex; align-items: center; gap: 2.6cqw; color: var(--hydro); }
+.m-hydro-data .head svg {
+  width: 4.6cqw; height: 4.6cqw;
+  filter: drop-shadow(0 0 4px rgba(70, 194, 255, 0.8));
+}
+.m-hydro-data .head .label { font-size: max(3cqw, 10px); letter-spacing: 0.24em; }
+.m-hydro-data .num {
+  font-family: var(--f-display);
+  font-weight: 500; /* same stroke treatment as the hero (owner's no-hairline bar) */
+  font-variation-settings: "opsz" 12;
+  font-size: 17cqw; /* mock: "56" digits nearly hero-sized (~117px943 bloom-corrected ink) */
+  letter-spacing: 0.05em;
+  line-height: 1;
+  color: var(--ink);
+  margin-top: 2.6cqw;
+}
+.m-hydro-data .num .unit {
+  font-size: 7.4cqw;
+  font-variation-settings: normal; /* back to auto optical sizing at small size */
+  letter-spacing: normal;
+  color: var(--hydro); /* owner 2026-07-16: units take the family color, oz included */
+  margin-left: 1cqw;
+}
+.m-hydro-data .of {
+  font-family: var(--f-display);
+  font-size: 4.2cqw;
+  color: #4da9f2; /* sampled from the mock: saturated mid-blue, not pale */
+  margin-top: 0;
+}
+.m-hydro-data .goal-line {
+  font-size: max(2.75cqw, 10px);
+  letter-spacing: 0.22em;
+  line-height: 1.2;
+  color: var(--hydro);
+  margin-top: 6.6cqw;
+}
+
+/* --- sleep scene ---
+   Mock split: text column ~40%, orbit spans the rest and bleeds from
+   under the time text (x~27% of stage) almost to the stage edge (~94.5%). */
+.m-sleep {
+  display: grid;
+  grid-template-columns: 40% 1fr;
+  gap: 0;
+  margin-top: 5.3cqw;
+  position: relative;
+  align-items: center;
+}
+.m-sleep-text { position: relative; z-index: 1; }
+.m-sleep-text p {
+  text-shadow:
+    0 0 3px #05060b, 0 0 6px #05060b, 0 0 10px #05060b,
+    0 0 14px rgba(5, 6, 11, 0.9), 0 0 20px rgba(5, 6, 11, 0.7);
+}
+.m-sleep .label {
+  font-size: max(2.6cqw, 9.5px);
+  letter-spacing: 0.18em;
+  line-height: 1.2;
+  color: var(--sleep-soft);
+  white-space: nowrap;
+}
+.m-sleep .time {
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: 11.1cqw; /* mock time digits: 75px943 ink */
+  line-height: 1.05;
+  color: var(--ink);
+  margin-top: 0.7cqw;
+  white-space: nowrap;
+}
+.m-sleep .time .unit { font-size: 6.1cqw; color: var(--sleep); margin-left: 0.5cqw; }
+.m-sleep .score-label { margin-top: 1.3cqw; }
+.m-sleep .score {
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: 8cqw;
+  line-height: 1;
+  color: var(--ink);
+  margin-top: 0.5cqw;
+}
+.m-sleep .verdict { font-size: max(3.3cqw, 11px); line-height: 1.2; color: var(--sleep-soft); margin-top: 1.2cqw; }
+
+/* zero-overlap structure (owner, session 2): the svg keeps its own row;
+   labels are flow siblings above and below it, never positioned over it,
+   and the ellipse no longer bleeds left under the sleep text column */
+.orbit { position: relative; margin-right: -1cqw; }
+.orbit svg { display: block; width: 100%; height: auto; }
+.orbit-label {
+  line-height: 1.35;
+  text-shadow:
+    0 0 3px #05060b, 0 0 6px #05060b, 0 0 10px #05060b,
+    0 0 14px rgba(5, 6, 11, 0.9), 0 0 20px rgba(5, 6, 11, 0.7);
+}
+.orbit-top {
+  display: flex; flex-direction: column; align-items: flex-end;
+  padding-right: 5cqw;
+  margin-bottom: 1cqw;
+}
+.orbit-bottom {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-top: 1.2cqw;
+  padding-left: 14cqw; /* seats "7h 24m" under the bright now-dot (~35% of dial) */
+  padding-right: 1cqw;
+}
+.orbit-label .big {
+  font-family: var(--f-display);
+  font-size: 4.4cqw;
+  color: var(--reward);
+}
+.orbit-label .cap { font-size: max(2.2cqw, 8px); letter-spacing: 0.18em; color: var(--reward); }
+.orbit-target { font-size: max(3.1cqw, 10px); color: var(--ink-soft); text-align: right; }
+.orbit-target .short { color: var(--sleep-soft); }
+.orbit-now { font-size: max(2.6cqw, 9px); color: var(--mute); letter-spacing: 0.08em; }
+
+/* --- bottom nav (recreation) --- */
+.m-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 0;
+  padding: 0.5cqw 3cqw 3.8cqw;
+  border-top: 1px solid var(--hairline);
+  background: linear-gradient(180deg, rgba(6, 7, 12, 0.2), rgba(5, 6, 10, 0.9));
+}
+.m-nav-item {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 1.6cqw;
+  color: rgba(205, 203, 221, 0.55);
+}
+.m-nav-item svg { width: 4.8cqw; height: 4.8cqw; }
+.m-nav-item .nav-label { font-size: max(2.4cqw, 9px); letter-spacing: 0.04em; font-weight: 500; }
+.m-nav-item.active { color: #eeb95c; }
+.m-nav-item.active .dot {
+  width: 1cqw; height: 1cqw; min-width: 3px; min-height: 3px;
+  border-radius: 50%; background: #eeb95c; margin-top: 0.6cqw;
+}
+.m-nav-item.track { color: var(--hydro); }
+.m-nav-item.track svg {
+  width: 5.4cqw; height: 5.4cqw;
+  filter: drop-shadow(0 0 5px rgba(70, 194, 255, 0.9)) drop-shadow(0 0 12px rgba(70, 194, 255, 0.5));
+}
+
+/* ============================================================
+   02 · TYPOGRAPHY
+   ============================================================ */
+
+.type-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 230px) 1fr;
+  gap: var(--sp-4);
+  align-items: baseline;
+  padding: var(--sp-4) 0;
+  border-top: 1px solid var(--hairline);
+}
+.type-row:last-child { border-bottom: 1px solid var(--hairline); }
+@media (max-width: 419px) {
+  .type-row { grid-template-columns: 1fr; gap: var(--sp-2); }
+}
+.type-spec { display: flex; flex-direction: column; gap: 2px; }
+.type-spec .name { color: var(--mute); }
+
+.sp-hero { font-family: var(--f-display); font-weight: 500; font-variation-settings: "opsz" 12; font-size: var(--t-hero); letter-spacing: 0.05em; line-height: 1.02; color: var(--ink); }
+.sp-display { font-family: var(--f-display); font-weight: 500; font-variation-settings: "opsz" 12; font-size: var(--t-display); letter-spacing: 0.05em; line-height: 1.05; color: var(--ink); }
+.sp-display span { font-variation-settings: normal; letter-spacing: normal; } /* unit span back to auto */
+.sp-stat-lg { font-family: var(--f-display); font-weight: 400; font-size: var(--t-stat-lg); line-height: 1.1; color: var(--ink); }
+.sp-stat { font-family: var(--f-display); font-weight: 400; font-size: var(--t-stat); line-height: 1.1; color: var(--ink); }
+.sp-headline { font-family: var(--f-display); font-style: italic; font-weight: 400; font-size: var(--t-headline); color: var(--ink); }
+.sp-value { font-family: var(--f-display); font-size: var(--t-value); color: var(--ink-soft); }
+.sp-body { font-size: var(--t-body); color: var(--ink-soft); max-width: 48ch; }
+.sp-label-lg { font-size: var(--t-label-lg); letter-spacing: 0.16em; color: var(--mute); }
+.sp-label { font-size: var(--t-label); letter-spacing: 0.18em; color: var(--mute); }
+.sp-micro { font-size: var(--t-micro); letter-spacing: 0.14em; color: var(--faint); }
+
+.face-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-6);
+  margin-top: var(--sp-6);
+}
+.face { border-top: 1px solid var(--hairline); padding-top: var(--sp-4); }
+.face .specimen { font-size: clamp(2.25rem, 1.9rem + 1.7vw, 2.875rem); line-height: 1.1; color: var(--ink); }
+.face .specimen .it { font-style: italic; }
+.face-playfair .specimen { font-family: var(--f-playfair); font-weight: 500; }
+.face-bodoni .specimen { font-family: var(--f-display); font-weight: 500; font-variation-settings: "opsz" 12; letter-spacing: 0.05em; }
+.face-instrument .specimen { font-family: var(--f-instrument); font-weight: 400; }
+.face .face-name { margin-top: var(--sp-3); color: var(--mute); }
+.face .face-tag { color: var(--reward); }
+
+/* ============================================================
+   03 · COLOR
+   ============================================================ */
+
+.sem-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--sp-6);
+}
+.sem { border-top: 1px solid var(--hairline); padding-top: var(--sp-4); }
+.sem .demo { min-height: 72px; display: flex; align-items: center; }
+.sem .meaning { margin-top: var(--sp-3); color: var(--mute); font-size: var(--t-body); }
+.sem .hex { margin-top: var(--sp-1); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 48px; padding: 0 22px;
+  border-radius: var(--r-control);
+  font-family: var(--f-body); font-size: 0.9375rem; font-weight: 600;
+  border: none; white-space: nowrap;
+}
+.btn-go { background: var(--go); color: #04170c; box-shadow: 0 0 26px rgba(47, 212, 120, 0.22); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-tonal { background: rgba(255, 255, 255, 0.08); color: var(--ink-soft); }
+.btn-quiet { background: transparent; color: var(--mute); padding: 0 10px; }
+.btn-disabled { background: rgba(255, 255, 255, 0.05); color: var(--faint); }
+
+.reward-chip {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: rgba(245, 201, 92, 0.1);
+  color: var(--reward);
+  font-size: var(--t-label-lg);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 600;
+  box-shadow: 0 0 30px rgba(245, 201, 92, 0.28);
+  text-shadow: 0 0 12px rgba(245, 201, 92, 0.5);
+}
+.progress-ind { display: inline-flex; flex-direction: column; gap: 6px; }
+.progress-ind .line { display: inline-flex; align-items: center; gap: 8px; color: var(--progress); font-weight: 600; }
+.progress-ind svg.spark { filter: drop-shadow(0 0 6px rgba(60, 230, 164, 0.7)); }
+
+.fam-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--sp-5);
+  margin-top: var(--sp-6);
+}
+.fam { border-top: 1px solid var(--hairline); padding-top: var(--sp-4); }
+.fam .label { font-size: var(--t-label); letter-spacing: 0.2em; color: var(--c); }
+.fam .num { font-family: var(--f-display); font-weight: 400; font-size: var(--t-stat); color: var(--ink); margin-top: var(--sp-2); }
+.fam .num .unit { font-size: 0.6em; color: var(--c); }
+.fam .fam-track { position: relative; height: 4px; border-radius: 999px; background: rgba(255,255,255,0.13); margin-top: var(--sp-3); }
+.fam .hex { margin-top: var(--sp-3); }
+/* fixed-size knobs/ticks outside the container-query stage */
+.fam .m-knob, .metric-col .m-knob { width: 8px; height: 8px; }
+.metric-col .m-tick { height: 10px; }
+
+.neutral-list { display: flex; flex-direction: column; gap: var(--sp-3); margin-top: var(--sp-6); }
+.neutral-row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-4); border-top: 1px solid var(--hairline); padding-top: var(--sp-3); }
+
+.hex-table { display: grid; grid-template-columns: max-content max-content 1fr; gap: 6px 20px; margin-top: var(--sp-6); }
+.hex-table span { white-space: nowrap; }
+.hex-table > div > span:nth-child(3) { white-space: normal; }
+.hex-table .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 8px; vertical-align: baseline; }
+
+/* ============================================================
+   04 · SPACING & GROUPING
+   ============================================================ */
+
+.space-ladder { display: flex; flex-direction: column; gap: var(--sp-3); max-width: 480px; }
+.space-row { display: grid; grid-template-columns: 90px 1fr; align-items: center; gap: var(--sp-4); }
+.space-row .block { background: rgba(255, 255, 255, 0.12); border-radius: 2px; }
+
+.rhythm-demo {
+  display: grid;
+  grid-template-columns: 1fr minmax(100px, 150px);
+  gap: var(--sp-6);
+  margin-top: var(--sp-7);
+  max-width: 560px;
+}
+.rhythm-demo .gap-note { text-align: left; align-self: end; }
+
+.divider-demo { margin-top: var(--sp-7); max-width: 560px; }
+.divider-demo .h-sample { border-top: 1px solid var(--hairline); margin: var(--sp-4) 0; }
+.divider-demo .cols { display: grid; grid-template-columns: 1fr 1fr 1fr; margin-top: var(--sp-4); }
+.divider-demo .cols > div + div { border-left: 1px solid var(--hairline); padding-left: var(--sp-4); }
+.divider-demo .cols > div { padding-right: var(--sp-4); }
+
+/* ============================================================
+   05 · PRIMITIVES
+   ============================================================ */
+
+.prim-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--sp-7) var(--sp-6);
+}
+.prim { border-top: 1px solid var(--hairline); padding-top: var(--sp-4); }
+.prim .prim-name { margin-bottom: var(--sp-5); }
+.prim .prim-note { color: var(--mute); margin-top: var(--sp-4); font-size: 0.875rem; max-width: 44ch; }
+
+.metric-col { max-width: 240px; }
+.metric-col .label { font-size: var(--t-label); letter-spacing: 0.2em; color: var(--energy); }
+.metric-col .num { font-family: var(--f-display); font-weight: 400; font-size: var(--t-stat); color: var(--ink); line-height: 1; margin-top: var(--sp-2); }
+.metric-col .num .unit { font-size: 0.62em; color: var(--c); }
+.metric-col .track { position: relative; height: 4px; border-radius: 999px; background: rgba(255,255,255,0.13); margin-top: var(--sp-3); }
+.metric-col .target { font-size: 0.8125rem; color: var(--mute); margin-top: var(--sp-3); }
+.metric-col .pct { font-size: 0.875rem; font-weight: 600; color: var(--energy); margin-top: 4px; }
+
+.gauge { position: relative; width: 168px; }
+.gauge svg { width: 100%; height: auto; }
+.gauge .center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: 4px;
+}
+.gauge .center .val { font-family: var(--f-display); font-weight: 400; font-size: 1.75rem; color: var(--ink); }
+.gauge .center .val .unit { font-size: 0.65em; color: var(--sleep); }
+
+.btn-stack { display: flex; flex-wrap: wrap; gap: var(--sp-3); align-items: center; }
+
+.scene-schema {
+  position: relative;
+  display: grid;
+  grid-template-columns: 44% 1fr;
+  gap: var(--sp-4);
+  align-items: center;
+  padding: var(--sp-5) 0;
+  overflow: hidden;
+}
+.scene-schema .atmo {
+  position: absolute; inset: 0;
+  background: radial-gradient(70% 90% at 25% 55%, rgba(56, 140, 255, 0.13), transparent 70%);
+  pointer-events: none;
+}
+.scene-schema .art {
+  aspect-ratio: 4 / 5;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px dashed var(--hairline-2);
+  border-radius: 6px;
+  text-align: center; line-height: 1.8;
+}
+.scene-schema .data .label { font-size: var(--t-label); letter-spacing: 0.22em; color: var(--hydro); }
+.scene-schema .data .num { font-family: var(--f-display); font-weight: 400; font-size: var(--t-stat-lg); color: var(--ink); margin-top: var(--sp-2); }
+.scene-schema .data .num .unit { font-size: 0.55em; color: var(--hydro); }
+.scene-schema .data .of { font-family: var(--f-display); font-size: var(--t-value); color: var(--hydro-soft); margin-top: 4px; }
+
+.nav-prim {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  max-width: 430px;
+  border-top: 1px solid var(--hairline);
+  padding: var(--sp-4) var(--sp-2) var(--sp-3);
+}
+.nav-prim .item {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  color: var(--faint);
+}
+.nav-prim .item svg { width: 19px; height: 19px; }
+.nav-prim .item .nav-label { font-size: 10px; letter-spacing: 0.06em; font-weight: 500; }
+.nav-prim .item.active { color: #eeb95c; }
+.nav-prim .item.log .disc {
+  display: flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: #fbfafa;
+  color: #0a0b10;
+  box-shadow: 0 0 22px rgba(251, 250, 250, 0.25);
+}
+.nav-prim .item.log { color: var(--ink-soft); }
