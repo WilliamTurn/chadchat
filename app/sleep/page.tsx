@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Toaster } from "sonner";
 import { RewardProvider } from "@/components/dashboard/reward";
 import { auth } from "@/app/(auth)/auth";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
@@ -44,15 +43,6 @@ import { getSleepPanelData } from "@/lib/today/panel-data";
 export default function SleepPage() {
   return (
     <PageShell active="/sleep" className="max-w-[1500px]">
-      <Toaster
-        position="top-center"
-        theme="system"
-        toastOptions={{
-          className:
-            "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
-        }}
-      />
-
 
       <div className="mb-8">
         <BackToDashboard />

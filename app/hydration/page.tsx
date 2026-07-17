@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { type ReactNode, Suspense } from "react";
-import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { Kpi } from "@/components/dashboard/kpi";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
@@ -49,15 +48,6 @@ import { DEFAULT_WATER_GOAL_ML, formatOz } from "@/lib/today/water-units";
 export default function HydrationPage() {
   return (
     <PageShell active="/hydration" className="max-w-[1500px]">
-      <Toaster
-        position="top-center"
-        theme="system"
-        toastOptions={{
-          className:
-            "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
-        }}
-      />
-
 
       <div className="mb-8">
         <BackToDashboard />

@@ -2,7 +2,6 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { AppearanceCustomizer } from "@/components/account/appearance-customizer";
 import { PageShell } from "@/components/nav/page-shell";
@@ -24,8 +23,6 @@ import { cn } from "@/lib/utils";
 export default function AppearancePage() {
   return (
     <PageShell active="/account" className="max-w-[var(--container-content)]">
-      <Toaster position="top-center" richColors theme="system" />
-
       <div className="mb-8">
         <Link
           className={cn(

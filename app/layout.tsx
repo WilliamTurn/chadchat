@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Archivo, Inter, JetBrains_Mono } from "next/font/google";
 import { TimezoneSync } from "@/components/account/timezone-sync";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import "./globals.css";
@@ -99,6 +100,10 @@ export default function RootLayout({
               {/* Silent per-user timezone capture (FEAT-8) — renders nothing. */}
               <TimezoneSync />
               {children}
+              {/* RC-5: the ONE app-wide toast surface. It lives here so a
+                  toast fired right before a navigation survives the route
+                  change; never mount another <Toaster> in a page or layout. */}
+              <Toaster />
             </TooltipProvider>
           </SessionProvider>
         </ThemeProvider>

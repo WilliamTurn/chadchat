@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { MealPlanSkeleton } from "@/components/dashboard/page-skeletons";
-import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { GenerateForm } from "@/components/meal-plan/generate-form";
 import { NewPlanSection } from "@/components/meal-plan/new-plan-section";
@@ -35,15 +34,6 @@ export default function MealPlanPage() {
     // Full-width desktop layout (LAY-1): the wide frame, filled with the
     // plan's multi-column meal grid and full-row day switcher.
     <PageShell active="/meal-plan" className="max-w-[1500px]">
-      <Toaster
-        position="top-center"
-        theme="system"
-        toastOptions={{
-          className:
-            "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
-        }}
-      />
-
 
       <div className="mb-8">
         <BackToDashboard />

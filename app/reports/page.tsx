@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { BackToDashboard } from "@/components/nav/back-to-dashboard";
@@ -32,15 +31,6 @@ export default function ReportsPage() {
     // as a reading column + "Earlier weeks" archive column at xl; single-report
     // and empty states render as a centered document/hero card instead.
     <PageShell active="/reports" className="max-w-[1500px]">
-      <Toaster
-        position="top-center"
-        theme="system"
-        toastOptions={{
-          className:
-            "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
-        }}
-      />
-
 
       <div className="mb-8">
         {/* RC-1 (RPT-02): /reports had no way back at all. */}

@@ -3,7 +3,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { type ReactNode, Suspense } from "react";
 import { NutritionSkeleton } from "@/components/dashboard/page-skeletons";
-import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { BackToDashboard } from "@/components/nav/back-to-dashboard";
@@ -58,15 +57,6 @@ export default function NutritionPage({
     // Full-width desktop layout (LAY-1): the wide frame, filled with the log
     // form + day totals side by side and multi-column meal grids.
     <PageShell active="/nutrition" className="max-w-[1500px]">
-      <Toaster
-        position="top-center"
-        theme="system"
-        toastOptions={{
-          className:
-            "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
-        }}
-      />
-
 
       <div className="mb-8">
         <BackToDashboard />

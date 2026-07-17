@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
 import { canAccessChad } from "@/lib/admin";
@@ -19,7 +18,6 @@ import { getUserById } from "@/lib/db/queries";
 export default function WelcomePage() {
   return (
     <main className="relative flex min-h-dvh w-full flex-col items-center justify-center overflow-hidden px-4 py-10">
-      <Toaster position="top-center" richColors theme="system" />
       {/* Soft brand glow behind the card so the first screen feels like Chad, not a form. */}
       <div
         aria-hidden

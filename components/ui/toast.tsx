@@ -5,9 +5,9 @@ import { toast } from "sonner";
 /**
  * FEEDBACK TOAST PRIMITIVES (FIX-38, P2-E). One toast grammar over sonner so
  * loggers stop hand-assembling durations, actions, and receipt phrasing.
- * Sonner announces toasts to screen readers (aria-live region) and the
- * existing per-layout <Toaster position="top-center" richColors /> mounts
- * stay the render surface.
+ * Sonner announces toasts to screen readers (aria-live region); the render
+ * surface is the single root-layout Toaster (components/ui/toaster.tsx,
+ * RC-5), which survives navigations.
  *
  * Three shapes, per the motion-interaction contract:
  *   toastReceipt  - success receipt for a meaningful write, with the concrete

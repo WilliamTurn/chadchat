@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { ProgressSkeleton } from "@/components/dashboard/page-skeletons";
@@ -123,8 +122,6 @@ export default async function ProgressOverviewPage({
 
   return (
     <PageShell active="/progress" className="max-w-[var(--container-content)]">
-      <Toaster position="top-center" richColors theme="system" />
-
       <div className="mb-8">
         <BackToDashboard />
         <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">

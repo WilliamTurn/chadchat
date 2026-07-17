@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Toaster } from "sonner";
 import {
   ConfirmDemo,
   DetailSheetDemo,
@@ -51,7 +50,6 @@ export default async function OverlaysFixturePage({
     <div className="space-y-10">
       {/* Toasters mount per layout in this app (the forms fixture does the
           same); receipts and Undo need one on this surface too. */}
-      <Toaster position="top-center" richColors theme="system" />
       <div className="space-y-3">
         <h1 className="text-page-title">Overlay platform</h1>
         <p className="max-w-prose text-body text-muted-foreground">

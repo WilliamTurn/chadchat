@@ -2,7 +2,6 @@ import { ChefHat, Lock } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { BackToDashboard } from "@/components/nav/back-to-dashboard";
@@ -31,15 +30,6 @@ import { clientField } from "@/lib/memory/client-field";
 export default function PlansPage() {
   return (
     <PageShell active="/plans" className="max-w-[var(--container-content)]">
-      <Toaster
-        position="top-center"
-        theme="system"
-        toastOptions={{
-          className:
-            "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
-        }}
-      />
-
       <div className="mb-8">
         <BackToDashboard />
         <h1 className="font-semibold text-2xl tracking-tight">All plans</h1>

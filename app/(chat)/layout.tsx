@@ -2,7 +2,6 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Script from "next/script";
 import { Suspense } from "react";
-import { Toaster } from "sonner";
 import { AppSidebar } from "@/components/chat/app-sidebar";
 import { DataStreamProvider } from "@/components/chat/data-stream-provider";
 import { ChatShell } from "@/components/chat/shell";
@@ -83,14 +82,6 @@ async function SidebarShell({ children }: { children: React.ReactNode }) {
           tab bar. */}
       <SidebarInset className="h-dvh overflow-hidden">
         {showVerifyBanner && <VerifyEmailBanner />}
-        <Toaster
-          position="top-center"
-          theme="system"
-          toastOptions={{
-            className:
-              "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
-          }}
-        />
         <Suspense fallback={<div className="min-h-0 flex-1" />}>
           <ActiveChatProvider>
             <ChatShell />

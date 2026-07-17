@@ -1,6 +1,5 @@
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { GoalForm } from "@/components/goals/goal-form";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
@@ -24,14 +23,6 @@ export default function EditGoalPage({
     // Full-width desktop layout (LAY-1): form column + sticky summary rail
     // (the two-column split lives inside GoalForm).
     <PageShell active="/goals" className="max-w-[1500px]">
-      <Toaster
-        position="top-center"
-        theme="system"
-        toastOptions={{
-          className:
-            "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
-        }}
-      />
       {/* usePathname inside the header is runtime data on a dynamic route, so
           it needs its own Suspense boundary under Cache Components. */}
       <Suspense fallback={null}>

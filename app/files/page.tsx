@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import {
   FilesBrowser,
@@ -22,8 +21,6 @@ export default function FilesPage() {
     // Full-width desktop layout (LAY-1): the wide frame, filled with a real
     // library grid (toolbar + responsive file-card grid).
     <PageShell active="/files" className="max-w-[1500px]">
-      <Toaster position="top-center" richColors theme="system" />
-
       <div className="mb-8">
         <BackToDashboard />
         <h1 className="font-semibold text-2xl tracking-tight">Files</h1>

@@ -2,7 +2,6 @@ import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import {
   DocumentView,
@@ -25,8 +24,6 @@ export default function FileDocumentPage({
 }) {
   return (
     <PageShell active="/files">
-      <Toaster position="top-center" richColors theme="system" />
-
       <div className="mb-8">
         <Link
           className="-mt-2 mb-1 inline-flex items-center gap-1 py-2 text-muted-foreground text-sm transition-colors hover:text-foreground"

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { BackToDashboard } from "@/components/nav/back-to-dashboard";
@@ -30,15 +29,6 @@ import type { ReceiptCardData } from "@/lib/quit/share-cards";
 export default function QuitDatePage() {
   return (
     <PageShell>
-      <Toaster
-        position="top-center"
-        theme="system"
-        toastOptions={{
-          className:
-            "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
-        }}
-      />
-
 
       {/* The page header lives inside the async content (s157, owner order):
           pre-test it sells the TEST ("outsmart Chad") and never names the

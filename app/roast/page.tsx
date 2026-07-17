@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { PageShell } from "@/components/nav/page-shell";
@@ -23,8 +22,6 @@ export default function RoastPage({
 }) {
   return (
     <PageShell>
-      <Toaster position="top-center" richColors theme="system" />
-
       <div className="mb-8 max-w-2xl">
         <h1 className="font-semibold text-2xl tracking-tight">
           Share the roast

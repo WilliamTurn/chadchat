@@ -1,4 +1,3 @@
-import { Toaster } from "sonner";
 import { FormsFixture } from "@/components/dev/forms-fixture";
 
 /**
@@ -20,7 +19,6 @@ export default function FormsFixturePage() {
         </p>
       </div>
       <FormsFixture />
-      <Toaster position="top-center" richColors theme="system" />
     </div>
   );
 }

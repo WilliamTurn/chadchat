@@ -10,8 +10,8 @@
     {
       "surface": "/account/appearance",
       "check": "clipped",
-      "widths": [768, 1280],
-      "reason": "Controls ('Upload your own', 'Female', 'Account menu') sit partly outside the viewport at tablet/desktop, same root cause as the overflow pin above. Found by the extended smoke gate 2026-07-16."
+      "widths": [768],
+      "reason": "Controls ('Upload your own', 'Female', 'Account menu') sit partly outside the viewport at tablet, same root cause as the overflow pin above. Found by the extended smoke gate 2026-07-16. The desktop-1280 width started passing in the RC-5 sweep (reproduced twice) and was removed per the ratchet rule."
     }
   ]
 }

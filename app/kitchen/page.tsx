@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { KitchenSkeleton } from "@/components/dashboard/page-skeletons";
 import { KitchenFeed } from "@/components/kitchen/kitchen-feed";
@@ -19,15 +18,6 @@ export default function KitchenPage() {
     // Full-width desktop layout (LAY-1): the wide frame, photo form and
     // history side by side on desktop (matches its sibling /nutrition).
     <PageShell active="/kitchen" className="max-w-[1500px]">
-      <Toaster
-        position="top-center"
-        theme="system"
-        toastOptions={{
-          className:
-            "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
-        }}
-      />
-
 
       <div className="mb-8">
         <BackToDashboard />

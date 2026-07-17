@@ -1,6 +1,5 @@
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { BackToDashboard } from "@/components/nav/back-to-dashboard";
@@ -30,15 +29,6 @@ export default function PlanDocPage({
 }) {
   return (
     <PageShell active="/today">
-      <Toaster
-        position="top-center"
-        theme="system"
-        toastOptions={{
-          className:
-            "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
-        }}
-      />
-
       {/* usePathname inside the header is runtime data on a dynamic route, so
           it needs its own Suspense boundary under Cache Components. */}
       <Suspense fallback={null}>

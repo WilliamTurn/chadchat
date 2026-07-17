@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { GoalForm } from "@/components/goals/goal-form";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
@@ -19,15 +18,6 @@ export default function NewGoalPage() {
   return (
     // Full-width desktop frame (LAY-1); the form lays itself out inside it.
     <PageShell active="/goals" className="max-w-[1500px]">
-      <Toaster
-        position="top-center"
-        theme="system"
-        toastOptions={{
-          className:
-            "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
-        }}
-      />
-
       <div className="mb-8">
         <BackToDashboard href="/goals" label="Goals" />
         <h1 className="font-semibold text-2xl tracking-tight">New goal</h1>

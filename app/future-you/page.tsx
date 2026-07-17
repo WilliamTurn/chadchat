@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { getLatestForecast } from "@/app/future-you/actions";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
@@ -32,15 +31,6 @@ export default function FutureYouPage() {
     // Full-width desktop layout (LAY-1): the wide frame; the experience fills
     // it with a two-column intake and a checkpoint gallery grid.
     <PageShell active="/future-you" className="max-w-[1500px]">
-      <Toaster
-        position="top-center"
-        theme="system"
-        toastOptions={{
-          className:
-            "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
-        }}
-      />
-
       <div className="mb-8">
         <BackToDashboard />
         <div className="flex items-center gap-3">

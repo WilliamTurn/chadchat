@@ -2,7 +2,6 @@ import { Ban, Dumbbell, ShieldCheck, Star } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { LogoutButton } from "@/components/billing/logout-button";
 import { PricingPlans } from "@/components/billing/pricing-plans";
@@ -29,14 +28,6 @@ export default function PricingPage({
       {/* Without this, sonner toasts (e.g. a checkout error) never render
           because /pricing lives outside the (chat) layout that mounts one —
           which made a failed checkout look like a "dead" button. */}
-      <Toaster
-        position="top-center"
-        theme="system"
-        toastOptions={{
-          className:
-            "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
-        }}
-      />
       <header className="mb-12 flex w-full max-w-5xl items-center justify-between">
         <Suspense fallback={<LogoMark />}>
           <HeaderLogo />

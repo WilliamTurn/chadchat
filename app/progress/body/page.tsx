@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { ProgressSkeleton } from "@/components/dashboard/page-skeletons";
-import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { DeleteEntryButton } from "@/components/progress/delete-entry-button";
 import { EditEntryButton } from "@/components/progress/edit-entry-button";
@@ -63,7 +62,6 @@ export default function ProgressBodyPage() {
     <PageShell active="/progress" className="max-w-[var(--container-content)]">
       {/* richColors: success renders green, error red (the "Logged." confirmation
           reads as a clear success instead of a neutral gray toast). */}
-      <Toaster position="top-center" richColors theme="system" />
 
       <div className="mb-8">
         <BackToDashboard href="/progress" label="Progress" />

@@ -12,7 +12,6 @@ import {
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { CheckInSettings } from "@/components/account/check-in-settings";
 import { DeleteDataButton } from "@/components/account/delete-data-button";
@@ -117,8 +116,6 @@ export default function AccountPage() {
     // frame with no dead bands (a row-aligned grid left the short Membership
     // cell stranded above a tall Profile card). Phones stack in that order.
     <PageShell active="/account" className="max-w-[1500px]">
-      <Toaster position="top-center" richColors theme="system" />
-
       <div className="mb-8">
         <h1 className="font-semibold text-2xl tracking-tight">Account</h1>
         <p className="mt-1 text-muted-foreground text-sm">

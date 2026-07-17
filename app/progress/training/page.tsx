@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { RewardProvider } from "@/components/dashboard/reward";
 import { ProgressSkeleton } from "@/components/dashboard/page-skeletons";
@@ -20,8 +19,6 @@ import { getUserById } from "@/lib/db/queries";
 export default function ProgressTrainingPage() {
   return (
     <PageShell active="/progress" className="max-w-[var(--container-content)]">
-      <Toaster position="top-center" richColors theme="system" />
-
       <div className="mb-8">
         <BackToDashboard href="/progress" label="Progress" />
         <div className="flex items-center gap-3">

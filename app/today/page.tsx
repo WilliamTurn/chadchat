@@ -2,7 +2,6 @@ import { ArrowRight, LineChart, Lock } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Toaster } from "sonner";
 import { auth } from "@/app/(auth)/auth";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
@@ -99,16 +98,6 @@ const TODAY_WORKOUT_LIMIT = 60;
 export default function TodayPage() {
   return (
     <PageShell active="/today" className="max-w-[1500px]">
-      {/* Bottom-anchored receipts (P56-D toast decision): success/error tint
-          via richColors, anchored in the thumb zone and offset above the
-          phone tab bar; desktop keeps a comfortable bottom margin. */}
-      <Toaster
-        mobileOffset={{ bottom: 76 }}
-        offset={{ bottom: 24 }}
-        position="bottom-center"
-        richColors
-        theme="system"
-      />
       <Suspense fallback={<TodaySkeleton />}>
         <TodayContent />
       </Suspense>

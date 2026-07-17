@@ -23,6 +23,9 @@
  *           came from (/progress), not a hardcoded Goals.
  *   CMP-16  The workout-complete celebration has a top back control like
  *           every other workout page.
+ *   XPK-15  A toast fired right before a navigation survives it (RC-5:
+ *           the one root-layout Toaster is the only render surface), both
+ *           inside a feature (picker add) and across route groups.
  *
  * The sibling "?" popover contract (SYS-04) is gated in s1-traps.test.ts on
  * a live surface (Escape, scroll, tap-away). The workouts-feature
@@ -472,6 +475,79 @@ test("workout complete has a top back control (CMP-15/16)", async ({
   await expect(back).toBeVisible({ timeout: 15_000 });
   await back.click();
   await expect(page).toHaveURL(/\/workouts(?:$|\?)/, { timeout: 15_000 });
+
+  await context.close();
+});
+
+/* --------------------------------------------------------------------------
+ * XPK-15 / RC-5: a toast fired right before a navigation survives it.
+ * The Toaster mounts once in the root layout; per-page mounts died with
+ * their page and took the confirmation with them.
+ * ------------------------------------------------------------------------ */
+
+test("the picker add confirmation survives the navigation it triggers (XPK-15)", async ({
+  browser,
+}) => {
+  const { context, page } = await openPage(browser, { authed: true });
+
+  // The original sighting: adding an exercise fires the confirmation toast
+  // and navigates back to the workout in the same tap.
+  await page.goto("/workouts");
+  await page
+    .getByRole("button", { name: /start an empty workout/i })
+    .first()
+    .click();
+  await page.waitForURL("**/workouts/session**");
+  await page.getByRole("button", { name: "Add your first exercise" }).click();
+  await page.waitForURL("**/exercises/pick**");
+  await page
+    .getByRole("button", { name: /Barbell Bench Press/i })
+    .first()
+    .click();
+  await page.getByRole("button", { name: /Add 1 exercise to/i }).click();
+
+  // The toast must still be on screen on the DESTINATION page.
+  await page.waitForURL("**/workouts/session**", { timeout: 15_000 });
+  await expect(
+    page.getByText(/Barbell Bench Press added to your workout/i)
+  ).toBeVisible({ timeout: 5_000 });
+
+  await context.close();
+});
+
+test("a toast survives a bottom-nav navigation to another route group (XPK-15)", async ({
+  browser,
+}) => {
+  const { context, page } = await openPage(browser, { authed: true });
+
+  // Warm the destination route first so the dev-box compile does not eat
+  // the toast's lifetime (prod navigations are instant).
+  await page.goto("/today");
+  await page.waitForLoadState("networkidle").catch(() => {
+    // Proceed if the page never goes idle.
+  });
+
+  // Log water on /hydration: the quick-add receipts with a 6s Undo toast.
+  await page.goto("/hydration");
+  await page
+    .getByRole("button", { name: "Log water", exact: true })
+    .click({ timeout: 30_000 });
+  await page
+    .getByRole("button", { name: /Add a glass of water/i })
+    .click({ timeout: 10_000 });
+  const receipt = page.getByText(/^Added 8 oz\./i);
+  await expect(receipt).toBeVisible({ timeout: 15_000 });
+
+  // Leave immediately for a different route group via the bottom nav.
+  await page
+    .locator('nav[aria-label="Primary"]')
+    .getByRole("link", { name: "Today" })
+    .click();
+  await expect(page).toHaveURL(/\/today/, { timeout: 15_000 });
+  await expect(
+    receipt,
+    "the receipt must still be visible after navigating away"
+  ).toBeVisible();
 
   await context.close();
 });

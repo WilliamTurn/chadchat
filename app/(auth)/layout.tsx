@@ -1,6 +1,5 @@
 import { ArrowLeftIcon, Dumbbell } from "lucide-react";
 import Link from "next/link";
-import { Toaster } from "sonner";
 import { Preview } from "@/components/chat/preview";
 
 export default function AuthLayout({
@@ -10,16 +9,6 @@ export default function AuthLayout({
 }) {
   return (
     <div className="flex h-dvh w-screen bg-sidebar">
-      {/* Without this, the sign-up / sign-in error messages (e.g. "use at least
-          8 characters", "account already exists") never render. */}
-      <Toaster
-        position="top-center"
-        theme="system"
-        toastOptions={{
-          className:
-            "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
-        }}
-      />
       {/* overflow-y-auto (not hidden): a tall form (e.g. sign-up with the
           password checklist + confirm field) must scroll, never clip the
           submit button. justify-center still centers it when it fits. */}
