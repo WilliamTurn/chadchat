@@ -4,10 +4,21 @@ This repo previously had no rulebook; sessions shipped unverified work. The work
 
 ## Exit gates (run before calling anything done)
 
-1. **`pnpm lint:design`** — hardcoded colors/sizes, raw controls, banned copy. It runs inside `pnpm build`, so a violation blocks the Vercel deploy. The baseline (`scripts/design-lint-baseline.json`) auto-shrinks on every run: when your fix lowers a file's count, the new lower count is pinned immediately — commit the baseline change with your fix. Never hand-edit a baseline number upward.
-2. **`pnpm test:smoke`** — renders /today, /nutrition, /hydration, /sleep, /workouts, and /progress in a real browser at 320, 360, 384, 390, 768, and 1280px. Fails on: redirect away from the surface, horizontal overflow, console errors, or uncaught page errors. Requires `POSTGRES_URL` in `.env.local`; it registers a throwaway `smoke-*@playwright.com` user per run.
-3. **`pnpm test:unit`** — the unit suite.
+1. **`pnpm lint:design`** — hardcoded colors/sizes, raw controls, banned copy, per-page Toasters, silent truncation, native confirm(), member-facing jargon. It runs inside `pnpm build`, so a violation blocks the Vercel deploy. The baseline (`scripts/design-lint-baseline.json`) auto-shrinks on every run: when your fix lowers a file's count, the new lower count is pinned immediately — commit the baseline change with your fix. Never hand-edit a baseline number upward. Adding a NEW copy pattern? It needs a NEW rule id (see `jargon-leak`) or it trips an old baseline instead of grandfathering.
+2. **`pnpm test:unit`** — the unit suite (seconds).
+3. **The browser gates — run the slice that covers what you touched** (each suite registers a throwaway `@playwright.com` user; requires `POSTGRES_URL` in `.env.local`):
+
+   | You touched… | Run |
+   |---|---|
+   | One member surface | That surface's smoke group at all 6 widths: `pnpm exec playwright test tests/e2e/surface-smoke.test.ts -g "<group>"` — groups are `core-dashboards`, `training-screens`, `plans-goals-reports`, `account-misc` (see `SURFACE_GROUPS` in the file). ~2–4 min warm |
+   | The workout runner / picker / custom exercise / finish flow | `pnpm test:traps` (every S1 trap at 320/384/390 + the Finish-button/dialog fit gate) and the smoke `-g "in-flow"` sweep. ~5 min warm |
+   | A shared primitive (dialog, tooltip, popover, chart, toast, bottom nav, back control) | `pnpm test:contracts` (one test per interaction trap class) plus the two rows above — a primitive change can break every surface. ~1 min warm |
+   | Anything about to merge toward `main`/prod (wave close) | **`pnpm test:gates`** — all three suites, full width sweep. ~15–30 min on the dev box. Non-negotiable before a merge |
+
+   The smoke gate asserts, per screen per width: no redirect, `<main>` visible, no horizontal overflow, no console/page errors, and no action control clipped by the viewport edge. `tests/e2e/smoke-known-failures.json` pins pre-existing defects (remove-only: when your fix clears a pinned entry the run tells you to delete it — do so in the same change; never add an entry for a defect you just shipped).
 4. **Look at what you made.** Screenshots at 360px, 390px, and desktop; actually inspect them. Layouts are fluid — never tuned to one width. The owner's phone is about 384px wide.
+
+Known expected failures: `interaction-contracts.test.ts` carries SYS-16 (back to referrer) and SYS-15 (scroll memory) as `test.fail()` pins. When the RC-1 wave fixes navigation, those tests start "failing" loudly — RC-1 deletes the `test.fail(...)` lines in the same change. The old template suites (`api.test.ts`, `model-selector.test.ts`, `chat.test.ts`) are broken (they visit chat unauthenticated) and are NOT part of the gates; bare `pnpm test` is red because of them until the owner decides fix-or-delete.
 
 ## Facts sessions keep getting wrong
 
