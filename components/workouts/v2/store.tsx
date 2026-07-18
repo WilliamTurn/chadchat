@@ -10,8 +10,10 @@ import {
   createContext,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useReducer,
+  useState,
   type ReactNode,
 } from "react";
 import type { SetType } from "@/lib/workouts/stats";
@@ -450,7 +452,9 @@ interface WorkoutsStore {
   session: ActiveSession | null;
   restTimer: RestTimer | null;
   draft: BuilderDraft | null;
-  /** False until localStorage has been read (avoids SSR/client mismatch). */
+  /** False until localStorage has been read AND the consuming component has
+   * mounted (see the veil in `useWorkouts`), so it is never true during a
+   * hydration render and persisted state can't mismatch the server HTML. */
   ready: boolean;
   startSession: (session: ActiveSession) => void;
   discardSession: () => void;
@@ -601,8 +605,25 @@ export function WorkoutsProvider({ children }: { children: ReactNode }) {
 
 export function useWorkouts(): WorkoutsStore {
   const ctx = useContext(StoreContext);
-  if (!ctx) {
+  // CI-8: the provider's `ready` flag flips in ITS effect, which can run
+  // before a consumer inside a still-dehydrated Suspense boundary hydrates,
+  // so that consumer's first (hydration) render would see the localStorage
+  // session and mismatch the server HTML, which always renders the empty
+  // state. Veil the persisted state until THIS component has mounted: its
+  // own first render then always matches the server, and the layout effect
+  // reveals the real state synchronously before paint (no flash on
+  // client-side navigations, where components also mount fresh).
+  const [hydrated, setHydrated] = useState(false);
+  useLayoutEffect(() => setHydrated(true), []);
+  const store = useMemo(
+    () =>
+      ctx && !hydrated
+        ? { ...ctx, session: null, restTimer: null, draft: null, ready: false }
+        : ctx,
+    [ctx, hydrated]
+  );
+  if (!store) {
     throw new Error("useWorkouts must be used inside <WorkoutsProvider>");
   }
-  return ctx;
+  return store;
 }

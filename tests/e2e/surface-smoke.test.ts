@@ -470,6 +470,14 @@ for (const viewport of VIEWPORTS) {
     await page.getByRole("button", { name: /Log set 1 .* as done/ }).click();
     await assertScreenClean(page, "flow:workout-session-engaged", viewport);
 
+    // --- Full page loads WITH the live session persisted (CI-8): the mini
+    //     bar, resume card, and player render from localStorage state the
+    //     server never saw, so these pages must hydrate without errors.
+    await page.goto("/workouts", { waitUntil: "load" });
+    await assertScreenClean(page, "flow:workouts-reload-mid-session", viewport);
+    await page.goto("/workouts/session", { waitUntil: "load" });
+    await assertScreenClean(page, "flow:player-reload-mid-session", viewport);
+
     // --- Finish dialog OPEN.
     await page.getByRole("button", { name: "Finish", exact: true }).click();
     const dialog = page.locator('[role="alertdialog"]').last();
