@@ -268,12 +268,13 @@ export const METRICS = {
   },
 
   /* ---- energy (calories-burned Phase 1, owner rulings 2026-07-18) ----
-     Registered ahead of their surfaces (Phase 2 wires the target
-     recommendation, Phase 3 the exercise line + workout-card estimates),
-     per the plan's registry-first rule: the computations exist and are
-     unit-tested in lib/energy/* now; `surfaces` stays empty until a phase
-     actually renders the number. All four are formula estimates
-     (estimated: true — labeled estimated at display time). */
+     Registered ahead of their surfaces per the plan's registry-first rule:
+     the computations exist and are unit-tested in lib/energy/*. Phase 2
+     wired the target recommendation into the target editor (both dashboards
+     it serves); the Phase 3 metrics keep `surfaces` empty until that phase
+     renders them (the exercise line + workout-card estimates). All four are
+     formula estimates (estimated: true — labeled estimated at display
+     time). */
   "energy.recommendedTarget": {
     domain: "nutrition",
     label: "Recommended calorie target",
@@ -288,7 +289,9 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: [],
+    // The target editor's "Recommended for you" block (Phase 2); it serves
+    // both dashboards.
+    surfaces: ["/today", "/nutrition"],
   },
   "energy.maintenance.kcalPerDay": {
     domain: "nutrition",
@@ -297,14 +300,15 @@ export const METRICS = {
     grain: "instant",
     source: { module: "lib/energy/tdee.ts", symbol: "maintenanceKcal" },
     derivation:
-      "TDEE: Mifflin-St Jeor BMR × activity multiplier (sedentary 1.2 | light 1.375 | moderate 1.55 | very 1.725). Shown inside the Phase 2 recommendation block ('Maintenance ~2,600'); same precedence note as energy.recommendedTarget.",
+      "TDEE: Mifflin-St Jeor BMR × activity multiplier (sedentary 1.2 | light 1.375 | moderate 1.55 | very 1.725). Shown inside the Phase 2 recommendation block ('Maintenance is about 2,600'); same precedence note as energy.recommendedTarget.",
     target: { kind: "none" },
     allowedClaims: ["current-value"],
     estimated: true,
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: [],
+    // The explanation line inside the recommendation block (Phase 2).
+    surfaces: ["/today", "/nutrition"],
   },
   "energy.workout.kcal": {
     domain: "training",

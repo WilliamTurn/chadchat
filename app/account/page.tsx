@@ -183,6 +183,7 @@ async function ProfileAndEmailSettings() {
             sex: user.sex,
             age: user.age,
             heightCm: user.heightCm,
+            activityLevel: user.activityLevel,
             experienceLevel: user.experienceLevel,
             primaryGoal: user.primaryGoal,
             primaryGoals: user.primaryGoals,

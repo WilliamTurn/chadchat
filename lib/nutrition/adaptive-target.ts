@@ -135,6 +135,36 @@ export type AdaptiveResult =
 const round25 = (n: number) => Math.round(n / 25) * 25;
 const round1 = (n: number) => Math.round(n * 10) / 10;
 
+/** The observed-energy-balance half of the engine, exposed on its own for
+ * the target recommendation (calories-burned Phase 2): once these gates
+ * pass, this expenditure OUTRANKS the Mifflin-St Jeor formula (plan §4.1
+ * precedence rule, D1). Rates and weights are unrounded here; display
+ * rounding happens at each surface's return point. */
+export type ObservedEnergyBalance = {
+  unit: WeightUnit;
+  /** Estimated true daily expenditure, kcal. */
+  expenditure: number;
+  /** Average intake across the fully-logged window days, kcal. */
+  avgIntake: number;
+  /** Fully-logged days that fed the average. */
+  loggedDays: number;
+  /** Observed trend rate over the window, unit/week (negative = losing). */
+  observedRate: number;
+  /** Current smoothed trend weight. */
+  trendWeight: number;
+};
+
+export type ObservedEnergyBalanceResult =
+  | ({ kind: "ok" } & ObservedEnergyBalance)
+  | {
+      kind: "insufficient";
+      reason:
+        | "few_weighins"
+        | "stale_weighins"
+        | "few_logged_days"
+        | "implausible_expenditure";
+    };
+
 /** Convert every weigh-in to the newest entry's unit (same convention as the
  * weekly report's trend block). */
 function normalize(weighIns: AdaptiveWeighIn[]): {
@@ -179,16 +209,17 @@ export function desiredRatePerWeek(
   return Math.min(hi, Math.max(lo, trendWeight * GAIN_RATE_PCT));
 }
 
-export function computeAdaptiveTarget(
-  inputs: AdaptiveTargetInputs
-): AdaptiveResult {
-  const currentCalories = inputs.target?.calories ?? null;
-  if (currentCalories == null) {
-    // Nothing to adapt: adaptive targets nudge an existing number, they don't
-    // invent the first one (that's the plan builder / target editor's job).
-    return { kind: "insufficient", reason: "no_calorie_target" };
-  }
-
+/**
+ * The engine's data half: EMA weight trend + fully-logged intake window →
+ * observed daily expenditure, behind all the honesty gates (fresh weigh-ins,
+ * ≥4 spread across the window, ≥10 fully-logged days, plausible result).
+ * Shared by computeAdaptiveTarget and the Phase 2 target recommendation.
+ */
+export function observedEnergyBalance(inputs: {
+  weighIns: AdaptiveWeighIn[];
+  intakeDays: AdaptiveIntakeDay[];
+  nowMs: number;
+}): ObservedEnergyBalanceResult {
   // --- the weight side: EMA trend + observed rate over the window ---
   const { unit, points } = normalize(inputs.weighIns);
   const rows = ema(points);
@@ -235,35 +266,127 @@ export function computeAdaptiveTarget(
     return { kind: "insufficient", reason: "implausible_expenditure" };
   }
 
-  const desiredRate = desiredRatePerWeek(last.trend, inputs.goalWeight, unit);
-  const ideal = expenditure + (desiredRate * KCAL_PER_UNIT[unit]) / 7;
+  return {
+    kind: "ok",
+    unit,
+    expenditure,
+    avgIntake,
+    loggedDays: logged.length,
+    observedRate,
+    trendWeight: last.trend,
+  };
+}
 
+/**
+ * Re-derive macro grams for a new calorie total: protein stays anchored,
+ * carbs/fat absorb the change in their existing ratio. Null macros when the
+ * member has no complete macro set (then only the calorie number changes).
+ */
+export function rebalanceMacros(
+  calories: number,
+  target: {
+    protein: number | null;
+    carbs: number | null;
+    fat: number | null;
+  } | null
+): { protein: number | null; carbs: number | null; fat: number | null } {
+  if (
+    !target ||
+    target.protein == null ||
+    target.carbs == null ||
+    target.fat == null
+  ) {
+    return { protein: null, carbs: null, fat: null };
+  }
+  const protein = target.protein;
+  const proteinKcal = protein * KCAL_PER_GRAM.protein;
+  const remaining = Math.max(0, calories - proteinKcal);
+  const carbsKcal = target.carbs * KCAL_PER_GRAM.carbs;
+  const fatKcal = target.fat * KCAL_PER_GRAM.fat;
+  const nonProtein = carbsKcal + fatKcal;
+  const carbsShare = nonProtein > 0 ? carbsKcal / nonProtein : 0.55;
+  return {
+    protein,
+    carbs: Math.round((remaining * carbsShare) / KCAL_PER_GRAM.carbs),
+    fat: Math.round((remaining * (1 - carbsShare)) / KCAL_PER_GRAM.fat),
+  };
+}
+
+/**
+ * Observed expenditure + desired pace → the daily target (and rebalanced
+ * macros) this engine stands behind. With a current target the move is
+ * clamped to ±MAX_STEP_KCAL (gentle weekly nudges); with none (day 0, the
+ * Phase 2 recommendation) the ideal is recommended directly. One
+ * implementation shared by computeAdaptiveTarget and the target
+ * recommendation so the two surfaces can never disagree.
+ */
+export function deriveTargetFromExpenditure(args: {
+  expenditure: number;
+  /** Signed units/week; 0 = maintenance. */
+  desiredRate: number;
+  unit: WeightUnit;
+  /** Null = no current target: no step clamp. */
+  currentCalories: number | null;
+  /** Current macro targets; a complete set is re-derived protein-anchored. */
+  target: {
+    protein: number | null;
+    carbs: number | null;
+    fat: number | null;
+  } | null;
+}): {
+  calories: number;
+  /** True when the calorie floor overrode the arithmetic. */
+  floored: boolean;
+  protein: number | null;
+  carbs: number | null;
+  fat: number | null;
+} {
+  const ideal =
+    args.expenditure + (args.desiredRate * KCAL_PER_UNIT[args.unit]) / 7;
   // Gentle nudge: clamp to a max step from the current target, then floor.
-  const stepped = Math.min(
-    currentCalories + MAX_STEP_KCAL,
-    Math.max(currentCalories - MAX_STEP_KCAL, ideal)
-  );
+  const stepped =
+    args.currentCalories == null
+      ? ideal
+      : Math.min(
+          args.currentCalories + MAX_STEP_KCAL,
+          Math.max(args.currentCalories - MAX_STEP_KCAL, ideal)
+        );
   const calories = Math.max(CALORIE_FLOOR, round25(stepped));
-  const deltaCalories = calories - currentCalories;
-  if (Math.abs(deltaCalories) < MIN_DELTA_KCAL) {
-    return { kind: "hold", reason: "delta_too_small" };
+  return {
+    calories,
+    floored: calories > round25(stepped),
+    ...rebalanceMacros(calories, args.target),
+  };
+}
+
+export function computeAdaptiveTarget(
+  inputs: AdaptiveTargetInputs
+): AdaptiveResult {
+  const currentCalories = inputs.target?.calories ?? null;
+  if (currentCalories == null) {
+    // Nothing to adapt: adaptive targets nudge an existing number, they don't
+    // invent the first one (that's the plan builder / target editor's job).
+    return { kind: "insufficient", reason: "no_calorie_target" };
   }
 
-  // --- macros: protein anchored, carbs/fat absorb the delta in ratio ---
-  let protein: number | null = null;
-  let carbs: number | null = null;
-  let fat: number | null = null;
-  const t = inputs.target;
-  if (t && t.protein != null && t.carbs != null && t.fat != null) {
-    protein = t.protein;
-    const proteinKcal = protein * KCAL_PER_GRAM.protein;
-    const remaining = Math.max(0, calories - proteinKcal);
-    const carbsKcal = t.carbs * KCAL_PER_GRAM.carbs;
-    const fatKcal = t.fat * KCAL_PER_GRAM.fat;
-    const nonProtein = carbsKcal + fatKcal;
-    const carbsShare = nonProtein > 0 ? carbsKcal / nonProtein : 0.55;
-    carbs = Math.round((remaining * carbsShare) / KCAL_PER_GRAM.carbs);
-    fat = Math.round((remaining * (1 - carbsShare)) / KCAL_PER_GRAM.fat);
+  const observed = observedEnergyBalance(inputs);
+  if (observed.kind !== "ok") {
+    return observed;
+  }
+  const { unit, expenditure, avgIntake, loggedDays, observedRate, trendWeight } =
+    observed;
+
+  const desiredRate = desiredRatePerWeek(trendWeight, inputs.goalWeight, unit);
+  const derived = deriveTargetFromExpenditure({
+    expenditure,
+    desiredRate,
+    unit,
+    currentCalories,
+    target: inputs.target,
+  });
+  const deltaCalories = derived.calories - currentCalories;
+  if (Math.abs(deltaCalories) < MIN_DELTA_KCAL) {
+    return { kind: "hold", reason: "delta_too_small" };
   }
 
   return {
@@ -271,15 +394,15 @@ export function computeAdaptiveTarget(
     unit,
     expenditure,
     avgIntake,
-    loggedDays: logged.length,
+    loggedDays,
     observedRate: round1(observedRate),
     desiredRate: round1(desiredRate),
-    trendWeight: last.trend,
+    trendWeight,
     currentCalories,
-    calories,
+    calories: derived.calories,
     deltaCalories,
-    protein,
-    carbs,
-    fat,
+    protein: derived.protein,
+    carbs: derived.carbs,
+    fat: derived.fat,
   };
 }

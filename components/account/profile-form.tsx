@@ -4,11 +4,13 @@ import { Loader2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { saveProfile } from "@/app/account/actions";
+import { ActivityLevelField } from "@/components/profile/activity-level-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  type ActivityLevel,
   cmToFtIn,
   EXPERIENCE_OPTIONS,
   type ExperienceLevel,
@@ -112,6 +114,7 @@ export function ProfileForm({
     sex: Sex | null;
     age: number | null;
     heightCm: number | null;
+    activityLevel: ActivityLevel | null;
     experienceLevel: ExperienceLevel | null;
     primaryGoal: PrimaryGoal | null;
     primaryGoals: PrimaryGoal[] | null;
@@ -138,6 +141,9 @@ export function ProfileForm({
     system === "metric" && initial.heightCm != null
       ? String(initial.heightCm)
       : ""
+  );
+  const [activity, setActivity] = useState<ActivityLevel | null>(
+    initial.activityLevel
   );
   const [experience, setExperience] = useState<ExperienceLevel | null>(
     initial.experienceLevel
@@ -171,6 +177,7 @@ export function ProfileForm({
           sex,
           age: age.trim() ? Number(age) : null,
           heightCm: currentHeightCm(),
+          activityLevel: activity,
           experienceLevel: experience,
           // The first pick mirrors into the legacy single-goal column so
           // every older reader keeps working.
@@ -260,6 +267,17 @@ export function ProfileForm({
             options={EXPERIENCE_OPTIONS}
             onChange={setExperience}
             value={experience}
+          />
+        </div>
+
+        {/* Everyday activity (calories-burned Phase 2, D6): full-width like
+            the goals block because each option carries a description. Feeds
+            the recommended calorie target in the target editor. */}
+        <div className="sm:col-span-2">
+          <ActivityLevelField
+            clearable
+            onChange={setActivity}
+            value={activity}
           />
         </div>
 

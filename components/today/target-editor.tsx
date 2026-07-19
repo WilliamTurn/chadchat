@@ -7,6 +7,7 @@ import { type FormEvent, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { saveNutritionTarget } from "@/app/nutrition/actions";
 import { SegmentedPicker } from "@/components/meal-plan/segmented-picker";
+import { RecommendedTargetBlock } from "@/components/today/recommended-target";
 import { Button } from "@/components/ui/button";
 import {
   AdaptiveDialog as Dialog,
@@ -205,7 +206,7 @@ export function TargetEditor({
         <DialogHeader>
           <DialogTitle>Daily targets</DialogTitle>
           <DialogDescription>
-            Set your daily calorie and macro goals. Protein and carbs are 4
+            Set your daily calorie and macro targets. Protein and carbs are 4
             calories per gram, fat is 9, so the numbers have to add up. Not
             sure what to aim for?{" "}
             <Link
@@ -219,6 +220,17 @@ export function TargetEditor({
             .
           </DialogDescription>
         </DialogHeader>
+
+        {/* Calories-burned Phase 2: the computed recommendation (or the ask
+            for whatever profile data it still needs). Accepting writes the
+            target through the same consent rails as the form below. */}
+        <RecommendedTargetBlock
+          onAccepted={(n) => {
+            setCal(String(n));
+            setOpen(false);
+          }}
+          open={open}
+        />
 
         <SegmentedPicker
           ariaLabel="Target entry mode"

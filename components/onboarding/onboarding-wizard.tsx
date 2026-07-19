@@ -5,10 +5,13 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { finishOnboarding } from "@/app/welcome/actions";
+import { ActivityLevelField } from "@/components/profile/activity-level-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  type ActivityLevel,
+  activityLabel,
   EXPERIENCE_OPTIONS,
   type ExperienceLevel,
   experienceLabel,
@@ -25,7 +28,7 @@ import { cn } from "@/lib/utils";
 
 type UnitSystem = "imperial" | "metric";
 
-const STEP_COUNT = 3;
+const STEP_COUNT = 4;
 
 // min-w-0 + wrapping: a label must NEVER spill past its button's border on a
 // narrow phone (user report: "Intermediate" overflowing its box). Long labels
@@ -162,6 +165,10 @@ export function OnboardingWizard({
   const [heightCm, setHeightCm] = useState("");
   const [weight, setWeight] = useState("");
 
+  // Everyday activity (calories-burned Phase 2, D6): feeds the recommended
+  // calorie target's TDEE multiplier. Workouts deliberately excluded.
+  const [activity, setActivity] = useState<ActivityLevel | null>(null);
+
   const [experience, setExperience] = useState<ExperienceLevel | null>(null);
   // Multi-select (s157): people usually train for more than one outcome.
   const [goals, setGoals] = useState<PrimaryGoal[]>([]);
@@ -207,6 +214,11 @@ export function OnboardingWizard({
     if (weightLine) {
       lines.push(`- Current weight: ${weightLine}`);
     }
+    if (activity) {
+      lines.push(
+        `- Everyday activity, outside workouts: ${activityLabel(activity)}`
+      );
+    }
     if (experience) {
       lines.push(`- Training experience: ${experienceLabel(experience)}`);
     }
@@ -237,6 +249,7 @@ export function OnboardingWizard({
     heightCm,
     weight,
     weightUnit,
+    activity,
     experience,
     goals,
     trainingDays,
@@ -253,6 +266,7 @@ export function OnboardingWizard({
             sex,
             age: age.trim() ? Number(age) : null,
             heightCm: heightCmValue,
+            activityLevel: activity,
             experienceLevel: experience,
             primaryGoal: goals[0] ?? null,
             primaryGoals: goals,
@@ -417,6 +431,10 @@ export function OnboardingWizard({
         )}
 
         {step === 2 && (
+          <ActivityLevelField onChange={setActivity} value={activity} />
+        )}
+
+        {step === 3 && (
           <>
             <div className="flex flex-col gap-2">
               <Label>Training experience</Label>

@@ -678,6 +678,7 @@ export type UserProfileInput = {
   sex?: "male" | "female" | null;
   age?: number | null;
   heightCm?: number | null;
+  activityLevel?: "sedentary" | "light" | "moderate" | "very" | null;
   experienceLevel?: "beginner" | "intermediate" | "advanced" | null;
   primaryGoal?: "muscle" | "fat_loss" | "strength" | "health" | null;
   primaryGoals?: ("muscle" | "fat_loss" | "strength" | "health")[] | null;
@@ -701,6 +702,7 @@ export async function updateUserProfile(
     "sex",
     "age",
     "heightCm",
+    "activityLevel",
     "experienceLevel",
     "primaryGoal",
     "primaryGoals",

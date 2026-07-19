@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { auth } from "@/app/(auth)/auth";
 import { canAccessProFeatures } from "@/lib/admin";
 import {
@@ -23,6 +24,7 @@ import {
 import {
   addWaterLog,
   createMealAnalysis,
+  createProgressEntry,
   deleteLatestWaterLog,
   deleteMealAnalysis,
   deleteWaterLogById,
@@ -30,6 +32,7 @@ import {
   getUserById,
   restoreMealAnalysis,
   updateMealAnalysis,
+  updateUserProfile,
   updateUserWaterGoal,
   upsertNutritionTarget,
 } from "@/lib/db/queries";
@@ -39,6 +42,8 @@ import {
   searchFoodDatabase,
 } from "@/lib/nutrition/food-search";
 import { computeUserRecalibration } from "@/lib/nutrition/recalibrate";
+import { computeUserTargetRecommendation } from "@/lib/nutrition/recommend-target";
+import type { TargetRecommendation } from "@/lib/nutrition/target-recommendation";
 import { reconcileTarget } from "@/lib/nutrition/target-math";
 import {
   type AnalyzeMealInput,
@@ -49,6 +54,8 @@ import {
   logMealSchema,
   type NutritionTargetInput,
   nutritionTargetSchema,
+  type RecommendationInputs,
+  recommendationInputsSchema,
   type RestoreMealInput,
   restoreMealSchema,
 } from "@/lib/validation/nutrition";
@@ -617,6 +624,121 @@ export async function saveNutritionTarget(
   }
 
   await upsertNutritionTarget(user.id, parsed.data);
+  applyMutationReceipt(
+    targetReceipt({
+      domain: "nutrition",
+      entity: "nutritionTarget",
+      todayISO: toCalendarDayISO(todayAnchorInTz(user.timezone)),
+    })
+  );
+  return { ok: true };
+}
+
+/**
+ * Calories-burned Phase 2 — the target editor's "Recommended for you" data:
+ * the recommendation (observed expenditure outranking the formula, D1) or
+ * the exact list of missing formula inputs to ask for. The member's weight
+ * unit rides along so the missing-data height/weight fields render in their
+ * system.
+ */
+export async function getTargetRecommendation(): Promise<{
+  ok: boolean;
+  rec?: TargetRecommendation;
+  weightUnit?: "lb" | "kg";
+  error?: string;
+}> {
+  const user = await requirePro();
+  if (!user) {
+    return { ok: false, error: "Targets are a Chad Pro feature." };
+  }
+  const rec = await computeUserTargetRecommendation(user);
+  return { ok: true, rec, weightUnit: user.weightUnit ?? "lb" };
+}
+
+/**
+ * Calories-burned Phase 2 — the missing-data ask inside the target editor.
+ * Fills ONLY what the recommendation still needs: profile facts go to the
+ * same structured profile /account edits (updateUserProfile), and a weight
+ * becomes the member's FIRST weigh-in (ProgressEntry) — one storage place,
+ * never a second "current weight" field.
+ */
+export async function saveRecommendationInputs(
+  input: RecommendationInputs
+): Promise<NutritionActionState> {
+  const user = await requirePro();
+  if (!user) {
+    return { ok: false, error: "Targets are a Chad Pro feature." };
+  }
+
+  const parsed = recommendationInputsSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.errors[0]?.message ?? "Couldn't save those details.",
+    };
+  }
+
+  const { weight, ...profile } = parsed.data;
+  if (Object.keys(profile).length > 0) {
+    await updateUserProfile(user.id, profile);
+    // The same fields show on /account, and sex drives the /today figure.
+    revalidatePath("/account");
+    revalidatePath("/today");
+  }
+
+  if (weight != null) {
+    await createProgressEntry({
+      userId: user.id,
+      recordedAt: new Date(),
+      weight,
+      unit: user.weightUnit ?? "lb",
+      photoUrl: null,
+      note: null,
+    });
+    applyMutationReceipt(
+      loggingReceipt({
+        domain: "body",
+        entity: "progressEntry",
+        op: "create",
+        days: { startISO: toCalendarDayISO(todayAnchorInTz(user.timezone)) },
+      })
+    );
+  }
+
+  return { ok: true };
+}
+
+/**
+ * Calories-burned Phase 2 — the member accepts the recommended target. Same
+ * consent shape as applyRecalibration: recomputed server-side from their
+ * real profile + logs (never taken from the client), written through the
+ * effective-dated NutritionTarget rails. This tap IS the consent; nothing
+ * ever sets a target silently.
+ */
+export async function acceptRecommendedTarget(): Promise<NutritionActionState> {
+  const user = await requirePro();
+  if (!user) {
+    return { ok: false, error: "Targets are a Chad Pro feature." };
+  }
+
+  const rec = await computeUserTargetRecommendation(user);
+  if (rec.kind !== "ready") {
+    return {
+      ok: false,
+      error:
+        "Your numbers changed since this was computed. Reopen the editor for the current recommendation.",
+    };
+  }
+
+  const existing = await getNutritionTarget(user.id);
+  await upsertNutritionTarget(user.id, {
+    calories: rec.target,
+    // Macros only move when the member has a complete set for the engine to
+    // rebalance (protein anchored); otherwise whatever they had stays.
+    protein: rec.protein ?? existing?.protein ?? null,
+    carbs: rec.carbs ?? existing?.carbs ?? null,
+    fat: rec.fat ?? existing?.fat ?? null,
+  });
   applyMutationReceipt(
     targetReceipt({
       domain: "nutrition",

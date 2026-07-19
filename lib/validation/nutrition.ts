@@ -102,3 +102,20 @@ export const nutritionTargetSchema = z.object({
 });
 
 export type NutritionTargetInput = z.infer<typeof nutritionTargetSchema>;
+
+/**
+ * The target editor's missing-data ask (calories-burned Phase 2): only the
+ * formula inputs the recommendation still needs. Fill-only, never clearing:
+ * a member empties fields on /account, not here. Weight (in the member's
+ * preferred unit) becomes their FIRST weigh-in (ProgressEntry), the same
+ * bounds as progressEntrySchema; the profile fields mirror profileSchema.
+ */
+export const recommendationInputsSchema = z.object({
+  sex: z.enum(["male", "female"]).optional(),
+  age: z.coerce.number().int().min(13).max(100).optional(),
+  heightCm: z.coerce.number().int().min(90).max(250).optional(),
+  activityLevel: z.enum(["sedentary", "light", "moderate", "very"]).optional(),
+  weight: z.number().positive().max(2000).optional(),
+});
+
+export type RecommendationInputs = z.infer<typeof recommendationInputsSchema>;
