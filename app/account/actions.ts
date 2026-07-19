@@ -9,6 +9,7 @@ import {
   getUserById,
   setChadIntensity,
   setCheckInSettings,
+  setExerciseCalorieAddBack,
   setMemoryEnabled,
   setQuitDateEnabled,
   setSensoryPrefs,
@@ -317,6 +318,27 @@ export async function saveQuitDateEnabled(enabled: boolean) {
   revalidatePath("/account");
   revalidatePath("/today");
   revalidatePath("/quit-date");
+}
+
+/**
+ * The D2 exercise-calorie toggle (calories-burned Phase 3): whether logged
+ * exercise raises the day's calorie budget (Remaining = Target − Food +
+ * Exercise). Off = plain Target − Food everywhere, instantly.
+ */
+export async function saveExerciseCalorieAddBack(enabled: boolean) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  if (typeof enabled !== "boolean") {
+    throw new Error("Invalid exercise calories setting");
+  }
+
+  await setExerciseCalorieAddBack(session.user.id, enabled);
+  revalidatePath("/account");
+  revalidatePath("/today");
+  revalidatePath("/nutrition");
 }
 
 /** Set how hard Chad goes on the current member (full | medium | low). */

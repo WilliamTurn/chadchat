@@ -17,7 +17,10 @@
  * Pure math, no DB, no Date.now().
  */
 
-import { activityMet } from "@/lib/energy/activity-catalog";
+import {
+  activityMet,
+  metForExerciseName,
+} from "@/lib/energy/activity-catalog";
 
 /**
  * D5: strength default MET 3.5 ("weight lifting, general", 2024 Compendium)
@@ -136,4 +139,98 @@ export function exerciseKcalForDay(
     return null;
   }
   return computable.reduce((sum, k) => sum + k, 0);
+}
+
+/* ------------------------------------------------- logged-session shape */
+
+/** The slice of a logged workout row this module prices (structurally
+ * satisfied by lib/workouts/stats.ts WorkoutData — no import cycle). */
+export type LoggedSession = {
+  /** Workout.durationSeconds; null = the member never timed the session. */
+  durationSeconds: number | null;
+  exercises: ReadonlyArray<{
+    name: string;
+    /** "timed" sets hold seconds in `reps`; anything else is strength work. */
+    kind?: "weighted" | "bodyweight" | "timed" | null;
+    sets: ReadonlyArray<{ reps: number | null; completed: boolean }>;
+  }>;
+};
+
+/** Whether every exercise in a logged session is catalog cardio — the
+ * display cue to drop lifting chrome (set counts, volume) from a session
+ * that was a run, not a lift. */
+export function isCardioOnlySession(session: LoggedSession): boolean {
+  return (
+    session.exercises.length > 0 &&
+    session.exercises.every(
+      (ex) => ex.kind === "timed" && metForExerciseName(ex.name) != null
+    )
+  );
+}
+
+/**
+ * THE canonical estimate for one LOGGED workout row (registry:
+ * energy.workout.kcal — what the Phase 3 burn lines render). Splits the
+ * session into its honest components and prices each through netKcal:
+ *
+ * - Cardio: every timed exercise whose name the catalog knows
+ *   (metForExerciseName — machine-cardio library names, catalog labels, and
+ *   the cardio logger's "activity · effort" snapshots). Its completed set
+ *   seconds are priced at that activity's MET.
+ * - Strength: the REST of the session's durationSeconds (minus the cardio
+ *   seconds, so a treadmill stretch inside a lifting session is never
+ *   double-counted) at the D5 general MET — but only when the session has
+ *   at least one non-cardio exercise; resting between rowing intervals is
+ *   not lifting.
+ *
+ * Missing inputs contribute nothing; a session with no computable component
+ * returns null (renders no line, never a guess).
+ */
+export function sessionNetKcal(
+  session: LoggedSession,
+  weightKg: number | null
+): number | null {
+  let total = 0;
+  let computable = false;
+  let cardioSeconds = 0;
+  let hasStrengthExercise = false;
+
+  for (const ex of session.exercises) {
+    const met = ex.kind === "timed" ? metForExerciseName(ex.name) : null;
+    if (met == null) {
+      hasStrengthExercise = true;
+      continue;
+    }
+    const seconds = ex.sets.reduce(
+      (sum, set) =>
+        sum + (set.completed && set.reps != null && set.reps > 0 ? set.reps : 0),
+      0
+    );
+    if (seconds <= 0) {
+      continue;
+    }
+    cardioSeconds += seconds;
+    const part = netKcal(met, weightKg, seconds / 3600);
+    if (part != null) {
+      total += part;
+      computable = true;
+    }
+  }
+
+  if (hasStrengthExercise && isUsable(session.durationSeconds)) {
+    const strengthSeconds = Math.max(0, session.durationSeconds - cardioSeconds);
+    if (strengthSeconds > 0) {
+      const part = netKcal(
+        STRENGTH_METS.general,
+        weightKg,
+        strengthSeconds / 3600
+      );
+      if (part != null) {
+        total += part;
+        computable = true;
+      }
+    }
+  }
+
+  return computable ? total : null;
 }

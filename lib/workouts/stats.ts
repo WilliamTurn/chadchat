@@ -148,6 +148,13 @@ export function computePersonalRecords(workouts: WorkoutData[]): PersonalRecord[
   for (const w of workouts) {
     const performed = new Date(w.performedAt).getTime();
     for (const ex of w.exercises) {
+      // Timed exercises store SECONDS in the reps column, so lifting records
+      // ("Best 1800 reps" for a 30-minute row) would be nonsense. Cardio and
+      // timed work have no PRs here (Phase 3; same position as the volume
+      // math, which already skips them via the weight requirement).
+      if (ex.kind === "timed") {
+        continue;
+      }
       const key = ex.name.trim().toLowerCase();
       if (!key) {
         continue;

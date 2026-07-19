@@ -629,6 +629,25 @@ export async function setQuitDateEnabled(userId: string, enabled: boolean) {
   }
 }
 
+/** The D2 toggle: whether logged exercise raises the day's calorie budget
+ * (Remaining = Target − Food + Exercise). Default ON in the schema. */
+export async function setExerciseCalorieAddBack(
+  userId: string,
+  enabled: boolean
+) {
+  try {
+    return await db
+      .update(user)
+      .set({ exerciseCalorieAddBack: enabled, updatedAt: new Date() })
+      .where(eq(user.id, userId));
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to update exercise calories setting"
+    );
+  }
+}
+
 /** Set the user's preferred body-weight unit (lb/kg) for display + new logs. */
 export async function setWeightUnit(userId: string, unit: "lb" | "kg") {
   try {
@@ -1327,6 +1346,30 @@ export async function getProgressEntriesByUserId(
     throw new ChatbotError(
       "bad_request:database",
       "Failed to get progress entries"
+    );
+  }
+}
+
+/** The most recent entry that carries a weight — the body weight every
+ * exercise-calorie estimate prices against (calories-burned plan §6:
+ * computed at read time from workout rows + catalog + latest weight). */
+export async function getLatestWeighIn(
+  userId: string
+): Promise<ProgressEntry | null> {
+  try {
+    const [row] = await db
+      .select()
+      .from(progressEntry)
+      .where(
+        and(eq(progressEntry.userId, userId), isNotNull(progressEntry.weight))
+      )
+      .orderBy(desc(progressEntry.recordedAt))
+      .limit(1);
+    return row ?? null;
+  } catch (_error) {
+    throw new ChatbotError(
+      "bad_request:database",
+      "Failed to get latest weigh-in"
     );
   }
 }

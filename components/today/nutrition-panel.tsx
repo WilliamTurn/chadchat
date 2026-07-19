@@ -17,6 +17,7 @@ import {
   resolvePanelState,
   unloggedReading,
 } from "@/lib/contracts/data-state";
+import { calorieBudget } from "@/lib/energy/calorie-budget";
 import { METRICS } from "@/lib/contracts/metrics";
 import { LOGGABLE_DOMAINS } from "@/lib/contracts/panels";
 import { formatQuantity } from "@/lib/contracts/units";
@@ -40,7 +41,9 @@ import { cn } from "@/lib/utils";
  * nutrition.week.daily) and never re-derives them.
  */
 
-/** A week day carrying the target active on that day (FIX-07). */
+/** A week day carrying the target active on that day (FIX-07), plus the
+ * Phase 3 exercise-adjusted budget (optional so fixture weeks stay valid;
+ * absent falls back to the plain target). */
 export type NutritionPanelDay = MacroDay & {
   target: {
     calories: number | null;
@@ -48,6 +51,8 @@ export type NutritionPanelDay = MacroDay & {
     carbs: number | null;
     fat: number | null;
   } | null;
+  /** target + credited exercise for that day; null without a target. */
+  budgetCalories?: number | null;
 };
 
 const NUTRITION_DOMAIN = LOGGABLE_DOMAINS.find((d) => d.domain === "nutrition");
@@ -107,6 +112,8 @@ export function NutritionPanel({
   mealsToday,
   target,
   week,
+  exerciseKcal = null,
+  addBackOn = true,
   viewHref = "/nutrition",
   locked = false,
   fetchState = "ready",
@@ -126,6 +133,10 @@ export function NutritionPanel({
   } | null;
   /** Sunday-start current week, each day with its own effective target. */
   week: NutritionPanelDay[];
+  /** Today's computable exercise estimate; null/absent = none (Phase 3). */
+  exerciseKcal?: number | null;
+  /** User.exerciseCalorieAddBack (D2); defaults on, like the column. */
+  addBackOn?: boolean;
   viewHref?: string;
   /** Entitlement gate: renders the locked teaser (no member data needed). */
   locked?: boolean;
@@ -154,15 +165,24 @@ export function NutritionPanel({
   });
 
   const calorieTarget = target?.calories ?? null;
-  const over = calorieTarget != null && calories > calorieTarget;
+  // Today's budget (Phase 3): target + credited exercise through the ONE
+  // canonical arithmetic; with add-back off (or nothing computable) this is
+  // exactly the plain target and everything below reverts.
+  const { credited, budget } = calorieBudget({
+    targetKcal: calorieTarget,
+    exerciseKcal,
+    addBackOn,
+  });
+  const over = budget != null && calories > budget;
 
-  // Week-strip grading per that day's own effective target: full amber = a
-  // logged day at or under its calorie target, critical = over (genuine
-  // at-most alert, Color Law), soft amber = logged with no target that day.
+  // Week-strip grading per that day's own exercise-adjusted budget (falling
+  // back to its effective target): full amber = a logged day at or under it,
+  // critical = over (genuine at-most alert, Color Law), soft amber = logged
+  // with no target that day.
   const strip = (
     <WeekStrip
       days={week.map((day) => {
-        const dayTarget = day.target?.calories ?? null;
+        const dayTarget = day.budgetCalories ?? day.target?.calories ?? null;
         const dayOver = dayTarget != null && day.calories > dayTarget;
         return {
           key: day.t,
@@ -269,9 +289,10 @@ export function NutritionPanel({
         }
         state={state}
         targetContext={
-          calorieTarget != null ? (
+          budget != null ? (
             <span className={cn(over && "font-medium text-critical-text")}>
-              of {formatQuantity(calorieTarget, "kcal")}
+              of {formatQuantity(budget, "kcal")}
+              {credited > 0 ? ` · includes ~${credited} cal exercise` : ""}
               {over ? " · over target" : ""}
             </span>
           ) : (
@@ -282,7 +303,12 @@ export function NutritionPanel({
         tone="amber"
         visual={
           <div className="flex items-center gap-3">
-            <CalorieArc consumed={calories} size={88} target={calorieTarget} />
+            <CalorieArc
+              consumed={calories}
+              exerciseCredited={credited}
+              size={88}
+              target={calorieTarget}
+            />
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               {MACRO_ROWS.map((row) => (
                 <MacroRow

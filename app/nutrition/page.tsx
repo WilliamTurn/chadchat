@@ -28,13 +28,21 @@ import {
   todayStartInTz,
 } from "@/lib/date";
 import {
+  getLatestWeighIn,
   getMealLogByUserId,
   getMealsBetween,
   getNutritionTarget,
   getUserById,
+  getWorkoutsBetween,
 } from "@/lib/db/queries";
 import type { MealAnalysis, NutritionTarget, User } from "@/lib/db/schema";
+import {
+  exerciseKcalForDay,
+  sessionNetKcal,
+} from "@/lib/energy/workout-energy";
 import { dailyMacroTrend } from "@/lib/nutrition/daily-macros";
+import { weighInKg } from "@/lib/progress/weight";
+import { toWorkoutData } from "@/lib/workouts/serialize";
 import { computeUserRecalibration } from "@/lib/nutrition/recalibrate";
 import { deriveRecentFoods } from "@/lib/nutrition/recent-foods";
 import { RewardProvider } from "@/components/dashboard/reward";
@@ -183,10 +191,19 @@ async function Feed({
   const dayISO = requested && requested < todayISO ? requested : todayISO;
   const viewingToday = dayISO === todayISO;
 
-  const [meals, target] = await Promise.all([
+  // The viewed day's exercise calories (Phase 3 add-back): that day's
+  // workouts priced at the latest weigh-in (energy.exercise.kcalPerDay).
+  const dayWindow = calendarRangeWindowInTz(dayISO, dayISO, timezone);
+  const [meals, target, dayWorkouts, latestWeighIn] = await Promise.all([
     getMealLogByUserId(userId),
     getNutritionTarget(userId),
+    getWorkoutsBetween(userId, dayWindow.start, dayWindow.end),
+    getLatestWeighIn(userId),
   ]);
+  const weightKg = weighInKg(latestWeighIn);
+  const exerciseKcal = exerciseKcalForDay(
+    dayWorkouts.map((w) => sessionNetKcal(toWorkoutData(w), weightKg))
+  );
 
   // NUT-23: this week's target recalibration, computed in code from the real
   // logs. Only surfaced on the today view, and only when the engine has an
@@ -261,6 +278,7 @@ async function Feed({
             unchanged. */}
         <div className="flex min-w-0 flex-col gap-4">
           <DaySummary
+            addBackOn={user.exerciseCalorieAddBack}
             dayNav={
               <DayNav
                 dayISO={dayISO}
@@ -269,6 +287,7 @@ async function Feed({
                 todayISO={todayISO}
               />
             }
+            exerciseKcal={exerciseKcal}
             heading={heading}
             meals={dayMeals}
             target={target}
@@ -314,12 +333,18 @@ function DaySummary({
   heading,
   viewingToday,
   dayNav,
+  exerciseKcal,
+  addBackOn,
 }: {
   meals: MealAnalysis[];
   target: NutritionTarget | undefined;
   heading: string;
   viewingToday: boolean;
   dayNav: ReactNode;
+  /** The viewed day's computable exercise estimate; null = none. */
+  exerciseKcal: number | null;
+  /** User.exerciseCalorieAddBack (D2). */
+  addBackOn: boolean;
 }) {
   return (
     // id="history": where the dashboard card's "View all" link lands (R2-5) --
@@ -361,6 +386,8 @@ function DaySummary({
           caloriesTarget={target?.calories ?? null}
           carbsConsumed={sumMacro(meals, "carbs")}
           carbsTarget={target?.carbs ?? null}
+          exerciseAddBackOn={addBackOn}
+          exerciseKcal={exerciseKcal}
           fatConsumed={sumMacro(meals, "fat")}
           fatTarget={target?.fat ?? null}
           proteinConsumed={sumMacro(meals, "protein")}

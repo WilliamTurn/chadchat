@@ -317,17 +317,19 @@ export const METRICS = {
     grain: "session",
     source: {
       module: "lib/energy/workout-energy.ts",
-      symbol: "workoutNetKcal",
+      symbol: "sessionNetKcal",
     },
     derivation:
-      "Net METs (D3, Cronometer's arithmetic): (MET − 1) × kg × hours, never gross. Strength sessions use Workout.durationSeconds at MET 3.5 ('general lifting', D5) or the intense variant (6.0); sets/reps/RPE are never calorie inputs (the MFP position). Cardio uses minutes against lib/energy/activity-catalog.ts (2024 Compendium). Body weight = latest weigh-in. Missing inputs → null, never a guess. Phase 3 renders it on workout cards/history ('~225 cal estimated').",
+      "Net METs (D3, Cronometer's arithmetic): (MET − 1) × kg × hours, never gross. sessionNetKcal splits a logged row into components: timed exercises the catalog knows (machine-cardio library names, catalog labels, and the cardio logger's 'activity · effort' snapshots via metForExerciseName) are priced per completed-set seconds at their MET; the REST of Workout.durationSeconds (never overlapping the cardio seconds) is strength at MET 3.5 ('general lifting', D5) — only when a non-cardio exercise exists. Sets/reps/RPE are never calorie inputs (the MFP position). Body weight = latest weigh-in. Missing inputs → null, never a guess. Rendered as '~225 cal estimated' on workout cards, history, and the session detail.",
     target: { kind: "none" },
     allowedClaims: ["current-value"],
     estimated: true,
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: [],
+    // The burn lines (Phase 3): history cards on the Workouts home + full
+    // history, and the detail page's stat tile.
+    surfaces: ["/workouts", "/workouts/history", "/workouts/history/[id]"],
   },
   "energy.exercise.kcalPerDay": {
     domain: "nutrition",
@@ -339,14 +341,16 @@ export const METRICS = {
       symbol: "exerciseKcalForDay",
     },
     derivation:
-      "Sum of the member-local day's computable per-session estimates (energy.workout.kcal); sessions with missing inputs contribute nothing, a day with no computable session is null (not-logged, never 0). Computed at read time from workout rows + catalog + latest weight — no denormalized burn column (one-canonical-value rule, plan §6). Phase 3 adds the Exercise line to the day's calorie math (Remaining = Target − Food + Exercise) when User.exerciseCalorieAddBack is on (D2, default true).",
+      "Sum of the member-local day's computable per-session estimates (energy.workout.kcal); sessions with missing inputs contribute nothing, a day with no computable session is null (not-logged, never 0). Computed at read time from workout rows + catalog + latest weight — no denormalized burn column (one-canonical-value rule, plan §6). Phase 3 renders the Exercise line and adjusts the day's budget (Remaining = Target − Food + Exercise via lib/energy/calorie-budget.ts) when User.exerciseCalorieAddBack is on (D2, default true).",
     target: { kind: "none" },
     allowedClaims: ["current-value", "comparison"],
     estimated: true,
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: [],
+    // The Exercise line + adjusted Remaining (Phase 3): the /nutrition dial
+    // and the /today panel (arc, week dots, status strip).
+    surfaces: ["/today", "/nutrition"],
   },
 
   /* ---------------------------------------------------------- hydration */

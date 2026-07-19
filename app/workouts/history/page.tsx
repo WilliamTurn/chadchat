@@ -4,7 +4,8 @@ import { PageShell } from "@/components/nav/page-shell";
 import { HistoryCard } from "@/components/workouts/v2/history-card";
 import { WorkoutPageHeader } from "@/components/workouts/v2/page-header";
 import { WCard } from "@/components/workouts/v2/ui";
-import { getWorkoutsByUserId } from "@/lib/db/queries";
+import { getLatestWeighIn, getWorkoutsByUserId } from "@/lib/db/queries";
+import { weighInKg } from "@/lib/progress/weight";
 import { getResolveOptions } from "@/lib/workouts/canonical";
 import { canonicalizeWorkouts } from "@/lib/workouts/exercise-identity";
 import { toWorkoutData } from "@/lib/workouts/serialize";
@@ -28,11 +29,14 @@ export default function HistoryPage() {
 
 async function Content() {
   const user = await requireWorkoutsUser();
-  const [rawWorkouts, resolveOptions] = await Promise.all([
+  const [rawWorkouts, resolveOptions, latestWeighIn] = await Promise.all([
     getWorkoutsByUserId(user.id, MAX_WORKOUTS),
     getResolveOptions(user.id),
+    getLatestWeighIn(user.id),
   ]);
   const workouts = rawWorkouts.map(toWorkoutData);
+  // Body weight behind every burn estimate on the cards (Phase 3).
+  const weightKg = weighInKg(latestWeighIn);
   // FIX-33: PR pills replay canonicalized history so records that merged
   // across aliases count the same here as everywhere else.
   const prCounts = prCountsByWorkout(
@@ -92,6 +96,7 @@ async function Content() {
                   <div className="min-w-0" key={workout.id}>
                     <HistoryCard
                       prCount={prCounts[workout.id] ?? 0}
+                      weightKg={weightKg}
                       workout={workout}
                     />
                   </div>

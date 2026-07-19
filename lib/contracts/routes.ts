@@ -213,6 +213,13 @@ export const ROUTES = {
     access: "pro",
     purpose: "Run the in-progress session.",
   },
+  "/workouts/cardio": {
+    path: "/workouts/cardio",
+    name: "Log cardio",
+    domain: "training",
+    access: "pro",
+    purpose: "Log a cardio session by activity and minutes.",
+  },
   "/workouts/history": {
     path: "/workouts/history",
     name: "Workout history",

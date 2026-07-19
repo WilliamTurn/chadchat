@@ -449,7 +449,10 @@ async function TodayContent() {
             data={{
               nutrition: {
                 calories: nutritionData.calories,
-                target: nutritionData.target?.calories ?? null,
+                // The exercise-adjusted budget (Phase 3), so the strip, the
+                // panel arc, and /nutrition all judge the same number; equals
+                // the plain target when nothing is credited.
+                target: nutritionData.budget,
                 mealsToday: nutritionData.mealsToday,
                 macros: {
                   protein: nutritionData.protein,

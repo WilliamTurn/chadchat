@@ -92,6 +92,7 @@ const SURFACE_GROUPS: Record<string, string[]> = {
     "/workouts/exercises/pick",
     "/workouts/exercises/new",
     "/workouts/new",
+    "/workouts/cardio",
   ],
   "plans-goals-reports": [
     "/goals",

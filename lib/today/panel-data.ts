@@ -8,6 +8,7 @@ import {
 } from "@/lib/date";
 import {
   getLatestSleepEntry,
+  getLatestWeighIn,
   getMealsSince,
   getNutritionTargetsByDay,
   getSleepDailyTotals,
@@ -15,10 +16,18 @@ import {
   getWaterDailyTotals,
   getWaterGoalMlByDay,
   getWaterMlSince,
+  getWorkoutsBetween,
   type NutritionTargetValues,
 } from "@/lib/db/queries";
 import type { User } from "@/lib/db/schema";
+import { calorieBudget } from "@/lib/energy/calorie-budget";
+import {
+  exerciseKcalForDay,
+  sessionNetKcal,
+} from "@/lib/energy/workout-energy";
 import { dailyMacroTrend } from "@/lib/nutrition/daily-macros";
+import { weighInKg } from "@/lib/progress/weight";
+import { toWorkoutData } from "@/lib/workouts/serialize";
 import { DEFAULT_WATER_GOAL_ML } from "@/lib/today/water-units";
 import {
   buildLastNight,
@@ -120,9 +129,16 @@ export async function getSleepPanelData(user: User): Promise<SleepPanelData> {
   };
 }
 
-/** A nutrition week day carrying the target active on that day (FIX-07). */
+/** A nutrition week day carrying the target active on that day (FIX-07),
+ * plus the day's exercise credit and resulting budget (Phase 3 add-back).
+ * The budget fields are optional so fixture-built weeks stay valid; absent
+ * means "no exercise data", and consumers fall back to the plain target. */
 export type NutritionWeekDay = MacroDay & {
   target: NutritionTargetValues | null;
+  /** The day's computable exercise estimate; null/absent = none. */
+  exerciseKcal?: number | null;
+  /** target + credited exercise (calorieBudget); null without a target. */
+  budgetCalories?: number | null;
 };
 
 export type NutritionPanelData = {
@@ -135,6 +151,14 @@ export type NutritionPanelData = {
   mealsToday: number;
   /** The target active today, effective-dated; null = no target set. */
   target: NutritionTargetValues | null;
+  /** Today's computable exercise estimate (energy.exercise.kcalPerDay);
+   * null = none logged/computable. */
+  exerciseKcal: number | null;
+  /** User.exerciseCalorieAddBack (D2). */
+  addBackOn: boolean;
+  /** Today's calorie budget: target + credited exercise; null = no target.
+   * THE number the arc, week dots, and status strip all judge against. */
+  budget: number | null;
   /** Sunday-start current week, each day with its own effective target. */
   week: NutritionWeekDay[];
 };
@@ -146,20 +170,47 @@ export async function getNutritionPanelData(
   const { days, todayMs } = weekAnchors(timezone);
   // The exact instant the member's local week began (DST-safe), for the
   // meals query bound; day bucketing then runs on local calendar days.
-  const weekStart = calendarRangeWindowInTz(
+  const weekWindow = calendarRangeWindowInTz(
     toCalendarDayISO(days[0]),
     toCalendarDayISO(days[days.length - 1]),
     timezone
-  ).start;
-  const [meals, targetsByDay] = await Promise.all([
+  );
+  const weekStart = weekWindow.start;
+  const [meals, targetsByDay, weekWorkouts, latestWeighIn] = await Promise.all([
     getMealsSince(user.id, weekStart),
     getNutritionTargetsByDay(user.id, days),
+    getWorkoutsBetween(user.id, weekWindow.start, weekWindow.end),
+    getLatestWeighIn(user.id),
   ]);
+  // Per-day exercise credit (Phase 3): each day's workouts priced at the
+  // latest weigh-in, summed by exerciseKcalForDay (null = nothing
+  // computable, never 0).
+  const weightKg = weighInKg(latestWeighIn);
+  const addBackOn = user.exerciseCalorieAddBack;
+  const sessionKcalsByDay = new Map<number, (number | null)[]>();
+  for (const w of weekWorkouts) {
+    const dayMs = calendarDayAnchorInTz(w.performedAt, timezone).getTime();
+    const list = sessionKcalsByDay.get(dayMs) ?? [];
+    list.push(sessionNetKcal(toWorkoutData(w), weightKg));
+    sessionKcalsByDay.set(dayMs, list);
+  }
   const daily = dailyMacroTrend(meals, timezone);
-  const week = buildMacroWeek(daily, timezone).map((day, i) => ({
-    ...day,
-    target: targetsByDay[i] ?? null,
-  }));
+  const week = buildMacroWeek(daily, timezone).map((day, i) => {
+    const target = targetsByDay[i] ?? null;
+    const exerciseKcal = exerciseKcalForDay(
+      sessionKcalsByDay.get(day.t) ?? []
+    );
+    return {
+      ...day,
+      target,
+      exerciseKcal,
+      budgetCalories: calorieBudget({
+        targetKcal: target?.calories ?? null,
+        exerciseKcal,
+        addBackOn,
+      }).budget,
+    };
+  });
   const todayIdx = days.findIndex((d) => d.getTime() === todayMs);
   const today = week[todayIdx];
   return {
@@ -175,6 +226,9 @@ export async function getNutritionPanelData(
         todayMs
     ).length,
     target: targetsByDay[todayIdx] ?? null,
+    exerciseKcal: today?.exerciseKcal ?? null,
+    addBackOn,
+    budget: today?.budgetCalories ?? null,
     week,
   };
 }

@@ -30,12 +30,16 @@ const SWEEP = 0.75;
 export function CalorieArc({
   consumed,
   target,
+  exerciseCredited = 0,
   size = 104,
   className,
 }: {
   consumed: number;
   /** Today's effective-dated calorie target; null = no target set. */
   target: number | null;
+  /** Exercise cal credited to today's budget (Phase 3 add-back); the arc
+   * fills toward target + credited while `target` stays the set mark. */
+  exerciseCredited?: number;
   size?: number;
   className?: string;
 }) {
@@ -43,17 +47,22 @@ export function CalorieArc({
   const c = 2 * Math.PI * R;
   const arcLen = c * SWEEP;
   const hasTarget = target != null && target > 0;
-  const fraction = hasTarget ? consumed / (target as number) : 0;
+  const budget = hasTarget ? (target as number) + exerciseCredited : null;
+  const fraction = budget != null ? consumed / budget : 0;
   const filled = Math.min(Math.max(fraction, 0), 1);
-  const over = hasTarget && consumed > (target as number);
-  const remaining = hasTarget ? Math.abs((target as number) - consumed) : 0;
+  const over = budget != null && consumed > budget;
+  const remaining = budget != null ? Math.abs(budget - consumed) : 0;
 
   const arcColor = over ? "var(--critical)" : "var(--chart-3)";
 
+  const budgetPhrase =
+    budget != null && exerciseCredited > 0
+      ? `${formatQuantity(budget, "kcal")} budget (your ${formatQuantity(target as number, "kcal")} target plus ${exerciseCredited} exercise, estimated)`
+      : `${formatQuantity(budget ?? 0, "kcal")} target`;
   const ariaLabel = hasTarget
     ? over
-      ? `${formatQuantity(consumed, "kcal")} eaten, ${formatQuantity(remaining, "kcal")} over your ${formatQuantity(target as number, "kcal")} target.`
-      : `${formatQuantity(consumed, "kcal")} eaten, ${formatQuantity(remaining, "kcal")} left of your ${formatQuantity(target as number, "kcal")} target.`
+      ? `${formatQuantity(consumed, "kcal")} eaten, ${formatQuantity(remaining, "kcal")} over your ${budgetPhrase}.`
+      : `${formatQuantity(consumed, "kcal")} eaten, ${formatQuantity(remaining, "kcal")} left of your ${budgetPhrase}.`
     : `${formatQuantity(consumed, "kcal")} eaten today. No daily target set.`;
 
   return (

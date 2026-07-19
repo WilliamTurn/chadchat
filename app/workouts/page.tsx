@@ -21,6 +21,7 @@ import { HistoryCard } from "@/components/workouts/v2/history-card";
 import {
   ChadPlanSection,
   IntroCard,
+  LogCardioSection,
   MyWorkoutsSection,
   ResumeCard,
   StartEmptySection,
@@ -33,10 +34,12 @@ import { calendarDayAnchorInTz } from "@/lib/date";
 import {
   getActivePlansByUserId,
   getCustomExercisesByUserId,
+  getLatestWeighIn,
   getUserById,
   getWorkoutsByUserId,
   getWorkoutTemplatesByUserId,
 } from "@/lib/db/queries";
+import { weighInKg } from "@/lib/progress/weight";
 import type { User } from "@/lib/db/schema";
 import { resolvePlanScheduleView } from "@/lib/db/plan-goal-queries";
 import { weekAnchors } from "@/lib/today/week";
@@ -130,6 +133,7 @@ async function Home({ user }: { user: User }) {
     customs,
     memberAliases,
     workoutHeaders,
+    latestWeighIn,
   ] = await Promise.all([
     getWorkoutsByUserId(user.id, MAX_WORKOUTS),
     getWorkoutTemplatesByUserId(user.id),
@@ -137,7 +141,10 @@ async function Home({ user }: { user: User }) {
     getCustomExercisesByUserId(user.id),
     getApprovedExerciseAliases(user.id),
     getWorkoutHeaders(user.id),
+    getLatestWeighIn(user.id),
   ]);
+  // Body weight behind every burn estimate on this page's history cards.
+  const weightKg = weighInKg(latestWeighIn);
   // training.sessions.total: the UNCAPPED count, same source as
   // /progress/training, never the page-capped hydration slice.
   const totalSessions = workoutHeaders.length;
@@ -274,6 +281,9 @@ async function Home({ user }: { user: User }) {
 
       <StartEmptySection unit={unit} />
 
+      {/* Cardio quick-log (calories-burned Phase 3). */}
+      <LogCardioSection />
+
       {workouts.length > 0 && (
         <>
           {/* Volume trend + personal records, paired side by side on desktop
@@ -334,7 +344,11 @@ async function Home({ user }: { user: User }) {
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
               {workouts.slice(0, 5).map((w) => (
                 <div className="min-w-0" key={w.id}>
-                  <HistoryCard prCount={prCounts[w.id] ?? 0} workout={w} />
+                  <HistoryCard
+                    prCount={prCounts[w.id] ?? 0}
+                    weightKg={weightKg}
+                    workout={w}
+                  />
                 </div>
               ))}
             </div>

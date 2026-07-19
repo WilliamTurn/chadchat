@@ -15,6 +15,7 @@ import {
   getCustomExercisesByUserId,
   deleteWorkout,
   deleteWorkoutTemplate,
+  getLatestWeighIn,
   getPlanById,
   getUserById,
   getWorkoutTemplateById,
@@ -32,6 +33,8 @@ import {
 import {
   type CustomExerciseInput,
   customExerciseSchema,
+  type LogCardioInput,
+  logCardioSchema,
   type PlanCompletionRef,
   planCompletionRefSchema,
   type SaveWorkoutInput,
@@ -41,6 +44,12 @@ import {
   type UpdateWorkoutInput,
   updateWorkoutSchema,
 } from "@/lib/validation/workouts";
+import {
+  cardioExerciseName,
+  findActivity,
+} from "@/lib/energy/activity-catalog";
+import { cardioNetKcal } from "@/lib/energy/workout-energy";
+import { weighInKg } from "@/lib/progress/weight";
 
 export type WorkoutActionState = { ok: boolean; error?: string };
 
@@ -182,7 +191,11 @@ export async function saveWorkout(
           calendarDayAnchorInTz(created.performedAt, user.timezone)
         ),
       },
-      alsoDomains: completedPlanSession ? ["plans"] : undefined,
+      // Exercise calories feed the day's budget (Phase 3 add-back), so a
+      // workout write also moves the nutrition surfaces.
+      alsoDomains: completedPlanSession
+        ? ["nutrition", "plans"]
+        : ["nutrition"],
     })
   );
   return { ok: true, id: created.id };
@@ -207,7 +220,13 @@ export async function editWorkout(
   const { id, ...rest } = parsed.data;
   await updateWorkout({ ...toWriteInput(user.id, rest), id });
   applyMutationReceipt(
-    loggingReceipt({ domain: "training", entity: "workout", op: "update" })
+    loggingReceipt({
+      domain: "training",
+      entity: "workout",
+      op: "update",
+      // Exercise calories feed the day's budget (Phase 3 add-back).
+      alsoDomains: ["nutrition"],
+    })
   );
   return { ok: true };
 }
@@ -219,9 +238,105 @@ export async function removeWorkout(id: string): Promise<WorkoutActionState> {
   }
   await deleteWorkout({ id, userId: user.id });
   applyMutationReceipt(
-    loggingReceipt({ domain: "training", entity: "workout", op: "delete" })
+    loggingReceipt({
+      domain: "training",
+      entity: "workout",
+      op: "delete",
+      // Exercise calories feed the day's budget (Phase 3 add-back).
+      alsoDomains: ["nutrition"],
+    })
   );
   return { ok: true };
+}
+
+export type LogCardioResult = WorkoutActionState & {
+  id?: string;
+  /** Net-MET estimate for the toast; null = no weigh-in yet (no guess). */
+  estimatedKcal?: number | null;
+};
+
+/**
+ * The Phase 3 cardio quick-log: activity + minutes (+ optional effort) →
+ * one logged workout through the EXISTING row shapes — a timed cardio
+ * exercise whose single set holds the seconds, plus the session duration.
+ * No new storage; the burn estimate is recomputed at read time from the
+ * name snapshot + catalog + latest weigh-in (plan §6).
+ */
+export async function logCardio(input: LogCardioInput): Promise<LogCardioResult> {
+  const user = await requirePro();
+  if (!user) {
+    return { ok: false, error: PRO_REQUIRED };
+  }
+
+  const parsed = logCardioSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.errors[0]?.message ?? "Couldn't log that cardio.",
+    };
+  }
+
+  const { activityId, variantId, minutes } = parsed.data;
+  const activity = findActivity(activityId);
+  const exerciseName = cardioExerciseName(activityId, variantId);
+  if (!(activity && exerciseName)) {
+    return { ok: false, error: "Pick an activity from the list." };
+  }
+
+  const performedAt = parseCalendarDay(parsed.data.performedAt) ?? new Date();
+  const seconds = minutes * 60;
+  const unit = user.weightUnit === "kg" ? ("kg" as const) : ("lb" as const);
+  const created = await createWorkout({
+    userId: user.id,
+    title: activity.label,
+    performedAt,
+    durationSeconds: seconds,
+    notes: null,
+    exercises: [
+      {
+        name: exerciseName,
+        muscleGroup: "cardio",
+        kind: "timed",
+        supersetGroup: null,
+        notes: null,
+        sets: [
+          {
+            weight: null,
+            // Timed convention: the set's reps column holds seconds.
+            reps: seconds,
+            unit,
+            rpe: null,
+            setType: "working",
+            completed: true,
+          },
+        ],
+      },
+    ],
+  });
+
+  applyMutationReceipt(
+    loggingReceipt({
+      domain: "training",
+      entity: "workout",
+      op: "create",
+      days: {
+        startISO: toCalendarDayISO(
+          calendarDayAnchorInTz(created.performedAt, user.timezone)
+        ),
+      },
+      // Exercise calories feed the day's budget (Phase 3 add-back).
+      alsoDomains: ["nutrition"],
+    })
+  );
+
+  const latest = await getLatestWeighIn(user.id);
+  const estimatedKcal = cardioNetKcal({
+    activityId,
+    variantId,
+    minutes,
+    weightKg: weighInKg(latest),
+  });
+  return { ok: true, id: created.id, estimatedKcal };
 }
 
 export type SaveTemplateResult = WorkoutActionState & { id?: string };

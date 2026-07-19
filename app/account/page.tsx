@@ -17,6 +17,7 @@ import { CheckInSettings } from "@/components/account/check-in-settings";
 import { DeleteDataButton } from "@/components/account/delete-data-button";
 import { IntensitySettings } from "@/components/account/intensity-settings";
 import { MemorySettings } from "@/components/account/memory-settings";
+import { ExerciseCaloriesSettings } from "@/components/account/exercise-calories-settings";
 import { QuitDateSettings } from "@/components/account/quit-date-settings";
 import { SensorySettings } from "@/components/account/sensory-settings";
 import { WeeklyReportSettings } from "@/components/account/weekly-report-settings";
@@ -280,6 +281,14 @@ async function PreferencesAndDataSettings() {
               </p>
             </div>
             <TimezonePreference initialTimezone={user.timezone} />
+          </div>
+
+          {/* Exercise calories (calories-burned Phase 3, D2): whether logged
+              workouts raise the day's calorie budget. */}
+          <div className="mt-6 border-border border-t pt-6">
+            <ExerciseCaloriesSettings
+              initialEnabled={user.exerciseCalorieAddBack}
+            />
           </div>
 
           {/* Logging feedback (DSH-54): the success chime + phone vibration. */}

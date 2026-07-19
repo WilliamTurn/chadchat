@@ -6,6 +6,7 @@
 
 import {
   ChevronRight,
+  Flame,
   Pencil,
   Play,
   Plus,
@@ -472,6 +473,39 @@ export function ChadPlanSection({
         </Link>{" "}
         to write or change your training plan. It shows up here automatically.
       </p>
+    </section>
+  );
+}
+
+/** The Phase 3 cardio quick-log entry: no live session, just activity +
+ * minutes on /workouts/cardio. Deliberately NOT gated by an in-progress
+ * session; logging this morning's run can't conflict with tonight's lift. */
+export function LogCardioSection() {
+  const router = useRouter();
+  return (
+    <section aria-labelledby="cardio-heading" className="mt-8">
+      <WCard className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2
+            className="font-black font-display text-foreground text-lg uppercase tracking-wide"
+            id="cardio-heading"
+          >
+            Did cardio?
+          </h2>
+          <p className="mt-1 text-muted-foreground/80 text-xs">
+            Running, cycling, swimming, sports. Log the minutes and the
+            estimated calories count toward your day.
+          </p>
+        </div>
+        <WButton
+          className="w-full shrink-0 sm:w-auto"
+          onClick={() => router.push("/workouts/cardio")}
+          size="lg"
+        >
+          <Flame aria-hidden className="size-5" />
+          Log cardio
+        </WButton>
+      </WCard>
     </section>
   );
 }

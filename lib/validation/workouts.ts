@@ -39,6 +39,23 @@ export const saveWorkoutSchema = z.object({
 
 export type SaveWorkoutInput = z.infer<typeof saveWorkoutSchema>;
 
+/** The Phase 3 cardio quick-log: a catalog activity + minutes, with an
+ * optional effort variant. The action validates the ids against
+ * lib/energy/activity-catalog.ts server-side. */
+export const logCardioSchema = z.object({
+  activityId: z.string().trim().min(1, "Pick an activity.").max(60),
+  variantId: z.string().trim().min(1).max(60).optional(),
+  minutes: z
+    .number({ invalid_type_error: "Enter how many minutes." })
+    .int("Whole minutes only.")
+    .min(1, "Enter how many minutes.")
+    .max(1440, "That is more than a day. Check the minutes."),
+  /** Member-local calendar day (yyyy-mm-dd); omitted = today. */
+  performedAt: z.string().optional(),
+});
+
+export type LogCardioInput = z.infer<typeof logCardioSchema>;
+
 /** The prescribed plan session a saved workout was started from (FIX-28);
  * the save action records a PlanSessionCompletion event from it. */
 export const planCompletionRefSchema = z.object({

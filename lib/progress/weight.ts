@@ -37,6 +37,18 @@ export function hasWeighIn(entries: { weight: number | null }[]): boolean {
   return entries.some((e) => e.weight != null);
 }
 
+/** A weigh-in's kilograms — the body weight the energy engine prices
+ * exercise estimates against (net METs work in kg). Null when the entry is
+ * missing or photo-only. */
+export function weighInKg(
+  entry: { weight: number | null; unit: "lb" | "kg" } | null
+): number | null {
+  if (!entry || entry.weight == null) {
+    return null;
+  }
+  return convertWeight(entry.weight, entry.unit, "kg");
+}
+
 /** The active weight goal, if any (metric "weight" with a target set). */
 export function activeWeightGoal(goals: Goal[]): Goal | null {
   return (

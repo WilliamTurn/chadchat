@@ -23,10 +23,23 @@ export type ActivityVariant = {
   met: number;
 };
 
+/** Picker sections (Phase 3): the catalog's own comment groups, made data. */
+export const ACTIVITY_GROUPS = [
+  { id: "gym-cardio", label: "Gym cardio" },
+  { id: "outdoor", label: "Outdoor" },
+  { id: "sports", label: "Sports" },
+  { id: "strength-mind-body", label: "Strength and mind-body" },
+  { id: "everyday", label: "Everyday" },
+] as const;
+
+export type ActivityGroupId = (typeof ACTIVITY_GROUPS)[number]["id"];
+
 export type Activity = {
   /** Stable kebab-case id — stored on logged cardio entries from Phase 3. */
   id: string;
   label: string;
+  /** Picker section this activity lists under. */
+  group: ActivityGroupId;
   /** The default MET: the general / moderate effort. */
   met: number;
   /** Optional intensity choices; omit when one honest number covers it. */
@@ -36,7 +49,7 @@ export type Activity = {
 export const ACTIVITY_CATALOG: readonly Activity[] = [
   /* ------------------------------------------------------- gym cardio */
   {
-    id: "treadmill-run",
+    id: "treadmill-run", group: "gym-cardio",
     label: "Treadmill run",
     met: 8.5,
     variants: [
@@ -48,7 +61,7 @@ export const ACTIVITY_CATALOG: readonly Activity[] = [
     ],
   },
   {
-    id: "treadmill-walk",
+    id: "treadmill-walk", group: "gym-cardio",
     label: "Treadmill walk",
     met: 4.8,
     variants: [
@@ -58,7 +71,7 @@ export const ACTIVITY_CATALOG: readonly Activity[] = [
     ],
   },
   {
-    id: "rowing-machine",
+    id: "rowing-machine", group: "gym-cardio",
     label: "Rowing machine",
     met: 7.5,
     variants: [
@@ -69,7 +82,7 @@ export const ACTIVITY_CATALOG: readonly Activity[] = [
     ],
   },
   {
-    id: "stationary-bike",
+    id: "stationary-bike", group: "gym-cardio",
     label: "Stationary bike",
     met: 6.8,
     variants: [
@@ -79,7 +92,7 @@ export const ACTIVITY_CATALOG: readonly Activity[] = [
     ],
   },
   {
-    id: "elliptical",
+    id: "elliptical", group: "gym-cardio",
     label: "Elliptical",
     met: 5.0,
     variants: [
@@ -87,10 +100,10 @@ export const ACTIVITY_CATALOG: readonly Activity[] = [
       { id: "vigorous", label: "Vigorous", met: 6.0 },
     ],
   },
-  { id: "stair-climber", label: "Stair climber", met: 9.0 },
-  { id: "spin-class", label: "Spin class", met: 8.5 },
+  { id: "stair-climber", group: "gym-cardio", label: "Stair climber", met: 9.0 },
+  { id: "spin-class", group: "gym-cardio", label: "Spin class", met: 8.5 },
   {
-    id: "jump-rope",
+    id: "jump-rope", group: "gym-cardio",
     label: "Jump rope",
     met: 11.0,
     variants: [
@@ -99,12 +112,12 @@ export const ACTIVITY_CATALOG: readonly Activity[] = [
       { id: "fast", label: "Fast", met: 12.3 },
     ],
   },
-  { id: "hiit", label: "HIIT workout", met: 11.0 },
-  { id: "circuit-training", label: "Circuit training", met: 8.0 },
+  { id: "hiit", group: "gym-cardio", label: "HIIT workout", met: 11.0 },
+  { id: "circuit-training", group: "gym-cardio", label: "Circuit training", met: 8.0 },
 
   /* ---------------------------------------------------------- outdoor */
   {
-    id: "running",
+    id: "running", group: "outdoor",
     label: "Running",
     met: 8.5,
     variants: [
@@ -115,9 +128,9 @@ export const ACTIVITY_CATALOG: readonly Activity[] = [
       { id: "10-mph", label: "10 mph (6:00 mile)", met: 14.8 },
     ],
   },
-  { id: "trail-running", label: "Trail running", met: 9.0 },
+  { id: "trail-running", group: "outdoor", label: "Trail running", met: 9.0 },
   {
-    id: "walking",
+    id: "walking", group: "outdoor",
     label: "Walking",
     met: 3.5,
     variants: [
@@ -127,7 +140,7 @@ export const ACTIVITY_CATALOG: readonly Activity[] = [
     ],
   },
   {
-    id: "cycling",
+    id: "cycling", group: "outdoor",
     label: "Cycling",
     met: 8.0,
     variants: [
@@ -136,9 +149,9 @@ export const ACTIVITY_CATALOG: readonly Activity[] = [
       { id: "vigorous", label: "Vigorous (14 to 16 mph)", met: 10.0 },
     ],
   },
-  { id: "hiking", label: "Hiking", met: 5.3 },
+  { id: "hiking", group: "outdoor", label: "Hiking", met: 5.3 },
   {
-    id: "swimming",
+    id: "swimming", group: "outdoor",
     label: "Swimming laps",
     met: 8.0,
     variants: [
@@ -147,16 +160,16 @@ export const ACTIVITY_CATALOG: readonly Activity[] = [
       { id: "vigorous", label: "Vigorous", met: 9.8 },
     ],
   },
-  { id: "water-aerobics", label: "Water aerobics", met: 5.3 },
-  { id: "rollerblading", label: "Rollerblading", met: 7.5 },
-  { id: "ice-skating", label: "Ice skating", met: 7.0 },
-  { id: "downhill-skiing", label: "Downhill skiing", met: 5.3 },
-  { id: "cross-country-skiing", label: "Cross-country skiing", met: 9.0 },
+  { id: "water-aerobics", group: "outdoor", label: "Water aerobics", met: 5.3 },
+  { id: "rollerblading", group: "outdoor", label: "Rollerblading", met: 7.5 },
+  { id: "ice-skating", group: "outdoor", label: "Ice skating", met: 7.0 },
+  { id: "downhill-skiing", group: "outdoor", label: "Downhill skiing", met: 5.3 },
+  { id: "cross-country-skiing", group: "outdoor", label: "Cross-country skiing", met: 9.0 },
 
   /* ----------------------------------------------------------- sports */
-  { id: "basketball", label: "Basketball", met: 7.5 },
+  { id: "basketball", group: "sports", label: "Basketball", met: 7.5 },
   {
-    id: "soccer",
+    id: "soccer", group: "sports",
     label: "Soccer",
     met: 9.5,
     variants: [
@@ -164,12 +177,12 @@ export const ACTIVITY_CATALOG: readonly Activity[] = [
       { id: "game", label: "Game", met: 9.5 },
     ],
   },
-  { id: "tennis-singles", label: "Tennis (singles)", met: 8.0 },
-  { id: "tennis-doubles", label: "Tennis (doubles)", met: 6.0 },
-  { id: "pickleball", label: "Pickleball", met: 4.1 },
-  { id: "badminton", label: "Badminton", met: 5.5 },
+  { id: "tennis-singles", group: "sports", label: "Tennis (singles)", met: 8.0 },
+  { id: "tennis-doubles", group: "sports", label: "Tennis (doubles)", met: 6.0 },
+  { id: "pickleball", group: "sports", label: "Pickleball", met: 4.1 },
+  { id: "badminton", group: "sports", label: "Badminton", met: 5.5 },
   {
-    id: "volleyball",
+    id: "volleyball", group: "sports",
     label: "Volleyball",
     met: 4.0,
     variants: [
@@ -178,10 +191,10 @@ export const ACTIVITY_CATALOG: readonly Activity[] = [
       { id: "beach", label: "Beach", met: 8.0 },
     ],
   },
-  { id: "golf-walking", label: "Golf (walking)", met: 4.3 },
-  { id: "martial-arts", label: "Martial arts", met: 10.3 },
+  { id: "golf-walking", group: "sports", label: "Golf (walking)", met: 4.3 },
+  { id: "martial-arts", group: "sports", label: "Martial arts", met: 10.3 },
   {
-    id: "boxing",
+    id: "boxing", group: "sports",
     label: "Boxing",
     met: 5.5,
     variants: [
@@ -189,9 +202,9 @@ export const ACTIVITY_CATALOG: readonly Activity[] = [
       { id: "sparring", label: "Sparring", met: 7.8 },
     ],
   },
-  { id: "rock-climbing", label: "Rock climbing", met: 8.0 },
+  { id: "rock-climbing", group: "sports", label: "Rock climbing", met: 8.0 },
   {
-    id: "dancing",
+    id: "dancing", group: "sports",
     label: "Dancing",
     met: 4.8,
     variants: [
@@ -202,7 +215,7 @@ export const ACTIVITY_CATALOG: readonly Activity[] = [
 
   /* ------------------------------------------- strength and mind-body */
   {
-    id: "weight-lifting",
+    id: "weight-lifting", group: "strength-mind-body",
     label: "Weight lifting",
     met: 3.5,
     variants: [
@@ -212,7 +225,7 @@ export const ACTIVITY_CATALOG: readonly Activity[] = [
     ],
   },
   {
-    id: "calisthenics",
+    id: "calisthenics", group: "strength-mind-body",
     label: "Calisthenics",
     met: 3.8,
     variants: [
@@ -220,9 +233,9 @@ export const ACTIVITY_CATALOG: readonly Activity[] = [
       { id: "vigorous", label: "Vigorous", met: 8.0 },
     ],
   },
-  { id: "kettlebell", label: "Kettlebell workout", met: 8.0 },
+  { id: "kettlebell", group: "strength-mind-body", label: "Kettlebell workout", met: 8.0 },
   {
-    id: "yoga",
+    id: "yoga", group: "strength-mind-body",
     label: "Yoga",
     met: 2.3,
     variants: [
@@ -230,12 +243,12 @@ export const ACTIVITY_CATALOG: readonly Activity[] = [
       { id: "power", label: "Power", met: 4.0 },
     ],
   },
-  { id: "pilates", label: "Pilates", met: 3.0 },
-  { id: "stretching", label: "Stretching and mobility", met: 2.3 },
+  { id: "pilates", group: "strength-mind-body", label: "Pilates", met: 3.0 },
+  { id: "stretching", group: "strength-mind-body", label: "Stretching and mobility", met: 2.3 },
 
   /* ----------------------------------------------------------- everyday */
-  { id: "yard-work", label: "Yard work", met: 4.0 },
-  { id: "housework", label: "Housework (vigorous)", met: 3.5 },
+  { id: "yard-work", group: "everyday", label: "Yard work", met: 4.0 },
+  { id: "housework", group: "everyday", label: "Housework (vigorous)", met: 3.5 },
 ];
 
 /**
@@ -284,4 +297,71 @@ export function activityForLibraryExercise(
     ([libraryName]) => libraryName.toLowerCase() === name.toLowerCase()
   );
   return entry ? findActivity(entry[1]) : undefined;
+}
+
+/**
+ * Separator between activity and effort in a logged cardio exercise name
+ * ("Rowing machine · Vigorous"). The name is the snapshot workout rows
+ * already store (exerciseName), so a logged session stays honest even if
+ * the catalog changes later; metForExerciseName reads it back.
+ */
+export const CARDIO_NAME_SEPARATOR = " · ";
+
+/**
+ * The exercise-name snapshot the Phase 3 cardio logger stores: the activity
+ * label, plus the chosen effort when one was picked. Null when the ids don't
+ * name a real catalog entry (the action rejects, never guesses).
+ */
+export function cardioExerciseName(
+  activityId: string,
+  variantId?: string
+): string | null {
+  const activity = findActivity(activityId);
+  if (!activity) {
+    return null;
+  }
+  if (variantId == null) {
+    return activity.label;
+  }
+  const variant = activity.variants?.find((v) => v.id === variantId);
+  return variant
+    ? `${activity.label}${CARDIO_NAME_SEPARATOR}${variant.label}`
+    : null;
+}
+
+/**
+ * The MET behind a logged exercise NAME: one of the 4 built-in machine-cardio
+ * library names ("Treadmill Run"), a catalog label ("Hiking"), or a
+ * variant-suffixed cardio-logger snapshot ("Treadmill run · 6 mph (10:00
+ * mile)"). Case-insensitive, like every name lookup on workout rows. Null =
+ * not a known cardio activity — callers treat the exercise as strength work
+ * instead of guessing.
+ */
+export function metForExerciseName(name: string): number | null {
+  const trimmed = name.trim();
+  const library = activityForLibraryExercise(trimmed);
+  if (library) {
+    return library.met;
+  }
+  const lower = trimmed.toLowerCase();
+  const byLabel = ACTIVITY_CATALOG.find((a) => a.label.toLowerCase() === lower);
+  if (byLabel) {
+    return byLabel.met;
+  }
+  const sep = trimmed.indexOf(CARDIO_NAME_SEPARATOR);
+  if (sep === -1) {
+    return null;
+  }
+  const activityLabel = trimmed.slice(0, sep).trim().toLowerCase();
+  const variantLabel = trimmed
+    .slice(sep + CARDIO_NAME_SEPARATOR.length)
+    .trim()
+    .toLowerCase();
+  const activity = ACTIVITY_CATALOG.find(
+    (a) => a.label.toLowerCase() === activityLabel
+  );
+  const variant = activity?.variants?.find(
+    (v) => v.label.toLowerCase() === variantLabel
+  );
+  return variant ? variant.met : null;
 }

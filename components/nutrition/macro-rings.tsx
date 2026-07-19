@@ -26,9 +26,11 @@
  * today's eating status.
  */
 
+import { Flame } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useId, useState } from "react";
 import { CountUp } from "@/components/dashboard/count-up";
+import { calorieBudget } from "@/lib/energy/calorie-budget";
 
 type RingVariant = "diary" | "plan";
 
@@ -41,6 +43,15 @@ type RingProps = {
   carbsTarget: number | null;
   fatConsumed: number;
   fatTarget: number | null;
+  /**
+   * The day's computable exercise-calorie estimate (energy.exercise
+   * .kcalPerDay); null = none logged/computable. Diary variant only: with
+   * add-back on it raises the day's budget (Remaining = Target − Food +
+   * Exercise, calories-burned Phase 3) and renders the Exercise line.
+   */
+  exerciseKcal?: number | null;
+  /** User.exerciseCalorieAddBack (D2); off = plain Target − Food. */
+  exerciseAddBackOn?: boolean;
   /**
    * "diary" (default) = today's live eating status ("calories remaining").
    * "plan" = a planned day judged against its target ("164 cal under target").
@@ -120,6 +131,7 @@ function planDeltaCopy(planned: number, target: number, unit: string): string {
 function CalorieDial({
   consumed,
   target,
+  exerciseCredited = 0,
   reduced,
   consumedLabel,
   noTargetSub,
@@ -127,6 +139,9 @@ function CalorieDial({
 }: {
   consumed: number;
   target: number | null;
+  /** Exercise cal already credited to the day's budget (0 = none; Phase 3).
+   * The ring fills toward target + credited; `target` stays the set mark. */
+  exerciseCredited?: number;
   reduced: boolean;
   consumedLabel: string;
   noTargetSub: string;
@@ -137,10 +152,14 @@ function CalorieDial({
 
   const isPlan = variant === "plan";
   const hasTarget = target != null && target > 0;
-  const fraction = hasTarget ? consumed / (target as number) : 0;
-  const over = hasTarget && consumed > (target as number);
-  const remaining = hasTarget ? (target as number) - consumed : 0;
-  const percent = pct(consumed, target);
+  // The day's budget: the set target plus credited exercise (plan mode never
+  // credits, so its budget IS the target and nothing below changes for it).
+  const credited = isPlan ? 0 : exerciseCredited;
+  const budget = hasTarget ? (target as number) + credited : null;
+  const fraction = budget != null ? consumed / budget : 0;
+  const over = budget != null && consumed > budget;
+  const remaining = budget != null ? budget - consumed : 0;
+  const percent = pct(consumed, budget);
   const band: PlanBand | null =
     isPlan && hasTarget ? planBand(consumed, target as number) : null;
 
@@ -148,12 +167,16 @@ function CalorieDial({
   const sweep = Math.max(0, Math.min(1, fraction));
   const dashOffset = CIRC * (1 - sweep);
 
+  const budgetPhrase =
+    credited > 0
+      ? `${round(budget as number)} cal (your ${round(target as number)} target plus ${credited} exercise, estimated)`
+      : `${round(budget ?? 0)} cal`;
   const ariaLabel = hasTarget
     ? isPlan
       ? `Planned: ${round(consumed)} of ${round(target as number)} cal, ${planDeltaCopy(consumed, target as number, " cal")}. Tap for details.`
       : over
-        ? `Calories: ${round(consumed)} of ${round(target as number)} cal, ${round(consumed - (target as number))} over target. Tap for details.`
-        : `Calories: ${round(consumed)} of ${round(target as number)} cal, ${round(remaining)} remaining. Tap for details.`
+        ? `Calories: ${round(consumed)} of ${budgetPhrase}, ${round(consumed - (budget as number))} over. Tap for details.`
+        : `Calories: ${round(consumed)} of ${budgetPhrase}, ${round(remaining)} remaining. Tap for details.`
     : isPlan
       ? `Planned: ${round(consumed)} cal. Tap for details.`
       : `Calories: ${round(consumed)} cal logged today. Tap for details.`;
@@ -171,7 +194,7 @@ function CalorieDial({
     big = round(consumed).toLocaleString();
     sub = "calories planned";
   } else if (over) {
-    big = round(consumed - (target as number)).toLocaleString();
+    big = round(consumed - (budget as number)).toLocaleString();
     sub = "calories over";
     bigClass = "fill-blood";
   } else {
@@ -294,6 +317,15 @@ function CalorieDial({
         </span>
       )}
 
+      {/* The Exercise line (Phase 3): logged exercise raised today's budget.
+          Estimated numbers are labeled estimated. */}
+      {!isPlan && credited > 0 && (
+        <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-3 py-1 font-medium text-muted-foreground text-xs">
+          <Flame aria-hidden className="size-3.5 text-amber-500" />
+          +{credited.toLocaleString()} cal from exercise · estimated
+        </span>
+      )}
+
       {/* Inline detail — calories */}
       <motion.div
         animate={{ height: open ? "auto" : 0, opacity: open ? 1 : 0 }}
@@ -301,7 +333,10 @@ function CalorieDial({
         initial={false}
         transition={{ duration: reduced ? 0 : 0.28, ease: EASE }}
       >
-        <div className="mt-3 flex items-center gap-4 rounded-xl border border-border bg-background/60 px-4 py-2.5 text-sm">
+        {/* Wraps on narrow containers: with the Exercise column this row is
+            five entries, wider than a 384px phone card. Dividers only render
+            once the container fits the row on one line. */}
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 rounded-xl border border-border bg-background/60 px-4 py-2.5 text-sm">
           <Detail
             label={consumedLabel}
             value={`${round(consumed).toLocaleString()}`}
@@ -313,6 +348,16 @@ function CalorieDial({
                 label="Target"
                 value={`${round(target as number).toLocaleString()}`}
               />
+              {credited > 0 && (
+                <>
+                  <Divider />
+                  <Detail
+                    accent="text-emerald-500"
+                    label="Exercise"
+                    value={`+${credited.toLocaleString()}`}
+                  />
+                </>
+              )}
               <Divider />
               <Detail
                 accent={
@@ -376,7 +421,11 @@ function Detail({
 }
 
 function Divider() {
-  return <span aria-hidden className="h-7 w-px shrink-0 bg-border" />;
+  // Hidden while the detail row wraps (narrow containers); a stray 28px bar
+  // at a wrap boundary reads as a glitch.
+  return (
+    <span aria-hidden className="hidden h-7 w-px shrink-0 bg-border @[28rem]:block" />
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -545,6 +594,8 @@ export function MacroRings({
   carbsTarget,
   fatConsumed,
   fatTarget,
+  exerciseKcal = null,
+  exerciseAddBackOn = true,
   variant = "diary",
   consumedLabel = "Eaten",
   noTargetSub = "calories today",
@@ -552,6 +603,17 @@ export function MacroRings({
 }: RingProps) {
   const reduced = useReducedMotion() ?? false;
   const noTarget = caloriesTarget == null || caloriesTarget <= 0;
+  // The one canonical add-back arithmetic (lib/energy/calorie-budget.ts).
+  // Plan mode never credits exercise; the diary dial fills toward
+  // target + credited and shows the Exercise line.
+  const { credited } =
+    variant === "diary"
+      ? calorieBudget({
+          targetKcal: caloriesTarget,
+          exerciseKcal,
+          addBackOn: exerciseAddBackOn,
+        })
+      : { credited: 0 };
 
   return (
     // Container query, not viewport breakpoints: this summary renders inside
@@ -566,6 +628,7 @@ export function MacroRings({
           <CalorieDial
             consumed={caloriesConsumed}
             consumedLabel={consumedLabel}
+            exerciseCredited={credited}
             noTargetSub={noTargetSub}
             reduced={reduced}
             target={caloriesTarget}

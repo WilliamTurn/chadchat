@@ -5,6 +5,7 @@ import { WorkoutsPageLoading } from "@/components/workouts/v2/loading";
 import { PageShell } from "@/components/nav/page-shell";
 import { exerciseSlug } from "@/components/workouts/v2/catalog";
 import {
+  formatClock,
   formatDay,
   formatDurationLong,
   formatVolume,
@@ -19,7 +20,12 @@ import {
   WorkoutPageHeader,
 } from "@/components/workouts/v2/page-header";
 import { Pill, WButton, WCard } from "@/components/workouts/v2/ui";
-import { getWorkoutById } from "@/lib/db/queries";
+import { getLatestWeighIn, getWorkoutById } from "@/lib/db/queries";
+import {
+  isCardioOnlySession,
+  sessionNetKcal,
+} from "@/lib/energy/workout-energy";
+import { weighInKg } from "@/lib/progress/weight";
 import { toWorkoutData } from "@/lib/workouts/serialize";
 import {
   workoutSetCount,
@@ -93,9 +99,10 @@ async function Content({
   const user = await requireWorkoutsUser();
   const { id } = await params;
   const isNew = (await searchParams).new === "1";
-  const [row, context] = await Promise.all([
+  const [row, context, latestWeighIn] = await Promise.all([
     getWorkoutById({ id, userId: user.id }),
     loadWorkoutContext(user),
+    getLatestWeighIn(user.id),
   ]);
 
   if (!row) {
@@ -121,6 +128,11 @@ async function Content({
   const duration = workout.durationSeconds
     ? formatDurationLong(workout.durationSeconds)
     : null;
+  // energy.workout.kcal via its registered source symbol (Phase 3); null =
+  // no weigh-in or no computable component, and no tile renders.
+  const estimatedKcal = sessionNetKcal(workout, weighInKg(latestWeighIn));
+  // A logged run/ride is not a lift: set counts and "0 lb moved" are noise.
+  const cardioOnly = isCardioOnlySession(workout);
 
   return (
     <>
@@ -152,18 +164,72 @@ async function Content({
         />
       )}
 
-      {/* Stats */}
-      <div className={`grid gap-3 ${duration ? "grid-cols-3" : "grid-cols-2"}`}>
-        {duration && <StatTile label="Duration" value={duration} />}
-        <StatTile label="Sets logged" value={String(sets)} />
-        <StatTile label="lb moved" value={formatVolume(volume)} />
-      </div>
-      <p className="mt-2.5 text-center text-[13px] text-muted-foreground leading-relaxed">
-        &ldquo;lb moved&rdquo; is weight × reps, added up across every set
-        {comparison
-          ? `. ${formatVolume(volume)} lb is ${comparison}.`
-          : "."}
-      </p>
+      {/* Stats. Cardio-only sessions drop the lifting tiles (set count,
+          "0 lb moved"); the burn estimate renders whenever it's computable
+          and is always labeled estimated (Phase 3). */}
+      {(() => {
+        const tiles: { label: string; value: string }[] = [
+          ...(duration ? [{ label: "Duration", value: duration }] : []),
+          ...(cardioOnly
+            ? []
+            : [
+                { label: "Sets logged", value: String(sets) },
+                { label: "lb moved", value: formatVolume(volume) },
+              ]),
+          ...(estimatedKcal != null
+            ? [
+                {
+                  label: "cal estimated",
+                  value: `~${estimatedKcal.toLocaleString()}`,
+                },
+              ]
+            : []),
+        ];
+        const gridClass =
+          tiles.length === 4
+            ? "grid-cols-2 sm:grid-cols-4"
+            : tiles.length === 3
+              ? "grid-cols-3"
+              : tiles.length === 2
+                ? "grid-cols-2"
+                : "grid-cols-1";
+        const notes = [
+          ...(cardioOnly
+            ? []
+            : [
+                `“lb moved” is weight × reps, added up across every set${
+                  comparison
+                    ? `. ${formatVolume(volume)} lb is ${comparison}`
+                    : ""
+                }.`,
+              ]),
+          ...(estimatedKcal != null
+            ? [
+                "Calories are estimated from your time and effort at your body weight.",
+              ]
+            : []),
+        ];
+        return (
+          <>
+            {tiles.length > 0 && (
+              <div className={`grid gap-3 ${gridClass}`}>
+                {tiles.map((tile) => (
+                  <StatTile
+                    key={tile.label}
+                    label={tile.label}
+                    value={tile.value}
+                  />
+                ))}
+              </div>
+            )}
+            {notes.length > 0 && (
+              <p className="mt-2.5 text-center text-[13px] text-muted-foreground leading-relaxed">
+                {notes.join(" ")}
+              </p>
+            )}
+          </>
+        );
+      })()}
 
       {workout.notes && (
         <WCard className="mt-5 p-4">
@@ -227,8 +293,13 @@ async function Content({
                       <span className="flex-1 font-mono text-[15px] text-foreground tabular-nums">
                         {(() => {
                           if (timed) {
-                            return set.reps == null
-                              ? "Done (no seconds entered)"
+                            if (set.reps == null) {
+                              return "Done (no seconds entered)";
+                            }
+                            // Long timed work reads as a clock ("30:00"),
+                            // not "1800 seconds" (cardio sessions).
+                            return set.reps >= 120
+                              ? `${formatClock(set.reps)} min`
                               : `${set.reps} seconds`;
                           }
                           if (set.weight == null && set.reps == null) {
