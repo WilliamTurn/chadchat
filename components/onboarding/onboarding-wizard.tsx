@@ -512,7 +512,7 @@ export function OnboardingWizard({
         onClick={handleSkip}
         type="button"
       >
-        Skip — I&apos;ll tell Chad myself
+        Skip, I&apos;ll tell Chad myself
       </button>
     </div>
   );

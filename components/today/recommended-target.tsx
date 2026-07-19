@@ -299,7 +299,13 @@ function MissingInputsForm({
       )}
 
       {(asks.has("age") || asks.has("weight")) && (
-      <div className="grid grid-cols-2 gap-4">
+      <div
+        className={
+          asks.has("age") && asks.has("weight")
+            ? "grid grid-cols-2 gap-4"
+            : "grid grid-cols-1 gap-4"
+        }
+      >
         {asks.has("age") && (
           <div className="flex flex-col gap-2">
             <Label htmlFor="rec-age">Age</Label>

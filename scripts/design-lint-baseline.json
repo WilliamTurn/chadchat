@@ -270,7 +270,7 @@
   "components/nutrition/meal-shared.tsx::raw-control": 1,
   "components/nutrition/recalibration-card.tsx::banned-copy": 1,
   "components/onboarding/onboarding-wizard.tsx::arbitrary-utility": 1,
-  "components/onboarding/onboarding-wizard.tsx::banned-copy": 3,
+  "components/onboarding/onboarding-wizard.tsx::banned-copy": 2,
   "components/onboarding/onboarding-wizard.tsx::example-placeholder": 2,
   "components/onboarding/onboarding-wizard.tsx::raw-control": 4,
   "components/panels/action-cluster.tsx::silent-truncation": 2,
