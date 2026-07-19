@@ -260,6 +260,8 @@ export function OnboardingWizard({
       try {
         await finishOnboarding({
           weightUnit,
+          // Saved as the member's first weigh-in (unless one already exists).
+          weight: weight.trim() ? Number(weight) : null,
           // Persist the structured stats so they're the trusted source of truth
           // from message one and editable later on /account (ONB-2).
           profile: {
@@ -426,6 +428,9 @@ export function OnboardingWizard({
                 placeholder={units === "metric" ? "e.g. 82" : "e.g. 180"}
                 value={weight}
               />
+              <p className="text-muted-foreground text-xs">
+                This will be your first weigh-in.
+              </p>
             </div>
           </>
         )}

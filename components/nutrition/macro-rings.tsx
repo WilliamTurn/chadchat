@@ -422,7 +422,7 @@ function MacroBar({
       : over
         ? `${round(consumed - (target as number))}g over`
         : `${round(remaining)}g left`
-    : "no goal set";
+    : "No target set";
   const hintClass = hasTarget
     ? band
       ? PLAN_BAND_TEXT[band]

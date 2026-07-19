@@ -21,6 +21,8 @@ import {
   type TargetRecommendationInputs,
 } from "../../lib/nutrition/target-recommendation";
 import { ACTIVITY_OPTIONS, profileSchema } from "../../lib/profile";
+import { hasWeighIn } from "../../lib/progress/weight";
+import { progressEntrySchema } from "../../lib/validation/progress";
 
 const DAY = 24 * 60 * 60 * 1000;
 const NOW = Date.UTC(2026, 6, 7);
@@ -271,4 +273,40 @@ test("profileSchema accepts and round-trips activityLevel", () => {
   assert.ok(cleared.success);
   const bad = profileSchema.safeParse({ activityLevel: "extreme" });
   assert.equal(bad.success, false);
+});
+
+/* ------------------------------------------- first-weigh-in guard (owner
+   correction 2026-07-19: the onboarding wizard's weight answer is saved as
+   the member's first weigh-in through the SAME code path as the target
+   editor's missing-data ask; hasWeighIn is the guard that keeps "first"
+   literal for both callers). */
+
+test("hasWeighIn: only entries carrying a weight count as weigh-ins", () => {
+  assert.equal(hasWeighIn([]), false);
+  // Photo-only and note-only progress entries are not weigh-ins.
+  assert.equal(hasWeighIn([{ weight: null }, { weight: null }]), false);
+  assert.equal(hasWeighIn([{ weight: 198 }]), true);
+  assert.equal(hasWeighIn([{ weight: null }, { weight: 82.5 }]), true);
+});
+
+test("the wizard weight rides the canonical weigh-in validation", () => {
+  // Valid weight + unit → the exact values the ProgressEntry stores.
+  const ok = progressEntrySchema.safeParse({ weight: 198, unit: "lb" });
+  assert.ok(ok.success);
+  assert.equal(ok.success && ok.data.weight, 198);
+  assert.equal(ok.success && ok.data.unit, "lb");
+  // A skipped weight field is NOT a valid weigh-in (nothing gets created).
+  assert.equal(
+    progressEntrySchema.safeParse({ weight: null, unit: "kg" }).success,
+    false
+  );
+  // Bounds are the /progress form's own: positive, at most 2000.
+  assert.equal(
+    progressEntrySchema.safeParse({ weight: 0, unit: "lb" }).success,
+    false
+  );
+  assert.equal(
+    progressEntrySchema.safeParse({ weight: 2001, unit: "lb" }).success,
+    false
+  );
 });

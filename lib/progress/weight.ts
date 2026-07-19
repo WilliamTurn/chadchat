@@ -29,6 +29,14 @@ export function parseWeightUnit(unit: string | null): "lb" | "kg" {
   return (unit ?? "").trim().toLowerCase().startsWith("k") ? "kg" : "lb";
 }
 
+/** Whether any progress entry carries a weight — i.e. the member has weighed
+ * in at least once. Photo- or note-only entries don't count. Guards the
+ * first-weigh-in create (onboarding wizard + target editor's missing-data
+ * ask) so neither path can ever add a duplicate "first" weigh-in. */
+export function hasWeighIn(entries: { weight: number | null }[]): boolean {
+  return entries.some((e) => e.weight != null);
+}
+
 /** The active weight goal, if any (metric "weight" with a target set). */
 export function activeWeightGoal(goals: Goal[]): Goal | null {
   return (

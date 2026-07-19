@@ -24,7 +24,6 @@ import {
 import {
   addWaterLog,
   createMealAnalysis,
-  createProgressEntry,
   deleteLatestWaterLog,
   deleteMealAnalysis,
   deleteWaterLogById,
@@ -36,6 +35,7 @@ import {
   updateUserWaterGoal,
   upsertNutritionTarget,
 } from "@/lib/db/queries";
+import { createFirstWeighIn } from "@/lib/nutrition/first-weigh-in";
 import {
   type FoodHit,
   lookupBarcode,
@@ -687,22 +687,12 @@ export async function saveRecommendationInputs(
   }
 
   if (weight != null) {
-    await createProgressEntry({
+    await createFirstWeighIn({
       userId: user.id,
-      recordedAt: new Date(),
       weight,
       unit: user.weightUnit ?? "lb",
-      photoUrl: null,
-      note: null,
+      timezone: user.timezone,
     });
-    applyMutationReceipt(
-      loggingReceipt({
-        domain: "body",
-        entity: "progressEntry",
-        op: "create",
-        days: { startISO: toCalendarDayISO(todayAnchorInTz(user.timezone)) },
-      })
-    );
   }
 
   return { ok: true };
