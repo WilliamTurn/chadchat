@@ -267,6 +267,84 @@ export const METRICS = {
     surfaces: ["/today", "/progress"],
   },
 
+  /* ---- energy (calories-burned Phase 1, owner rulings 2026-07-18) ----
+     Registered ahead of their surfaces (Phase 2 wires the target
+     recommendation, Phase 3 the exercise line + workout-card estimates),
+     per the plan's registry-first rule: the computations exist and are
+     unit-tested in lib/energy/* now; `surfaces` stays empty until a phase
+     actually renders the number. All four are formula estimates
+     (estimated: true — labeled estimated at display time). */
+  "energy.recommendedTarget": {
+    domain: "nutrition",
+    label: "Recommended calorie target",
+    unit: "kcal",
+    grain: "instant",
+    source: { module: "lib/energy/tdee.ts", symbol: "recommendedTarget" },
+    derivation:
+      "Mifflin-St Jeor BMR × everyday-life activity multiplier (User.activityLevel, workouts EXCLUDED — MFP semantics) ± the goal rate as kcal/day (3500 kcal/lb or 7700 kcal/kg per week ÷ 7), rounded to 25, floored at 1500 (male) / 1200 (female). Body weight = latest ProgressEntry weigh-in, never a second storage place. PRECEDENCE (plan §4.1): once lib/nutrition/adaptive-target.ts clears its own data gate its observed expenditure OUTRANKS this formula in recommendations; this is the day-0/no-data fallback. Proposes only — all target writes flow through the existing consent rails (D4), never silently.",
+    target: { kind: "none" },
+    allowedClaims: ["current-value"],
+    estimated: true,
+    staleAfterDays: null,
+    access: "pro",
+    precision: 0,
+    surfaces: [],
+  },
+  "energy.maintenance.kcalPerDay": {
+    domain: "nutrition",
+    label: "Maintenance calories",
+    unit: "kcal",
+    grain: "instant",
+    source: { module: "lib/energy/tdee.ts", symbol: "maintenanceKcal" },
+    derivation:
+      "TDEE: Mifflin-St Jeor BMR × activity multiplier (sedentary 1.2 | light 1.375 | moderate 1.55 | very 1.725). Shown inside the Phase 2 recommendation block ('Maintenance ~2,600'); same precedence note as energy.recommendedTarget.",
+    target: { kind: "none" },
+    allowedClaims: ["current-value"],
+    estimated: true,
+    staleAfterDays: null,
+    access: "pro",
+    precision: 0,
+    surfaces: [],
+  },
+  "energy.workout.kcal": {
+    domain: "training",
+    label: "Exercise calories",
+    unit: "kcal",
+    grain: "session",
+    source: {
+      module: "lib/energy/workout-energy.ts",
+      symbol: "workoutNetKcal",
+    },
+    derivation:
+      "Net METs (D3, Cronometer's arithmetic): (MET − 1) × kg × hours, never gross. Strength sessions use Workout.durationSeconds at MET 3.5 ('general lifting', D5) or the intense variant (6.0); sets/reps/RPE are never calorie inputs (the MFP position). Cardio uses minutes against lib/energy/activity-catalog.ts (2024 Compendium). Body weight = latest weigh-in. Missing inputs → null, never a guess. Phase 3 renders it on workout cards/history ('~225 cal estimated').",
+    target: { kind: "none" },
+    allowedClaims: ["current-value"],
+    estimated: true,
+    staleAfterDays: null,
+    access: "pro",
+    precision: 0,
+    surfaces: [],
+  },
+  "energy.exercise.kcalPerDay": {
+    domain: "nutrition",
+    label: "Exercise calories today",
+    unit: "kcal",
+    grain: "user-day",
+    source: {
+      module: "lib/energy/workout-energy.ts",
+      symbol: "exerciseKcalForDay",
+    },
+    derivation:
+      "Sum of the member-local day's computable per-session estimates (energy.workout.kcal); sessions with missing inputs contribute nothing, a day with no computable session is null (not-logged, never 0). Computed at read time from workout rows + catalog + latest weight — no denormalized burn column (one-canonical-value rule, plan §6). Phase 3 adds the Exercise line to the day's calorie math (Remaining = Target − Food + Exercise) when User.exerciseCalorieAddBack is on (D2, default true).",
+    target: { kind: "none" },
+    allowedClaims: ["current-value", "comparison"],
+    estimated: true,
+    staleAfterDays: null,
+    access: "pro",
+    precision: 0,
+    surfaces: [],
+  },
+
   /* ---------------------------------------------------------- hydration */
   "hydration.water.today": {
     domain: "hydration",

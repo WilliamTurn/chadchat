@@ -121,6 +121,19 @@ export const user = pgTable("User", {
   // strength, sports, classes, or nothing yet. Same treatment as
   // primaryGoalDetail so Chad plans around it.
   trainingDescription: text("trainingDescription"),
+  // --- Energy engine (calories-burned Phase 1, owner rulings 2026-07-18) ---
+  // Everyday-life activity level for the TDEE multiplier (MFP semantics:
+  // EXCLUDES intentional workouts — those are credited separately via METs).
+  // Null = not asked yet; the onboarding question is Phase 2 UI (D6).
+  activityLevel: varchar("activityLevel", {
+    enum: ["sedentary", "light", "moderate", "very"],
+  }),
+  // Whether logged exercise raises the day's calorie budget
+  // (Remaining = Target − Food + Exercise). Default ON, the MFP/LoseIt
+  // behavior (D2); the settings toggle itself is Phase 3 UI.
+  exerciseCalorieAddBack: boolean("exerciseCalorieAddBack")
+    .notNull()
+    .default(true),
   // --- Proactive check-ins (FEAT-11, Elite) ---
   // Whether Chad may email this member first (morning briefs, missed-workout
   // callouts). Default ON — it's the flagship of the Elite tier — with a
