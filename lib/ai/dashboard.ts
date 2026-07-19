@@ -10,6 +10,7 @@ import type {
   NutritionTarget,
   ProgressEntry,
 } from "@/lib/db/schema";
+import { formatClock } from "@/components/workouts/v2/format";
 import { LB_PER_KG } from "@/lib/contracts/units";
 import {
   exerciseKcalForDay,
@@ -222,6 +223,20 @@ function formatWorkoutLine(w: WorkoutWithChildren): string {
       );
       if (working.length === 0) {
         return `${ex.exerciseName}${exNote}`;
+      }
+      // Timed exercises store seconds in the reps column (cardio): render
+      // the duration the way the session detail page does ("30:00 min"),
+      // never as phantom reps — Chad must read time, not "1×(top BW×1800)".
+      // Owner-approved wording, 2026-07-19 (Phase 4 defect 2).
+      if (ex.kind === "timed") {
+        const seconds = working.reduce((sum, s) => sum + (s.reps ?? 0), 0);
+        if (seconds <= 0) {
+          return `${ex.exerciseName}${exNote}`;
+        }
+        const dur =
+          seconds >= 120 ? `${formatClock(seconds)} min` : `${seconds} seconds`;
+        const sets = working.length > 1 ? `${working.length} sets · ` : "";
+        return `${ex.exerciseName} ${sets}${dur}${exNote}`;
       }
       const top = working.reduce((a, b) =>
         toLb(b.weight ?? 0, b.unit) > toLb(a.weight ?? 0, a.unit) ? b : a

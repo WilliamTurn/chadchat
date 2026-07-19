@@ -9,7 +9,7 @@
  *
  * WORDING GATE: the block text below is prompt text Chad reads when
  * writing the weekly report. Changes need the owner's authorization on the
- * exact wording; this is the Phase 4 draft presented for approval.
+ * exact wording; this text was owner-approved 2026-07-19 (Phase 4).
  */
 
 import {

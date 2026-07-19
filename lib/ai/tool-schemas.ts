@@ -7,8 +7,8 @@
  *
  * WORDING GATE: every .describe() string here is text Chad reads. Changes
  * need the owner's explicit authorization on the exact wording (chadlatest
- * CLAUDE.md, Chad authorization). The strings below are the Phase 4 drafts
- * presented for that approval.
+ * CLAUDE.md, Chad authorization). The strings below were owner-approved
+ * 2026-07-19 (Phase 4 closing report carries the approved package).
  */
 
 import { z } from "zod";

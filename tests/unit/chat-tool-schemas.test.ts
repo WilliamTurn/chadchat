@@ -382,3 +382,75 @@ test("buildDayLog with no weigh-in on record estimates nothing", () => {
   assert.equal(log.exerciseKcal, null);
   assert.doesNotMatch(log.summary, /cal estimated/);
 });
+
+test("buildDayLog renders timed cardio as time, never phantom reps", () => {
+  // Phase 4 defect 2 (owner-approved fix): "Rowing machine · Vigorous
+  // 30:00 min", not "1×(top BW×1800)" — Chad reads time, not reps.
+  const log = dayLogWith(90);
+  assert.match(log.summary, /Rowing machine · Vigorous 30:00 min/);
+  assert.doesNotMatch(log.summary, /top BW×1800|×1800|1800 reps/);
+  assert.equal(
+    log.workouts[0].summary,
+    "Rowing machine — Rowing machine · Vigorous 30:00 min"
+  );
+});
+
+test("buildDayLog timed rendering: short work in seconds, intervals counted", () => {
+  const short = {
+    ...rowingWorkout(),
+    durationSeconds: 90,
+    exercises: [
+      {
+        exerciseName: "Jump rope",
+        muscleGroup: "cardio",
+        kind: "timed",
+        supersetGroup: null,
+        notes: null,
+        sets: [
+          {
+            weight: null,
+            reps: 90,
+            unit: "lb",
+            rpe: null,
+            setType: "working",
+            completed: true,
+          },
+        ],
+      },
+    ],
+  } as unknown as WorkoutWithChildren;
+  const intervals = {
+    ...rowingWorkout(),
+    exercises: [
+      {
+        exerciseName: "Rowing machine · All-out intervals",
+        muscleGroup: "cardio",
+        kind: "timed",
+        supersetGroup: null,
+        notes: null,
+        sets: [300, 300, 300].map((reps) => ({
+          weight: null,
+          reps,
+          unit: "lb",
+          rpe: null,
+          setType: "working",
+          completed: true,
+        })),
+      },
+    ],
+  } as unknown as WorkoutWithChildren;
+  const log = buildDayLog({
+    start: DAY_START,
+    end: DAY_END,
+    meals: [],
+    workouts: [short, intervals],
+    weighIns: [],
+    waterMl: 0,
+    measurements: [],
+  });
+  assert.match(log.summary, /Jump rope 90 seconds/);
+  assert.match(
+    log.summary,
+    /Rowing machine · All-out intervals 3 sets · 15:00 min/
+  );
+});
