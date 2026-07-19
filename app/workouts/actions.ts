@@ -44,12 +44,9 @@ import {
   type UpdateWorkoutInput,
   updateWorkoutSchema,
 } from "@/lib/validation/workouts";
-import {
-  cardioExerciseName,
-  findActivity,
-} from "@/lib/energy/activity-catalog";
 import { cardioNetKcal } from "@/lib/energy/workout-energy";
 import { weighInKg } from "@/lib/progress/weight";
+import { buildCardioWorkout } from "@/lib/workouts/cardio-entry";
 
 export type WorkoutActionState = { ok: boolean; error?: string };
 
@@ -277,42 +274,18 @@ export async function logCardio(input: LogCardioInput): Promise<LogCardioResult>
   }
 
   const { activityId, variantId, minutes } = parsed.data;
-  const activity = findActivity(activityId);
-  const exerciseName = cardioExerciseName(activityId, variantId);
-  if (!(activity && exerciseName)) {
+  const write = buildCardioWorkout({
+    activityId,
+    variantId,
+    minutes,
+    performedAt: parseCalendarDay(parsed.data.performedAt) ?? new Date(),
+    weightUnit: user.weightUnit === "kg" ? "kg" : "lb",
+  });
+  if (!write) {
     return { ok: false, error: "Pick an activity from the list." };
   }
 
-  const performedAt = parseCalendarDay(parsed.data.performedAt) ?? new Date();
-  const seconds = minutes * 60;
-  const unit = user.weightUnit === "kg" ? ("kg" as const) : ("lb" as const);
-  const created = await createWorkout({
-    userId: user.id,
-    title: activity.label,
-    performedAt,
-    durationSeconds: seconds,
-    notes: null,
-    exercises: [
-      {
-        name: exerciseName,
-        muscleGroup: "cardio",
-        kind: "timed",
-        supersetGroup: null,
-        notes: null,
-        sets: [
-          {
-            weight: null,
-            // Timed convention: the set's reps column holds seconds.
-            reps: seconds,
-            unit,
-            rpe: null,
-            setType: "working",
-            completed: true,
-          },
-        ],
-      },
-    ],
-  });
+  const created = await createWorkout({ userId: user.id, ...write });
 
   applyMutationReceipt(
     loggingReceipt({

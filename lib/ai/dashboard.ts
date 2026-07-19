@@ -11,7 +11,12 @@ import type {
   ProgressEntry,
 } from "@/lib/db/schema";
 import { LB_PER_KG } from "@/lib/contracts/units";
+import {
+  exerciseKcalForDay,
+  sessionNetKcal,
+} from "@/lib/energy/workout-energy";
 import { formatOz, mlToOz } from "@/lib/today/water-units";
+import { toWorkoutData } from "@/lib/workouts/serialize";
 import { toLb } from "@/lib/workouts/stats";
 
 // Keep day-log payloads bounded so a "review my last 30 days" call can't bloat
@@ -234,6 +239,12 @@ function formatWorkoutLine(w: WorkoutWithChildren): string {
 export type DayLog = {
   range: { start: string; end: string; singleDay: boolean };
   nutrition: MacroTotals & { target: NutritionTarget | null };
+  /**
+   * Estimated exercise calories across the window's computable sessions
+   * (energy.exercise.kcalPerDay math), priced against the latest weigh-in.
+   * Null when no session is computable or the caller gave no weight.
+   */
+  exerciseKcal: number | null;
   weighIns: {
     date: string;
     weight: number | null;
@@ -241,7 +252,13 @@ export type DayLog = {
     note: string | null;
     photoUrl: string | null;
   }[];
-  workouts: { date: string; title: string; summary: string }[];
+  workouts: {
+    date: string;
+    title: string;
+    summary: string;
+    /** Per-session estimate (energy.workout.kcal); null = not computable. */
+    estimatedKcal: number | null;
+  }[];
   waterMl: number;
   // Same volume in the app's display unit (fluid ounces) so the model speaks
   // the unit the client logs in (FN-7).
@@ -274,6 +291,7 @@ export function buildDayLog({
   kitchen,
   target,
   timezone = null,
+  weightKg,
 }: {
   start: Date;
   end: Date;
@@ -288,6 +306,11 @@ export function buildDayLog({
   // and logged-now rows are instants, so day labels resolve on THEIR wall
   // clock (noon-UTC-anchored picked days resolve to the day picked).
   timezone?: string | null;
+  // Body weight (kg) from the latest weigh-in — opts the log into exercise-
+  // calorie estimates (Phase 4: getDashboard exposes them). Omitted =
+  // estimates off and output identical to before; null = the caller looked
+  // and the member has no weigh-in yet.
+  weightKg?: number | null;
 }): DayLog {
   // Which local calendar day an instant belongs to, as a 00:00-UTC anchor the
   // UTC formatters below render correctly.
@@ -338,14 +361,33 @@ export function buildDayLog({
     sections.push("Nutrition: no meals logged.");
   }
 
+  // Exercise-calorie estimates (Phase 4): per-session energy.workout.kcal
+  // plus the window total, only when the caller opted in with a weight.
+  // Lines cover the capped display list; the total prices EVERY session in
+  // the window so it never under-reports a busy range.
+  const estimateFor = (w: WorkoutWithChildren): number | null =>
+    weightKg === undefined ? null : sessionNetKcal(toWorkoutData(w), weightKg);
+  const exerciseKcal =
+    weightKg === undefined
+      ? null
+      : exerciseKcalForDay(workouts.map((w) => estimateFor(w)));
+
   if (cappedWorkouts.length > 0) {
     const lines = cappedWorkouts.map((w) => {
       const when = singleDay
         ? ""
         : `${formatCalendarDay(dayAnchor(w.performedAt))} `;
-      return `  - ${when}${formatWorkoutLine(w)}`;
+      const kcal = estimateFor(w);
+      const burn = kcal == null ? "" : ` — ~${kcal} cal estimated`;
+      return `  - ${when}${formatWorkoutLine(w)}${burn}`;
     });
-    sections.push(`Workouts: ${cappedWorkouts.length}.\n${lines.join("\n")}`);
+    const total =
+      exerciseKcal == null
+        ? ""
+        : ` — ~${exerciseKcal} cal estimated total, counted toward the day's calorie budget`;
+    sections.push(
+      `Workouts: ${cappedWorkouts.length}${total}.\n${lines.join("\n")}`
+    );
   } else {
     sections.push("Workouts: none logged.");
   }
@@ -399,6 +441,7 @@ export function buildDayLog({
       singleDay,
     },
     nutrition: { ...totals, target: target ?? null },
+    exerciseKcal,
     weighIns: loggedEntries.map((e) => ({
       date: toISO(e.recordedAt),
       weight: e.weight,
@@ -410,6 +453,7 @@ export function buildDayLog({
       date: toISO(w.performedAt),
       title: w.title,
       summary: formatWorkoutLine(w),
+      estimatedKcal: estimateFor(w),
     })),
     waterMl: round(waterMl),
     waterOz: round(mlToOz(waterMl)),

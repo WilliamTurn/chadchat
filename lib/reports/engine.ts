@@ -37,7 +37,13 @@ import {
   weeklyReportContentSchema,
 } from "@/lib/reports/content";
 import { computeUserRecalibration } from "@/lib/nutrition/recalibrate";
+import { weighInKg } from "@/lib/progress/weight";
+import {
+  formatExerciseCalories,
+  weekExerciseKcal,
+} from "@/lib/reports/exercise-energy";
 import { isReportDue } from "@/lib/reports/schedule";
+import { toWorkoutData } from "@/lib/workouts/serialize";
 import { getAppUrl } from "@/lib/stripe";
 import { hasActiveAccess } from "@/lib/subscription";
 
@@ -259,6 +265,7 @@ export async function runUserWeeklyReport(
   const [
     meals,
     workouts,
+    priorWorkouts,
     waterMl,
     allWeighIns,
     allMeasurements,
@@ -271,6 +278,12 @@ export async function runUserWeeklyReport(
   ] = await Promise.all([
     getMealsBetween(user.id, start, end),
     getWorkoutsBetween(user.id, start, end),
+    // The week before the report week — the exercise-calorie comparison.
+    getWorkoutsBetween(
+      user.id,
+      new Date(start.getTime() - REPORT_DAYS * DAY_MS),
+      start
+    ),
     getWaterMlBetween(user.id, start, end),
     getProgressEntriesByUserId(user.id),
     getBodyMeasurementsByUserId(user.id),
@@ -366,6 +379,19 @@ Check this week's data against every one of those orders. Followed orders get na
 Include this as one of the ADJUSTMENTS: state the new numbers and the reason from the balance above, and tell them the recalibrated targets are waiting on their Calorie Tracker page where one tap applies them. Nothing changes until they accept it.`
       : "";
 
+  // Exercise calories, this week vs the week before (Phase 4): the same
+  // per-session estimates the workout cards render, priced against the
+  // latest weigh-in — pre-computed here so the report can only narrate it.
+  const latestWeighed = allWeighIns
+    .filter((e) => e.weight != null)
+    .sort((a, b) => a.recordedAt.getTime() - b.recordedAt.getTime())
+    .at(-1);
+  const reportWeightKg = weighInKg(latestWeighed ?? null);
+  const exerciseBlock = formatExerciseCalories(
+    weekExerciseKcal(workouts.map(toWorkoutData), reportWeightKg),
+    weekExerciseKcal(priorWorkouts.map(toWorkoutData), reportWeightKg)
+  );
+
   const firstName = user.name?.trim().split(/\s+/)[0];
   const context = [
     formatProfileForPrompt(user),
@@ -374,6 +400,7 @@ Include this as one of the ADJUSTMENTS: state the new numbers and the reason fro
     previousBlock,
     `THIS CLIENT'S LOGGED DATA FOR THE REPORT WEEK (${formatCalendarDay(start)} – ${formatCalendarDay(new Date(end.getTime() - 1))}, today inclusive — this is everything; if it's not here, it wasn't logged):\n\n${weekLog.summary}`,
     sleepBlock,
+    exerciseBlock,
     formatWeightTrend(allWeighIns, end),
     recalibrationBlock,
     photoNote,

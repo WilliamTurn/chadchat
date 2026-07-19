@@ -46,6 +46,7 @@ import { generateMealPlanTool } from "@/lib/ai/tools/generate-meal-plan";
 import { getAppGuide } from "@/lib/ai/tools/get-app-guide";
 import { getDashboard } from "@/lib/ai/tools/get-dashboard";
 import { getFutureYou } from "@/lib/ai/tools/get-future-you";
+import { logCardio } from "@/lib/ai/tools/log-cardio";
 import { logMeal } from "@/lib/ai/tools/log-meal";
 import { logSleep } from "@/lib/ai/tools/log-sleep";
 import { logWater } from "@/lib/ai/tools/log-water";
@@ -397,6 +398,7 @@ export async function POST(request: Request) {
                   "savePlan",
                   "generateMealPlan",
                   "logWorkout",
+                  "logCardio",
                   "logMeal",
                   "logWater",
                   "logSleep",
@@ -436,6 +438,7 @@ export async function POST(request: Request) {
             savePlan: savePlan({ session, chatId: id }),
             generateMealPlan: generateMealPlanTool({ session, chatId: id }),
             logWorkout: logWorkout({ session, user: dbUser }),
+            logCardio: logCardio({ session, user: dbUser }),
             logMeal: logMeal({ session, user: dbUser }),
             logWater: logWater({ session, user: dbUser }),
             logSleep: logSleep({ session, user: dbUser }),

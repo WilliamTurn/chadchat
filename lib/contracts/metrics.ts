@@ -352,6 +352,26 @@ export const METRICS = {
     // and the /today panel (arc, week dots, status strip).
     surfaces: ["/today", "/nutrition"],
   },
+  "energy.exercise.kcalPerWeek": {
+    domain: "training",
+    label: "Exercise calories this week",
+    unit: "kcal",
+    grain: "week",
+    source: {
+      module: "lib/reports/exercise-energy.ts",
+      symbol: "weekExerciseKcal",
+    },
+    derivation:
+      "Sum of one week's computable per-session estimates (energy.workout.kcal math via sessionNetKcal), priced against the latest weigh-in; sessions with missing inputs contribute nothing, a week with none is null (never 0). Phase 4: the weekly report's one-line comparison, this report week vs the week before, pre-computed in code (formatExerciseCalories) so Chad narrates it and never recalculates.",
+    target: { kind: "none" },
+    allowedClaims: ["current-value", "comparison"],
+    estimated: true,
+    staleAfterDays: null,
+    access: "elite",
+    precision: 0,
+    // The weekly coach's report (rendered on /reports + the report email).
+    surfaces: ["/reports"],
+  },
 
   /* ---------------------------------------------------------- hydration */
   "hydration.water.today": {

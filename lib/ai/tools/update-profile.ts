@@ -1,8 +1,9 @@
 import { tool } from "ai";
 import type { Session } from "next-auth";
-import { z } from "zod";
+import { updateProfileInputSchema } from "@/lib/ai/tool-schemas";
 import { setSensoryPrefs, updateUserProfile } from "@/lib/db/queries";
 import {
+  activityLabel,
   experienceLabel,
   formatHeightBoth,
   goalLabel,
@@ -27,47 +28,8 @@ type UpdateProfileProps = {
 export const updateProfile = ({ session }: UpdateProfileProps) =>
   tool({
     description:
-      "Update the client's confirmed profile stats (the 'Your stats' section on their Account page, which the app treats as the truth about them): primary goal, age, height, sex, training experience, or training days per week. Also flips their logging-feedback preferences (success sounds, vibration) when they ask. Use it when the client states or agrees to a change in one of these - especially when you two settle on a different primary goal than the profile shows. Pass ONLY the fields that changed, with exactly what the client confirmed. Never guess or update a field they didn't address.",
-    inputSchema: z.object({
-      primaryGoal: z
-        .enum(["muscle", "fat_loss", "strength", "health"])
-        .optional()
-        .describe(
-          "Their primary goal: muscle = build muscle, fat_loss = lose fat, strength = get stronger, health = overall health."
-        ),
-      primaryGoals: z
-        .array(z.enum(["muscle", "fat_loss", "strength", "health"]))
-        .max(4)
-        .optional()
-        .describe(
-          "Their FULL set of training goals when they name more than one (e.g. build muscle AND lose fat). Use this instead of primaryGoal whenever multiple goals apply; list them in priority order."
-        ),
-      age: z.number().int().min(13).max(100).optional(),
-      heightCm: z
-        .number()
-        .int()
-        .min(90)
-        .max(250)
-        .optional()
-        .describe("Height in whole centimeters (convert from ft/in yourself)."),
-      sex: z.enum(["male", "female"]).optional(),
-      experienceLevel: z
-        .enum(["beginner", "intermediate", "advanced"])
-        .optional(),
-      trainingDaysPerWeek: z.number().int().min(1).max(7).optional(),
-      soundEnabled: z
-        .boolean()
-        .optional()
-        .describe(
-          "Whether the app plays the success chime when they log something. Set only when the client asks to turn logging sounds on or off."
-        ),
-      hapticsEnabled: z
-        .boolean()
-        .optional()
-        .describe(
-          "Whether the app vibrates on logs and timers (phones only). Set only when the client asks to turn vibration on or off."
-        ),
-    }),
+      "Update the client's confirmed profile stats (the 'Your stats' section on their Account page, which the app treats as the truth about them): primary goal, age, height, sex, training experience, training days per week, or everyday activity level (which feeds their recommended calorie target). Also flips their logging-feedback preferences (success sounds, vibration) when they ask. Use it when the client states or agrees to a change in one of these - especially when you two settle on a different primary goal than the profile shows. Pass ONLY the fields that changed, with exactly what the client confirmed. Never guess or update a field they didn't address.",
+    inputSchema: updateProfileInputSchema,
     execute: async (input) => {
       // Sound/vibration are preferences, not profile stats; split them off
       // before the profile validation and write them through the same setter
@@ -136,6 +98,11 @@ export const updateProfile = ({ session }: UpdateProfileProps) =>
       if (parsed.data.trainingDaysPerWeek != null) {
         changed.push(
           `training days/week: ${parsed.data.trainingDaysPerWeek}`
+        );
+      }
+      if (parsed.data.activityLevel) {
+        changed.push(
+          `everyday activity: ${activityLabel(parsed.data.activityLevel)}`
         );
       }
       if (sensory.soundEnabled != null) {
