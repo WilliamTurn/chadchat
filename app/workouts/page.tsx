@@ -11,7 +11,7 @@ import {
 } from "@/components/dashboard/metric-value";
 import type { UnitId } from "@/lib/contracts/units";
 import { WorkoutsSkeleton } from "@/components/dashboard/page-skeletons";
-import { BackToDashboard } from "@/components/nav/back-to-dashboard";
+import { BackLink } from "@/components/nav/back-link";
 import { PageShell } from "@/components/nav/page-shell";
 import { ScrollToHash } from "@/components/nav/scroll-to-hash";
 import { Badge } from "@/components/ui/badge";
@@ -68,7 +68,7 @@ export default function WorkoutsPage() {
     // multi-column workout/plan card grids and a paired analytics row.
     <PageShell active="/workouts" className="max-w-[1500px]">
       <div className="mb-8">
-        <BackToDashboard />
+        <BackLink />
         <div className="flex items-center gap-3">
           <h1 className="font-semibold text-2xl tracking-tight">Workouts</h1>
           <Badge variant="secondary">Pro feature</Badge>
@@ -331,10 +331,10 @@ async function Home({ user }: { user: User }) {
           <section className="scroll-mt-20" id="history">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
-                Recent workouts
+                Workout History
               </h2>
               <div className="flex items-center gap-2">
-                <AskChadButton prompt="Review my Workouts page: my logged sessions, weekly volume, training plan, and PRs. How is my training progressing overall, and what should I focus on next?" />
+                <AskChadButton prompt="Review my Workouts page: my logged workouts, weekly volume, training plan, and PRs. How is my training progressing overall, and what should I focus on next?" />
               </div>
             </div>
             {/* Two-across on desktop (LAY-1); explicit grid-cols-1 + min-w-0

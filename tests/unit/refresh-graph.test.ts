@@ -26,15 +26,15 @@ describe("surfacesForDomains", () => {
   it("nutrition spans every surface its metrics render on", () => {
     assertCovers(
       surfacesForDomains(["nutrition"]),
-      ["/today", "/nutrition", "/reports"],
+      ["/home", "/nutrition", "/reports"],
       "nutrition"
     );
   });
 
-  it("body mutations reach /today, /goals, and /reports, not just /progress (the pre-FIX-10 bug)", () => {
+  it("body mutations reach /home, /goals, and /reports, not just /progress (the pre-FIX-10 bug)", () => {
     assertCovers(
       surfacesForDomains(["body"]),
-      ["/today", "/progress", "/goals", "/reports"],
+      ["/home", "/progress", "/goals", "/reports"],
       "body"
     );
   });
@@ -42,13 +42,13 @@ describe("surfacesForDomains", () => {
   it("training spans the workout routes and the dashboards", () => {
     assertCovers(
       surfacesForDomains(["training"]),
-      ["/today", "/workouts", "/workouts/history", "/goals"],
+      ["/home", "/workouts", "/workouts/history", "/goals"],
       "training"
     );
   });
 
   it("engagement adds the Today dashboard", () => {
-    assertCovers(surfacesForDomains(["engagement"]), ["/today"], "engagement");
+    assertCovers(surfacesForDomains(["engagement"]), ["/home"], "engagement");
   });
 });
 
@@ -66,7 +66,7 @@ describe("receipts cover every legacy hardcoded revalidate list", () => {
         op: "create",
         alsoDomains: ["kitchen"],
       }),
-      old: ["/nutrition", "/kitchen", "/today"],
+      old: ["/nutrition", "/kitchen", "/home"],
     },
     {
       label: "water log (logWaterAmount/removeWater)",
@@ -75,17 +75,17 @@ describe("receipts cover every legacy hardcoded revalidate list", () => {
         entity: "waterLog",
         op: "create",
       }),
-      old: ["/today", "/hydration"],
+      old: ["/home", "/hydration"],
     },
     {
       label: "water goal (saveWaterGoal)",
       receipt: targetReceipt({ domain: "hydration", entity: "waterGoal" }),
-      old: ["/today", "/hydration"],
+      old: ["/home", "/hydration"],
     },
     {
       label: "nutrition target (saveNutritionTarget/applyRecalibration)",
       receipt: targetReceipt({ domain: "nutrition", entity: "nutritionTarget" }),
-      old: ["/nutrition", "/today"],
+      old: ["/nutrition", "/home"],
     },
     {
       label: "sleep entry (logSleep/removeSleep)",
@@ -94,12 +94,12 @@ describe("receipts cover every legacy hardcoded revalidate list", () => {
         entity: "sleepEntry",
         op: "create",
       }),
-      old: ["/today", "/sleep"],
+      old: ["/home", "/sleep"],
     },
     {
       label: "sleep goal (saveSleepGoal)",
       receipt: targetReceipt({ domain: "sleep", entity: "sleepGoal" }),
-      old: ["/today", "/sleep"],
+      old: ["/home", "/sleep"],
     },
     {
       label: "weigh-in / measurement (app/progress)",
@@ -117,7 +117,7 @@ describe("receipts cover every legacy hardcoded revalidate list", () => {
         entity: "workout",
         op: "create",
       }),
-      old: ["/workouts", "/workouts/history", "/today"],
+      old: ["/workouts", "/workouts/history", "/home"],
     },
     {
       label: "custom exercise (revalidateExercisePages)",
@@ -129,19 +129,19 @@ describe("receipts cover every legacy hardcoded revalidate list", () => {
       old: ["/workouts", "/workouts/exercises", "/workouts/exercises/pick"],
     },
     {
-      label: "goal record (app/today saveGoalRecord/removeGoal)",
+      label: "goal record (app/home saveGoalRecord/removeGoal)",
       receipt: mutationReceipt({ domain: "goals", entity: "goal", op: "create" }),
-      old: ["/today"],
+      old: ["/home"],
     },
     {
-      label: "plan record (app/today savePlanRecord/removePlan)",
+      label: "plan record (app/home savePlanRecord/removePlan)",
       receipt: mutationReceipt({
         domain: "plans",
         entity: "plan",
         op: "create",
-        alsoSurfaces: ["/today"],
+        alsoSurfaces: ["/home"],
       }),
-      old: ["/today"],
+      old: ["/home"],
     },
     {
       label: "meal plan build (app/meal-plan generatePlan)",
@@ -150,9 +150,9 @@ describe("receipts cover every legacy hardcoded revalidate list", () => {
         entity: "mealPlan",
         op: "create",
         alsoDomains: ["nutrition"],
-        alsoSurfaces: ["/today"],
+        alsoSurfaces: ["/home"],
       }),
-      old: ["/meal-plan", "/today", "/nutrition"],
+      old: ["/meal-plan", "/home", "/nutrition"],
     },
   ];
 
@@ -188,10 +188,10 @@ describe("receipt semantics", () => {
       domain: "plans",
       entity: "plan",
       op: "create",
-      alsoSurfaces: ["/today"],
+      alsoSurfaces: ["/home"],
     });
     const surfaces = surfacesForReceipt(r);
-    assert.ok(surfaces.includes("/today"));
+    assert.ok(surfaces.includes("/home"));
     assert.ok(surfaces.includes("/plans/[id]"));
   });
 });

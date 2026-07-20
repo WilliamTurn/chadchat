@@ -53,7 +53,7 @@ function emailToHue(email: string): number {
  * Account avatar + dropdown for the standalone pages. The chat view has the
  * sidebar user menu for this; the dashboard pages had no sign-out anywhere, so
  * a logged-in member who landed here (e.g. via the landing "Log in" link, which
- * bounces authenticated users to /today) was stranded with no way out.
+ * bounces authenticated users to /home) was stranded with no way out.
  */
 function AccountMenu() {
   const { data } = useSession();
@@ -153,7 +153,7 @@ function Wordmark() {
     <Link
       aria-label="Chad dashboard"
       className="flex min-h-11 shrink-0 items-center gap-2"
-      href="/today"
+      href="/home"
     >
       <span className="flex size-7 items-center justify-center rounded-lg bg-muted/60 ring-1 ring-border/50">
         <Dumbbell className="text-blood" size={14} strokeWidth={2.5} />

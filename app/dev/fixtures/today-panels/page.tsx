@@ -29,7 +29,7 @@ import { PERSONAS } from "@/tests/fixtures/dashboard-states";
  *
  * Interactions here call the real server actions and surface their honest
  * failure toasts when unauthenticated; this page verifies composition and
- * states, the live logging paths are verified on /hydration, /sleep, /today.
+ * states, the live logging paths are verified on /hydration, /sleep, /home.
  */
 export default function TodayPanelsFixturePage() {
   return (

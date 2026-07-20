@@ -5,7 +5,7 @@
  *
  * Why this exists: the same quantity was being formatted differently on
  * different surfaces, and LB_PER_KG was independently declared in
- * `app/today/page.tsx`, `lib/ai/dashboard.ts`, and `lib/workouts/stats.ts`.
+ * `app/home/page.tsx`, `lib/ai/dashboard.ts`, and `lib/workouts/stats.ts`.
  * Any two declarations of the same constant will eventually disagree. From
  * Phase 2 on, new code imports conversions and formatting from here; the three
  * existing declarations migrate here as those files are touched (surgical

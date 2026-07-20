@@ -108,7 +108,7 @@ export const SYSTEM_COPY_BANNED: readonly BannedPattern[] = [
   {
     id: "session-vocab",
     // Quoted, sentence-like strings only (must contain a space), so route
-    // paths ("/workouts/session") and identifiers stay legal. The lookaround
+    // paths ("/workouts/active") and identifiers stay legal. The lookaround
     // guards skip template-literal interpolations like `${session.name}`.
     pattern:
       /(["'`])(?=[^"'`]* )[^"'`]*(?<!\$\{)\bsessions?\b(?![.}\w])[^"'`]*\1/i,

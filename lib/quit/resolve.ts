@@ -43,7 +43,7 @@ export type QuitResolution = {
  *   loop). The concession narrative is generated FIRST, so a model failure
  *   leaves the row active and the next hourly pass simply retries.
  * - Silent for HIT_SILENCE_DAYS past the date → HIT: the row resolves and the
- *   /today card + Chad's context flip to the "I called it" callback.
+ *   /home card + Chad's context flip to the "I called it" callback.
  * Either way the resolved row's content gains the outcome ledger record:
  * days lasted + every check-in sent in the danger window, so announced
  * predictions accumulate intervention-vs-outcome ground truth.

@@ -50,8 +50,8 @@ async function Content({
     <>
       <WorkoutPageHeader
         back={{
-          href: target === "draft" ? "/workouts/new" : "/workouts/session",
-          label: target === "draft" ? "workout builder" : "workout",
+          href: target === "draft" ? "/workouts/new" : "/workouts/active",
+          label: target === "draft" ? "workout builder" : "your workout",
         }}
         subtitle={
           target === "replace"

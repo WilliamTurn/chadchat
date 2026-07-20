@@ -1,5 +1,5 @@
 /**
- * /today Up-next selector tests (FIX-23, P56-D). The verdict must follow the
+ * /home Up-next selector tests (FIX-23, P56-D). The verdict must follow the
  * fixed priority order, be deterministic, and be safe when data is missing.
  */
 
@@ -32,7 +32,7 @@ function trainingVerdict(name = "Day 2: Lower"): UpNextVerdict {
         },
       ],
     },
-    reason: "Your least recent session in the rotation.",
+    reason: "Your least recent workout in the rotation.",
   };
 }
 
@@ -73,7 +73,7 @@ describe("selectUpNextToday", () => {
     assert.equal(v.secondary?.href, "/plans/p1");
     assert.deepEqual(v.training?.exercises, ["Squat"]);
     // The WHY comes from the P34-D selector, never re-derived here.
-    assert.equal(v.reason, "Your least recent session in the rotation.");
+    assert.equal(v.reason, "Your least recent workout in the rotation.");
   });
 
   it("skips training once today's session is completed", () => {
@@ -90,7 +90,7 @@ describe("selectUpNextToday", () => {
       })
     );
     assert.equal(v.kind, "sleep");
-    assert.match(v.reason, /session is done/i);
+    assert.match(v.reason, /workout is done/i);
   });
 
   it("sleep repair outranks the meal plan", () => {

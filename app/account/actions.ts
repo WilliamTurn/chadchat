@@ -115,14 +115,14 @@ export async function setPreferredWeightUnit(unit: "lb" | "kg") {
 
   await setWeightUnit(session.user.id, unit);
   revalidatePath("/account");
-  revalidatePath("/today");
+  revalidatePath("/home");
   revalidatePath("/progress");
 }
 
 /**
  * Save the member's editable stats/profile (ONB-2). This is their own trusted
  * data — the source of truth Chad reads in every chat — so they can correct
- * anything he ever got wrong. Revalidates /today because the profile's sex
+ * anything he ever got wrong. Revalidates /home because the profile's sex
  * drives the default hero figure there.
  */
 export async function saveProfile(input: ProfileInput) {
@@ -138,7 +138,7 @@ export async function saveProfile(input: ProfileInput) {
 
   await updateUserProfile(session.user.id, parsed.data);
   revalidatePath("/account");
-  revalidatePath("/today");
+  revalidatePath("/home");
 }
 
 /**
@@ -174,7 +174,7 @@ export async function saveTimezone(timezone: string) {
 
   await setUserTimezone(session.user.id, timezone);
   revalidatePath("/account");
-  revalidatePath("/today");
+  revalidatePath("/home");
   revalidatePath("/nutrition");
   revalidatePath("/sleep");
 }
@@ -300,7 +300,7 @@ export async function saveSensorySettings(prefs: {
 }
 
 /**
- * Switch the Quit Date mechanic on or off (FEAT-25). Off hides the /today
+ * Switch the Quit Date mechanic on or off (FEAT-25). Off hides the /home
  * card, blocks new autopsies, and drops the prediction from Chad's chat and
  * check-in prompts + the cron sweeps. The prediction ledger itself is kept.
  */
@@ -316,7 +316,7 @@ export async function saveQuitDateEnabled(enabled: boolean) {
 
   await setQuitDateEnabled(session.user.id, enabled);
   revalidatePath("/account");
-  revalidatePath("/today");
+  revalidatePath("/home");
   revalidatePath("/quit-date");
 }
 
@@ -337,7 +337,7 @@ export async function saveExerciseCalorieAddBack(enabled: boolean) {
 
   await setExerciseCalorieAddBack(session.user.id, enabled);
   revalidatePath("/account");
-  revalidatePath("/today");
+  revalidatePath("/home");
   revalidatePath("/nutrition");
 }
 
@@ -392,5 +392,5 @@ export async function deleteMyData() {
 
   await deleteAllUserData(session.user.id);
   revalidatePath("/account");
-  revalidatePath("/today");
+  revalidatePath("/home");
 }

@@ -58,7 +58,7 @@ export function TrainingHighlight({
       detailLink={{ label: "Training progress", href: "/progress/training" }}
       empty={{
         absent: "No workouts this week yet.",
-        unlock: "Log a session and your training week builds here.",
+        unlock: "Log a workout and your training week builds here.",
         visual: (
           <WeekBars
             days={week.map((d) => ({
@@ -77,7 +77,7 @@ export function TrainingHighlight({
         </span>
       }
       icon={<Dumbbell className="size-4" />}
-      lockedCapability="Pro members see their training week: sessions, volume, and plan completion."
+      lockedCapability="Pro members see their training week: workouts, volume, and plan completion."
       state={locked ? "locked" : sessionsThisWeek > 0 ? "populated" : "empty"}
       targetContext={
         volumeWeekLb > 0

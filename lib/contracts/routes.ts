@@ -56,13 +56,12 @@ export type Domain = {
 export const DOMAINS: Record<DomainId, Domain> = {
   nutrition: {
     id: "nutrition",
-    name: "Calorie Tracker",
+    // RC-11 (Q-D): renamed from "Calorie Tracker". The domain includes macros,
+    // meals, targets, and history, not only calories; benchmark apps name the
+    // domain, not one metric. The URL was already /nutrition, so this is the
+    // "nav item, page title, and URL always match" rule landing.
+    name: "Nutrition",
     owns: "meals, calories, macros, nutrition targets, food history",
-    proposedName: {
-      name: "Nutrition",
-      rationale:
-        "The domain includes macros, meals, targets, and history, not only calories; benchmark apps (MacroFactor, MyFitnessPal, Apple Health) name the domain, not one metric. LC-12/R2-6 standardized 'Calorie Tracker' before the overhaul; renaming is a P3 owner call.",
-    },
   },
   hydration: {
     id: "hydration",
@@ -102,8 +101,10 @@ export const DOMAINS: Record<DomainId, Domain> = {
     owns: "streaks, weekly logging consistency, milestones",
   },
   reports: {
+    // RC-11 (Q-D): "Weekly Report" (singular) named one document while the URL
+    // and the surface are the plural archive. The section is Reports.
     id: "reports",
-    name: "Weekly Report",
+    name: "Reports",
     owns: "weekly/monthly reviews and their evidence",
   },
   coach: {
@@ -174,17 +175,22 @@ export type RouteDef = {
 };
 
 export const ROUTES = {
-  "/today": {
-    path: "/today",
-    name: "Dashboard",
+  "/home": {
+    // RC-11 (Q-D): /today renamed to /home, named Home on every surface.
+    // "Dashboard" is retired as a member-facing and internal word.
+    path: "/home",
+    name: "Home",
     domain: "engagement",
     access: "member",
     purpose: "See today's status, log the day, and catch what needs attention.",
     proposedNavGroup: "primary",
   },
   "/": {
+    // RC-11 (owner ruling 2026-07-19): the nav says "Chad" everywhere. The
+    // bottom tab said "Coach" and the sidebar said "Chat", so one destination
+    // answered to two words. Both now resolve from this name.
     path: "/",
-    name: "Chat",
+    name: "Chad",
     domain: "coach",
     access: "member",
     purpose: "Talk to Chad.",
@@ -206,40 +212,42 @@ export const ROUTES = {
     access: "pro",
     purpose: "Build and start a workout.",
   },
-  "/workouts/session": {
-    path: "/workouts/session",
-    name: "Live workout",
+  "/workouts/active": {
+    // RC-11 (Q-D): /workouts/session renamed; "session" is banned
+    // member-facing and the URL carried it.
+    path: "/workouts/active",
+    name: "Active workout",
     domain: "training",
     access: "pro",
-    purpose: "Run the in-progress session.",
+    purpose: "Run the workout that is currently in progress.",
   },
   "/workouts/cardio": {
     path: "/workouts/cardio",
     name: "Log cardio",
     domain: "training",
     access: "pro",
-    purpose: "Log a cardio session by activity and minutes.",
+    purpose: "Log a cardio workout by activity and minutes.",
   },
   "/workouts/history": {
     path: "/workouts/history",
     name: "Workout history",
     domain: "training",
     access: "pro",
-    purpose: "Browse past sessions.",
+    purpose: "Browse past workouts.",
   },
   "/workouts/history/[id]": {
     path: "/workouts/history/[id]",
     name: "Workout details",
     domain: "training",
     access: "pro",
-    purpose: "One logged session in full.",
+    purpose: "One logged workout in full.",
   },
   "/workouts/[id]/edit": {
     path: "/workouts/[id]/edit",
     name: "Edit workout",
     domain: "training",
     access: "pro",
-    purpose: "Correct a logged session.",
+    purpose: "Correct a logged workout.",
   },
   "/workouts/exercises": {
     path: "/workouts/exercises",
@@ -271,7 +279,7 @@ export const ROUTES = {
   },
   "/nutrition": {
     path: "/nutrition",
-    name: "Calorie Tracker",
+    name: "Nutrition",
     domain: "nutrition",
     access: "pro",
     purpose: "Log meals and track calories and macros against targets.",
@@ -355,7 +363,7 @@ export const ROUTES = {
     domain: "plans",
     access: "member",
     purpose:
-      "See and manage every saved plan: active, past, add, and reactivate. (P56-E: the /today plan-management card relocated here, FIX-30.)",
+      "See and manage every saved plan: active, past, add, and reactivate. (P56-E: the /home plan-management card relocated here, FIX-30.)",
   },
   "/plans/[id]": {
     path: "/plans/[id]",
@@ -390,7 +398,7 @@ export const ROUTES = {
   },
   "/reports": {
     path: "/reports",
-    name: "Weekly Report",
+    name: "Reports",
     domain: "reports",
     access: "elite",
     purpose:
@@ -434,7 +442,7 @@ export const ROUTES = {
     name: "Appearance",
     domain: "account",
     access: "member",
-    // DEC-05 (DECIDED 2026-07-13): the owned home of the relocated /today
+    // DEC-05 (DECIDED 2026-07-13): the owned home of the relocated /home
     // header figure customizer. Registered additively by P56-D.
     purpose: "Choose the figure that represents you.",
   },
@@ -529,7 +537,7 @@ export const TERMS: readonly Term[] = [
   {
     term: "Not logged",
     meaning:
-      "The member-facing word for missing data. Missing is never rendered as 0. Carve-out: counts of logged events (sessions, meals-logged count, PRs) render a truthful 0; those metrics declare missingRendersAs: 'zero' in the registry.",
+      "The member-facing word for missing data. Missing is never rendered as 0. Carve-out: counts of logged events (workouts, meals-logged count, PRs) render a truthful 0; those metrics declare missingRendersAs: 'zero' in the registry.",
     never: ["0 (for unobservable missing data)", "skipped (as a system judgment)"],
   },
   {

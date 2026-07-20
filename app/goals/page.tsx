@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { auth } from "@/app/(auth)/auth";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
-import { BackToDashboard } from "@/components/nav/back-to-dashboard";
+import { BackLink } from "@/components/nav/back-link";
 import { PageShell } from "@/components/nav/page-shell";
 import { GoalList, type LiftProgress } from "@/components/today/goal-list";
 import { canAccessChad, canAccessProFeatures } from "@/lib/admin";
@@ -31,11 +31,11 @@ import { exercise1RMTrend } from "@/lib/workouts/stats";
  * The dedicated Goals page (R2-8): goals' ONE deep surface, following the
  * /sleep and /hydration pattern. Every domain had a full page except the thing
  * the whole product is aimed at. Active goals with live progress and lift
- * charts, past goals, the editor, and the coherence nudges, with the /today
+ * charts, past goals, the editor, and the coherence nudges, with the /home
  * card keeping the compact list + "View all →".
  */
 
-// Matches the /today hydration bound: enough history for a real e1RM trend.
+// Matches the /home hydration bound: enough history for a real e1RM trend.
 const GOALS_WORKOUT_LIMIT = 60;
 
 export default function GoalsPage() {
@@ -45,7 +45,7 @@ export default function GoalsPage() {
     <PageShell active="/goals" className="max-w-[1500px]">
 
       <div className="mb-8">
-        <BackToDashboard />
+        <BackLink />
         <h1 className="font-semibold text-2xl tracking-tight">Goals</h1>
         <p className="mt-1 text-muted-foreground text-sm">
           All of your goals in one place: live progress on the active ones,
@@ -111,13 +111,13 @@ async function GoalsContent() {
   const goalItems = goals.map(toGoalItem);
   const pastGoalItems = pastGoals.map(toGoalItem);
 
-  // Same anchors the /today card uses, so the two surfaces never disagree.
+  // Same anchors the /home card uses, so the two surfaces never disagree.
   // "Current" is the smoothed trend weight — the canonical number (LC-4).
   const currentWeight =
     trendWeightInUnit(entries, user.weightUnit)?.value ?? null;
 
   // Canonical inputs + a canonicalized ref, so this page's lift values are
-  // the SAME series /today and /progress read through buildGoalVM (P56-Z
+  // the SAME series /home and /progress read through buildGoalVM (P56-Z
   // adversarial P1-1: raw-history math here diverged from the canonical
   // surfaces once FIX-33 landed, and alias-spelled refs missed entirely).
   const resolveOptions = await getResolveOptions(user.id);

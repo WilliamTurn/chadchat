@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
-import { removePlan, updatePlanRecord } from "@/app/today/actions";
+import { removePlan, updatePlanRecord } from "@/app/home/actions";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -173,7 +173,7 @@ function PastPlanItem({ plan }: { plan: EditablePlan }) {
 }
 
 /**
- * The /today "Your training" card body: lists the user's saved training/diet
+ * The /home "Your training" card body: lists the user's saved training/diet
  * plans (the full documents), with an Add control and an empty state that falls
  * back to the one-line plan Chad has in memory until a real one is saved.
  * Archived/completed plans collapse into a "Past plans" disclosure so the

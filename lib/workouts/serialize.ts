@@ -4,7 +4,7 @@ import type { WorkoutData } from "@/lib/workouts/stats";
 /**
  * DB workout rows → the serializable shape the pure stats helpers and client
  * charts consume. Shared by every page that hydrates workouts for lift-goal
- * trends (/today, /goals, /goals/[id]).
+ * trends (/home, /goals, /goals/[id]).
  */
 export function toWorkoutData(w: WorkoutWithChildren): WorkoutData {
   return {

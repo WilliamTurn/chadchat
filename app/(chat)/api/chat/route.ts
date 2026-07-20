@@ -293,7 +293,7 @@ export async function POST(request: Request) {
 
     // Always-on "today's dashboard" snapshot so Chad has live, ambient
     // awareness of where the client stands (nutrition vs target, latest
-    // weigh-in, water) without being asked. Pro-only data, mirroring /today;
+    // weigh-in, water) without being asked. Pro-only data, mirroring /home;
     // for any other day Chad calls the getDashboard tool. Best-effort — a query
     // hiccup here must never block the chat.
     let dashboardBlock = "";

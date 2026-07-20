@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import type { PlanStatusSummary } from "@/lib/subscription";
 
 /**
- * THE COMPACT /today HEADER (FIX-22, DEC-05). Date eyebrow, greeting, tier
+ * THE COMPACT /home HEADER (FIX-22, DEC-05). Date eyebrow, greeting, tier
  * badge, one quiet Coach action: 72 to 88px of chrome, no decorative
  * silhouette, no stats (status belongs to the four-domain strip below), no
  * customizer (relocated to Account > Appearance per DEC-05). The MacroFactor

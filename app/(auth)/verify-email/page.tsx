@@ -45,14 +45,14 @@ async function VerifyResult({
 
   return verified ? (
     <AuthStatus
-      action={{ href: "/today", label: "Continue to Chad" }}
+      action={{ href: "/home", label: "Continue to Chad" }}
       description="Thanks — your email address is confirmed. You're all set."
       title="Email verified"
       variant="success"
     />
   ) : (
     <AuthStatus
-      action={{ href: "/today", label: "Go to Chad" }}
+      action={{ href: "/home", label: "Go to Chad" }}
       description="This verification link is invalid or has expired. Sign in and resend a new one from the banner at the top of the app."
       title="Link expired"
       variant="expired"

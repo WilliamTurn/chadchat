@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { auth } from "@/app/(auth)/auth";
 import { RewardProvider } from "@/components/dashboard/reward";
 import { ProgressSkeleton } from "@/components/dashboard/page-skeletons";
-import { BackToDashboard } from "@/components/nav/back-to-dashboard";
+import { BackLink } from "@/components/nav/back-link";
 import { PageShell } from "@/components/nav/page-shell";
 import { TrainingSection } from "@/components/progress/training/training-section";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +20,7 @@ export default function ProgressTrainingPage() {
   return (
     <PageShell active="/progress" className="max-w-[var(--container-content)]">
       <div className="mb-8">
-        <BackToDashboard href="/progress" label="Progress" />
+        <BackLink href="/progress" label="Progress" />
         <div className="flex items-center gap-3">
           <h1 className="font-semibold text-2xl tracking-tight">Training</h1>
           {/* "Pro feature", not bare "Pro" (LC-13). */}

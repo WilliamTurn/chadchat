@@ -230,7 +230,7 @@ describe("weeklyAdherenceSeries + perfectPlanWeekMilestones", () => {
     });
     assert.equal(milestones.length, 1);
     assert.equal(milestones[0].kind, "perfect-week");
-    assert.equal(milestones[0].detail, "3 of 3 sessions completed");
+    assert.equal(milestones[0].detail, "3 of 3 workouts completed");
   });
 });
 

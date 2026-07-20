@@ -245,7 +245,7 @@ async function PreferencesAndDataSettings() {
   // hydration, sleep, and measurements was only half the promise.
   const exports: { dataset: string; label: string; icon: typeof Scale }[] = [
     { dataset: "weighins", label: "Weigh-ins", icon: Scale },
-    { dataset: "meals", label: "Calorie Tracker", icon: Salad },
+    { dataset: "meals", label: "Nutrition", icon: Salad },
     { dataset: "workouts", label: "Workouts", icon: Dumbbell },
     { dataset: "hydration", label: "Hydration", icon: GlassWater },
     { dataset: "sleep", label: "Sleep", icon: Moon },
@@ -511,7 +511,7 @@ async function MembershipCard() {
 
           {hasAccess ? (
             <Button asChild variant="outline">
-              <Link href="/today">Open Chad</Link>
+              <Link href="/home">Open Chad</Link>
             </Button>
           ) : (
             <Button asChild variant="outline">

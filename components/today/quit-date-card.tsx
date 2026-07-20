@@ -12,7 +12,7 @@ import { parseQuitPredictionContent } from "@/lib/quit/content";
 import { dayNumberOn, daysUntilQuit } from "@/lib/quit/lifecycle";
 
 /**
- * The Quit Date card on /today. FEAT-21 put the prediction here; FEAT-22 made
+ * The Quit Date card on /home. FEAT-21 put the prediction here; FEAT-22 made
  * it the live countdown ("Day 14 of 23. Chad still says you quit March 14.")
  * and gave the resolved states their moments: past-the-date (prove-him-wrong
  * pending), hit (the owner's verbatim callback line + restart path), and the

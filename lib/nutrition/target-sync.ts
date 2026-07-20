@@ -3,7 +3,7 @@
  *
  * Historically a user could have TWO competing macro targets: the daily
  * Calorie-Tracker target (`NutritionTarget`, what drives the dashboard rings on
- * /today and /nutrition) and a meal plan's own embedded target snapshot. They
+ * /home and /nutrition) and a meal plan's own embedded target snapshot. They
  * could drift (tracker 200C vs plan 190C), and Chad could build a plan whose
  * target never showed up in the tracker at all.
  *
@@ -11,7 +11,7 @@
  * built: the user's explicit daily-target values win, the plan fills any gaps,
  * and the merged result is written back to the daily target AND returned so the
  * caller snapshots the SAME numbers on the plan. After a build,
- * `NutritionTarget == mealPlan.target` — the rings, the /today card, and the
+ * `NutritionTarget == mealPlan.target` — the rings, the /home card, and the
  * plan view can no longer disagree.
  */
 
@@ -43,7 +43,7 @@ export async function reconcilePlanTarget(
     fat: existing?.fat ?? planTarget.fat,
   };
 
-  // Persist so the daily Calorie Tracker and the plan share one set of numbers.
+  // Persist so the daily Nutrition targets and the plan share one set of numbers.
   await upsertNutritionTarget(userId, merged);
 
   return merged;

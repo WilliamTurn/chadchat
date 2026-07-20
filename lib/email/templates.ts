@@ -144,7 +144,7 @@ export function checkInEmailTemplate({
               </td>
             </tr>
             ${roastUrl ? `<tr><td style="color:#a3a3a3;font-size:13px;padding-bottom:24px;"><a href="${roastUrl}" style="color:#a3a3a3;">Share this roast →</a></td></tr>` : ""}
-            <tr><td style="color:#737373;font-size:12px;line-height:20px;border-top:1px solid #262626;padding-top:16px;">You get these check-ins as a Chad Elite member — it's Chad holding you accountable between sessions. Choose how often he reaches out, or pause check-ins, anytime on <a href="${settingsUrl}" style="color:#a3a3a3;">your account page</a>.</td></tr>
+            <tr><td style="color:#737373;font-size:12px;line-height:20px;border-top:1px solid #262626;padding-top:16px;">You get these check-ins as a Chad Elite member: it's Chad holding you accountable between workouts. Choose how often he reaches out, or pause check-ins, anytime on <a href="${settingsUrl}" style="color:#a3a3a3;">your account page</a>.</td></tr>
           </table>
         </td>
       </tr>

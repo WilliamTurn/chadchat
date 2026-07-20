@@ -11,7 +11,7 @@ import { MeasurementsSection } from "@/components/progress/measurements-section"
 import { MontageCard } from "@/components/progress/montage-card";
 import { PhotoCompare } from "@/components/progress/photo-compare";
 import { WeightChartInteractive } from "@/components/progress/weight-chart-interactive";
-import { BackToDashboard } from "@/components/nav/back-to-dashboard";
+import { BackLink } from "@/components/nav/back-link";
 import { PageShell } from "@/components/nav/page-shell";
 import { ScrollToHash } from "@/components/nav/scroll-to-hash";
 import { Badge } from "@/components/ui/badge";
@@ -64,7 +64,7 @@ export default function ProgressBodyPage() {
           reads as a clear success instead of a neutral gray toast). */}
 
       <div className="mb-8">
-        <BackToDashboard href="/progress" label="Progress" />
+        <BackLink href="/progress" label="Progress" />
         <div className="flex items-center gap-3">
           <h1 className="font-semibold text-2xl tracking-tight">Body</h1>
           {/* "Pro feature", not bare "Pro" (LC-13). */}
@@ -274,7 +274,7 @@ async function Dashboard({
       {/* History */}
       {recent.length > 0 && (
         <section>
-          <h2 className="mb-4 font-medium text-lg">History</h2>
+          <h2 className="mb-4 font-medium text-lg">Weight History</h2>
           <div className="overflow-hidden rounded-2xl border border-border">
             {recent.map((e, i) => (
               <div

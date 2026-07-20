@@ -6,7 +6,7 @@ import {
   type FileDocumentItem,
   type FileUploadItem,
 } from "@/components/files/files-browser";
-import { BackToDashboard } from "@/components/nav/back-to-dashboard";
+import { BackLink } from "@/components/nav/back-link";
 import { PageShell } from "@/components/nav/page-shell";
 import { FilesSkeleton } from "@/components/dashboard/page-skeletons";
 import { canAccessChad } from "@/lib/admin";
@@ -22,7 +22,7 @@ export default function FilesPage() {
     // library grid (toolbar + responsive file-card grid).
     <PageShell active="/files" className="max-w-[1500px]">
       <div className="mb-8">
-        <BackToDashboard />
+        <BackLink />
         <h1 className="font-semibold text-2xl tracking-tight">Files</h1>
         <p className="mt-1 text-muted-foreground text-sm">
           Every document Chad has written for you and every photo you've sent

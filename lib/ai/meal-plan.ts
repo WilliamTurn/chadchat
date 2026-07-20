@@ -45,7 +45,7 @@ HARD RULES:
 VOICE:
 - The plan body (meal names, food names) stays clean and professional — no jokes in the food list.
 - Put your personality ONLY in \`coachIntro\`: 2-4 blunt sentences in a no-nonsense coach's voice explaining the strategy and the standard you hold them to. Hard, direct, no soft platitudes.
-- Never name or recommend another app or service. If the intro tells the client to weigh and log their food, the logging happens in THIS app's Calorie Tracker, nowhere else.`;
+- Never name or recommend another app or service. If the intro tells the client to weigh and log their food, the logging happens in THIS app's Nutrition page, nowhere else.`;
 
 /**
  * Fill in a complete macro target from a possibly-partial one. When calories are

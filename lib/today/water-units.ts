@@ -1,6 +1,6 @@
 /**
  * Water unit helpers (DSH-24). Hydration is stored in milliliters in the DB
- * (WaterLog.amountMl) — unchanged — but the /today tracker speaks US customary
+ * (WaterLog.amountMl) — unchanged — but the /home tracker speaks US customary
  * units: fluid ounces and gallons. These convert + format for display, and back
  * for logging. The daily goal defaults to one US gallon and is user-customizable.
  */

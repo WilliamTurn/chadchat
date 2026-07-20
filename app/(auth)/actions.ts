@@ -56,7 +56,7 @@ async function issueVerificationEmail(userId: string, email: string) {
  * `redirectUrl` carries the paywall's original destination (e.g. the landing
  * page's `/pricing?plan=pro` funnel param, ACC-20) through the OAuth
  * round-trip. Same-origin absolute paths only — anything else falls back to
- * /today, closing the open-redirect hole.
+ * /home, closing the open-redirect hole.
  */
 export const signInWithGoogle = async (
   redirectUrl?: string | null
@@ -66,7 +66,7 @@ export const signInWithGoogle = async (
     redirectUrl.startsWith("/") &&
     !(redirectUrl.startsWith("//") || redirectUrl.startsWith("/\\"))
       ? redirectUrl
-      : "/today";
+      : "/home";
   await signIn("google", { redirectTo: safe });
 };
 

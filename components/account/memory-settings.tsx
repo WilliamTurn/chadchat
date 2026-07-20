@@ -23,8 +23,8 @@ export function MemorySettings({ initialEnabled }: { initialEnabled: boolean }) 
         await setChadMemoryEnabled(next);
         toast.success(
           next
-            ? "Chad will remember you across sessions."
-            : "Memory off. Every session starts fresh."
+            ? "Chad will remember you across conversations."
+            : "Memory off. Every conversation starts fresh."
         );
       } catch {
         setEnabled(prev);

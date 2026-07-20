@@ -61,7 +61,7 @@ export function Kpi({
 }
 
 /** The "?" affordance + popover that demystifies a stat in plain English.
- *  Exported for the /today hero stats + streak (HLP-1 pattern, DSH-35/R2-2). */
+ *  Exported for the /home hero stats + streak (HLP-1 pattern, DSH-35/R2-2). */
 export function KpiHelp({
   label,
   children,

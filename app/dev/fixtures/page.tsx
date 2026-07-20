@@ -54,7 +54,7 @@ export default function FixturesIndexPage() {
           <li>
             <Link
               className="underline underline-offset-4"
-              href="/dev/fixtures/today-panels"
+              href="/dev/fixtures/home-panels"
             >
               Today tracking panels
             </Link>

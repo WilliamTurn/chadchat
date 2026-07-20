@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Streamdown } from "streamdown";
-import { removePlan } from "@/app/today/actions";
+import { removePlan } from "@/app/home/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { remarkHardBreaks } from "@/lib/markdown/hard-breaks";
@@ -32,7 +32,7 @@ export function PlanDoc({ plan }: { plan: EditablePlan }) {
       const result = await removePlan(plan.id);
       if (result.ok) {
         toast.success("Plan deleted.");
-        router.push("/today");
+        router.push("/home");
         router.refresh();
       } else {
         toast.error(result.error ?? "Couldn't delete that.");

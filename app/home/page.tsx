@@ -90,14 +90,14 @@ function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }
 
-// How much workout history to hydrate for /today (goal e1rm trends + the
+// How much workout history to hydrate for /home (goal e1rm trends + the
 // week's training numbers). Bounded and cheaper than the /workouts page's
 // 200, but plenty for a strength-goal trend line.
 const TODAY_WORKOUT_LIMIT = 60;
 
 export default function TodayPage() {
   return (
-    <PageShell active="/today" className="max-w-[1500px]">
+    <PageShell active="/home" className="max-w-[1500px]">
       <Suspense fallback={<TodaySkeleton />}>
         <TodayContent />
       </Suspense>

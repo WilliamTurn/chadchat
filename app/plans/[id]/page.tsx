@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { auth } from "@/app/(auth)/auth";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
-import { BackToDashboard } from "@/components/nav/back-to-dashboard";
+import { BackLink } from "@/components/nav/back-link";
 import { PageShell } from "@/components/nav/page-shell";
 import { PlanScheduleSection } from "@/components/plans/plan-schedule-section";
 import { PlanDoc } from "@/components/today/plan-doc";
@@ -28,14 +28,14 @@ export default function PlanDocPage({
   params: Promise<{ id: string }>;
 }) {
   return (
-    <PageShell active="/today">
+    <PageShell active="/home">
       {/* usePathname inside the header is runtime data on a dynamic route, so
           it needs its own Suspense boundary under Cache Components. */}
       <Suspense fallback={null}>
       </Suspense>
 
       <div className="mb-8">
-        <BackToDashboard />
+        <BackLink />
         <h1 className="font-semibold text-2xl tracking-tight">Plan</h1>
         <p className="mt-1 text-muted-foreground text-sm">
           The full document, exactly as you and Chad wrote it.

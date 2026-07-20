@@ -191,7 +191,7 @@ export function AppSidebar({
                                 </Link>
                               </SidebarMenuButton>
                             </SidebarMenuItem>
-                            {link.href === "/today" && (
+                            {link.href === "/home" && (
                               <SidebarMenuItem>
                                 <SidebarMenuButton
                                   className="h-10 rounded-lg border border-sidebar-border text-[15px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground md:h-8 md:text-[13px]"

@@ -24,7 +24,7 @@ import { exercise1RMTrend, type WorkoutData } from "@/lib/workouts/stats";
  * computeGoalProgress + the DSH-62 goalStanding rule, never per-card math.
  *
  * Extracted verbatim from app/progress/page.tsx's private buildGoalVM
- * (P56-E) so /today's primary-goal summary and the /progress overview render
+ * (P56-E) so /home's primary-goal summary and the /progress overview render
  * a goal through the SAME computation (the DSH-26 two-screens-disagree class
  * is structurally impossible again). Pure: no DB, no React; callers fetch.
  */

@@ -7,7 +7,7 @@ export const authConfig = {
   trustHost: true,
   pages: {
     signIn: `${base}/login`,
-    newUser: `${base}/today`,
+    newUser: `${base}/home`,
     // Surface OAuth/sign-in failures on the login page (it reads `?error=` and
     // toasts a friendly message) instead of the default bare /api/auth/error.
     error: `${base}/login`,

@@ -233,7 +233,7 @@ export function perfectPlanWeekMilestones(args: {
         kind: "perfect-week" as const,
         label: "Perfect plan week",
         achievedAt: new Date(w.t).toISOString(),
-        detail: `${w.completed} of ${w.planned} sessions completed`,
+        detail: `${w.completed} of ${w.planned} workouts completed`,
       };
     });
 }

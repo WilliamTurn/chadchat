@@ -67,7 +67,7 @@ async function Content() {
             ? `${workouts.length} finished ${workouts.length === 1 ? "workout" : "workouts"}. Tap one to see every set.`
             : undefined
         }
-        title="History"
+        title="Workout History"
       />
 
       {workouts.length === 0 ? (

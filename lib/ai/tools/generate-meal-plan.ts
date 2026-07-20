@@ -165,13 +165,13 @@ export const generateMealPlanTool = ({
 
       // The daily target may have just changed — refresh the surfaces whose
       // rings read it.
-      revalidatePath("/today");
+      revalidatePath("/home");
       revalidatePath("/nutrition");
       revalidatePath("/meal-plan");
 
       const targetNote = hadTarget
-        ? "Their daily Calorie Tracker targets already drive this plan."
-        : "Their daily Calorie Tracker targets are now set to match this plan, so their dashboard rings track toward it.";
+        ? "Their daily Nutrition targets already drive this plan."
+        : "Their daily Nutrition targets are now set to match this plan, so the rings on Home track toward it.";
 
       return {
         id: created.id,

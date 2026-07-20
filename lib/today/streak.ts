@@ -1,5 +1,5 @@
 /**
- * Pure streak math, extracted from app/today/page.tsx (P2-A quick win pinned
+ * Pure streak math, extracted from app/home/page.tsx (P2-A quick win pinned
  * by Phase 1). This is the registered source of `engagement.streak.days`
  * (lib/contracts/metrics.ts); the definition there is owner-approved, so the
  * semantics here must not drift without a tracker decision-log entry.

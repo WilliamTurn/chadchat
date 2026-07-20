@@ -21,7 +21,7 @@ type LogMealProps = {
 export const logMeal = ({ session, user }: LogMealProps) =>
   tool({
     description:
-      "Log a meal the client reports into their Calorie Tracker so it counts toward today's macros. Use when they tell you something they ate and either ask you to log it or say yes when you offer. Use the macro numbers they give you; if they only describe the food, estimate the macros yourself and say they're estimates. Never log a meal they didn't report.",
+      "Log a meal the client reports into their Nutrition log so it counts toward today's macros. Use when they tell you something they ate and either ask you to log it or say yes when you offer. Use the macro numbers they give you; if they only describe the food, estimate the macros yourself and say they're estimates. Never log a meal they didn't report.",
     inputSchema: z.object({
       title: z
         .string()
@@ -58,7 +58,7 @@ export const logMeal = ({ session, user }: LogMealProps) =>
       if (!canAccessProFeatures(user)) {
         return {
           error:
-            "This client's plan doesn't include the Calorie Tracker; it's part of Chad Pro. Tell them to upgrade to have you track their food. Give them the upgrade link: [Upgrade to Pro](/pricing).",
+            "This client's plan doesn't include Nutrition; it's part of Chad Pro. Tell them to upgrade to have you track their food. Give them the upgrade link: [Upgrade to Pro](/pricing).",
         };
       }
 
@@ -94,7 +94,7 @@ export const logMeal = ({ session, user }: LogMealProps) =>
       return {
         id: created.id,
         title: created.title,
-        message: `Meal "${created.title}" (${calories ?? "?"} kcal, P${protein ?? "?"}/C${carbs ?? "?"}/F${fat ?? "?"}) logged to the client's Calorie Tracker.`,
+        message: `Meal "${created.title}" (${calories ?? "?"} kcal, P${protein ?? "?"}/C${carbs ?? "?"}/F${fat ?? "?"}) logged to the client's Nutrition log.`,
       };
     },
   });

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { removeGoal, updateGoalRecord } from "@/app/today/actions";
+import { removeGoal, updateGoalRecord } from "@/app/home/actions";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
 import {
   AlertDialog,
@@ -73,7 +73,7 @@ export function GoalDoc({
   weightChart?: GoalWeightChart | null;
   coherence?: GoalCoherence | null;
   /** Member-local today anchor for the embedded weight chart's window, so
-   *  this page's 30-day stats match /progress/body and /today exactly
+   *  this page's 30-day stats match /progress/body and /home exactly
    *  (P56-Z audit P1: the UTC fallback shifted the window a day). */
   todayMs?: number;
 }) {
@@ -118,7 +118,7 @@ export function GoalDoc({
           {coherence?.calorie && (
             <p>
               This goal mentions {coherence.calorie.mentioned.toLocaleString()}{" "}
-              calories a day, but your Calorie Tracker target is{" "}
+              calories a day, but your Nutrition target is{" "}
               {coherence.calorie.target.toLocaleString()}. One of them is out
               of date. Ask Chad which to follow, or edit the stale one so they
               match.
@@ -138,7 +138,7 @@ export function GoalDoc({
             label="Sort this out with Chad"
             prompt={`Look at my goal "${goal.title}". ${
               coherence?.calorie
-                ? `It says ${coherence.calorie.mentioned.toLocaleString()} calories a day but my Calorie Tracker target is ${coherence.calorie.target.toLocaleString()}; which should I follow? `
+                ? `It says ${coherence.calorie.mentioned.toLocaleString()} calories a day but my Nutrition target is ${coherence.calorie.target.toLocaleString()}; which should I follow? `
                 : ""
             }${
               (coherence?.overlapTitles.length ?? 0) > 0

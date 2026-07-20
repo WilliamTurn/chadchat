@@ -145,7 +145,7 @@ export function TrainingAnalyticsView({
           />
         </StatTile>
         <StatTile
-          help="Session-count milestones are earned at real thresholds (10th, 25th, 50th workout and up). This is your progress toward the next one."
+          help="Workout-count milestones are earned at real thresholds (10th, 25th, 50th workout and up). This is your progress toward the next one."
           label={
             data.nextMilestone
               ? `Next milestone · ${ordinalLabel(data.nextMilestone.threshold)} workout`
@@ -178,8 +178,8 @@ export function TrainingAnalyticsView({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-body-sm text-muted-foreground">
           {windowedSessionDays.length > 0
-            ? `${windowedSessionDays.length} ${windowedSessionDays.length === 1 ? "session" : "sessions"} ${inRange(control.rangeLabel)}`
-            : `No sessions ${inRange(control.rangeLabel)}`}
+            ? `${windowedSessionDays.length} ${windowedSessionDays.length === 1 ? "workout" : "workouts"} ${inRange(control.rangeLabel)}`
+            : `No workouts ${inRange(control.rangeLabel)}`}
         </p>
         <ChartRangeControl control={control} />
       </div>
@@ -192,7 +192,7 @@ export function TrainingAnalyticsView({
           emptyMessage="Finish your first workout and your training calendar starts filling in."
           emptyAction={<StartWorkoutButton />}
           headlineLabel={
-            windowedSessionDays.length > 0 ? "sessions in range" : undefined
+            windowedSessionDays.length > 0 ? "workouts in range" : undefined
           }
           height={204}
           rangeLabel={control.rangeLabel}
@@ -215,7 +215,7 @@ export function TrainingAnalyticsView({
               cells={heatmapCells(data, w)}
               color="var(--progress)"
               maxLevel={2}
-              tipLabel="sessions"
+              tipLabel="workouts"
               todayMs={data.todayMs}
             />
             {/* The 7-day strip: the habit-streak reward, never removed
@@ -406,9 +406,9 @@ function AdherenceCard({
   return (
     <ChartFrame
       className={className}
-      emptyMessage="Adherence unlocks when a structured training plan is active: each week scores your completed sessions against the plan."
+      emptyMessage="Adherence unlocks when a structured training plan is active: each week scores your completed workouts against the plan."
       goalText={
-        adherence ? `Plan: ${adherence.plannedPerWeek} sessions a week` : undefined
+        adherence ? `Plan: ${adherence.plannedPerWeek} workouts a week` : undefined
       }
       headlineLabel={
         adherence ? `of ${adherence.plannedPerWeek} planned this week` : undefined
@@ -425,7 +425,7 @@ function AdherenceCard({
               reading,
               unit: "count",
               extra: [
-                `${adherence.completedThisWeek} of ${adherence.plannedPerWeek} planned sessions completed`,
+                `${adherence.completedThisWeek} of ${adherence.plannedPerWeek} planned workouts completed`,
                 `${recentWeeks.filter((w) => w.planned > 0 && w.completed >= w.planned).length} perfect weeks in the last ${recentWeeks.length}`,
               ],
             })

@@ -5,7 +5,7 @@ import { type ReactNode, Suspense } from "react";
 import { NutritionSkeleton } from "@/components/dashboard/page-skeletons";
 import { auth } from "@/app/(auth)/auth";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
-import { BackToDashboard } from "@/components/nav/back-to-dashboard";
+import { BackLink } from "@/components/nav/back-link";
 import { PageShell } from "@/components/nav/page-shell";
 import { ScrollToHash } from "@/components/nav/scroll-to-hash";
 import { AnalysisCard } from "@/components/nutrition/analysis-card";
@@ -67,11 +67,9 @@ export default function NutritionPage({
     <PageShell active="/nutrition" className="max-w-[1500px]">
 
       <div className="mb-8">
-        <BackToDashboard />
+        <BackLink />
         <div className="flex items-center gap-3">
-          <h1 className="font-semibold text-2xl tracking-tight">
-            Calorie Tracker
-          </h1>
+          <h1 className="font-semibold text-2xl tracking-tight">Nutrition</h1>
           {/* "Pro feature", not bare "Pro" (LC-13). */}
           <Badge variant="secondary">Pro feature</Badge>
         </div>
@@ -138,9 +136,7 @@ async function NutritionContent({
 function UpgradePrompt() {
   return (
     <div className="rounded-2xl border border-border bg-card p-8 text-center">
-      <h2 className="font-medium text-lg">
-        The Calorie Tracker is a Chad Pro feature
-      </h2>
+      <h2 className="font-medium text-lg">Nutrition is a Chad Pro feature</h2>
       <p className="mx-auto mt-2 max-w-md text-muted-foreground text-sm">
         Upgrade to Pro to log meals with food-database search, barcode
         scanning, photo analysis, or by hand. Chad grades each plate out of 10
@@ -372,8 +368,8 @@ function DaySummary({
           <AskChadButton
             prompt={
               viewingToday
-                ? "Go through my Calorie Tracker for today: each meal I've logged so far and my calories and macros against my targets. What's working, and what should I eat (or skip) for the rest of the day?"
-                : `Go through my food log for ${heading} in my Calorie Tracker: each meal that day and how the day's calories and macros stacked up against my targets. What should I take away from that day?`
+                ? "Go through my nutrition log for today: each meal I've logged so far and my calories and macros against my targets. What's working, and what should I eat (or skip) for the rest of the day?"
+                : `Go through my food log for ${heading}: each meal that day and how the day's calories and macros stacked up against my targets. What should I take away from that day?`
             }
           />
         </div>
@@ -489,7 +485,7 @@ function HistorySection({ meals }: { meals: MealAnalysis[] }) {
 
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="font-medium text-lg">Earlier</h2>
+      <h2 className="font-medium text-lg">Nutrition History</h2>
       {/* Each past day is a collapsible group so a long history stays scannable
           instead of one endless scroll (NUT-12). The most recent past day is
           open by default; older days collapse to a one-line date + meal-count +

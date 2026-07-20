@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 /**
- * One badge per plan status, shared by the /today plan card and the
+ * One badge per plan status, shared by the /home plan card and the
  * /plans/[id] document (LC-15). "active" now renders too ("Current", tinted):
  * before, active plans carried no badge at all, so two simultaneously active
  * training plans were indistinguishable and nothing said which program the

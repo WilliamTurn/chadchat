@@ -32,7 +32,7 @@ describe("selectUpNextSession", () => {
   it("picks the first session when nothing is completed", () => {
     const verdict = selectUpNextSession(schedule(["a", "b", "c"]), []);
     assert.equal(verdict?.session.position, 0);
-    assert.equal(verdict?.reason, "The first session of your rotation.");
+    assert.equal(verdict?.reason, "The first workout of your rotation.");
   });
 
   it("advances the rotation after a completion", () => {

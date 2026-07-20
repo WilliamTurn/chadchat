@@ -4,7 +4,7 @@ import { type ReactNode, Suspense } from "react";
 import { auth } from "@/app/(auth)/auth";
 import { Kpi } from "@/components/dashboard/kpi";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
-import { BackToDashboard } from "@/components/nav/back-to-dashboard";
+import { BackLink } from "@/components/nav/back-link";
 import { PageShell } from "@/components/nav/page-shell";
 import { HydrationPanel } from "@/components/today/hydration-panel";
 import { WaterBackfill } from "@/components/today/water-backfill";
@@ -36,7 +36,7 @@ import { DEFAULT_WATER_GOAL_ML, formatOz } from "@/lib/today/water-units";
 
 /**
  * The dedicated Hydration page, water's ONE deep surface (audit rule 3 /
- * DSH-33: the /today card keeps the compact vessel + week strip; the deep
+ * DSH-33: the /home card keeps the compact vessel + week strip; the deep
  * stats live here). Streak stat tiles, the daily trend chart, a day-by-day
  * history, and the "Log a past day" backfill card (DSH-57).
  *
@@ -50,7 +50,7 @@ export default function HydrationPage() {
     <PageShell active="/hydration" className="max-w-[1500px]">
 
       <div className="mb-8">
-        <BackToDashboard />
+        <BackLink />
         <div className="flex items-center gap-3">
           <h1 className="font-semibold text-2xl tracking-tight">Hydration</h1>
           {/* "Pro feature", not bare "Pro" (LC-13). */}

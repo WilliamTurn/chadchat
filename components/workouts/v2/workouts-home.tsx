@@ -72,7 +72,7 @@ export function IntroCard() {
     },
     {
       title: "It saves to your history",
-      body: "When you press Finish, the session is logged with your records and progress, and Chad sees it.",
+      body: "When you press Finish, the workout is logged with your records and progress, and Chad sees it.",
     },
   ];
   return (
@@ -123,7 +123,7 @@ export function ResumeCard() {
     return null;
   }
   return (
-    <Link className="mb-6 block" href="/workouts/session">
+    <Link className="mb-6 block" href="/workouts/active">
       <WCard className="border-[var(--go)]/40 p-5 transition hover:brightness-110">
         <div className="flex items-center gap-4">
           <span className="flex size-12 items-center justify-center rounded-2xl bg-[var(--go)] text-[var(--bg)]">
@@ -221,7 +221,7 @@ function TemplateCard({
           disabled={busy}
           onClick={() => {
             startSession(sessionFromTemplate(template, lastSets, unit));
-            router.push("/workouts/session");
+            router.push("/workouts/active");
           }}
           size="lg"
           variant="primary"
@@ -234,7 +234,7 @@ function TemplateCard({
       </div>
 
       <ConfirmDialog
-        body="The workout (your plan) will be deleted. Sessions you already logged with it stay in your history."
+        body="The workout (your plan) will be deleted. Workouts you already logged with it stay in your history."
         busy={deleting}
         confirmLabel="Delete workout"
         destructive
@@ -268,14 +268,14 @@ export function MyWorkoutsSection({
 }) {
   const router = useRouter();
   return (
-    <section aria-labelledby="my-workouts-heading">
+    <section aria-labelledby="your-workouts-heading">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
           <h2
             className="font-black font-display text-[17px] text-foreground uppercase tracking-wide"
-            id="my-workouts-heading"
+            id="your-workouts-heading"
           >
-            My Workouts
+            Your Workouts
           </h2>
           <p className="text-[12.5px] text-muted-foreground/80">
             Reusable workout plans you build once and run any gym day
@@ -383,7 +383,7 @@ export function ChadPlanSection({
         : null
     );
     startSession(sessionFromDay);
-    router.push("/workouts/session");
+    router.push("/workouts/active");
   }
 
   return (
@@ -535,7 +535,7 @@ export function StartEmptySection({ unit }: { unit: WeightUnit }) {
           disabled={busy}
           onClick={() => {
             startSession(emptySession(unit));
-            router.push("/workouts/session");
+            router.push("/workouts/active");
           }}
           size="lg"
         >

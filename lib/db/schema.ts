@@ -50,12 +50,12 @@ export const user = pgTable("User", {
   // maintained and injected into his prompt). Default on — it's the
   // recommended experience; users can turn it off from /account.
   memoryEnabled: boolean("memoryEnabled").notNull().default(true),
-  // --- /today hero figure (DSH-21) ---
-  // Which decorative figure bleeds into the /today header. Null = use the
+  // --- /home hero figure (DSH-21) ---
+  // Which decorative figure bleeds into the /home header. Null = use the
   // gender-derived default silhouette (male/female from Chad's memory "Sex",
   // falling back to male). "custom" pairs with heroImageUrl below.
   heroFigure: varchar("heroFigure", { enum: ["male", "female", "custom"] }),
-  // A user-uploaded background image (Blob URL) for the /today header, used
+  // A user-uploaded background image (Blob URL) for the /home header, used
   // when heroFigure === "custom".
   heroImageUrl: text("heroImageUrl"),
   // --- Hydration goal (DSH-24) ---
@@ -177,7 +177,7 @@ export const user = pgTable("User", {
   hapticsEnabled: boolean("hapticsEnabled").notNull().default(true),
   // --- The Quit Date (FEAT-25) ---
   // Whether the Quit Date mechanic is on for this member (all tiers). Default
-  // ON — the prediction is the retention hook. OFF hides the /today card,
+  // ON — the prediction is the retention hook. OFF hides the /home card,
   // blocks new autopsies, drops the prediction from Chad's chat + check-in
   // prompts, and skips the member in the resolution sweep and danger-window
   // escalation. Existing QuitPrediction rows are kept (the ledger survives).
@@ -836,7 +836,7 @@ export const bodyMeasurement = pgTable("BodyMeasurement", {
 export type BodyMeasurement = InferSelectModel<typeof bodyMeasurement>;
 
 // --- Water log (a lightweight daily diary staple) ---
-// One row per increment logged; summed per day for the counter on /today.
+// One row per increment logged; summed per day for the counter on /home.
 export const waterLog = pgTable("WaterLog", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   userId: uuid("userId")

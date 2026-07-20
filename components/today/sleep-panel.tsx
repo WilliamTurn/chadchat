@@ -3,7 +3,7 @@
 import { Moon, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { logSleep, removeSleep, saveSleepGoal } from "@/app/today/actions";
+import { logSleep, removeSleep, saveSleepGoal } from "@/app/home/actions";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { NightColumns } from "@/components/charts/night-columns";
 import { useReward } from "@/components/dashboard/reward";

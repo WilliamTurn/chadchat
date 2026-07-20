@@ -5,7 +5,7 @@ import { auth } from "@/app/(auth)/auth";
 import { getLatestForecast } from "@/app/future-you/actions";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
 import { FutureYouExperience } from "@/components/future-you/future-you-experience";
-import { BackToDashboard } from "@/components/nav/back-to-dashboard";
+import { BackLink } from "@/components/nav/back-link";
 import { PageShell } from "@/components/nav/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,7 @@ export default function FutureYouPage() {
     // it with a two-column intake and a checkpoint gallery grid.
     <PageShell active="/future-you" className="max-w-[1500px]">
       <div className="mb-8">
-        <BackToDashboard />
+        <BackLink />
         <div className="flex items-center gap-3">
           <h1 className="font-semibold text-2xl tracking-tight">Future You</h1>
           <Badge variant="secondary">Pro feature</Badge>

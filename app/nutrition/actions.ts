@@ -217,7 +217,7 @@ export async function searchFoods(
 ): Promise<{ ok: boolean; results?: FoodHit[]; error?: string }> {
   const user = await requirePro();
   if (!user) {
-    return { ok: false, error: "The Calorie Tracker is a Chad Pro feature." };
+    return { ok: false, error: "Nutrition is a Chad Pro feature." };
   }
   const q = typeof query === "string" ? query.trim() : "";
   if (q.length < 2) {
@@ -234,7 +234,7 @@ export async function lookupFoodBarcode(
 ): Promise<{ ok: boolean; result?: FoodHit | null; error?: string }> {
   const user = await requirePro();
   if (!user) {
-    return { ok: false, error: "The Calorie Tracker is a Chad Pro feature." };
+    return { ok: false, error: "Nutrition is a Chad Pro feature." };
   }
   const digits = typeof code === "string" ? code.replace(/\D/g, "") : "";
   if (digits.length < 8 || digits.length > 14) {
@@ -250,7 +250,7 @@ export async function logMealManually(
 ): Promise<NutritionActionState> {
   const user = await requirePro();
   if (!user) {
-    return { ok: false, error: "The Calorie Tracker is a Chad Pro feature." };
+    return { ok: false, error: "Nutrition is a Chad Pro feature." };
   }
 
   const parsed = logMealSchema.safeParse(input);
@@ -681,9 +681,9 @@ export async function saveRecommendationInputs(
   const { weight, ...profile } = parsed.data;
   if (Object.keys(profile).length > 0) {
     await updateUserProfile(user.id, profile);
-    // The same fields show on /account, and sex drives the /today figure.
+    // The same fields show on /account, and sex drives the /home figure.
     revalidatePath("/account");
-    revalidatePath("/today");
+    revalidatePath("/home");
   }
 
   if (weight != null) {

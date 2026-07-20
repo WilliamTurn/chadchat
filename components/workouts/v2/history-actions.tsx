@@ -44,7 +44,7 @@ export function RepeatWorkoutButton({
             unit
           )
         );
-        router.push("/workouts/session");
+        router.push("/workouts/active");
       }}
       size="lg"
       variant="primary"

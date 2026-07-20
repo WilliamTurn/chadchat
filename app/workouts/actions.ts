@@ -517,9 +517,9 @@ export async function syncPlanDays(planId: string): Promise<SyncPlanDaysState> {
       entity: "planDays",
       op: "update",
       alsoDomains: ["training"],
-      // Plan summaries render on /today (registry gap until FIX-28 registers
+      // Plan summaries render on /home (registry gap until FIX-28 registers
       // plan metrics).
-      alsoSurfaces: ["/today"],
+      alsoSurfaces: ["/home"],
     })
   );
   return { ok: true, days };

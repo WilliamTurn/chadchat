@@ -13,7 +13,7 @@ const UNITS: { value: "lb" | "kg"; label: string }[] = [
 /**
  * Segmented lb/kg picker for the member's preferred body-weight unit. Optimistic
  * — flips instantly, rolls back on failure. The preference drives how weight
- * reads across /today and /progress and the default unit for new weigh-ins.
+ * reads across /home and /progress and the default unit for new weigh-ins.
  */
 export function UnitPreference({
   initialUnit,

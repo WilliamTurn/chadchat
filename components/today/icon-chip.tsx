@@ -1,6 +1,6 @@
 /**
  * A small domain-colored icon chip — a tinted rounded square holding a lucide
- * icon. The /today dashboard uses one consistent accent per domain so the page
+ * icon. The /home dashboard uses one consistent accent per domain so the page
  * reads as a cockpit (Whoop/Oura pattern) instead of a wall of identical red
  * icons, while staying restrained on Chad's blood-on-ink brand: color is an
  * accent, never a rainbow.

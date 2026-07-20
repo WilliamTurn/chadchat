@@ -118,7 +118,7 @@ export async function proxy(request: NextRequest) {
       request.nextUrl.searchParams.get("redirectUrl")
     );
     return NextResponse.redirect(
-      new URL(target ?? `${base}/today`, request.url)
+      new URL(target ?? `${base}/home`, request.url)
     );
   }
 

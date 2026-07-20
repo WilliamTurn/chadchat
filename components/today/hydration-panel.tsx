@@ -51,7 +51,7 @@ import type { WaterDay } from "@/lib/today/week";
 
 /**
  * A week day carrying the goal active on that day (FIX-07). `goalMl` is
- * optional ONLY so the pre-assembler /today mount keeps compiling until
+ * optional ONLY so the pre-assembler /home mount keeps compiling until
  * P56-D adopts getHydrationPanelData (lib/today/panel-data.ts); a day
  * without one grades against today's goal (the pre-FIX-07 behavior).
  */

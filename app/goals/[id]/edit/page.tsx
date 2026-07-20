@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { auth } from "@/app/(auth)/auth";
 import { GoalForm } from "@/components/goals/goal-form";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
-import { BackToDashboard } from "@/components/nav/back-to-dashboard";
+import { BackLink } from "@/components/nav/back-link";
 import { PageShell } from "@/components/nav/page-shell";
 import { canAccessChad } from "@/lib/admin";
 import { getGoalById, getUserById } from "@/lib/db/queries";
@@ -29,7 +29,7 @@ export default function EditGoalPage({
       </Suspense>
 
       <div className="mb-8">
-        <BackToDashboard href="/goals" label="Goals" />
+        <BackLink href="/goals" label="Goals" />
         <h1 className="font-semibold text-2xl tracking-tight">Edit goal</h1>
         <p className="mt-1 text-muted-foreground text-sm">
           Change anything: the wording, the numbers, the target date, the

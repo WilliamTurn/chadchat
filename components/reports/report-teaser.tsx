@@ -28,13 +28,13 @@ import { cn } from "@/lib/utils";
 
 /** What a real weekly report looks like (static sample content). */
 const SAMPLE_REPORT: WeeklyReportContent = {
-  headline: "Four sessions in, protein still 20g short",
+  headline: "Four workouts in, protein still 20g short",
   intro:
-    "You trained four times this week and hit every planned session. Bodyweight moved from 214.2 to 212.9, right on the pace we set. Protein is the weak spot: you averaged 158g against a 180g target, and every day you missed it was a day you skipped the evening shake.",
+    "You trained four times this week and hit every planned workout. Bodyweight moved from 214.2 to 212.9, right on the pace we set. Protein is the weak spot: you averaged 158g against a 180g target, and every day you missed it was a day you skipped the evening shake.",
   sections: [
     {
       title: "Training",
-      body: "Four sessions logged: two lower, two upper. Squat top set moved 265 to 275 for the same five reps. Total volume 38,450 lb, up 6% on last week. Bench stalled at 205; bar speed on the last set says fatigue, not weakness.",
+      body: "Four workouts logged: two lower, two upper. Squat top set moved 265 to 275 for the same five reps. Total volume 38,450 lb, up 6% on last week. Bench stalled at 205; bar speed on the last set says fatigue, not weakness.",
     },
     {
       title: "Nutrition",
@@ -52,7 +52,7 @@ const SAMPLE_REPORT: WeeklyReportContent = {
     },
     {
       change: "Hold bench at 205 and add a back-off set",
-      reason: "the top set stalled two sessions in a row",
+      reason: "the top set stalled two workouts in a row",
     },
   ],
   bottomLine:

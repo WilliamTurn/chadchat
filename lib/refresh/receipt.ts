@@ -4,7 +4,7 @@
  * from the metric registry instead of hand-maintained per action. This kills
  * the class of bug where a mutation refreshes the page it happened on and
  * silently leaves a sibling surface stale (the pre-FIX-10 progress actions
- * revalidated /progress only, while body.weight.* metrics render on /today,
+ * revalidated /progress only, while body.weight.* metrics render on /home,
  * /goals, and /reports too).
  *
  * Pure module (no server imports) so receipts can be built, returned to
@@ -46,7 +46,7 @@ export type MutationReceipt = {
   /**
    * Registered routes that render this entity but are not yet derivable from
    * the metric registry (a REGISTRY GAP, not a preference). Example: Plan
-   * summaries render on /today, but no plan metric is registered until
+   * summaries render on /home, but no plan metric is registered until
    * FIX-28's batch registration; the receipt names the surface explicitly so
    * the dependency is visible and deletable the day the registry covers it.
    */
@@ -76,7 +76,7 @@ export function mutationReceipt(args: {
 /**
  * A LOGGED-ACTION mutation (meal, water, sleep, weigh-in, workout, ...):
  * adds "engagement", because the streak and weekly logging consistency on
- * /today count logs from every domain.
+ * /home count logs from every domain.
  */
 export function loggingReceipt(args: {
   domain: DomainId;

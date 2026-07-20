@@ -25,7 +25,7 @@ import {
   removeGoal,
   saveGoalRecord,
   updateGoalRecord,
-} from "@/app/today/actions";
+} from "@/app/home/actions";
 import { KpiHelp } from "@/components/dashboard/kpi";
 import type { EditableGoal } from "@/components/goals/types";
 import { Button } from "@/components/ui/button";

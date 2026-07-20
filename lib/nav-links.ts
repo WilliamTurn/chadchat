@@ -30,7 +30,7 @@ import { ROUTES, type RouteId } from "@/lib/contracts/routes";
  * `tests/unit/contracts.test.ts` asserts the two can never disagree.
  *
  * Surfaces (`surfaces`):
- * - `header`  → the StandaloneSidebar/StandaloneHeader nav on /today,
+ * - `header`  → the StandaloneSidebar/StandaloneHeader nav on /home,
  *   /nutrition, /progress, … (desktop panel + phone sheet).
  * - `sidebar` → the chat sidebar (NAV-31: the full feature inventory, so the
  *   product is discoverable from the chat landing). Chat stays header-only
@@ -61,7 +61,7 @@ export type NavLink = {
  */
 const NAV_CONFIG: { route: RouteId; icon: LucideIcon; surfaces: NavSurface[] }[] = [
   // primary
-  { route: "/today", icon: LayoutDashboard, surfaces: ["header", "sidebar"] },
+  { route: "/home", icon: LayoutDashboard, surfaces: ["header", "sidebar"] },
   { route: "/", icon: MessageSquare, surfaces: ["header"] },
   // track
   { route: "/workouts", icon: Dumbbell, surfaces: ["header", "sidebar"] },
@@ -129,9 +129,9 @@ export const headerLinks = NAV_LINKS.filter((link) =>
   link.surfaces.includes("header")
 );
 
-export const sidebarLinks = NAV_LINKS.filter((link) =>
-  link.surfaces.includes("sidebar")
-);
+/* `sidebarLinks` was removed in RC-11: it had no consumers. The chat sidebar
+ * filters NAV_GROUPS by surface itself (components/chat/app-sidebar.tsx), so
+ * the export was a second, silently diverging source of the same list. */
 
 /**
  * Selected state for nav surfaces (FIX-20): a subroute highlights its section
@@ -164,10 +164,13 @@ export type BottomTab =
   | { kind: "more"; label: string };
 
 export const BOTTOM_NAV_TABS: BottomTab[] = [
-  { kind: "route", href: "/today", label: "Today", icon: LayoutDashboard },
+  // RC-11 (Q-D): the tab labels now match the registry names they point at, so
+  // one destination is never called two things. "Today" became Home with the
+  // /today → /home rename; "Coach" became Chad (owner ruling 2026-07-19).
+  { kind: "route", href: "/home", label: "Home", icon: LayoutDashboard },
   { kind: "log", label: "Log" },
   { kind: "route", href: "/progress", label: "Progress", icon: LineChart },
-  { kind: "route", href: "/", label: "Coach", icon: MessageSquare },
+  { kind: "route", href: "/", label: "Chad", icon: MessageSquare },
   { kind: "more", label: "More" },
 ];
 

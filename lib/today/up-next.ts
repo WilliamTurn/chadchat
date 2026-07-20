@@ -1,7 +1,7 @@
 import type { UpNextVerdict } from "@/lib/plans/up-next";
 
 /**
- * THE /today "Up next" decision (FIX-23, P6). Pure and deterministic: the
+ * THE /home "Up next" decision (FIX-23, P6). Pure and deterministic: the
  * verdict derives entirely from the snapshot passed in, so it is inspectable,
  * unit-testable, and two renders of the same day can never disagree.
  *
@@ -96,7 +96,7 @@ export function selectUpNextToday(snap: UpNextSnapshot): UpNextToday {
       kind: "sleep",
       title: "Log last night's sleep",
       reason: t?.trainedToday
-        ? "Today's session is done. Last night's sleep isn't logged yet."
+        ? "Today's workout is done. Last night's sleep isn't logged yet."
         : "Last night's sleep isn't logged yet.",
       cta: { label: "Log last night", href: "/sleep" },
       secondary: { label: "Sleep trends", href: "/sleep" },
@@ -119,7 +119,7 @@ export function selectUpNextToday(snap: UpNextSnapshot): UpNextToday {
     kind: "review",
     title: "Review your progress",
     reason: t?.trainedToday
-      ? "Today's session is done and your logs are current."
+      ? "Today's workout is done and your logs are current."
       : "Nothing is overdue right now.",
     cta: { label: "Open Progress", href: "/progress" },
     secondary: { label: "Talk to Chad", href: "/" },
@@ -128,4 +128,4 @@ export function selectUpNextToday(snap: UpNextSnapshot): UpNextToday {
 
 /** The member-facing explainer for the "?" popover (inspectability law). */
 export const UP_NEXT_PRIORITY_EXPLAINER =
-  "Up next is picked by a fixed order: 1) your next training session (skipped once you've trained today), 2) logging last night's sleep if it's missing, 3) your meal plan when nothing is logged yet today, 4) reviewing your progress. Same data, same answer, every time.";
+  "Up next is picked by a fixed order: 1) your next workout (skipped once you've trained today), 2) logging last night's sleep if it's missing, 3) your meal plan when nothing is logged yet today, 4) reviewing your progress. Same data, same answer, every time.";

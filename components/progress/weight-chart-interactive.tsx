@@ -21,7 +21,7 @@
  *
  * Two variants share the plot:
  *   - `full` (default): the /progress/body centerpiece.
- *   - `compact`: the /today mini view (bare plot, page supplies the card).
+ *   - `compact`: the /home mini view (bare plot, page supplies the card).
  */
 
 import { Minus, TrendingDown, TrendingUp, Trophy } from "lucide-react";
@@ -177,7 +177,7 @@ export function WeightChartInteractive({
   variant?: "full" | "compact";
   /** Sync the range (incl. custom from/to) to `?range=` for back/forward and
    * deep links (FIX-03). Only the page that owns those params opts in
-   * (/progress/body); embedded mounts (/today, goal detail) stay URL-silent. */
+   * (/progress/body); embedded mounts (/home, goal detail) stay URL-silent. */
   urlState?: boolean;
   /** 00:00-UTC anchor of the member-local today (window math, DSH-60). The
    * owning page passes it; embedded mounts fall back to the UTC day. */
@@ -290,7 +290,7 @@ export function WeightChartInteractive({
 
   // How far along the journey to the goal, anchored on the goal's stored start
   // weight and the smoothed TREND weight (the canonical current, LC-4) via the
-  // SHARED calc (lib/goals/progress), so this matches the /today goal card
+  // SHARED calc (lib/goals/progress), so this matches the /home goal card
   // exactly (DSH-26). Falls back to the first weigh-in for older goals with no
   // stored start.
   const goalProgress = useMemo(() => {
@@ -319,7 +319,7 @@ export function WeightChartInteractive({
   );
   const trendTone = TONE_TO_TREND[stats?.tone ?? "neutral"];
 
-  // ---- Compact /today mini view: bare plot, the page supplies the card ------
+  // ---- Compact /home mini view: bare plot, the page supplies the card ------
   if (variant === "compact") {
     if (n === 1) {
       return (

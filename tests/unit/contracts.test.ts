@@ -622,7 +622,7 @@ test("fixtures are fully deterministic (no wall-clock dependence)", () => {
 
 /* ------------------------------------------------- registry completeness */
 
-test("every loggable-domain metric surface includes /today", () => {
+test("every loggable-domain metric surface includes /home", () => {
   // The dashboard's daily loggers must render registered metrics.
   const mustBeOnToday: MetricId[] = [
     "nutrition.calories.today",
@@ -633,8 +633,8 @@ test("every loggable-domain metric surface includes /today", () => {
   ];
   for (const id of mustBeOnToday) {
     assert.ok(
-      (METRICS[id].surfaces as readonly string[]).includes("/today"),
-      `${id} missing /today surface`
+      (METRICS[id].surfaces as readonly string[]).includes("/home"),
+      `${id} missing /home surface`
     );
   }
 });

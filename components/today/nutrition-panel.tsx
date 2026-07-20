@@ -299,7 +299,7 @@ export function NutritionPanel({
             "kcal today · no daily target"
           )
         }
-        title="Calorie Tracker"
+        title="Nutrition"
         tone="amber"
         visual={
           <div className="flex items-center gap-3">

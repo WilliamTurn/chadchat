@@ -159,7 +159,7 @@ export function WaterHistory({ days }: { days: WaterHistoryDay[] }) {
   return (
     <section className="scroll-mt-20" id="history">
       <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-        History · last 30 days
+        Hydration History · last 30 days
       </h2>
       {rows.length === 0 ? (
         // Designed empty (never a missing anchor target): what is absent and

@@ -285,7 +285,7 @@ export function ProfileForm({
           <Label>Training goals</Label>
           <p className="text-muted-foreground text-xs">
             Pick everything you&apos;re training for. Most people want more
-            than one. The Goals on your dashboard are the measurable targets
+            than one. The Goals on Home are the measurable targets
             that serve them.
           </p>
           <LabeledMultiSegmented

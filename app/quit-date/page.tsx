@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { auth } from "@/app/(auth)/auth";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
-import { BackToDashboard } from "@/components/nav/back-to-dashboard";
+import { BackLink } from "@/components/nav/back-link";
 import { PageShell } from "@/components/nav/page-shell";
 import { QuitDateExperience } from "@/components/quit/quit-date-experience";
 import { canAccessChad } from "@/lib/admin";
@@ -21,7 +21,7 @@ import type { ReceiptCardData } from "@/lib/quit/share-cards";
  * The Quit Date (FEAT-21): Chad's on-the-record prediction of the exact day
  * this member quits. No standing prediction: the page runs The Autopsy (the
  * failure-history intake). Standing prediction: it shows The Verdict. Not
- * tier-gated; every member with access gets a date. Reached from the /today
+ * tier-gated; every member with access gets a date. Reached from the /home
  * card (deliberately not in the shared nav while NAV-35/VF-20 debate how many
  * icons the header can hold).
  */
@@ -63,7 +63,7 @@ async function QuitDateContent() {
   if (!user.quitDateEnabled) {
     return (
       <>
-        <PageHeading sub="You turned this feature off." title="The Quit Date" />
+        <PageHeading sub="You turned this feature off." title="The Quit Test" />
         <div className="max-w-2xl rounded-2xl border border-border bg-card p-6 sm:p-8">
           <h2 className="font-medium text-lg">
             The Quit Date is switched off
@@ -127,19 +127,19 @@ async function QuitDateContent() {
     <>
       {/* Pre-test: the owner's test framing, verbatim — the page never names
           the quit-date mechanic before the verdict does (s157). */}
-      {content ? (
-        <PageHeading
-          sub="Chad reads your history of abandoned plans and names the exact
-          day you quit this one. Your job is to prove him wrong."
-          title="The Quit Date"
-        />
-      ) : (
-        <PageHeading
-          sub="See if you have what it takes. Take this test and try to
-          outsmart Chad."
-          title="The Quit Test"
-        />
-      )}
+      {/* RC-11 (Q-D): one destination, one title. The heading used to rename
+          itself from "The Quit Test" to "The Quit Date" once a prediction
+          existed, so the same page answered to two names. The title is now
+          fixed to the registered name and only the sub-copy changes with
+          state. */}
+      <PageHeading
+        sub={
+          content
+            ? "Chad read your history of abandoned plans and named the exact day you quit this one. Your job is to prove him wrong."
+            : "See if you have what it takes. Take this test and try to outsmart Chad."
+        }
+        title="The Quit Test"
+      />
       <div className="max-w-2xl">
         <QuitDateExperience
           initial={content}
@@ -158,7 +158,7 @@ async function QuitDateContent() {
 function PageHeading({ title, sub }: { title: string; sub: string }) {
   return (
     <div className="mb-8 max-w-2xl">
-      <BackToDashboard />
+      <BackLink />
       <h1 className="font-semibold text-2xl tracking-tight">{title}</h1>
       <p className="mt-1 text-muted-foreground text-sm">{sub}</p>
     </div>

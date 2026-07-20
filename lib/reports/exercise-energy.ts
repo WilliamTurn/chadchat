@@ -52,8 +52,8 @@ export function formatExerciseCalories(
   }
   const week = (w: WeekExerciseKcal) =>
     w.kcal == null
-      ? "no sessions with a computable estimate"
-      : `~${w.kcal.toLocaleString()} kcal across ${w.sessions} session${w.sessions === 1 ? "" : "s"}`;
+      ? "no workouts with a computable estimate"
+      : `~${w.kcal.toLocaleString()} kcal across ${w.sessions} workout${w.sessions === 1 ? "" : "s"}`;
   return `COMPUTED EXERCISE CALORIES (already calculated by the app with the same estimates the client sees on their workout cards — use these numbers exactly, do not recalculate; they are estimates, so keep the ~ framing):
 - This report week: ${week(thisWeek)}.
 - The week before: ${week(lastWeek)}.

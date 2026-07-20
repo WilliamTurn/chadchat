@@ -2,7 +2,7 @@
  * Pull a value from the "## Client file" block of Chad's memory profile:
  * lines like "- Name: Alex" or "* Primary goal: Lose 20 lb". Returns null for
  * missing fields and explicit "unknown"s. Shared by the dashboard pages that
- * personalize from memory (/today, /goals).
+ * personalize from memory (/home, /goals).
  */
 export function clientField(
   profile: string | null | undefined,

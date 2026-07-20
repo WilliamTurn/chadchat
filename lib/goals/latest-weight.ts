@@ -5,7 +5,7 @@ import type { ProgressEntry } from "@/lib/db/schema";
  * Weigh-in → display-unit helpers for the goal surfaces (/goals, /goals/[id]).
  * The "current" anchor they feed to the shared goal-progress calc is the
  * smoothed **trend weight** (`trendWeightInUnit`) — the app's one canonical
- * current weight (LC-4) — so their bars match /today and /progress exactly
+ * current weight (LC-4) — so their bars match /home and /progress exactly
  * (DSH-26). The raw latest weigh-in stays available for labeled display.
  */
 

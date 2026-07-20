@@ -176,7 +176,7 @@ export function StatusStrip({ data }: { data: StatusStripData }) {
         aria-label="Today's status"
         className="grid grid-cols-1 gap-3 @[320px]:grid-cols-2 @[960px]:grid-cols-4"
       >
-      <CellLink href="/nutrition" name="Calorie Tracker">
+      <CellLink href="/nutrition" name="Nutrition">
         <StatusPanel
           empty={{
             absent: "Not logged yet.",
@@ -320,7 +320,7 @@ export function StatusStrip({ data }: { data: StatusStripData }) {
       <CellLink href="/workouts" name="Workouts">
         <StatusPanel
           empty={{
-            absent: "No sessions this week.",
+            absent: "No workouts this week.",
             unlock: "Log a workout and the week fills in.",
             visual: (
               <WeekBars

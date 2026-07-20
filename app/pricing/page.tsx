@@ -115,7 +115,7 @@ function LogoMark() {
 /**
  * The header logo. A signed-in member's logo ALWAYS stays inside the app
  * (owner order, ACC-29: it must never dump them onto the logged-out marketing
- * site): /today for members with access; without access /today bounces right
+ * site): /home for members with access; without access /home bounces right
  * back here, which keeps them on the page that can actually fix their plan.
  * Only logged-out visitors go to the marketing site.
  */
@@ -123,7 +123,7 @@ async function HeaderLogo() {
   const session = await auth();
   if (session?.user?.id) {
     return (
-      <Link aria-label="Chad — home" href="/today">
+      <Link aria-label="Chad — home" href="/home">
         <LogoMark />
       </Link>
     );
@@ -185,7 +185,7 @@ async function PricingContent({
       {hasAccess && (
         <div className="mb-8 flex items-center gap-3">
           <Button asChild>
-            <Link href="/today">Open Chad</Link>
+            <Link href="/home">Open Chad</Link>
           </Button>
           <Button asChild variant="outline">
             <Link href="/account">Manage billing</Link>

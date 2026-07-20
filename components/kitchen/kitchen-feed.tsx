@@ -33,7 +33,7 @@ export function KitchenFeed({
 
       {analyzing || hasEntries ? (
         <section className="flex min-w-0 flex-col gap-4">
-          <h2 className="font-medium text-lg">History</h2>
+          <h2 className="font-medium text-lg">Kitchen History</h2>
           {analyzing && <KitchenAnalysisSkeleton />}
           {history}
         </section>

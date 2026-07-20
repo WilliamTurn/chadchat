@@ -15,7 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 
 /**
- * THE /today "UP NEXT" PANEL (FIX-23). One prioritized, deterministic next
+ * THE /home "UP NEXT" PANEL (FIX-23). One prioritized, deterministic next
  * action (lib/today/up-next.ts consumes P34-D's rotation selector), with the
  * WHY always visible and the priority order one "?" away (the inspectability
  * law; the Oura one-big-thing pattern from the P56-D teardown). PlanPanel

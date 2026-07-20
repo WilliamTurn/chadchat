@@ -117,7 +117,7 @@ async function startEmptyWorkout(page: Page) {
     .getByRole("button", { name: /start an empty workout/i })
     .first()
     .click();
-  await page.waitForURL("**/workouts/session**");
+  await page.waitForURL("**/workouts/active**");
 }
 
 async function addBenchPress(page: Page) {
@@ -128,7 +128,7 @@ async function addBenchPress(page: Page) {
     .first()
     .click();
   await page.getByRole("button", { name: /Add 1 exercise to/i }).click();
-  await page.waitForURL("**/workouts/session**", { timeout: 15_000 });
+  await page.waitForURL("**/workouts/active**", { timeout: 15_000 });
 }
 
 /** The RUN-68 class: a control that exists and "works" but sits partly
@@ -267,7 +267,7 @@ for (const viewport of TRAP_VIEWPORTS) {
       await expect(page.getByText(/Nothing is checked off yet/i)).toBeVisible({
         timeout: 10_000,
       });
-      expect(page.url()).toContain("/workouts/session");
+      expect(page.url()).toContain("/workouts/active");
 
       // Clean up: discard the session so later runs start clean.
       await dialog.getByRole("button", { name: "Keep lifting" }).click();

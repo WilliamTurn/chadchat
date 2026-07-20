@@ -6,7 +6,7 @@ import { KitchenSkeleton } from "@/components/dashboard/page-skeletons";
 import { KitchenFeed } from "@/components/kitchen/kitchen-feed";
 import { AnalysisCard } from "@/components/nutrition/analysis-card";
 import { RewardProvider } from "@/components/dashboard/reward";
-import { BackToDashboard } from "@/components/nav/back-to-dashboard";
+import { BackLink } from "@/components/nav/back-link";
 import { PageShell } from "@/components/nav/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ export default function KitchenPage() {
     <PageShell active="/kitchen" className="max-w-[1500px]">
 
       <div className="mb-8">
-        <BackToDashboard />
+        <BackLink />
         <div className="flex items-center gap-3">
           <h1 className="font-semibold text-2xl tracking-tight">
             Rate My Kitchen
@@ -37,7 +37,7 @@ export default function KitchenPage() {
             className="text-foreground underline underline-offset-4"
             href="/nutrition"
           >
-            Calorie Tracker
+            Nutrition
           </Link>{" "}
           ·{" "}
           <Link

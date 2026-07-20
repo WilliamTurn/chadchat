@@ -311,7 +311,7 @@ export function MealPlanView({ plan }: { plan: MealPlanViewData }) {
                 {plan.targetIsDaily && (
                   <span className="text-muted-foreground/70">
                     {" "}
-                    (your daily Calorie Tracker targets, too)
+                    (your daily Nutrition targets, too)
                   </span>
                 )}
               </span>

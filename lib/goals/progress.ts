@@ -1,5 +1,5 @@
 /**
- * The single definition of weight-goal progress, shared by `/today` (the goal
+ * The single definition of weight-goal progress, shared by `/home` (the goal
  * card) and `/progress` (the "Progress to goal" bar) so the two screens never
  * disagree (DSH-26).
  *
@@ -10,14 +10,14 @@
  * captured when the goal was created — so the percentage reflects progress on
  * THIS goal, not lifetime weight history. Before this existed, the two screens
  * disagreed badly: the dashboard anchored on `goal.startValue` while Progress
- * anchored on the first-ever weigh-in, so the same goal read 26% on `/today` and
+ * anchored on the first-ever weigh-in, so the same goal read 26% on `/home` and
  * 38% on `/progress`. Falls back to the earliest weigh-in only when a goal has no
  * stored start (older goals created before the field existed).
  *
  * `current` and `firstWeight` are supplied by the caller. For weight goals every
  * screen now passes the **smoothed trend weight** as `current` — the app's one
  * canonical "current weight" (LC-4) — so a goal's %, "now", and "to go" read the
- * same on /today, /goals, /goals/[id], and /progress. Raw weigh-ins stay visible
+ * same on /home, /goals, /goals/[id], and /progress. Raw weigh-ins stay visible
  * as labeled data points, never as a competing headline number.
  */
 

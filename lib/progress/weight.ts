@@ -80,7 +80,7 @@ export function weightGoalTarget(
 /**
  * The stored start weight (in `displayUnit`) of the active weight goal, if
  * any. This is the shared anchor for goal progress (DSH-26), the same one
- * /today uses, so "Progress to goal" agrees across screens.
+ * /home uses, so "Progress to goal" agrees across screens.
  */
 export function weightGoalStart(
   goals: Goal[],

@@ -8,7 +8,7 @@ import {
 } from "@/lib/quit/heuristics";
 
 // The Quit Date (FEAT-21) shared shapes, mirrored on lib/montage/content.ts:
-// client-safe (no "server-only") because the intake form and the /today card
+// client-safe (no "server-only") because the intake form and the /home card
 // both render from these. The heuristics stay in lib/quit/heuristics.ts
 // (pure, unit-tested); this module owns validation and display labels.
 

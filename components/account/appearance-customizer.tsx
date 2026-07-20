@@ -1,7 +1,7 @@
 "use client";
 
 // DEC-05 (owner, 2026-07-13): the dashboard header silhouette/body customizer,
-// relocated from /today to Account > Appearance. Relocation only: every
+// relocated from /home to Account > Appearance. Relocation only: every
 // capability of the old header popover survives here: switch between the
 // built-in male / female silhouettes, upload your own image, reset to the
 // default. The page renders the current choice as a live preview; this
@@ -15,7 +15,7 @@ import {
   resetHeroFigure,
   setHeroFigure,
   uploadHeroImage,
-} from "@/app/today/actions";
+} from "@/app/home/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {

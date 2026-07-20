@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { auth } from "@/app/(auth)/auth";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
-import { BackToDashboard } from "@/components/nav/back-to-dashboard";
+import { BackLink } from "@/components/nav/back-link";
 import { PageShell } from "@/components/nav/page-shell";
 import { ModuleCard, ModuleHeader } from "@/components/today/module-card";
 import { PlanList } from "@/components/today/plan-list";
@@ -20,18 +20,18 @@ import {
 import { clientField } from "@/lib/memory/client-field";
 
 /**
- * The plans index (P56-E, FIX-30). Plan MANAGEMENT relocated off /today per
+ * The plans index (P56-E, FIX-30). Plan MANAGEMENT relocated off /home per
  * the 03-spec ("plan edit/delete controls move to plan detail"; capabilities
  * are relocated, never silently removed): the same PlanList the dashboard
  * carried, verbatim: active plans, add, edit, delete, past plans with
- * one-tap reactivate, and the memory-plan hint. /today now shows the
+ * one-tap reactivate, and the memory-plan hint. /home now shows the
  * Training-today summary and links here.
  */
 export default function PlansPage() {
   return (
     <PageShell active="/plans" className="max-w-[var(--container-content)]">
       <div className="mb-8">
-        <BackToDashboard />
+        <BackLink />
         <h1 className="font-semibold text-2xl tracking-tight">All plans</h1>
         <p className="mt-1 text-muted-foreground text-sm">
           Every plan document you have saved: your current training and diet

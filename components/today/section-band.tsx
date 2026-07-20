@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Visible section band for the /today dashboard (R2-13). The page is organized
+ * Visible section band for the /home dashboard (R2-13). The page is organized
  * STATUS → LOGGERS → PLANS → REVIEW, but until now only the code knew: each
  * band names its section and states its job in one plain-language line, so the
  * organizing model is visible to members. The hero (STATUS) needs no band.

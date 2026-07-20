@@ -1,7 +1,7 @@
 /**
- * Coherence nudges for the goal surfaces (P2-4), shared by /today and /goals:
+ * Coherence nudges for the goal surfaces (P2-4), shared by /home and /goals:
  * (a) an active goal whose text names a daily calorie figure that disagrees
- * with the Calorie Tracker target, and (b) two active goals tracking the same
+ * with the Nutrition target, and (b) two active goals tracking the same
  * metric, whose progress bars anchor on different start values and so can
  * contradict each other on one screen.
  */
@@ -35,7 +35,7 @@ export function mentionedCalories(text: string): number | null {
 }
 
 /** First active goal whose text names a calorie figure that disagrees with the
- *  Calorie Tracker target. Null when the target is unset or everything agrees. */
+ *  Nutrition target. Null when the target is unset or everything agrees. */
 export function findCalorieConflict(
   goals: CoherenceGoal[],
   targetCalories: number | null | undefined

@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { RewardProvider } from "@/components/dashboard/reward";
 import { auth } from "@/app/(auth)/auth";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
-import { BackToDashboard } from "@/components/nav/back-to-dashboard";
+import { BackLink } from "@/components/nav/back-link";
 import { PageShell } from "@/components/nav/page-shell";
 import {
   SleepHistory,
@@ -31,7 +31,7 @@ import { getSleepPanelData } from "@/lib/today/panel-data";
 
 /**
  * The dedicated Sleep & recovery page (NAV-30) — sleep's ONE deep surface
- * (audit rule 3: compact readout on /today, the full chart + history here).
+ * (audit rule 3: compact readout on /home, the full chart + history here).
  * Tracker card + full nightly trend + an editable History list, so any logged
  * night can be corrected or deleted (audit P1-3).
  *
@@ -45,7 +45,7 @@ export default function SleepPage() {
     <PageShell active="/sleep" className="max-w-[1500px]">
 
       <div className="mb-8">
-        <BackToDashboard />
+        <BackLink />
         <div className="flex items-center gap-3">
           <h1 className="font-semibold text-2xl tracking-tight">Sleep</h1>
           {/* "Pro feature", not bare "Pro" (LC-13). */}

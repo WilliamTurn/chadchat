@@ -248,9 +248,9 @@ export async function savePlanRecord(
       domain: "plans",
       entity: "plan",
       op: "create",
-      // Plan summaries render on /today; no plan metric is registered until
+      // Plan summaries render on /home; no plan metric is registered until
       // FIX-28's batch registration, so the surface is named explicitly.
-      alsoSurfaces: ["/today"],
+      alsoSurfaces: ["/home"],
     })
   );
   return { ok: true };
@@ -284,7 +284,7 @@ export async function updatePlanRecord(
       domain: "plans",
       entity: "plan",
       op: "update",
-      alsoSurfaces: ["/today"],
+      alsoSurfaces: ["/home"],
     })
   );
   return { ok: true };
@@ -301,7 +301,7 @@ export async function removePlan(id: string): Promise<TodayActionState> {
       domain: "plans",
       entity: "plan",
       op: "delete",
-      alsoSurfaces: ["/today"],
+      alsoSurfaces: ["/home"],
     })
   );
   return { ok: true };
@@ -402,9 +402,9 @@ export async function saveSleepGoal(
   return { ok: true };
 }
 
-// --- /today hero figure (DSH-21) ---
+// --- /home hero figure (DSH-21) ---
 
-/** Switch the decorative /today header figure to a built-in silhouette. */
+/** Switch the decorative /home header figure to a built-in silhouette. */
 export async function setHeroFigure(
   figure: "male" | "female"
 ): Promise<TodayActionState> {
@@ -416,7 +416,7 @@ export async function setHeroFigure(
     return { ok: false, error: "Unknown figure." };
   }
   await updateUserHero(gate.user.id, { heroFigure: figure });
-  revalidatePath("/today");
+  revalidatePath("/home");
   return { ok: true };
 }
 
@@ -427,14 +427,14 @@ export async function resetHeroFigure(): Promise<TodayActionState> {
     return { ok: false, error: gate.error };
   }
   await updateUserHero(gate.user.id, { heroFigure: null });
-  revalidatePath("/today");
+  revalidatePath("/home");
   return { ok: true };
 }
 
 const MAX_HERO_BYTES = 5 * 1024 * 1024;
 const HERO_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
-/** Upload a custom background image for the /today header and select it. */
+/** Upload a custom background image for the /home header and select it. */
 export async function uploadHeroImage(
   formData: FormData
 ): Promise<TodayActionState> {
@@ -477,6 +477,6 @@ export async function uploadHeroImage(
     return { ok: false, error: "Couldn't save that image. Try again." };
   }
 
-  revalidatePath("/today");
+  revalidatePath("/home");
   return { ok: true };
 }

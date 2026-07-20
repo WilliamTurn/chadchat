@@ -35,7 +35,7 @@ import { loggedReading, unloggedReading } from "@/lib/contracts/data-state";
 import { formatQuantity } from "@/lib/contracts/units";
 
 const ASK_CHAD_PROMPT =
-  "Look at my training volume trend chart: total weight moved per session over time. Am I progressively overloading, stalling, or backing off, and what should I do about it?";
+  "Look at my training volume trend chart: total weight moved per workout over time. Am I progressively overloading, stalling, or backing off, and what should I do about it?";
 
 const RANGE_DAYS: Record<string, number> = {
   "1w": 7,

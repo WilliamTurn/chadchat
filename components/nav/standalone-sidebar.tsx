@@ -54,8 +54,8 @@ export function StandaloneSidebar() {
         <div className="flex items-center gap-1 group-data-[collapsible=icon]:flex-col">
           <SidebarMenu className="min-w-0 flex-1 group-data-[collapsible=icon]:flex-none">
             <SidebarMenuItem>
-              <SidebarMenuButton asChild className="h-11" tooltip="Dashboard">
-                <Link aria-label="Chad dashboard" href="/today">
+              <SidebarMenuButton asChild className="h-11" tooltip="Home">
+                <Link aria-label="Chad home" href="/home">
                   <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted/60 ring-1 ring-border/50">
                     <Dumbbell
                       className="text-blood"

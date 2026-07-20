@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 /**
  * Account > Appearance (DEC-05, owner-decided 2026-07-13): the owned home of
  * the member's figure: the silhouette or uploaded image that used to live in
- * the /today header customizer. Relocation only: every capability (pick
+ * the /home header customizer. Relocation only: every capability (pick
  * male/female, upload your own, reset) survives here, and the dashboard
  * header stays compact. Dedicated page with a back link per the s168
  * pages-not-popups law.
@@ -70,7 +70,7 @@ async function AppearanceContent() {
   }
 
   const memory = await getUserMemory(user.id);
-  // Same resolution the /today header used (DSH-21): explicit choice, else a
+  // Same resolution the /home header used (DSH-21): explicit choice, else a
   // silhouette derived from the member's sex in Chad's memory, else male.
   const hero = resolveHero(
     user.heroFigure,

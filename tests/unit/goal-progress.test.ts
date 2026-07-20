@@ -1,7 +1,7 @@
 // DSH-26 regression test. Run with: pnpm test:unit
 //
 // Guards the "same goal, two different percentages" trust bug from the athlete
-// audit: `/today` showed 26% and `/progress` showed 38% for the SAME weight goal
+// audit: `/home` showed 26% and `/progress` showed 38% for the SAME weight goal
 // because the two screens anchored the calc on different start weights (the
 // goal's stored start vs. the first-ever weigh-in). Both screens now call
 // `computeGoalProgress`, so this test pins the shared contract.

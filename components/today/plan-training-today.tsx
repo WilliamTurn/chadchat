@@ -103,7 +103,7 @@ export function PlanTrainingToday({
   ) : trainedToday ? (
     <span className="flex min-w-0 flex-wrap items-baseline gap-x-2">
       <span className="min-w-0 text-positive-text">
-        {data.completedTodayName ?? "Session"} done
+        {data.completedTodayName ?? "Workout"} done
       </span>
       <span className="text-body-sm text-muted-foreground">
         {data.planTitle}
@@ -160,7 +160,7 @@ export function PlanTrainingToday({
       empty={{
         absent: "No training plan yet.",
         unlock:
-          "Ask Chad for a split or add one on All plans, and today's session appears here. Freestyle sessions count too.",
+          "Ask Chad for a split or add one on All plans, and today's workout appears here. Freestyle workouts count too.",
         // Freestyle members keep their Today workout entry (the old workout
         // card's job); plan management is the named "All plans" link above.
         action: (
@@ -181,7 +181,7 @@ export function PlanTrainingToday({
             className="min-h-11 sm:min-h-8"
             prompt={
               data
-                ? "Look at my training plan and what I've done this week. Is today's session right, and what should I focus on in it?"
+                ? "Look at my training plan and what I've done this week. Is today's workout right, and what should I focus on in it?"
                 : "I don't have a training plan yet. Build me a split that fits my goal and schedule."
             }
           />
@@ -203,7 +203,7 @@ export function PlanTrainingToday({
       glow={trainedToday ? "emerald" : "blood"}
       headline={headline}
       icon={<Dumbbell className="size-4" />}
-      lockedCapability="Members see their next plan session with a one-tap start."
+      lockedCapability="Members see their next planned workout with a one-tap start."
       state={data ? "populated" : "empty"}
       title="Training today"
       wrapTitle

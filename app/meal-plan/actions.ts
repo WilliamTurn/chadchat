@@ -146,7 +146,7 @@ export async function generatePlan(
         entity: "mealPlan",
         op: "create",
         alsoDomains: ["nutrition"],
-        alsoSurfaces: ["/today"],
+        alsoSurfaces: ["/home"],
       })
     );
     return { ok: true, planId };
@@ -199,7 +199,7 @@ export async function regeneratePlan(
         entity: "mealPlan",
         op: "update",
         alsoDomains: ["nutrition"],
-        alsoSurfaces: ["/today"],
+        alsoSurfaces: ["/home"],
       })
     );
     return { ok: true, planId: newId };

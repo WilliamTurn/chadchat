@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { removeGoal, updateGoalRecord } from "@/app/today/actions";
+import { removeGoal, updateGoalRecord } from "@/app/home/actions";
 import { computeGoalProgress } from "@/lib/goals/progress";
 import { cn } from "@/lib/utils";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
@@ -163,10 +163,10 @@ function CoherenceNotice({
   const promptParts: string[] = [];
   if (calorieConflict) {
     lines.push(
-      `"${calorieConflict.goalTitle}" mentions ${calorieConflict.mentioned.toLocaleString()} calories a day; your Calorie Tracker target is ${calorieConflict.target.toLocaleString()}.`
+      `"${calorieConflict.goalTitle}" mentions ${calorieConflict.mentioned.toLocaleString()} calories a day; your Nutrition target is ${calorieConflict.target.toLocaleString()}.`
     );
     promptParts.push(
-      `My goal "${calorieConflict.goalTitle}" says ${calorieConflict.mentioned.toLocaleString()} calories a day, but my Calorie Tracker target is ${calorieConflict.target.toLocaleString()}. Which one should I follow? Update the stale one so they match.`
+      `My goal "${calorieConflict.goalTitle}" says ${calorieConflict.mentioned.toLocaleString()} calories a day, but my Nutrition target is ${calorieConflict.target.toLocaleString()}. Which one should I follow? Update the stale one so they match.`
     );
   }
   for (const noun of overlapNouns) {
@@ -446,7 +446,7 @@ function PastGoalItem({
 }
 
 /**
- * The /today "Your goals" card body: lists active goals with live progress, an
+ * The /home "Your goals" card body: lists active goals with live progress, an
  * Add control, and a graceful empty state (falling back to the one-line goal
  * Chad has in memory, if any, until the user saves a real one). Achieved and
  * archived goals collapse into a "Past goals" disclosure so a status change
@@ -484,7 +484,7 @@ export function GoalList({
   overlapIds?: string[];
   /** The goals deep page ("View all →" /goals). Omit when already on it. */
   viewHref?: string;
-  /** "card" = the /today module body (default). "page" = the /goals page body
+  /** "card" = the /home module body (default). "page" = the /goals page body
    *  (LAY-1): toolbar up top, goal cards in a responsive multi-column grid,
    *  past goals in a two-column grid — a real desktop layout, not a column. */
   layout?: "card" | "page";

@@ -16,7 +16,7 @@
 
 import { Star } from "lucide-react";
 import { useState, useTransition } from "react";
-import { logSleep, removeSleep } from "@/app/today/actions";
+import { logSleep, removeSleep } from "@/app/home/actions";
 import {
   LogSleepDialog,
   type SleepLogInput,
@@ -132,7 +132,7 @@ export function SleepHistory({
     // (pre-delivery audit P2: a lone first night was jammed into a 3-column
     // grid cell inside the centered column).
     <section className="scroll-mt-20 @container" id="history">
-      <h2 className="mb-4 font-medium text-lg">History</h2>
+      <h2 className="mb-4 font-medium text-lg">Sleep History</h2>
       {entries.length === 0 ? (
         // Designed empty (never a missing anchor target).
         <p className="rounded-xl border border-border border-dashed bg-card/50 px-4 py-6 text-muted-foreground text-sm">

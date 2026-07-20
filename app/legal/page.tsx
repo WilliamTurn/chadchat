@@ -9,7 +9,7 @@ import { getUserById } from "@/lib/db/queries";
  * whose acceptedTermsAt is null: accounts created before the gate existed and
  * Google signups (who never see the registration checkbox). Every product
  * page redirects here until they accept; accepting stamps the timestamp and
- * sends them to /today. Layout mirrors the /welcome wizard card.
+ * sends them to /home. Layout mirrors the /welcome wizard card.
  */
 export default function LegalPage() {
   return (
@@ -45,7 +45,7 @@ async function LegalGate() {
 
   // Already accepted — never trap a member on this screen.
   if (user.acceptedTermsAt) {
-    redirect("/today");
+    redirect("/home");
   }
 
   return (

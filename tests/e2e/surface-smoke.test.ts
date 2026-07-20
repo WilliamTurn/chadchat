@@ -77,7 +77,7 @@ function isKnownFailure(
  *  240s budget even when the dev server first-compiles each route. */
 const SURFACE_GROUPS: Record<string, string[]> = {
   "core-dashboards": [
-    "/today",
+    "/home",
     "/nutrition",
     "/hydration",
     "/sleep",
@@ -446,7 +446,7 @@ for (const viewport of VIEWPORTS) {
       .getByRole("button", { name: /start an empty workout/i })
       .first()
       .click();
-    await page.waitForURL("**/workouts/session**");
+    await page.waitForURL("**/workouts/active**");
     await assertScreenClean(page, "flow:workout-session-pending", viewport);
 
     // --- Exercise picker, entered MID-FLOW from the session.
@@ -460,7 +460,7 @@ for (const viewport of VIEWPORTS) {
       .first()
       .click();
     await page.getByRole("button", { name: /Add 1 exercise to/i }).click();
-    await page.waitForURL("**/workouts/session**", { timeout: 15_000 });
+    await page.waitForURL("**/workouts/active**", { timeout: 15_000 });
 
     // --- ENGAGED session: Play pressed, one set logged.
     await page
@@ -476,7 +476,7 @@ for (const viewport of VIEWPORTS) {
     //     server never saw, so these pages must hydrate without errors.
     await page.goto("/workouts", { waitUntil: "load" });
     await assertScreenClean(page, "flow:workouts-reload-mid-session", viewport);
-    await page.goto("/workouts/session", { waitUntil: "load" });
+    await page.goto("/workouts/active", { waitUntil: "load" });
     await assertScreenClean(page, "flow:player-reload-mid-session", viewport);
 
     // --- Finish dialog OPEN.

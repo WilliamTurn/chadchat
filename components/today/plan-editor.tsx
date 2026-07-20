@@ -4,7 +4,7 @@ import { Pencil, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { savePlanRecord, updatePlanRecord } from "@/app/today/actions";
+import { savePlanRecord, updatePlanRecord } from "@/app/home/actions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

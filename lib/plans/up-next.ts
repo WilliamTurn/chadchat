@@ -65,12 +65,12 @@ export function selectUpNextSession(
       session: pick,
       reason: anyCompleted
         ? `You haven't done ${pick.name} yet.`
-        : "The first session of your rotation.",
+        : "The first workout of your rotation.",
     };
   }
   return {
     session: pick,
-    reason: `Your least recent session in the rotation.`,
+    reason: `Your least recent workout in the rotation.`,
   };
 }
 

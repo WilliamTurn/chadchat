@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { auth } from "@/app/(auth)/auth";
 import { AskChadButton } from "@/components/chad/ask-chad-button";
 import { ProgressSkeleton } from "@/components/dashboard/page-skeletons";
-import { BackToDashboard } from "@/components/nav/back-to-dashboard";
+import { BackLink } from "@/components/nav/back-link";
 import { PageShell } from "@/components/nav/page-shell";
 import {
   BodySection,
@@ -99,7 +99,7 @@ import { computeStreak } from "@/lib/today/streak";
 /** The consistency calendar's fixed window (engagement.consistency.window). */
 const CONSISTENCY_DAYS = 84;
 
-/** Streak lookback, matching /today exactly (one canonical streak). */
+/** Streak lookback, matching /home exactly (one canonical streak). */
 const ACTIVITY_LOOKBACK_DAYS = 120;
 
 /** Workout history depth for records/frequency (matches /workouts). */
@@ -123,7 +123,7 @@ export default async function ProgressOverviewPage({
   return (
     <PageShell active="/progress" className="max-w-[var(--container-content)]">
       <div className="mb-8">
-        <BackToDashboard />
+        <BackLink />
         <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
           <div className="min-w-0">
             <h1 className="font-semibold text-2xl tracking-tight">Progress</h1>

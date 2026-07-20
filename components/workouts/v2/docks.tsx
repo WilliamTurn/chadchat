@@ -44,7 +44,7 @@ function SessionMiniBar() {
   // shell's stacking context paints this dock above those bars, so it would
   // cover their primary button and hijack the tap.
   const pageHasOwnBottomBar =
-    pathname.startsWith("/workouts/session") ||
+    pathname.startsWith("/workouts/active") ||
     pathname.startsWith("/workouts/exercises/pick") ||
     pathname.startsWith("/workouts/exercises/new") ||
     pathname.startsWith("/workouts/new") ||
@@ -60,7 +60,7 @@ function SessionMiniBar() {
     <div className="pointer-events-auto flex items-center gap-1 rounded-2xl border border-[var(--go)]/40 bg-card py-2 pr-1.5 pl-4 shadow-[var(--shadow-float)]">
       <Link
         className="flex min-w-0 flex-1 items-center gap-3 py-1 transition-transform active:scale-[0.99]"
-        href="/workouts/session"
+        href="/workouts/active"
       >
         <span className="relative flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--go)] text-[var(--bg)]">
           <Play aria-hidden className="size-5 fill-current" />
@@ -78,7 +78,7 @@ function SessionMiniBar() {
             {session.timer.running || elapsed > 0 ? formatClock(elapsed) : "-"}
           </span>
           <span className="block font-semibold text-[11px] text-[var(--go)]/70 uppercase tracking-wider">
-            Back to workout
+            Back to your workout
           </span>
         </span>
       </Link>

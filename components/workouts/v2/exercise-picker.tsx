@@ -129,7 +129,7 @@ export function ExercisePickerPage({
     }
     // Land on the workout in ONE tap, whatever the history stack looks like
     // (flaws XPK-16: router.back() looped through the custom-exercise form).
-    router.replace(target === "draft" ? "/workouts/new" : "/workouts/session");
+    router.replace(target === "draft" ? "/workouts/new" : "/workouts/active");
   }
 
   function toggle(ref: ExerciseRef) {

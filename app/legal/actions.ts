@@ -15,7 +15,7 @@ export async function acceptTerms(): Promise<void> {
     redirect("/login");
   }
   await markTermsAccepted(session.user.id);
-  redirect("/today");
+  redirect("/home");
 }
 
 /** The honest exit for anyone who declines: sign them out cleanly. */

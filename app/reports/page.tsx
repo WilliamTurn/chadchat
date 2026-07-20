@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { auth } from "@/app/(auth)/auth";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
-import { BackToDashboard } from "@/components/nav/back-to-dashboard";
+import { BackLink } from "@/components/nav/back-link";
 import { PageShell } from "@/components/nav/page-shell";
 import { ReportActions } from "@/components/reports/report-actions";
 import { ReportDetails } from "./report-details";
@@ -34,11 +34,9 @@ export default function ReportsPage() {
 
       <div className="mb-8">
         {/* RC-1 (RPT-02): /reports had no way back at all. */}
-        <BackToDashboard />
+        <BackLink />
         <div className="flex items-center gap-3">
-          <h1 className="font-semibold text-2xl tracking-tight">
-            Weekly Report
-          </h1>
+          <h1 className="font-semibold text-2xl tracking-tight">Reports</h1>
           {/* "Elite feature", not bare "Elite": on every other page the H1
               badge marks the tier the feature belongs to, but a bare tier
               name reads as the member's OWN plan — and here that misread
@@ -189,8 +187,10 @@ function ReportsList({
 
         {hasOlder && (
           <section className="min-w-0">
+            {/* RC-11 (Q-D): past-entries sections are "<Category> History";
+                "Earlier" is retired. */}
             <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-              Earlier weeks
+              Report History
             </h2>
             <div className="flex flex-col gap-3">
               {older.map((report) => (

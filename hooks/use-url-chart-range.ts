@@ -87,7 +87,7 @@ export function useUrlChartWindow<T extends { t: number }>(
 /** URL-synced legacy `useChartRange`, custom window included. Same shape.
  * `enabled: false` = behave exactly like the plain hook (for components that
  * also mount embedded on pages that do not own the params, e.g. the weight
- * chart's compact /today mount). */
+ * chart's compact /home mount). */
 export function useUrlChartRange<T extends { t: number }>(
   rows: T[],
   opts: {

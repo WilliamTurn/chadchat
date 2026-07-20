@@ -7,7 +7,7 @@
  *
  * The stack mirrors the browser history for in-app movement, so "did the
  * member actually navigate here from another page?" is answerable without
- * touching window.history: BackToDashboard walks real history
+ * touching window.history: BackLink walks real history
  * (router.back()) only when a referrer exists; a cold entry (deep link,
  * fresh tab) keeps the labeled fallback destination.
  */
@@ -18,7 +18,7 @@ const FRESH_KEY = "nav.fresh";
 const MAX_ENTRIES = 50;
 
 /** Fired on window after every recordVisit, so controls that render from the
- *  stack (BackToDashboard) can re-read it once the tracker has run; effect
+ *  stack (BackLink) can re-read it once the tracker has run; effect
  *  ordering between separately hydrated islands is not guaranteed. */
 export const NAV_STACK_EVENT = "chad:nav-stack";
 
@@ -91,16 +91,11 @@ export function recordVisit(path: string): NavAction {
   return action;
 }
 
-/** The page the member came from, or null on a cold entry. Correct whether
- *  or not the tracker has recorded `currentPath` yet. */
-export function referrerPath(currentPath: string): string | null {
-  const stack = read<string[]>(STACK_KEY, []);
-  const top = stack[stack.length - 1];
-  if (top === currentPath) {
-    return stack.length >= 2 ? stack[stack.length - 2] : null;
-  }
-  return top ?? null;
-}
+/* RC-11 (Q-D, WKT-38/39) removed `referrerPath`. It existed so the back
+ * control could read "Back" and walk history to wherever the member came
+ * from; back controls now always name and navigate to an explicit
+ * destination, so nothing consumes the referrer any more. The nav STACK
+ * itself stays: NavTracker still uses it for scroll memory (SYS-15). */
 
 export function saveScrollPosition(path: string, y: number) {
   const map = read<Record<string, number>>(SCROLL_KEY, {});

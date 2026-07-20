@@ -7,7 +7,7 @@ import {
 
 /**
  * Shared view-model builders for the tracker cards' 7-day week strips
- * (sleep + hydration) and the sleep "last night" readout. /today, /sleep and
+ * (sleep + hydration) and the sleep "last night" readout. /home, /sleep and
  * /hydration all render the same cards, so the week/readout shapes are built
  * here once instead of being copy-pasted per page. All day math runs on the
  * member's local calendar days (FEAT-8): daily totals are keyed to each local

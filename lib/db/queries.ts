@@ -384,7 +384,7 @@ export async function setUserStripeCustomerId(
   }
 }
 
-/** Set the /today hero figure choice (DSH-21) for a user. */
+/** Set the /home hero figure choice (DSH-21) for a user. */
 export async function updateUserHero(
   userId: string,
   hero: {
@@ -1695,7 +1695,7 @@ export async function getActivePlansByUserId(userId: string): Promise<Plan[]> {
 
 /**
  * A user's archived/completed plans, newest first. Backs the "Past plans"
- * disclosure on /today (LC-15) so the single-current rule's auto-archive
+ * disclosure on /home (LC-15) so the single-current rule's auto-archive
  * stays recoverable instead of reading as a silent delete.
  */
 export async function getInactivePlansByUserId(
@@ -2536,7 +2536,7 @@ async function getUserTargetValuesByDay(
   }
 }
 
-// --- Water log (lightweight daily counter on /today) ---
+// --- Water log (lightweight daily counter on /home) ---
 
 /** Total ml logged since `since` (clamped at 0). */
 export async function getWaterMlSince(
@@ -2626,7 +2626,7 @@ export async function getWaterDailyTotals(
 /**
  * Distinct days (returned as the raw logged timestamps) on which the user took
  * any tracked action since `since` — a logged meal, a workout, a water entry, or
- * a progress/weigh-in. Backs the /today streak strip + 7-day week dots so the
+ * a progress/weigh-in. Backs the /home streak strip + 7-day week dots so the
  * streak reflects *all* engagement, not just one surface. Cheap: each select
  * pulls a single timestamp column over a short window; the caller buckets into
  * days. Meals use their effective day (`recordedAt ?? createdAt`).
@@ -2686,7 +2686,7 @@ export async function getActivityDaysSince(
     // does NOT run through the column's Date codec — the driver hands it back as
     // a string. The other three select typed columns and are real Dates. Coerce
     // everything to a Date so downstream `dayKey`/streak math never sees a string
-    // (which would throw `getFullYear is not a function` and 500 /today).
+    // (which would throw `getFullYear is not a function` and 500 /home).
     return [...meals, ...workouts, ...waters, ...progress, ...sleeps]
       .map((r) => (r.t instanceof Date ? r.t : new Date(r.t as unknown as string)))
       .filter((t): t is Date => t != null && !Number.isNaN(t.getTime()));
@@ -2786,7 +2786,7 @@ export async function deleteLatestWaterLog({
   }
 }
 
-// --- Sleep log (nightly recovery on /today) ---
+// --- Sleep log (nightly recovery on /home) ---
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -2890,7 +2890,7 @@ export async function getLatestSleepEntry(
 
 /**
  * Nightly sleep over the last `sinceDays` days, oldest first, for the sleep
- * trend chart + the /today week strip. One row per night (writes dedupe per
+ * trend chart + the /home week strip. One row per night (writes dedupe per
  * day); keyed to that day's midnight-UTC ms, the same timezone-stable bucketing
  * the water/volume trends use (see lib/date.ts).
  */
@@ -4543,7 +4543,7 @@ export async function createQuitPrediction(entry: {
 }
 
 /** The member's standing (unresolved) quit prediction, if any. Renders on
- * /today and /quit-date; FEAT-22 resolves it to beaten/hit. */
+ * /home and /quit-date; FEAT-22 resolves it to beaten/hit. */
 export async function getActiveQuitPrediction(
   userId: string
 ): Promise<QuitPrediction | undefined> {
@@ -4570,7 +4570,7 @@ export async function getActiveQuitPrediction(
 
 /**
  * The member's newest quit prediction regardless of status (FEAT-22). The
- * /today card and /quit-date render from this: an active row is the live
+ * /home card and /quit-date render from this: an active row is the live
  * countdown, a hit row is the "I called it" callback with the restart path.
  */
 export async function getLatestQuitPrediction(

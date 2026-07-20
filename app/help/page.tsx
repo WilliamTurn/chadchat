@@ -51,7 +51,7 @@ type Feature = {
 const FEATURES: Feature[] = [
   {
     icon: MessageSquare,
-    title: "Chat",
+    title: "Chad",
     href: "/",
     body: (
       <>
@@ -72,12 +72,12 @@ const FEATURES: Feature[] = [
   },
   {
     icon: LayoutDashboard,
-    title: "Dashboard",
-    href: "/today",
+    title: "Home",
+    href: "/home",
     body: (
       <>
         <p>
-          The Dashboard is your home base: today's calories and macros, your
+          Home is your starting point: today's calories and macros, your
           weight trend, your streak, your last workout, water, sleep, and your
           goals, all on one page. Every card links to its full page, and the
           "Ask Chad" buttons start a chat about that exact card.
@@ -98,7 +98,7 @@ const FEATURES: Feature[] = [
     body: (
       <>
         <p>
-          Log every session: exercises, sets, reps, and weight. The page tracks
+          Log every workout: exercises, sets, reps, and weight. The page tracks
           your total volume (all the weight you moved), your personal records,
           and your estimated one-rep max for each lift, with charts that show
           the trend over time.
@@ -113,7 +113,7 @@ const FEATURES: Feature[] = [
   },
   {
     icon: Camera,
-    title: "Calorie Tracker",
+    title: "Nutrition",
     href: "/nutrition",
     tier: "Pro",
     body: (
@@ -198,7 +198,7 @@ const FEATURES: Feature[] = [
         <p>
           Set your goals (lose weight, build muscle, hit a lift) and Chad
           writes them up properly: the target, the pace, and the training plan
-          that gets you there. Goal progress shows up on your Dashboard, and
+          that gets you there. Goal progress shows up on Home, and
           Chad brings your goals up when you talk to him. Goals and training
           plans download as PDFs.
         </p>
@@ -236,8 +236,8 @@ const FEATURES: Feature[] = [
     body: (
       <>
         <p>
-          Log your water through the day against a daily target. The Dashboard
-          shows how much is left, and Chad sees it when he reviews your day.
+          Log your water through the day against a daily target. Home shows
+          how much is left, and Chad sees it when he reviews your day.
         </p>
       </>
     ),
@@ -340,7 +340,7 @@ const PLAN_ROWS: PlanRow[] = [
     name: "Chad Pro",
     price: "$39/month",
     summary:
-      "Everything in Basic, plus the full dashboard: the Workouts log, Calorie Tracker with photo and label analysis, Meal Plans, Rate My Kitchen, Future You photo forecasts, Progress tracking with trend weight and photos, Hydration, and Sleep.",
+      "Everything in Basic, plus every tracking surface: the Workouts log, Nutrition with photo and label analysis, Meal Plans, Rate My Kitchen, Future You photo forecasts, Progress tracking with trend weight and photos, Hydration, and Sleep.",
   },
   {
     name: "Chad Elite",
@@ -519,7 +519,7 @@ const TROUBLESHOOTING: TroubleshootingRow[] = [
       <>
         Ask Chad in chat; he knows the app and can walk you through any
         feature. Look for the small "?" icons next to stats around the
-        dashboard too; they explain what each number means.
+        app too; they explain what each number means.
       </>
     ),
   },
@@ -607,8 +607,8 @@ export default function HelpPage() {
                 body: "Workouts after training, meals when you eat (a photo is enough), a weigh-in in the morning, water and sleep when you think of it. Logging takes seconds and it is the raw material for all of Chad's coaching.",
               },
               {
-                title: "Check the Dashboard, take the heat",
-                body: "The Dashboard shows where today stands, and Chad reviews everything you log. Hit your numbers and he says so. Miss them and he says that too.",
+                title: "Check Home, take the heat",
+                body: "Home shows where today stands, and Chad reviews everything you log. Hit your numbers and he says so. Miss them and he says that too.",
               },
             ].map((step, i) => (
               <li className="flex min-w-0 gap-4" key={step.title}>

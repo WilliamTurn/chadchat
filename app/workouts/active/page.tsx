@@ -6,13 +6,13 @@ import { getWorkoutTemplatesByUserId } from "@/lib/db/queries";
 import { parseTemplateExercises } from "@/lib/validation/workout-templates";
 import { loadWorkoutContext, requireWorkoutsUser } from "../data";
 
-export const metadata = { title: "Workout in Progress" };
+export const metadata = { title: "Active workout" };
 
-/** The live workout player. The session itself lives client-side (store +
+/** The active workout player. The run itself lives client-side (store +
  * localStorage); this page supplies history-derived context: "last time"
  * ghosts, PR baselines, and the member's templates for the update-plan
  * checkbox on Finish. */
-export default function SessionPage() {
+export default function ActiveWorkoutPage() {
   return (
     // Full-width desktop layout (LAY-1): the live exercise cards render
     // two-across on desktop instead of one stacked column.

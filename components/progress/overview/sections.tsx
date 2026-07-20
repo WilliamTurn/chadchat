@@ -171,13 +171,13 @@ export function TrainingSection({ vm }: { vm: TrainingSectionVM }) {
       empty={{
         absent: "No workouts logged yet.",
         unlock:
-          "Log your first session and your frequency, volume, and records build from there.",
+          "Log your first workout and your frequency, volume, and records build from there.",
         action: quietAction("Log a workout", "/workouts/new"),
       }}
       footer={{
         status: vm.insight,
         askChad: (
-          <AskChadButton prompt="Review my training progress: session frequency, volume, and records. Where am I slipping?" />
+          <AskChadButton prompt="Review my training progress: workout frequency, volume, and records. Where am I slipping?" />
         ),
       }}
       headline={vm.headline}
@@ -193,7 +193,7 @@ export function TrainingSection({ vm }: { vm: TrainingSectionVM }) {
             color={DOMAIN.training}
             slots={vm.weekSlots}
             target={vm.target}
-            tipLabel="Sessions"
+            tipLabel="Workouts"
           />
         </div>
       }
@@ -362,7 +362,7 @@ export type ConsistencySectionVM = {
 export function ConsistencySection({ vm }: { vm: ConsistencySectionVM }) {
   return (
     <SummaryPanel
-      detailLink={{ label: "Dashboard", href: "/today" }}
+      detailLink={{ label: "Home", href: "/home" }}
       empty={{
         absent: "Nothing logged yet.",
         unlock:

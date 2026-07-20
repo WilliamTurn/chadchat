@@ -115,7 +115,7 @@ async function Content({
             It may have been deleted.
           </p>
         <Link className="mt-5 inline-block" href="/workouts/history">
-          <WButton variant="primary">Back to History</WButton>
+          <WButton variant="primary">Back to Workout History</WButton>
         </Link>
       </div>
     );
@@ -142,8 +142,12 @@ async function Content({
           {/* RC-1 (CMP-15/16): the celebration view replaces the standard
               header, which used to cost it the top back control every other
               workout page has. Explicit destination, not history: the page
-              behind this one is the dead just-finished session. */}
-          <WorkoutBackLink href="/workouts" label="Workouts" />
+              behind this one is the dead just-finished workout.
+              RC-11 (Q-28, owner ruling 2026-07-19): the top control points at
+              Home, so finishing a workout has a one-tap route back to the main
+              surface. The bottom "Done, back to Workouts" stays, so both
+              destinations are reachable and neither is duplicated. */}
+          <WorkoutBackLink href="/home" label="Home" />
           <div className="mb-6 animate-in text-center duration-500 slide-in-from-bottom-4">
             <div className="mx-auto mb-4 flex size-16 animate-in items-center justify-center rounded-3xl bg-blood text-white shadow-[0_16px_48px_rgba(164,22,26,0.35)] zoom-in-75 duration-500">
               <PartyPopper aria-hidden className="size-8" />
@@ -158,7 +162,7 @@ async function Content({
         </>
       ) : (
         <WorkoutPageHeader
-          back={{ href: "/workouts/history", label: "History" }}
+          back={{ href: "/workouts/history", label: "Workout History" }}
           subtitle={formatDay(new Date(workout.performedAt).getTime())}
           title={workout.title}
         />

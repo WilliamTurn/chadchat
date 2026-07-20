@@ -13,7 +13,7 @@ import { getUserById } from "@/lib/db/queries";
  * shows a member the wizard a single time.
  *
  * Gating mirrors the rest of the app: unauthenticated → /login, no access →
- * /pricing, already onboarded → /today.
+ * /pricing, already onboarded → /home.
  */
 export default function WelcomePage() {
   return (
@@ -61,7 +61,7 @@ async function WelcomeGate() {
 
   // Already done it — don't trap a returning member on the welcome screen.
   if (user.onboardedAt) {
-    redirect("/today");
+    redirect("/home");
   }
 
   return (

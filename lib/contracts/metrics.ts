@@ -141,7 +141,7 @@ export const METRICS = {
     grain: "user-day",
     source: { module: "lib/ai/dashboard.ts", symbol: "sumMacros" },
     derivation:
-      "Sum over meals with recordedAt/createdAt inside the member-local today window (todayStartInTz). No meals logged = unlogged, never 0 kcal. Rewiring status (P56-Z): /today reads it through lib/today/panel-data.ts + lib/today/week.ts (buildMacroWeek/dailyMacroTrend over the same member-local day windows); app/nutrition/page.tsx still inline-reduces (sumMacro) and remains the LAST unrewired reader, queued in MTL; values agree today, the one-module structure is the open debt. CAUTION: lib/nutrition/macros.ts exports a DIFFERENT sumMacros (meal-plan domain, other signature); this metric's source is lib/ai/dashboard.ts only.",
+      "Sum over meals with recordedAt/createdAt inside the member-local today window (todayStartInTz). No meals logged = unlogged, never 0 kcal. Rewiring status (P56-Z): /home reads it through lib/today/panel-data.ts + lib/today/week.ts (buildMacroWeek/dailyMacroTrend over the same member-local day windows); app/nutrition/page.tsx still inline-reduces (sumMacro) and remains the LAST unrewired reader, queued in MTL; values agree today, the one-module structure is the open debt. CAUTION: lib/nutrition/macros.ts exports a DIFFERENT sumMacros (meal-plan domain, other signature); this metric's source is lib/ai/dashboard.ts only.",
     target: {
       kind: "user-target",
       source: "NutritionTarget.calories (lib/db/queries.getNutritionTarget)",
@@ -153,7 +153,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/today", "/nutrition", "/reports"],
+    surfaces: ["/home", "/nutrition", "/reports"],
   },
   "nutrition.protein.today": {
     domain: "nutrition",
@@ -173,7 +173,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/today", "/nutrition", "/reports"],
+    surfaces: ["/home", "/nutrition", "/reports"],
   },
   "nutrition.carbs.today": {
     domain: "nutrition",
@@ -189,7 +189,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/today", "/nutrition"],
+    surfaces: ["/home", "/nutrition"],
   },
   "nutrition.fat.today": {
     domain: "nutrition",
@@ -205,7 +205,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/today", "/nutrition"],
+    surfaces: ["/home", "/nutrition"],
   },
   "nutrition.meals.today": {
     domain: "nutrition",
@@ -220,7 +220,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/today", "/nutrition"],
+    surfaces: ["/home", "/nutrition"],
   },
   "nutrition.week.daily": {
     domain: "nutrition",
@@ -240,7 +240,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/today", "/nutrition"],
+    surfaces: ["/home", "/nutrition"],
   },
   "nutrition.adherence.window": {
     domain: "nutrition",
@@ -264,7 +264,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/today", "/progress"],
+    surfaces: ["/home", "/progress"],
   },
 
   /* ---- energy (calories-burned Phase 1, owner rulings 2026-07-18) ----
@@ -291,7 +291,7 @@ export const METRICS = {
     precision: 0,
     // The target editor's "Recommended for you" block (Phase 2); it serves
     // both dashboards.
-    surfaces: ["/today", "/nutrition"],
+    surfaces: ["/home", "/nutrition"],
   },
   "energy.maintenance.kcalPerDay": {
     domain: "nutrition",
@@ -308,7 +308,7 @@ export const METRICS = {
     access: "pro",
     precision: 0,
     // The explanation line inside the recommendation block (Phase 2).
-    surfaces: ["/today", "/nutrition"],
+    surfaces: ["/home", "/nutrition"],
   },
   "energy.workout.kcal": {
     domain: "training",
@@ -349,8 +349,8 @@ export const METRICS = {
     access: "pro",
     precision: 0,
     // The Exercise line + adjusted Remaining (Phase 3): the /nutrition dial
-    // and the /today panel (arc, week dots, status strip).
-    surfaces: ["/today", "/nutrition"],
+    // and the /home panel (arc, week dots, status strip).
+    surfaces: ["/home", "/nutrition"],
   },
   "energy.exercise.kcalPerWeek": {
     domain: "training",
@@ -393,7 +393,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/today", "/hydration"],
+    surfaces: ["/home", "/hydration"],
   },
   "hydration.week.daily": {
     domain: "hydration",
@@ -410,7 +410,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/today", "/hydration"],
+    surfaces: ["/home", "/hydration"],
   },
   "hydration.avg.window": {
     domain: "hydration",
@@ -444,7 +444,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/today", "/progress"],
+    surfaces: ["/home", "/progress"],
   },
 
   /* -------------------------------------------------------------- sleep */
@@ -463,7 +463,7 @@ export const METRICS = {
     staleAfterDays: 1,
     access: "pro",
     precision: 0,
-    surfaces: ["/today", "/sleep"],
+    surfaces: ["/home", "/sleep"],
   },
   "sleep.lastNight.quality": {
     domain: "sleep",
@@ -477,7 +477,7 @@ export const METRICS = {
     staleAfterDays: 1,
     access: "pro",
     precision: 0,
-    surfaces: ["/today", "/sleep"],
+    surfaces: ["/home", "/sleep"],
   },
   "sleep.week.nightly": {
     domain: "sleep",
@@ -494,7 +494,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/today", "/sleep"],
+    surfaces: ["/home", "/sleep"],
   },
   "sleep.avg.window": {
     domain: "sleep",
@@ -528,7 +528,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/today", "/progress"],
+    surfaces: ["/home", "/progress"],
   },
 
   /* --------------------------------------------------------------- body */
@@ -549,7 +549,7 @@ export const METRICS = {
     staleAfterDays: 10,
     access: "pro",
     precision: 1,
-    surfaces: ["/today", "/progress/body"],
+    surfaces: ["/home", "/progress/body"],
   },
   "body.weight.trend": {
     domain: "body",
@@ -565,7 +565,7 @@ export const METRICS = {
     staleAfterDays: 10,
     access: "pro",
     precision: 1,
-    surfaces: ["/today", "/progress", "/progress/body", "/goals", "/reports"],
+    surfaces: ["/home", "/progress", "/progress/body", "/goals", "/reports"],
   },
   "body.weight.ratePerWeek": {
     domain: "body",
@@ -632,7 +632,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "member",
     precision: 0,
-    surfaces: ["/today", "/progress", "/progress/body", "/goals", "/goals/[id]"],
+    surfaces: ["/home", "/progress", "/progress/body", "/goals", "/goals/[id]"],
   },
 
   /* -------------------------------------------------------------- plans */
@@ -654,7 +654,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/today"],
+    surfaces: ["/home"],
   },
 
   /* ----------------------------------------------------------- training */
@@ -672,7 +672,7 @@ export const METRICS = {
     staleAfterDays: 14,
     access: "pro",
     precision: 0,
-    surfaces: ["/today", "/workouts"],
+    surfaces: ["/home", "/workouts"],
   },
   "training.volume.dailyTrend": {
     domain: "training",
@@ -709,7 +709,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/today", "/workouts", "/goals"],
+    surfaces: ["/home", "/workouts", "/goals"],
   },
   "training.prs": {
     domain: "training",
@@ -733,7 +733,7 @@ export const METRICS = {
   },
   "training.sessions.thisWeek": {
     domain: "training",
-    label: "Sessions this week",
+    label: "Workouts this week",
     unit: "count",
     grain: "week",
     source: { module: "lib/today/week.ts", symbol: "buildWorkoutWeek" },
@@ -748,7 +748,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/today", "/workouts", "/progress"],
+    surfaces: ["/home", "/workouts", "/progress"],
   },
   /* FIX-33 batch registrations (P5, per the README P5 batch-register list):
      the Progress > Training analytics numbers. All computed over
@@ -794,7 +794,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/today", "/workouts", "/progress/training"],
+    surfaces: ["/home", "/workouts", "/progress/training"],
   },
   "training.frequency.weeklyTrend": {
     domain: "training",
@@ -821,7 +821,7 @@ export const METRICS = {
   },
   "training.plan.completion.week": {
     domain: "training",
-    label: "Plan sessions completed",
+    label: "Plan workouts completed",
     unit: "count",
     grain: "week",
     source: { module: "lib/plans/adherence.ts", symbol: "weeklyPlanAdherence" },
@@ -837,7 +837,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/today", "/progress/training", "/plans/[id]"],
+    surfaces: ["/home", "/progress/training", "/plans/[id]"],
   },
   "training.plan.adherence.weeklyTrend": {
     domain: "training",
@@ -936,7 +936,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/today", "/progress"],
+    surfaces: ["/home", "/progress"],
   },
   "engagement.consistency.week": {
     domain: "engagement",
@@ -952,7 +952,7 @@ export const METRICS = {
     staleAfterDays: null,
     access: "pro",
     precision: 0,
-    surfaces: ["/today"],
+    surfaces: ["/home"],
   },
   "engagement.consistency.window": {
     domain: "engagement",

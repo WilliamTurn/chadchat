@@ -133,7 +133,7 @@ export async function runAutopsy(
     });
 
     revalidatePath("/quit-date");
-    revalidatePath("/today");
+    revalidatePath("/home");
     return { ok: true, content, id: created?.id ?? null };
   } catch (_error) {
     return {

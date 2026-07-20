@@ -6,7 +6,7 @@
  *   remaining = budget − food          (Remaining = Target − Food + Exercise)
  *
  * ONE symbol for the adjusted ring math, shared by the /nutrition dial, the
- * /today panel (arc, week dots, status strip), and anything later — so no
+ * /home panel (arc, week dots, status strip), and anything later — so no
  * two surfaces can disagree about what "remaining" means. Exercise numbers
  * arrive from lib/energy/workout-energy.ts (estimates, labeled estimated at
  * display time); with the toggle off, or no computable exercise, the math

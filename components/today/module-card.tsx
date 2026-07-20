@@ -4,7 +4,7 @@ import { type ChipTone, IconChip } from "@/components/today/icon-chip";
 import { cn } from "@/lib/utils";
 
 /**
- * The /today card grammar (DSH-32 + R2-7): every dashboard module follows the
+ * The /home card grammar (DSH-32 + R2-7): every dashboard module follows the
  * same three-slot layout so the page scans consistently:
  *
  *   [IconChip TITLE]                      [View all →]   ← ModuleHeader

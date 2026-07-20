@@ -296,10 +296,10 @@ test("formatExerciseCalories: both weeks, singular session, ~ framing", () => {
     { kcal: null, sessions: 0 }
   );
   assert.match(block, /COMPUTED EXERCISE CALORIES/);
-  assert.match(block, /This report week: ~338 kcal across 1 session\./);
+  assert.match(block, /This report week: ~338 kcal across 1 workout\./);
   assert.match(
     block,
-    /The week before: no sessions with a computable estimate\./
+    /The week before: no workouts with a computable estimate\./
   );
   assert.match(block, /exactly ONE line/);
 });

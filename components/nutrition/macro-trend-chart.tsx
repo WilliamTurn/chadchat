@@ -157,9 +157,9 @@ export function MacroTrendChart({
             Set a daily target on{" "}
             <Link
               className="font-medium text-foreground underline-offset-4 hover:underline"
-              href="/today"
+              href="/home"
             >
-              /today
+              /home
             </Link>{" "}
             to see it on the chart.
           </span>

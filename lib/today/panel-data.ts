@@ -44,7 +44,7 @@ import { SLEEP_GOAL_MINUTES } from "@/lib/validation/sleep";
 
 /**
  * CANONICAL PANEL-DATA ASSEMBLERS (P56-C, FIX-25/26/27). One server-side
- * assembler per Today tracking panel, so every mount (app/today/page.tsx, the
+ * assembler per Today tracking panel, so every mount (app/home/page.tsx, the
  * domain detail pages, the fixture harness' live checks) feeds the SAME
  * values through the SAME queries: the one-canonical-value law at the data
  * layer, not just the display layer.

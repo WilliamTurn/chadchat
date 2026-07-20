@@ -376,7 +376,7 @@ Check this week's data against every one of those orders. Followed orders get na
 - Target pace: ${recalibration.desiredRate === 0 ? "maintenance" : `${recalibration.desiredRate > 0 ? "+" : ""}${recalibration.desiredRate} ${recalibration.unit}/week`}.
 - Recommended daily calorie target: ${recalibration.calories} kcal (currently ${recalibration.currentCalories}, a change of ${recalibration.deltaCalories > 0 ? "+" : ""}${recalibration.deltaCalories}).${recalibration.protein != null && recalibration.carbs != null && recalibration.fat != null ? `\n- Recommended macros: protein ${recalibration.protein}g (unchanged), carbs ${recalibration.carbs}g, fat ${recalibration.fat}g.` : ""}
 
-Include this as one of the ADJUSTMENTS: state the new numbers and the reason from the balance above, and tell them the recalibrated targets are waiting on their Calorie Tracker page where one tap applies them. Nothing changes until they accept it.`
+Include this as one of the ADJUSTMENTS: state the new numbers and the reason from the balance above, and tell them the recalibrated targets are waiting on their Nutrition page where one tap applies them. Nothing changes until they accept it.`
       : "";
 
   // Exercise calories, this week vs the week before (Phase 4): the same

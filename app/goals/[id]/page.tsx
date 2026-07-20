@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { auth } from "@/app/(auth)/auth";
 import { TodaySkeleton } from "@/components/dashboard/page-skeletons";
-import { BackToDashboard } from "@/components/nav/back-to-dashboard";
+import { BackLink } from "@/components/nav/back-link";
 import { PageShell } from "@/components/nav/page-shell";
 import {
   GoalDoc,
@@ -61,7 +61,7 @@ export default function GoalDocPage({
       </Suspense>
 
       <div className="mb-8">
-        <BackToDashboard href="/goals" label="Goals" />
+        <BackLink href="/goals" label="Goals" />
         <h1 className="font-semibold text-2xl tracking-tight">Goal</h1>
         <p className="mt-1 text-muted-foreground text-sm">
           The full write-up, your live progress, and everything you can do with
@@ -159,7 +159,7 @@ async function GoalDocContent({
     };
   }
 
-  // Coherence detail for THIS goal (VF-4): the /today and /goals cards show one
+  // Coherence detail for THIS goal (VF-4): the /home and /goals cards show one
   // quiet line; the full explanation lives here on the goal's own page.
   const mentioned = isActive
     ? mentionedCalories(`${goal.title} ${goal.detail ?? ""}`)
@@ -176,7 +176,7 @@ async function GoalDocContent({
       }
     : null;
 
-  // Canonical inputs + canonicalized ref: same series as /goals, /today,
+  // Canonical inputs + canonicalized ref: same series as /goals, /home,
   // and /progress (P56-Z adversarial P1-1).
   const resolveOptions = needsLift
     ? await getResolveOptions(user.id)

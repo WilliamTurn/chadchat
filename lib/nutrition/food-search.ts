@@ -2,7 +2,7 @@ import "server-only";
 
 /**
  * Interactive food-database search + barcode lookup (FN-1) - the data layer
- * behind the Calorie Tracker's Search tab.
+ * behind the Nutrition page's Search tab.
  *
  * Search merges two verified sources: the curated food table (instant,
  * hand-verified, lib/nutrition/food-table.ts) first, then live USDA FoodData

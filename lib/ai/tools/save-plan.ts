@@ -101,10 +101,10 @@ export const savePlan = ({ session, chatId }: SavePlanProps) =>
         sourceChatId: chatId,
         days: normalizedDays,
       });
-      // The Workouts page renders the runnable plan; refresh it (and /today,
+      // The Workouts page renders the runnable plan; refresh it (and /home,
       // which shows the plan card) so the new program appears immediately.
       revalidatePath("/workouts");
-      revalidatePath("/today");
+      revalidatePath("/home");
       return {
         id: created.id,
         title: created.title,
