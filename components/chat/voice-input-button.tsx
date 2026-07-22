@@ -1,9 +1,8 @@
 "use client";
 
-import { Loader2, Mic } from "lucide-react";
+import { Loader2, Mic, Square, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 
 // Preference order matters: Chrome/Edge/Firefox record webm+opus, Safari
@@ -21,7 +20,14 @@ const MAX_RECORDING_MS = 5 * 60 * 1000;
 // — drop it instead of paying for a transcription of nothing.
 const MIN_RECORDING_MS = 400;
 
-type VoiceState = "idle" | "recording" | "transcribing";
+export type VoiceInputState = "idle" | "recording" | "transcribing";
+
+function formatClock(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
 
 function pickMimeType(): string | undefined {
   if (typeof MediaRecorder === "undefined") {
@@ -33,16 +39,22 @@ function pickMimeType(): string | undefined {
 }
 
 /**
- * Push-to-talk dictation for the composer (FEAT-20): tap to record, tap again
- * to stop; the audio is transcribed server-side (through the AI Gateway) and
- * the words land in the input box for the member to edit and send themselves.
+ * Push-to-talk dictation for the composer (FEAT-20): tap the mic to record.
+ * While recording, the button becomes an explicit stop control (red square)
+ * with a live timer and a cancel button, the standard dictation pattern from
+ * ChatGPT/Gemini, so nobody has to guess that a second tap ends the take.
+ * The audio is transcribed server-side (through the AI Gateway) and the words
+ * land in the input box for the member to edit and send themselves.
  */
 export function VoiceInputButton({
   onTranscript,
+  onStateChange,
 }: {
   onTranscript: (text: string) => void;
+  onStateChange?: (state: VoiceInputState) => void;
 }) {
-  const [state, setState] = useState<VoiceState>("idle");
+  const [state, setState] = useState<VoiceInputState>("idle");
+  const [elapsedMs, setElapsedMs] = useState(0);
   // MediaRecorder + getUserMedia exist on every modern browser (iOS Safari
   // 14.3+), but render nothing rather than a dead button on the stragglers.
   // Detected in an effect so SSR and the first client render agree.
@@ -63,6 +75,22 @@ export function VoiceInputButton({
         pickMimeType() !== undefined
     );
   }, []);
+
+  useEffect(() => {
+    onStateChange?.(state);
+  }, [state, onStateChange]);
+
+  // Live elapsed-time readout while the mic is hot.
+  useEffect(() => {
+    if (state !== "recording") {
+      setElapsedMs(0);
+      return;
+    }
+    const tick = () => setElapsedMs(Date.now() - startedAtRef.current);
+    tick();
+    const interval = setInterval(tick, 500);
+    return () => clearInterval(interval);
+  }, [state]);
 
   const releaseRecorder = useCallback(() => {
     if (stopTimerRef.current) {
@@ -176,36 +204,80 @@ export function VoiceInputButton({
     }, MAX_RECORDING_MS);
   }, [releaseRecorder, transcribeRecording]);
 
-  const handleClick = useCallback(() => {
-    if (state === "recording") {
-      recorderRef.current?.stop();
-      return;
+  const stopRecording = useCallback(() => {
+    recorderRef.current?.stop();
+  }, []);
+
+  const cancelRecording = useCallback(() => {
+    discardRef.current = true;
+    const recorder = recorderRef.current;
+    if (recorder && recorder.state !== "inactive") {
+      recorder.stop();
+    } else {
+      releaseRecorder();
+      setState("idle");
     }
-    if (state === "idle") {
-      startRecording();
-    }
-  }, [state, startRecording]);
+  }, [releaseRecorder]);
 
   if (!isSupported) {
     return null;
   }
 
+  if (state === "recording") {
+    return (
+      <div
+        className="flex items-center gap-1.5"
+        data-testid="voice-recording-controls"
+      >
+        <span
+          className="flex items-center gap-1.5 pl-1 font-medium text-red-500 text-xs tabular-nums"
+          data-testid="voice-recording-timer"
+        >
+          <span aria-hidden="true" className="relative flex size-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-60" />
+            <span className="relative inline-flex size-2 rounded-full bg-red-500" />
+          </span>
+          {formatClock(elapsedMs)}
+        </span>
+        <Button
+          aria-label="Cancel recording"
+          className="h-7 w-7 rounded-lg border border-border/40 p-1 text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+          data-testid="voice-cancel-button"
+          onClick={(event) => {
+            event.preventDefault();
+            cancelRecording();
+          }}
+          type="button"
+          variant="ghost"
+        >
+          <X className="size-3.5" />
+        </Button>
+        <Button
+          aria-label="Stop recording"
+          className="h-7 w-7 rounded-xl bg-red-500 p-1 text-white transition-all duration-200 hover:bg-red-500/85 active:scale-95"
+          data-testid="voice-stop-button"
+          onClick={(event) => {
+            event.preventDefault();
+            stopRecording();
+          }}
+          type="button"
+          variant="secondary"
+        >
+          <Square className="size-3 fill-current" />
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <Button
-      aria-label={
-        state === "recording" ? "Stop recording" : "Dictate a message"
-      }
-      className={cn(
-        "h-7 w-7 rounded-lg border p-1 transition-colors",
-        state === "recording"
-          ? "animate-pulse border-red-500/60 bg-red-500/15 text-red-500 hover:bg-red-500/25 hover:text-red-500"
-          : "border-border/40 text-foreground hover:border-border"
-      )}
+      aria-label="Dictate a message"
+      className="h-7 w-7 rounded-lg border border-border/40 p-1 text-foreground transition-colors hover:border-border"
       data-testid="voice-input-button"
       disabled={state === "transcribing"}
       onClick={(event) => {
         event.preventDefault();
-        handleClick();
+        startRecording();
       }}
       type="button"
       variant="ghost"

@@ -31,7 +31,7 @@ import {
 import { Button } from "../ui/button";
 import { PaperclipIcon, StopIcon } from "./icons";
 import { PreviewAttachment } from "./preview-attachment";
-import { VoiceInputButton } from "./voice-input-button";
+import { VoiceInputButton, type VoiceInputState } from "./voice-input-button";
 import type { VisibilityType } from "./visibility-selector";
 
 function PureMultimodalInput({
@@ -139,6 +139,9 @@ function PureMultimodalInput({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);
+  // Mirrors the dictation state so the composer can yield the send slot to
+  // the stop control and narrate what the mic is doing in the placeholder.
+  const [voiceState, setVoiceState] = useState<VoiceInputState>("idle");
 
   const submitForm = useCallback(() => {
     window.history.pushState(
@@ -391,7 +394,13 @@ function PureMultimodalInput({
             }
           }}
           placeholder={
-            editingMessage ? "Edit your message..." : "Ask anything..."
+            voiceState === "recording"
+              ? "Listening..."
+              : voiceState === "transcribing"
+                ? "Turning your words into text..."
+                : editingMessage
+                  ? "Edit your message..."
+                  : "Ask anything..."
           }
           ref={textareaRef}
           value={input}
@@ -407,10 +416,13 @@ function PureMultimodalInput({
           </PromptInputTools>
 
           <div className="flex items-center gap-1.5">
-            <VoiceInputButton onTranscript={handleTranscript} />
+            <VoiceInputButton
+              onStateChange={setVoiceState}
+              onTranscript={handleTranscript}
+            />
             {status === "submitted" ? (
               <StopButton setMessages={setMessages} stop={stop} />
-            ) : (
+            ) : voiceState === "recording" ? null : (
               <PromptInputSubmit
                 className={cn(
                   "h-7 w-7 rounded-xl transition-all duration-200",
