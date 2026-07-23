@@ -15,6 +15,13 @@
  *      half-clipped by the right screen edge. Controls inside a deliberate
  *      horizontal scroller (filter chips) are exempt: they are reachable.
  *   4. No console errors or uncaught page errors while it renders.
+ *   5. No SERIOUS or CRITICAL axe violation (WCAG 2.2 AA tag set). Added by
+ *      S0b-2. Canon 05 is the owner of accessibility; axe is only the
+ *      mechanical floor of it — automated rules catch roughly 30-40% of real
+ *      accessibility defects, so a clean axe run is a NECESSARY, never a
+ *      SUFFICIENT, condition. The ux-* auditors and a keyboard pass own the
+ *      remaining 60-70% (focus order, label sense, alt-text quality, reading
+ *      order, motion, cognitive load).
  *
  * Coverage is two sweeps:
  *   - STATIC: every reachable member URL, grouped to stay inside the test
@@ -38,6 +45,7 @@
  * which IS swept).
  */
 
+import AxeBuilder from "@axe-core/playwright";
 import {
   type Browser,
   type BrowserContext,
@@ -46,6 +54,7 @@ import {
   test,
 } from "@playwright/test";
 import postgres from "postgres";
+import axeKnownFailures from "./axe-known-failures.json";
 import knownFailures from "./smoke-known-failures.json";
 
 /**
@@ -71,6 +80,66 @@ function isKnownFailure(
     }
   }
   return null;
+}
+
+/**
+ * The axe half of the ratchet (S0b-2). Same remove-only contract as the pins
+ * above, but keyed per accessibility RULE as well as screen and width: a
+ * screen that pins `color-contrast` still fails on a new `label` violation,
+ * so a pin can never grandfather a defect it was not written for.
+ */
+function isKnownAxeFailure(
+  surface: string,
+  ruleId: string,
+  width: number
+): string | null {
+  for (const entry of axeKnownFailures.entries) {
+    if (
+      entry.surface === surface &&
+      entry.rule === ruleId &&
+      entry.widths.includes(width)
+    ) {
+      return entry.reason;
+    }
+  }
+  return null;
+}
+
+/**
+ * WCAG 2.2 AA is the legal floor (EAA since June 2025, ADA Title II from
+ * 2026), so the tag set is the full A + AA ladder rather than axe's default.
+ * `best-practice` rules are deliberately excluded: they are opinions, and the
+ * canon — not axe — is this app's opinion.
+ */
+const AXE_TAGS = [
+  "wcag2a",
+  "wcag2aa",
+  "wcag21a",
+  "wcag21aa",
+  "wcag22aa",
+];
+
+/** Only these two impact levels gate. Minor/moderate findings are surfaced by
+ *  the auditors, which can judge whether they matter to a member. */
+const AXE_BLOCKING_IMPACTS = new Set(["serious", "critical"]);
+
+type AxeFinding = { rule: string; impact: string; nodes: number; help: string };
+
+async function axeFindings(page: Page): Promise<AxeFinding[]> {
+  const results = await new AxeBuilder({ page })
+    .withTags(AXE_TAGS)
+    // The Next.js dev-tools badge is not product markup and does not exist in
+    // prod; scanning it would pin defects the member can never meet.
+    .exclude("nextjs-portal")
+    .analyze();
+  return results.violations
+    .filter((v) => AXE_BLOCKING_IMPACTS.has(v.impact ?? ""))
+    .map((v) => ({
+      rule: v.id,
+      impact: v.impact ?? "unknown",
+      nodes: v.nodes.length,
+      help: v.help,
+    }));
 }
 
 /** Every reachable member screen, grouped so one test stays inside the
@@ -377,6 +446,64 @@ async function assertScreenClean(
       )
       .toEqual([]);
   }
+
+  await assertAxeClean(page, surface, viewport);
+}
+
+/**
+ * The axe pass (S0b-2, canon 05). Every blocking finding is echoed as a
+ * machine-readable `AXE-FINDING {...}` line whether it is pinned or not, so a
+ * whole-suite run can be piped straight into a regenerated pin file; only
+ * UNPINNED findings fail the gate.
+ */
+async function assertAxeClean(
+  page: Page,
+  surface: string,
+  viewport: { name: string; width: number }
+): Promise<void> {
+  const label = `${surface} @ ${viewport.name}`;
+  const findings = await axeFindings(page);
+  const found = new Set(findings.map((f) => f.rule));
+  const unpinned: AxeFinding[] = [];
+
+  for (const finding of findings) {
+    console.warn(
+      `AXE-FINDING ${JSON.stringify({
+        surface,
+        width: viewport.width,
+        ...finding,
+      })}`
+    );
+    const pin = isKnownAxeFailure(surface, finding.rule, viewport.width);
+    if (pin) {
+      console.warn(
+        `KNOWN FAILURE (pinned): ${label} axe ${finding.rule} x${finding.nodes}. ${pin}`
+      );
+    } else {
+      unpinned.push(finding);
+    }
+  }
+
+  // The ratchet's other half: a pin that no longer reproduces must be deleted
+  // in the change that fixed it.
+  for (const entry of axeKnownFailures.entries) {
+    if (
+      entry.surface === surface &&
+      entry.widths.includes(viewport.width) &&
+      !found.has(entry.rule)
+    ) {
+      console.warn(
+        `PINNED ENTRY NOW PASSING: ${label} axe ${entry.rule}. Remove it from axe-known-failures.json.`
+      );
+    }
+  }
+
+  expect
+    .soft(
+      unpinned,
+      `${label}: serious/critical accessibility violations (WCAG 2.2 AA, canon 05)`
+    )
+    .toEqual([]);
 }
 
 /* --------------------------------------------------------------------------

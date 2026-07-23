@@ -1,0 +1,296 @@
+{
+  "__doc__": "Pre-existing SERIOUS/CRITICAL axe violations pinned when the accessibility sweep was added to the surface-smoke gate (S0b-2, 2026-07-22). Each entry downgrades ONE screen + RULE + width combination from failure to a logged warning, so the gate can land while the defect is owed to a fix wave. Pins are per-RULE on purpose: pinning color-contrast on a screen does NOT grandfather a new label violation on that same screen. RATCHET RULE: entries are only ever REMOVED (the test logs PINNED ENTRY NOW PASSING the moment a pinned rule stops firing; delete it in the change that fixed it). Never add an entry for a NEW defect you just shipped - fix it instead. To regenerate after a fix wave: run pnpm test:smoke and collect the AXE-FINDING {...} lines the run emits.",
+  "__scope__": "axe covers roughly 30-40% of real accessibility defects. A clean run here is necessary, never sufficient; canon 05 and the ux-* auditors own the rest.",
+  "entries": [
+    {
+      "surface": "/",
+      "rule": "button-name",
+      "impact": "critical",
+      "widths": [
+        320,
+        360,
+        384,
+        390,
+        768,
+        1280
+      ],
+      "reason": "Critical: buttons with no discernible text (up to 3 nodes) - icon-only controls missing an accessible name. Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
+    },
+    {
+      "surface": "/",
+      "rule": "color-contrast",
+      "impact": "serious",
+      "widths": [
+        320,
+        360,
+        384,
+        390,
+        768,
+        1280
+      ],
+      "reason": "Serious contrast failures (up to 3 nodes) at every width. Text and control colors come from the ds.css tokens, so this is ONE token-level fix across the app rather than a per-page repair; pinning per surface keeps the ratchet honest about which screens still carry it. Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
+    },
+    {
+      "surface": "/",
+      "rule": "label",
+      "impact": "critical",
+      "widths": [
+        320,
+        360,
+        384,
+        390,
+        768,
+        1280
+      ],
+      "reason": "Critical: form elements with no programmatic label (up to 1 nodes), so a screen-reader member hears an unnamed control and cannot tell what it sets. Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
+    },
+    {
+      "surface": "/",
+      "rule": "link-name",
+      "impact": "serious",
+      "widths": [
+        768,
+        1280
+      ],
+      "reason": "Serious: links with no discernible text (up to 1 nodes), so they are announced as bare \"link\". Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
+    },
+    {
+      "surface": "/account",
+      "rule": "color-contrast",
+      "impact": "serious",
+      "widths": [
+        320,
+        360,
+        384,
+        390,
+        768,
+        1280
+      ],
+      "reason": "Serious contrast failures (up to 2 nodes) at every width. Text and control colors come from the ds.css tokens, so this is ONE token-level fix across the app rather than a per-page repair; pinning per surface keeps the ratchet honest about which screens still carry it. Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
+    },
+    {
+      "surface": "/account/appearance",
+      "rule": "label",
+      "impact": "critical",
+      "widths": [
+        320,
+        360,
+        384,
+        390,
+        768,
+        1280
+      ],
+      "reason": "Critical: form elements with no programmatic label (up to 1 nodes), so a screen-reader member hears an unnamed control and cannot tell what it sets. Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
+    },
+    {
+      "surface": "/goals/new",
+      "rule": "color-contrast",
+      "impact": "serious",
+      "widths": [
+        320,
+        360,
+        384,
+        390,
+        768,
+        1280
+      ],
+      "reason": "Serious contrast failures (up to 1 nodes) at every width. Text and control colors come from the ds.css tokens, so this is ONE token-level fix across the app rather than a per-page repair; pinning per surface keeps the ratchet honest about which screens still carry it. Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
+    },
+    {
+      "surface": "/home",
+      "rule": "color-contrast",
+      "impact": "serious",
+      "widths": [
+        320,
+        360,
+        384,
+        390,
+        768,
+        1280
+      ],
+      "reason": "Serious contrast failures (up to 1 nodes) at every width. Text and control colors come from the ds.css tokens, so this is ONE token-level fix across the app rather than a per-page repair; pinning per surface keeps the ratchet honest about which screens still carry it. Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
+    },
+    {
+      "surface": "/kitchen",
+      "rule": "color-contrast",
+      "impact": "serious",
+      "widths": [
+        320,
+        360,
+        384,
+        390,
+        768,
+        1280
+      ],
+      "reason": "Serious contrast failures (up to 1 nodes) at every width. Text and control colors come from the ds.css tokens, so this is ONE token-level fix across the app rather than a per-page repair; pinning per surface keeps the ratchet honest about which screens still carry it. Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
+    },
+    {
+      "surface": "/progress/training",
+      "rule": "color-contrast",
+      "impact": "serious",
+      "widths": [
+        320,
+        360,
+        384,
+        390,
+        768,
+        1280
+      ],
+      "reason": "Serious contrast failures (up to 8 nodes) at every width. Text and control colors come from the ds.css tokens, so this is ONE token-level fix across the app rather than a per-page repair; pinning per surface keeps the ratchet honest about which screens still carry it. Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
+    },
+    {
+      "surface": "/reports",
+      "rule": "color-contrast",
+      "impact": "serious",
+      "widths": [
+        320,
+        360,
+        384,
+        390,
+        768,
+        1280
+      ],
+      "reason": "Serious contrast failures (up to 1 nodes) at every width. Text and control colors come from the ds.css tokens, so this is ONE token-level fix across the app rather than a per-page repair; pinning per surface keeps the ratchet honest about which screens still carry it. Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
+    },
+    {
+      "surface": "/workouts",
+      "rule": "color-contrast",
+      "impact": "serious",
+      "widths": [
+        320,
+        360,
+        384,
+        390,
+        768,
+        1280
+      ],
+      "reason": "Serious contrast failures (up to 4 nodes) at every width. Text and control colors come from the ds.css tokens, so this is ONE token-level fix across the app rather than a per-page repair; pinning per surface keeps the ratchet honest about which screens still carry it. Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
+    },
+    {
+      "surface": "/workouts/cardio",
+      "rule": "color-contrast",
+      "impact": "serious",
+      "widths": [
+        320,
+        360,
+        384,
+        390,
+        768,
+        1280
+      ],
+      "reason": "Serious contrast failures (up to 5 nodes) at every width. Text and control colors come from the ds.css tokens, so this is ONE token-level fix across the app rather than a per-page repair; pinning per surface keeps the ratchet honest about which screens still carry it. Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
+    },
+    {
+      "surface": "/workouts/exercises/new",
+      "rule": "color-contrast",
+      "impact": "serious",
+      "widths": [
+        320,
+        360,
+        384,
+        390,
+        768,
+        1280
+      ],
+      "reason": "Serious contrast failures (up to 6 nodes) at every width. Text and control colors come from the ds.css tokens, so this is ONE token-level fix across the app rather than a per-page repair; pinning per surface keeps the ratchet honest about which screens still carry it. Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
+    },
+    {
+      "surface": "/workouts/new",
+      "rule": "color-contrast",
+      "impact": "serious",
+      "widths": [
+        320,
+        360,
+        384,
+        390,
+        768,
+        1280
+      ],
+      "reason": "Serious contrast failures (up to 2 nodes) at every width. Text and control colors come from the ds.css tokens, so this is ONE token-level fix across the app rather than a per-page repair; pinning per surface keeps the ratchet honest about which screens still carry it. Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
+    },
+    {
+      "surface": "flow:finish-dialog-open",
+      "rule": "color-contrast",
+      "impact": "serious",
+      "widths": [
+        320,
+        360,
+        384,
+        390,
+        768,
+        1280
+      ],
+      "reason": "Serious contrast failures (up to 7 nodes) at every width. Text and control colors come from the ds.css tokens, so this is ONE token-level fix across the app rather than a per-page repair; pinning per surface keeps the ratchet honest about which screens still carry it. Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
+    },
+    {
+      "surface": "flow:player-reload-mid-session",
+      "rule": "color-contrast",
+      "impact": "serious",
+      "widths": [
+        320,
+        360,
+        384,
+        390,
+        768,
+        1280
+      ],
+      "reason": "Serious contrast failures (up to 7 nodes) at every width. Text and control colors come from the ds.css tokens, so this is ONE token-level fix across the app rather than a per-page repair; pinning per surface keeps the ratchet honest about which screens still carry it. Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
+    },
+    {
+      "surface": "flow:workout-complete",
+      "rule": "color-contrast",
+      "impact": "serious",
+      "widths": [
+        320,
+        360,
+        384,
+        390,
+        768,
+        1280
+      ],
+      "reason": "Serious contrast failures (up to 2 nodes) at every width. Text and control colors come from the ds.css tokens, so this is ONE token-level fix across the app rather than a per-page repair; pinning per surface keeps the ratchet honest about which screens still carry it. Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
+    },
+    {
+      "surface": "flow:workout-session-engaged",
+      "rule": "color-contrast",
+      "impact": "serious",
+      "widths": [
+        320,
+        360,
+        384,
+        390,
+        768,
+        1280
+      ],
+      "reason": "Serious contrast failures (up to 7 nodes) at every width. Text and control colors come from the ds.css tokens, so this is ONE token-level fix across the app rather than a per-page repair; pinning per surface keeps the ratchet honest about which screens still carry it. Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
+    },
+    {
+      "surface": "flow:workout-session-pending",
+      "rule": "color-contrast",
+      "impact": "serious",
+      "widths": [
+        320,
+        360,
+        384,
+        390,
+        768,
+        1280
+      ],
+      "reason": "Serious contrast failures (up to 2 nodes) at every width. Text and control colors come from the ds.css tokens, so this is ONE token-level fix across the app rather than a per-page repair; pinning per surface keeps the ratchet honest about which screens still carry it. Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
+    },
+    {
+      "surface": "flow:workouts-reload-mid-session",
+      "rule": "color-contrast",
+      "impact": "serious",
+      "widths": [
+        320,
+        360,
+        384,
+        390,
+        768,
+        1280
+      ],
+      "reason": "Serious contrast failures (up to 4 nodes) at every width. Text and control colors come from the ds.css tokens, so this is ONE token-level fix across the app rather than a per-page repair; pinning per surface keeps the ratchet honest about which screens still carry it. Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
+    }
+  ]
+}

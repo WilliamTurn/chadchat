@@ -20,11 +20,11 @@
     "db:check": "drizzle-kit check",
     "db:up": "drizzle-kit up",
     "stripe:setup": "tsx scripts/stripe-setup.ts",
-    "test": "export PLAYWRIGHT=True && pnpm exec playwright test",
-    "test:smoke": "export PLAYWRIGHT=True && pnpm exec playwright test tests/e2e/surface-smoke.test.ts",
-    "test:traps": "export PLAYWRIGHT=True && pnpm exec playwright test tests/e2e/s1-traps.test.ts",
-    "test:contracts": "export PLAYWRIGHT=True && pnpm exec playwright test tests/e2e/interaction-contracts.test.ts",
-    "test:gates": "export PLAYWRIGHT=True && pnpm exec playwright test tests/e2e/surface-smoke.test.ts tests/e2e/s1-traps.test.ts tests/e2e/interaction-contracts.test.ts",
+    "test": "cross-env PLAYWRIGHT=True pnpm exec playwright test",
+    "test:smoke": "cross-env PLAYWRIGHT=True pnpm exec playwright test tests/e2e/surface-smoke.test.ts",
+    "test:traps": "cross-env PLAYWRIGHT=True pnpm exec playwright test tests/e2e/s1-traps.test.ts",
+    "test:contracts": "cross-env PLAYWRIGHT=True pnpm exec playwright test tests/e2e/interaction-contracts.test.ts tests/e2e/ux-contracts.test.ts",
+    "test:gates": "cross-env PLAYWRIGHT=True pnpm exec playwright test tests/e2e/surface-smoke.test.ts tests/e2e/s1-traps.test.ts tests/e2e/interaction-contracts.test.ts tests/e2e/ux-contracts.test.ts",
     "test:unit": "node --import tsx --test tests/unit/*.test.ts"
   },
   "dependencies": {
@@ -106,6 +106,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@biomejs/biome": "2.3.11",
     "@playwright/test": "^1.50.1",
     "@tailwindcss/postcss": "^4.1.13",
@@ -117,6 +118,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "babel-plugin-react-compiler": "^1.0.0",
+    "cross-env": "^10.1.0",
     "drizzle-kit": "^0.25.0",
     "postcss": "^8",
     "tailwindcss": "^4.1.13",
