@@ -67,6 +67,19 @@
  *   missing-reduced-motion  Animation with no reduced-motion story in the
  *                      file (canon 04 #104, 05 #82).
  *
+ * D1 composition gates (2026-07-23; canon numbers refer to
+ * ../chadlatest/audits/design-standards-2026-07-23/composition-canon/):
+ *   nested-container   A container (WCard / bordered+rounded box) rendered
+ *                      inside a dialog/sheet/another container in the same
+ *                      file. Depth 2 needs a justification comment naming
+ *                      canon 01 §53's earning test on the lines above it;
+ *                      depth 3 always fails (canon 01 §52–54).
+ *   dialog-form-overload  More than 1 input control inside a dialog-class
+ *                      overlay (canon 04 §10: a confirm's budget is AT MOST
+ *                      one simple input; §11(b): two or more input groups
+ *                      means the wrong container was chosen — escalate to a
+ *                      sheet or page, never a scrollbar).
+ *
  * New rules grandfather their current counts ONCE (tracked via "__rules__"
  * in the baseline), then ratchet down like everything else.
  *
@@ -144,7 +157,11 @@ type RuleId =
   | "swallowed-error"
   | "unformatted-number"
   | "toast-duration"
-  | "missing-reduced-motion";
+  | "missing-reduced-motion"
+  // D1 composition gates (2026-07-23). Canon numbers cite
+  // ../chadlatest/audits/design-standards-2026-07-23/composition-canon/.
+  | "nested-container"
+  | "dialog-form-overload";
 
 type Violation = { file: string; rule: RuleId; line: number; excerpt: string };
 
@@ -270,6 +287,165 @@ const IDENTITY_NAME_RE =
  *  iOS zooms the page on focus below 16px). md:text-sm etc. stay legal. */
 const SMALL_INPUT_TEXT_RE = /(?<![:\w-])text-(?:xs|sm)\b/;
 
+/* ------------------- D1 composition rules (2026-07-23) -------------------
+ * Canon citations below refer to
+ * ../chadlatest/audits/design-standards-2026-07-23/composition-canon/. */
+
+/** Components that open an overlay surface. An overlay IS a container
+ *  (canon 04 §16), so each counts one containment level (canon 01 §52). */
+const OVERLAY_REGION_COMPONENTS = new Set([
+  "DialogContent",
+  "AlertDialogContent",
+  "AdaptiveDialogContent",
+  "SheetContent",
+  "DrawerContent",
+  "PopoverContent",
+  "HoverCardContent",
+  "ConfirmDialog",
+]);
+/** Shared container components (canon 01's cards/boxed sections). */
+const CONTAINER_COMPONENTS = new Set(["WCard", "Card"]);
+/** Dialog-class overlays carry canon 04 §10's content budget. Sheets and
+ *  drawers are the escalation TARGET for forms (canon 04 §11) and are
+ *  deliberately absent. AdaptiveDialogContent renders as a dialog on
+ *  desktop, so it budgets as one. */
+const DIALOG_BUDGET_COMPONENTS = new Set([
+  "DialogContent",
+  "AlertDialogContent",
+  "AdaptiveDialogContent",
+  "ConfirmDialog",
+]);
+/** Canon 04 §10: a dialog's full content budget includes AT MOST one simple
+ *  input; §11(b) makes two or more input groups an overflow signal. */
+const DIALOG_INPUT_BUDGET = 1;
+/** Input controls the dialog budget counts (static approximation; radio
+ *  items inflate the count slightly — the composition auditor owns the
+ *  judgment tail). */
+const DIALOG_CONTROL_TAGS = new Set([
+  "input",
+  "Input",
+  "textarea",
+  "Textarea",
+  "select",
+  "Select",
+  "Switch",
+  "Checkbox",
+  "RadioGroup",
+  "Slider",
+  "Calendar",
+  "DatePicker",
+  "PhotoInput",
+]);
+/** Tags a bordered+rounded className does NOT make a layout container:
+ *  interactive controls, fields (containers by nature, canon 04 §19),
+ *  media/code depictions (canon 04 §19), and chip-scale primitives. */
+const BOXED_EXEMPT_TAGS = new Set([
+  "button",
+  "Button",
+  "WButton",
+  "a",
+  "Link",
+  "input",
+  "Input",
+  "textarea",
+  "Textarea",
+  "select",
+  "Select",
+  "SelectTrigger",
+  "InputGroup",
+  "img",
+  "Image",
+  "video",
+  "canvas",
+  "pre",
+  "code",
+  "Badge",
+  "Pill",
+  "Skeleton",
+  "Separator",
+]);
+/** The bare `border` utility (a full box), NOT border-t/-b/-l/-r dividers. */
+const BARE_BORDER_RE = /(?:^|[\s"'`{])border(?=$|[\s"'`}])/;
+const ROUNDED_RE = /\brounded(?:-[a-z0-9]+)?\b/;
+/** A depth-2 container is legal only with an explicit earning-test note on
+ *  the lines above it (canon 01 §53). */
+const NESTED_JUSTIFICATION_RE = /nested-container:\s*earned|canon 01 §53/;
+
+type ContainerRegion = {
+  name: string;
+  openLine: number;
+  closeLine: number;
+  /** Overlay/container regions enclosing this one (page surface = 0). */
+  enclosing: number;
+};
+
+/** Blank comments (preserving newlines) so JSX examples inside JSDoc blocks
+ *  are never scanned as real tags. */
+function blankComments(source: string): string {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, " "))
+    .replace(/^[ \t]*\/\/.*$/gm, (c) => c.replace(/[^\n]/g, " "));
+}
+
+/** Finds every overlay/container component region (open line, close line,
+ *  nesting depth) with the same quote/brace-aware tag scan extractJsxTags
+ *  uses, so `>` inside props never ends a tag early. Self-closing tags open
+ *  no region. */
+function scanContainerRegions(text: string): ContainerRegion[] {
+  const blanked = blankComments(text);
+  const names = [...OVERLAY_REGION_COMPONENTS, ...CONTAINER_COMPONENTS].join(
+    "|"
+  );
+  const tagRe = new RegExp(`<(/?)(${names})\\b`, "g");
+  const stack: { name: string; openLine: number; enclosing: number }[] = [];
+  const regions: ContainerRegion[] = [];
+  let m = tagRe.exec(blanked);
+  while (m) {
+    const line = blanked.slice(0, m.index).split("\n").length;
+    if (m[1] === "/") {
+      for (let i = stack.length - 1; i >= 0; i--) {
+        if (stack[i].name === m[2]) {
+          regions.push({
+            name: m[2],
+            openLine: stack[i].openLine,
+            closeLine: line,
+            enclosing: stack[i].enclosing,
+          });
+          stack.length = i;
+          break;
+        }
+      }
+    } else {
+      let i = tagRe.lastIndex;
+      let brace = 0;
+      let quote: string | null = null;
+      while (i < blanked.length) {
+        const c = blanked[i];
+        if (quote) {
+          if (c === quote) {
+            quote = null;
+          }
+        } else if (c === '"' || c === "'" || c === "`") {
+          quote = c;
+        } else if (c === "{") {
+          brace++;
+        } else if (c === "}") {
+          brace--;
+        } else if ((c === ">" || c === "<") && brace <= 0) {
+          break;
+        }
+        i++;
+      }
+      const selfClosing = blanked[i] === ">" && blanked[i - 1] === "/";
+      if (!selfClosing) {
+        stack.push({ name: m[2], openLine: line, enclosing: stack.length });
+      }
+    }
+    m = tagRe.exec(blanked);
+  }
+  return regions;
+}
+
 type JsxTag = { name: string; attrs: string; line: number };
 
 /** Extracts JSX open tags (name + attribute source + line), tolerating
@@ -277,11 +453,7 @@ type JsxTag = { name: string; attrs: string; line: number };
  *  A `>` only ends the tag at brace depth 0 outside quotes, so
  *  onClick={() => x} never terminates the scan early. */
 function extractJsxTags(source: string): JsxTag[] {
-  // Blank out comments (preserving newlines) so JSX examples inside JSDoc
-  // blocks are never scanned as real tags.
-  const text = source
-    .replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, " "))
-    .replace(/^[ \t]*\/\/.*$/gm, (c) => c.replace(/[^\n]/g, " "));
+  const text = blankComments(source);
   const tags: JsxTag[] = [];
   const openRe = /<([A-Za-z][\w.-]*)/g;
   let m = openRe.exec(text);
@@ -465,12 +637,14 @@ export function lintFile(
 
   /* Tag-scoped rules: attributes span lines, so these run over extracted
    * JSX open tags rather than raw lines. */
+  const jsxTags =
+    !colorOnly && rel.endsWith(".tsx") ? extractJsxTags(text) : [];
   if (!colorOnly && rel.endsWith(".tsx")) {
     const autofocusExempt =
       isUiPrimitive ||
       AUTOFOCUS_EXEMPT_PATH_RE.test(toPosix(rel)) ||
       OVERLAY_CONTEXT_RE.test(text);
-    for (const tag of extractJsxTags(text)) {
+    for (const tag of jsxTags) {
       const pushTag = (rule: RuleId) =>
         out.push({
           file: rel,
@@ -520,6 +694,112 @@ export function lintFile(
       }
       if (!autofocusExempt && /\bautoFocus\b/.test(tag.attrs)) {
         pushTag("page-autofocus");
+      }
+    }
+  }
+
+  /* D1 composition rules (canon numbers cite the composition canon; see the
+   * header). components/ui is exempt: primitives legitimately compose the
+   * overlay parts these rules police at use sites. */
+  if (!colorOnly && rel.endsWith(".tsx") && !isUiPrimitive) {
+    const regions = scanContainerRegions(text);
+    const insideCount = (line: number) =>
+      regions.filter((r) => r.openLine <= line && line <= r.closeLine).length;
+    const justified = (line: number) =>
+      lines
+        .slice(Math.max(0, line - 6), line - 1)
+        .some((l) => NESTED_JUSTIFICATION_RE.test(l));
+    const pushNested = (line: number, excerpt: string) =>
+      out.push({
+        file: rel,
+        rule: "nested-container",
+        line,
+        excerpt: excerpt.slice(0, 120),
+      });
+
+    /* nested-container (A2.5, canon 01 §52–54): a container component at
+     * depth 2 needs an earning-test note; depth 3 is never the answer. */
+    for (const r of regions) {
+      if (!CONTAINER_COMPONENTS.has(r.name)) {
+        continue;
+      }
+      if (r.enclosing >= 2) {
+        pushNested(
+          r.openLine,
+          `<${r.name}> at containment depth ${r.enclosing + 1} — restructure, depth 3 is never the answer (canon 01 §54)`
+        );
+      } else if (r.enclosing === 1 && !justified(r.openLine)) {
+        pushNested(
+          r.openLine,
+          `<${r.name}> inside another container — pass canon 01 §53's earning test in a "nested-container: earned" comment or flatten (canon 01 §53)`
+        );
+      }
+    }
+    /* Hand-rolled boxed sections (bordered+rounded, canon 01 §52's
+     * "container-styled" class — the screenshot's boxed checkbox row). */
+    for (const tag of jsxTags) {
+      if (
+        BOXED_EXEMPT_TAGS.has(tag.name) ||
+        CONTAINER_COMPONENTS.has(tag.name) ||
+        OVERLAY_REGION_COMPONENTS.has(tag.name) ||
+        !(BARE_BORDER_RE.test(tag.attrs) && ROUNDED_RE.test(tag.attrs))
+      ) {
+        continue;
+      }
+      const enclosing = insideCount(tag.line);
+      if (enclosing >= 2) {
+        pushNested(
+          tag.line,
+          `bordered box <${tag.name}> at containment depth ${enclosing + 1} — restructure (canon 01 §54)`
+        );
+      } else if (enclosing === 1 && !justified(tag.line)) {
+        pushNested(
+          tag.line,
+          `bordered box <${tag.name}> inside an overlay/container — content sits directly on the surface; separate with spacing (canon 04 §16–§18, 01 §53)`
+        );
+      }
+    }
+
+    /* dialog-form-overload (A2.6, canon 04 §10/§11): count input controls
+     * per dialog-class region; the budget is at most one simple input. */
+    const dialogRegions = regions.filter((r) =>
+      DIALOG_BUDGET_COMPONENTS.has(r.name)
+    );
+    if (dialogRegions.length > 0) {
+      const controlCounts = new Map<ContainerRegion, number>();
+      for (const tag of jsxTags) {
+        if (
+          !DIALOG_CONTROL_TAGS.has(tag.name) ||
+          /\btype=["']hidden["']/.test(tag.attrs)
+        ) {
+          continue;
+        }
+        let innermost: ContainerRegion | null = null;
+        for (const r of dialogRegions) {
+          if (
+            r.openLine <= tag.line &&
+            tag.line <= r.closeLine &&
+            (!innermost || r.openLine > innermost.openLine)
+          ) {
+            innermost = r;
+          }
+        }
+        if (innermost) {
+          controlCounts.set(innermost, (controlCounts.get(innermost) ?? 0) + 1);
+        }
+      }
+      for (const [r, n] of controlCounts) {
+        if (n > DIALOG_INPUT_BUDGET) {
+          out.push({
+            file: rel,
+            rule: "dialog-form-overload",
+            line: r.openLine,
+            excerpt: `${n} input controls inside <${r.name}> (budget ${DIALOG_INPUT_BUDGET}, canon 04 §10) — a form outgrew this dialog; escalate to a sheet or page (canon 04 §11)`.slice(
+              0,
+              120
+            ),
+          });
+        }
       }
     }
   }
@@ -666,6 +946,8 @@ function main() {
     "unformatted-number",
     "toast-duration",
     "missing-reduced-motion",
+    "nested-container",
+    "dialog-form-overload",
   ];
   for (const rule of ALL_RULES) {
     knownRules.add(rule);

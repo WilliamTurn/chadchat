@@ -30,7 +30,7 @@ Every line of your spec is grounded in one of: a **canon principle number** (`do
 ## Before you spec
 1. Read `CLAUDE.md` (UX conventions + the mandate) and the relevant canon file(s) in `docs/ux-canon/` — the caller's control tells you which (a picker → 01 §H/§K + 02 §6; a confirmation → 01 §N + 03 §15; a timer → 03 §18; an empty state → 03 §7 + 02 §7). Read the whole owning section.
 2. Look at how the leading apps actually do it: pull real screens via `mcp__mobbin__search_screens` / `search_flows` / `search_sections` (fitness surfaces → Hevy, Strong, MyFitnessPal; general patterns → the category leader). For fitness patterns already settled, cite the `fitness-app-patterns` skill.
-3. Find the shared components the builder should compose from: `Grep`/`Glob` the repo (shared UI layer, `app/design-system`, dialog/sheet/tooltip/popover primitives). Composing from shared components and `ds.css` tokens is mandatory (CLAUDE.md §3); never spec a hand-rolled control when a shared one exists.
+3. Find the shared components the builder should compose from: `Grep`/`Glob` the repo (shared UI layer, `components/ui`, dialog/sheet/tooltip/popover primitives). Composing from shared components and the `app/globals.css` tokens (ds.css port pending — re-point on land) is mandatory (CLAUDE.md §3); never spec a hand-rolled control when a shared one exists.
 
 ## The spec you return
 Structure every spec exactly like this:
@@ -62,7 +62,7 @@ Structure every spec exactly like this:
 [where it sits, which container (menu/dialog/sheet/panel/page) by task weight — canon 02 §17 §166; thumb zone — canon 01 §114; button order + safe-default focus — canon 01 §10 §132]
 
 ## Shared components to compose from
-[the exact repo components + ds.css tokens; never hand-roll what exists — CLAUDE.md §3]
+[the exact repo components + app/globals.css tokens; never hand-roll what exists — CLAUDE.md §3]
 
 ## Copy note
 [member-facing strings are neutral product voice; for exact strings call member-copy-writer — voice boundary canon 07 §118]

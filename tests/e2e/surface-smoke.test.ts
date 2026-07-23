@@ -22,6 +22,14 @@
  *      SUFFICIENT, condition. The ux-* auditors and a keyboard pass own the
  *      remaining 60-70% (focus order, label sense, alt-text quality, reading
  *      order, motion, cognitive load).
+ *   6. No horizontal overflow INSIDE any open overlay (D1 A1.1, composition
+ *      canon 04 §22 — the finish-dialog screenshot class the page-level
+ *      check can't see). Deliberate in-overlay scrollers need an explicit
+ *      data-allow-hscroll attribute.
+ *   7. No leaf text clipped without ellipsis at 320–384px (D1 A1.2,
+ *      composition canon 04 §15/§46; behind the known-failures ratchet).
+ *   8. Overlay action bars fully inside the viewport before any scrolling
+ *      (D1 A1.3, composition canon 04 §23/§24 — buried confirm buttons).
  *
  * Coverage is two sweeps:
  *   - STATIC: every reachable member URL, grouped to stay inside the test
@@ -63,8 +71,18 @@ import knownFailures from "./smoke-known-failures.json";
  * so the gate can land while the defect is owed to a fix wave. Entries are
  * only ever REMOVED (the ratchet); the test logs loudly once a pinned entry
  * starts passing so it gets unpinned in the same change that fixed it.
+ *
+ * D1 (2026-07-23) added three composition checks (canon numbers cite
+ * ../chadlatest/audits/design-standards-2026-07-23/composition-canon/):
+ * "overlay-overflow", "clipped-text", "dialog-actions".
  */
-type KnownFailureCheck = "overflow" | "clipped" | "console";
+type KnownFailureCheck =
+  | "overflow"
+  | "clipped"
+  | "console"
+  | "overlay-overflow"
+  | "clipped-text"
+  | "dialog-actions";
 function isKnownFailure(
   surface: string,
   check: KnownFailureCheck,
@@ -376,7 +394,228 @@ async function clippedControls(page: Page): Promise<ClippedControl[]> {
   });
 }
 
-/** The three per-screen assertions, shared by both sweeps. `surface` is the
+type OverlayOverflow = {
+  overlay: string;
+  element: string;
+  scrollWidth: number;
+  clientWidth: number;
+};
+
+/**
+ * D1 A1.1 — horizontal scroll INSIDE an open overlay is always a defect,
+ * zero exceptions at any width (composition canon 04 §22; the finish-dialog
+ * screenshot class: a scrollbar inside the dialog with a clipped unit label).
+ * The page-level overflow check cannot see it, so every element inside every
+ * open overlay is measured: scrollWidth must fit clientWidth. A deliberate
+ * horizontal scroller inside an overlay must carry an explicit
+ * `data-allow-hscroll` attribute (same idea as the clipped-control
+ * exemption, but explicit because canon 04 §22 says the default is "never").
+ */
+async function overlayOverflows(page: Page): Promise<OverlayOverflow[]> {
+  return await page.evaluate(() => {
+    const out: {
+      overlay: string;
+      element: string;
+      scrollWidth: number;
+      clientWidth: number;
+    }[] = [];
+    const describe = (el: Element) => {
+      const cls = (el.getAttribute("class") || "").split(/\s+/).slice(0, 4);
+      const text = (el.textContent || "").trim().slice(0, 40);
+      return `<${el.tagName.toLowerCase()}${cls.length ? ` class="${cls.join(" ")}…"` : ""}> "${text}"`;
+    };
+    const overlays = document.querySelectorAll(
+      '[role="dialog"], [role="alertdialog"]'
+    );
+    for (const overlay of overlays) {
+      const or = overlay.getBoundingClientRect();
+      if (or.width <= 1.5 || or.height <= 1.5) {
+        continue; // closed or collapsed
+      }
+      for (const el of [overlay, ...overlay.querySelectorAll("*")]) {
+        if (el.namespaceURI !== "http://www.w3.org/1999/xhtml") {
+          continue; // svg internals measure their own way
+        }
+        if (el.closest("[data-allow-hscroll]")) {
+          continue;
+        }
+        if (el.clientWidth <= 0) {
+          continue; // inline boxes have no client area to overflow
+        }
+        const rect = el.getBoundingClientRect();
+        if (rect.width <= 1.5 || rect.height <= 1.5) {
+          continue; // sr-only (1px) boxes clip their content by design
+        }
+        const style = getComputedStyle(el);
+        if (style.display === "none" || style.visibility === "hidden") {
+          continue;
+        }
+        if (el.scrollWidth > el.clientWidth + 1) {
+          out.push({
+            overlay: describe(overlay),
+            element: describe(el),
+            scrollWidth: el.scrollWidth,
+            clientWidth: el.clientWidth,
+          });
+        }
+      }
+    }
+    return out;
+  });
+}
+
+type ClippedText = {
+  text: string;
+  element: string;
+  scrollWidth: number;
+  clientWidth: number;
+};
+
+/**
+ * D1 A1.2 — leaf text that overflows its own box without an ellipsis at
+ * phone widths (composition canon 04 §15: never make content fit by
+ * clipping it; 04 §46 / forms canon 03 #18/#23: unit labels and row text
+ * must be budgeted into the row, the screenshot's clipped "s" class).
+ * Ellipsis truncation is design-lint's silent-truncation rule; form
+ * controls scroll their value by design; code blocks may scroll (canon 04
+ * §19); text inside a deliberate horizontal scroller is reachable. Noisy by
+ * nature, so it ships behind the known-failures ratchet at 320–384px only.
+ */
+async function clippedTextLabels(page: Page): Promise<ClippedText[]> {
+  return await page.evaluate(() => {
+    const out: {
+      text: string;
+      element: string;
+      scrollWidth: number;
+      clientWidth: number;
+    }[] = [];
+    const isScrollableX = (el: Element) => {
+      const s = getComputedStyle(el);
+      return (
+        (s.overflowX === "auto" || s.overflowX === "scroll") &&
+        el.scrollWidth > el.clientWidth + 1
+      );
+    };
+    const SKIP_TAGS =
+      /^(?:INPUT|TEXTAREA|SELECT|OPTION|SCRIPT|STYLE|IFRAME|CANVAS|PRE|CODE)$/;
+    for (const el of document.querySelectorAll("body *")) {
+      if (el.namespaceURI !== "http://www.w3.org/1999/xhtml") {
+        continue;
+      }
+      if (SKIP_TAGS.test(el.tagName)) {
+        continue;
+      }
+      if (el.closest("[data-allow-hscroll]")) {
+        continue;
+      }
+      let hasText = false;
+      for (const n of el.childNodes) {
+        if (n.nodeType === 3 && (n.textContent || "").trim().length > 0) {
+          hasText = true;
+          break;
+        }
+      }
+      if (!hasText || el.clientWidth <= 0) {
+        continue;
+      }
+      const r = el.getBoundingClientRect();
+      if (r.width <= 1.5 || r.height <= 1.5) {
+        continue; // collapsed / sr-only
+      }
+      const style = getComputedStyle(el);
+      if (style.display === "none" || style.visibility === "hidden") {
+        continue;
+      }
+      if (style.textOverflow === "ellipsis") {
+        continue; // design-lint silent-truncation owns ellipsis
+      }
+      let parent = el.parentElement;
+      let exempt = false;
+      while (parent) {
+        if (isScrollableX(parent)) {
+          exempt = true;
+          break;
+        }
+        parent = parent.parentElement;
+      }
+      if (exempt) {
+        continue;
+      }
+      if (el.scrollWidth > el.clientWidth + 1) {
+        out.push({
+          text: (el.textContent || "").trim().slice(0, 60),
+          element: `<${el.tagName.toLowerCase()}>`,
+          scrollWidth: el.scrollWidth,
+          clientWidth: el.clientWidth,
+        });
+      }
+    }
+    return out;
+  });
+}
+
+type BuriedActions = {
+  overlay: string;
+  footerTop: number;
+  footerBottom: number;
+  viewportHeight: number;
+};
+
+/**
+ * D1 A1.3 — an open overlay's action bar must be inside the viewport before
+ * any scrolling (composition canon 04 §23/§24: only the body zone may
+ * scroll; actions never scroll out of reach — the screenshot's buried
+ * confirm buttons). Every footer slot ends in "-footer"
+ * (dialog/alert-dialog/drawer/sheet), so overlays without an action bar
+ * (popovers, info dialogs closed by X) are naturally skipped.
+ */
+async function buriedDialogActions(page: Page): Promise<BuriedActions[]> {
+  return await page.evaluate(() => {
+    const out: {
+      overlay: string;
+      footerTop: number;
+      footerBottom: number;
+      viewportHeight: number;
+    }[] = [];
+    const vh = window.visualViewport
+      ? window.visualViewport.height
+      : window.innerHeight;
+    const overlays = document.querySelectorAll(
+      '[role="dialog"], [role="alertdialog"]'
+    );
+    for (const overlay of overlays) {
+      const or = overlay.getBoundingClientRect();
+      if (or.width <= 1.5 || or.height <= 1.5) {
+        continue;
+      }
+      const footer = overlay.querySelector('[data-slot$="-footer"]');
+      if (!footer) {
+        continue;
+      }
+      const r = footer.getBoundingClientRect();
+      if (r.height <= 0) {
+        continue;
+      }
+      if (r.bottom > vh + 0.5 || r.top < -0.5) {
+        out.push({
+          overlay: `"${(
+            overlay.getAttribute("aria-label") ||
+            overlay.querySelector("h1,h2,h3")?.textContent ||
+            "(unnamed)"
+          )
+            .trim()
+            .slice(0, 40)}"`,
+          footerTop: Math.round(r.top),
+          footerBottom: Math.round(r.bottom),
+          viewportHeight: Math.round(vh),
+        });
+      }
+    }
+    return out;
+  });
+}
+
+/** The per-screen assertions, shared by both sweeps. `surface` is the
  *  stable key known-failure pins match against (a URL for the static sweep,
  *  a "flow:" key for in-flow states). */
 async function assertScreenClean(
@@ -394,13 +633,28 @@ async function assertScreenClean(
   // transient plumbing off-viewport (e.g. the sidebar rail's 100vw drag
   // strip), which is not a member-facing defect. Only a PERSISTENT
   // overflow or clipped control fails the gate.
+  // clipped-text is asserted at phone widths only (A1.2's remit is 320–384;
+  // wider viewports make the leaf-text heuristic mostly noise).
+  const checkClippedText = viewport.width <= 384;
   const deadline = Date.now() + 15_000;
   let overflow = 0;
   let clipped: ClippedControl[] = [];
+  let overlayOv: OverlayOverflow[] = [];
+  let clippedText: ClippedText[] = [];
+  let buried: BuriedActions[] = [];
   for (;;) {
     overflow = await overflowPx(page);
     clipped = await clippedControls(page);
-    if (overflow <= 1 && clipped.length === 0) {
+    overlayOv = await overlayOverflows(page);
+    clippedText = checkClippedText ? await clippedTextLabels(page) : [];
+    buried = await buriedDialogActions(page);
+    if (
+      overflow <= 1 &&
+      clipped.length === 0 &&
+      overlayOv.length === 0 &&
+      clippedText.length === 0 &&
+      buried.length === 0
+    ) {
       break;
     }
     if (Date.now() > deadline) {
@@ -446,6 +700,45 @@ async function assertScreenClean(
       )
       .toEqual([]);
   }
+
+  // The D1 composition checks share one pin-aware assertion shape.
+  const assertCompositionCheck = (
+    check: KnownFailureCheck,
+    findings: unknown[],
+    message: string
+  ) => {
+    const pin = isKnownFailure(surface, check, viewport.width);
+    if (findings.length > 0 && pin) {
+      console.warn(
+        `KNOWN FAILURE (pinned): ${label} ${check} x${findings.length}. ${pin}`
+      );
+      return;
+    }
+    if (findings.length === 0 && pin) {
+      console.warn(
+        `PINNED ENTRY NOW PASSING: ${label} ${check}. Remove it from smoke-known-failures.json.`
+      );
+    }
+    expect.soft(findings, `${label}: ${message}`).toEqual([]);
+  };
+
+  assertCompositionCheck(
+    "overlay-overflow",
+    overlayOv,
+    "horizontal overflow inside an open overlay (composition canon 04 §22, the finish-dialog screenshot class)"
+  );
+  if (checkClippedText) {
+    assertCompositionCheck(
+      "clipped-text",
+      clippedText,
+      "text clipped without ellipsis at phone width (composition canon 04 §15/§46)"
+    );
+  }
+  assertCompositionCheck(
+    "dialog-actions",
+    buried,
+    "overlay action bar outside the viewport before any scrolling (composition canon 04 §23/§24)"
+  );
 
   await assertAxeClean(page, surface, viewport);
 }
@@ -648,3 +941,36 @@ for (const viewport of VIEWPORTS) {
     await context.close();
   });
 }
+
+/* --------------------------------------------------------------------------
+ * D1 REGRESSION FIXTURE: the composition checks must keep catching the
+ * finish-workout screenshot class even after the live dialogs are rebuilt
+ * (the buried-actions half no longer reproduces in the driven flow). The
+ * fixture (/dev/fixtures/overlays?open=composition-defects) reproduces all
+ * three defects on purpose; each check must FIRE there or the gate has
+ * silently gone blind.
+ * ------------------------------------------------------------------------ */
+
+test("composition checks catch the screenshot defect class (fixture)", async ({
+  browser,
+}) => {
+  const context = await browser.newContext({
+    viewport: { width: 384, height: 700 },
+  });
+  const page = await context.newPage();
+  await page.goto("/dev/fixtures/overlays?open=composition-defects");
+  await expect(page.locator('[role="alertdialog"]')).toBeVisible();
+  expect(
+    (await overlayOverflows(page)).length,
+    "overlay-overflow must fire on the fixture's overflowing dialog (canon 04 §22)"
+  ).toBeGreaterThan(0);
+  expect(
+    (await clippedTextLabels(page)).length,
+    "clipped-text must fire on the fixture's clipped unit label (canon 04 §15/§46)"
+  ).toBeGreaterThan(0);
+  expect(
+    (await buriedDialogActions(page)).length,
+    "dialog-actions must fire on the fixture's buried action bar (canon 04 §23/§24)"
+  ).toBeGreaterThan(0);
+  await context.close();
+});

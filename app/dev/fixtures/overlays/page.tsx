@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CompositionDefectsDemo } from "./composition-defects-demo";
 import {
   ConfirmDemo,
   DetailSheetDemo,
@@ -103,6 +104,20 @@ export default async function OverlaysFixturePage({
             body and a named link deeper.
           </li>
         </ul>
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-section-title">Gate regression fixtures</h2>
+        <p className="max-w-prose text-body-sm text-muted-foreground">
+          Broken on purpose. The composition-defects dialog reproduces the
+          finish-workout screenshot classes (internal horizontal overflow,
+          clipped unit label, buried action bar) so the surface-smoke
+          composition checks stay proven even after the real dialogs are
+          rebuilt. Opens via <code>?open=composition-defects</code>.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <CompositionDefectsDemo autoOpen={open === "composition-defects"} />
+        </div>
       </section>
 
       <section className="space-y-4">
