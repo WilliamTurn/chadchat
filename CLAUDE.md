@@ -41,7 +41,7 @@ Known expected failures: the old template suites (`api.test.ts`, `model-selector
 - Every empty state says why it is empty and offers the action that fills it, and never strands the user without a way back.
 - Type floor is 12px, labels 13px+ on phones (permanent owner order; the floors live in the ds.css tokens).
 
-The full canon: 1,311 principles in `docs/ux-canon/` (landing via S0b-3; until then `../chadlatest/audits/workout-overhaul-2026-07-22/ux-canon/`). The skills load the relevant domain automatically; read the owning section before building anything it covers.
+The full canon: 1,311 principles in `docs/ux-canon/` (the ten `ux-canon/*.md` files, landed via S0b-3; the chadlatest copy is the frozen research artifact). The skills load the relevant domain automatically; read the owning section before building anything it covers.
 
 ## The examples rule
 
@@ -50,6 +50,8 @@ Examples are samples, never the list. When the owner gives examples of a problem
 ## The convention-lookup mandate
 
 At any UX decision point the canon doesn't cover, STOP and establish the convention first: canon sources, real-app references (Mobbin), or the interaction-spec-advisor. No established convention → closest mainstream pattern or ask the owner. Deciding UX from imagination is a defect even when the result looks fine.
+
+Building or changing any member-facing control, flow, or copy? Get the spec from `interaction-spec-advisor` / the strings from `member-copy-writer` FIRST, then implement. Don't invent.
 
 ## Exit gate 5
 
