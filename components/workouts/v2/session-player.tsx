@@ -35,9 +35,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { saveWorkout } from "@/app/workouts/actions";
+import { Input } from "@/components/ui/input";
 import type { TemplateExercise } from "@/lib/validation/workout-templates";
 import type { LastExerciseLog, PrBaseline } from "@/lib/workouts/stats";
 import { exerciseSlug } from "./catalog";
@@ -54,7 +55,7 @@ import {
 } from "./format";
 import { detectPRs, serializeSession } from "./session-factory";
 import { ActionSheet, type SheetAction } from "./sheet";
-import { useWorkouts } from "./store";
+import { persistSessionCleared, useWorkouts } from "./store";
 import type { PRKind, SessionExercise, SessionSet } from "./types";
 import { REST_OPTIONS, RPE_OPTIONS, SET_TYPE_META } from "./types";
 import { WButton, WCard } from "./ui";
@@ -662,6 +663,15 @@ function ExerciseCard({
   );
 }
 
+/** Parse the Finish dialog's duration fields into clamped seconds (0 to 24h). */
+function draftDurationSeconds(draft: { min: string; sec: string }): number {
+  const min = Number.parseInt(draft.min, 10);
+  const sec = Number.parseInt(draft.sec, 10);
+  const total =
+    (Number.isNaN(min) ? 0 : min) * 60 + (Number.isNaN(sec) ? 0 : sec);
+  return Math.min(Math.max(total, 0), 86_400);
+}
+
 // ---------------------------------------------------------------------------
 // The player
 // ---------------------------------------------------------------------------
@@ -698,7 +708,30 @@ export function SessionPlayer({
   const [saving, setSaving] = useState(false);
   const [discarding, setDiscarding] = useState(false);
   const [prToast, setPrToast] = useState<string | null>(null);
+  // Duration shown in the Finish dialog, frozen when the dialog opens so what
+  // the member reads is exactly what gets saved. Editable: people who get
+  // interrupted mid-workout shouldn't be forced to log a wrongly-timed session.
+  const [durationDraft, setDurationDraft] = useState({ min: "", sec: "" });
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Finish-flash fix: the session is cleared on UNMOUNT (after the complete
+  // page's navigation commits), never before router.push, so the player can't
+  // re-render into its "No workout is running" branch while the complete page
+  // is still server-rendering. The dispatch is deferred to a microtask: fired
+  // synchronously from the cleanup it lands MID-commit and re-renders the
+  // outgoing player with a null session (the flash this fix exists to kill);
+  // a microtask runs after the commit but before the browser paints, so the
+  // mini bar can't flash on the complete page either.
+  const clearOnUnmount = useRef(false);
+  const clearSessionRef = useRef(clearSession);
+  clearSessionRef.current = clearSession;
+  useLayoutEffect(
+    () => () => {
+      if (clearOnUnmount.current) {
+        queueMicrotask(() => clearSessionRef.current());
+      }
+    },
+    []
+  );
 
   // Session-wide "you are here": the first unchecked set in order.
   const nextSetId = useMemo(() => {
@@ -830,7 +863,10 @@ export function SessionPlayer({
           })),
         }
       : session;
-    const payload = serializeSession(sessionForSave, elapsed);
+    // The corrected duration also corrects the calorie estimate: duration is
+    // an input to the saved workout's energy computation.
+    const durationSeconds = draftDurationSeconds(durationDraft);
+    const payload = serializeSession(sessionForSave, durationSeconds);
     if (!payload) {
       toast.error(
         "Nothing is checked off yet. Check your sets, or tick “Mark all unchecked sets as done”."
@@ -872,13 +908,19 @@ export function SessionPlayer({
       session.templateId ?? undefined,
       session.planRef ?? undefined
     );
-    setSaving(false);
     if (!result.ok || !result.id) {
+      setSaving(false);
       toast.error(result.error ?? "Couldn't save that workout. Try again.");
       return;
     }
-    clearSession();
-    setFinishing(false);
+    // Keep the dialog in its busy state until the complete page's navigation
+    // commits and unmounts this player; the unmount cleanup clears the
+    // session. Clearing here would flash "No workout is running" for the
+    // seconds the complete page takes to server-render. The persisted copy is
+    // wiped NOW, so even a navigation that degrades to a full page load can
+    // never rehydrate the saved workout as a zombie session.
+    clearOnUnmount.current = true;
+    persistSessionCleared();
     router.push(`/workouts/history/${result.id}?new=1`);
     router.refresh();
   }
@@ -955,6 +997,13 @@ export function SessionPlayer({
               // are never marked done by default. With nothing checked and
               // the box unticked, save is refused with a corrective toast.
               setCompleteRemaining(false);
+              // Freeze the timed duration into the editable draft: the value
+              // the dialog shows is the value that saves, even if the clock
+              // keeps running behind the scrim.
+              setDurationDraft({
+                min: String(Math.floor(elapsed / 60)),
+                sec: String(elapsed % 60),
+              });
               setFinishing(true);
             }}
             size="sm"
@@ -1154,13 +1203,72 @@ export function SessionPlayer({
             : "")
         }
         busy={saving}
-        cancelLabel="Keep lifting"
         confirmLabel="Finish and save"
         onCancel={() => setFinishing(false)}
         onConfirm={handleFinishConfirmed}
         open={finishing}
         title="Finish workout?"
       >
+        <div className="mt-4">
+          {/* One compact row: the finish dialog must keep its primary action
+              inside a 320x568 viewport (the RUN-70 fit gate). */}
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-semibold text-muted-foreground text-sm">
+              Duration
+            </span>
+            <div className="flex items-center gap-1.5">
+              <Input
+                aria-label="Duration, minutes"
+                className="w-14 rounded-xl bg-background text-center font-bold font-mono tabular-nums"
+                inputMode="numeric"
+                onChange={(e) =>
+                  setDurationDraft((d) => ({
+                    ...d,
+                    min: e.target.value.replace(/\D/g, "").slice(0, 4),
+                  }))
+                }
+                onFocus={(e) => e.target.select()}
+                size="lg"
+                type="text"
+                value={durationDraft.min}
+              />
+              <span className="font-semibold text-muted-foreground text-sm">
+                min
+              </span>
+              <Input
+                aria-label="Duration, seconds"
+                className="w-14 rounded-xl bg-background text-center font-bold font-mono tabular-nums"
+                inputMode="numeric"
+                onBlur={(e) => {
+                  // Seconds settle into 0-59 on blur; whole-value clamping
+                  // (24h cap) happens in draftDurationSeconds on save.
+                  const n = Number.parseInt(e.target.value, 10);
+                  setDurationDraft((d) => ({
+                    ...d,
+                    sec: Number.isNaN(n) ? "0" : String(Math.min(n, 59)),
+                  }));
+                }}
+                onChange={(e) =>
+                  setDurationDraft((d) => ({
+                    ...d,
+                    sec: e.target.value.replace(/\D/g, "").slice(0, 2),
+                  }))
+                }
+                onFocus={(e) => e.target.select()}
+                size="lg"
+                type="text"
+                value={durationDraft.sec}
+              />
+              <span className="font-semibold text-muted-foreground text-sm">
+                sec
+              </span>
+            </div>
+          </div>
+          <p className="mt-1 text-muted-foreground text-xs">
+            Timed automatically. Adjust it if the timer ran while you were
+            interrupted.
+          </p>
+        </div>
         <label className="mt-4 block">
           <span className="mb-1.5 block font-semibold text-[13px] text-muted-foreground">
             Workout notes (optional, saved with this workout)
@@ -1222,7 +1330,6 @@ export function SessionPlayer({
             ? `The ${doneSets} ${doneSets === 1 ? "set" : "sets"} you logged in this workout will be permanently deleted.`
             : "This workout will be deleted. Nothing has been logged yet."
         }
-        cancelLabel="Keep lifting"
         confirmLabel="Discard workout"
         destructive
         onCancel={() => setDiscarding(false)}

@@ -463,7 +463,6 @@
   "components/workouts/v2/session-player.tsx::arbitrary-utility": 58,
   "components/workouts/v2/session-player.tsx::banned-copy": 1,
   "components/workouts/v2/session-player.tsx::device-verb": 4,
-  "components/workouts/v2/session-player.tsx::dialog-dismiss-label": 2,
   "components/workouts/v2/session-player.tsx::missing-reduced-motion": 1,
   "components/workouts/v2/session-player.tsx::native-tooltip": 1,
   "components/workouts/v2/session-player.tsx::raw-control": 15,

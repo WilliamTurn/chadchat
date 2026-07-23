@@ -51,7 +51,7 @@ describe("normalizePlanDays", () => {
 });
 
 describe("formatPlanTarget", () => {
-  it("shows sets x reps, load, and note when present", () => {
+  it("shows sets x reps and load, never the note (surfaces render the note on its own line)", () => {
     assert.equal(
       formatPlanTarget({
         name: "Barbell Bench Press",
@@ -61,7 +61,7 @@ describe("formatPlanTarget", () => {
         unit: "lb",
         note: "RPE 8",
       }),
-      "4 x 4-6 @ 185 lb · RPE 8"
+      "4 x 4-6 @ 185 lb"
     );
     assert.equal(
       formatPlanTarget({ name: "Pull-Up", sets: 3, reps: "AMRAP" }),

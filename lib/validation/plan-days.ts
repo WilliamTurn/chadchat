@@ -69,14 +69,13 @@ export function parsePlanDays(raw: unknown): PlanDay[] | null {
   return normalizePlanDays(raw);
 }
 
-/** "4 x 4-6 @ 185 lb · RPE 8", the one-line target shown in the logger. */
+/** "4 x 4-6 @ 185 lb", the one-line target shown in the logger. The note is
+ * NOT part of the target: every surface renders `ex.note` on its own line, so
+ * appending it here showed it twice on plan-day exercise cards. */
 export function formatPlanTarget(ex: PlanDayExercise): string {
   let s = `${ex.sets} x ${ex.reps}`;
   if (ex.weight != null && ex.weight > 0) {
     s += ` @ ${ex.weight} ${ex.unit ?? "lb"}`;
-  }
-  if (ex.note) {
-    s += ` · ${ex.note}`;
   }
   return s;
 }
