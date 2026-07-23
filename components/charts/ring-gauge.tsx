@@ -45,6 +45,7 @@ export function RingGauge({
       style={{ width: size, height: size }}
     >
       <svg
+        aria-hidden="true"
         className="-rotate-90"
         height={size}
         viewBox={`0 0 ${size} ${size}`}

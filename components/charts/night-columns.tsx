@@ -115,11 +115,14 @@ export function NightColumns({
           return (
             <Tooltip key={night.key}>
               <TooltipTrigger asChild>
+                {/* biome-ignore-start lint/a11y/noNoninteractiveTabindex: keyboard users need focus on the column to summon its tooltip (WCAG 1.4.13). */}
                 <div
                   aria-label={summary}
                   className="relative flex h-full flex-1 items-end"
+                  role="img"
                   tabIndex={0}
                 >
+                  {/* biome-ignore-end lint/a11y/noNoninteractiveTabindex: see above. */}
                   {/* Per-column goal tick when goals differ across the week
                       (a mid-week FIX-07 goal change stays visible). */}
                   {uniformGoal == null && (

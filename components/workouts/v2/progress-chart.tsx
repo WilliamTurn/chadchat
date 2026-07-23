@@ -118,6 +118,7 @@ export function ProgressChart({ points }: { points: ChartPoint[] }) {
     <div>
       <p className="mb-2 font-semibold text-[13.5px] text-foreground">{trend}</p>
       <div className="relative">
+        {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: hover/touch scrubbing is a pointer-only enhancement; the trend summary above conveys the data without it. */}
         <svg
           aria-label={`Estimated strength over time, from ${formatWeight(first.value)} to ${formatWeight(last.value)} pounds`}
           className="w-full touch-none select-none"

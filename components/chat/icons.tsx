@@ -1,6 +1,7 @@
 export const BotIcon = () => {
   return (
     <svg
+      aria-hidden="true"
       height="16"
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -20,6 +21,7 @@ export const BotIcon = () => {
 export const UserIcon = () => {
   return (
     <svg
+      aria-hidden="true"
       data-testid="geist-icon"
       height="16"
       strokeLinejoin="round"
@@ -40,6 +42,7 @@ export const UserIcon = () => {
 export const AttachmentIcon = () => {
   return (
     <svg
+      aria-hidden="true"
       height="16"
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -59,6 +62,7 @@ export const AttachmentIcon = () => {
 export const VercelIcon = ({ size = 17 }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -78,6 +82,7 @@ export const VercelIcon = ({ size = 17 }) => {
 export const GitIcon = () => {
   return (
     <svg
+      aria-hidden="true"
       height="16"
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -104,6 +109,7 @@ export const GitIcon = () => {
 export const BoxIcon = ({ size = 16 }: { size: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -123,6 +129,7 @@ export const BoxIcon = ({ size = 16 }: { size: number }) => {
 export const HomeIcon = ({ size = 16 }: { size: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -142,6 +149,7 @@ export const HomeIcon = ({ size = 16 }: { size: number }) => {
 export const GPSIcon = ({ size = 16 }: { size: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -163,6 +171,7 @@ export const GPSIcon = ({ size = 16 }: { size: number }) => {
 export const InvoiceIcon = ({ size = 16 }: { size: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -182,6 +191,7 @@ export const InvoiceIcon = ({ size = 16 }: { size: number }) => {
 export const LogoOpenAI = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -199,6 +209,7 @@ export const LogoOpenAI = ({ size = 16 }: { size?: number }) => {
 export const LogoGoogle = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       data-testid="geist-icon"
       height={size}
       strokeLinejoin="round"
@@ -229,6 +240,7 @@ export const LogoGoogle = ({ size = 16 }: { size?: number }) => {
 export const LogoAnthropic = () => {
   return (
     <svg
+      aria-hidden="true"
       height="18px"
       style={{ color: "currentcolor", fill: "currentcolor" }}
       viewBox="0 0 92.2 65"
@@ -249,6 +261,7 @@ export const LogoAnthropic = () => {
 export const RouteIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -268,6 +281,7 @@ export const RouteIcon = ({ size = 16 }: { size?: number }) => {
 export const FileIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -287,6 +301,7 @@ export const FileIcon = ({ size = 16 }: { size?: number }) => {
 export const LoaderIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -362,6 +377,7 @@ export const LoaderIcon = ({ size = 16 }: { size?: number }) => {
 export const UploadIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       data-testid="geist-icon"
       height={size}
       strokeLinejoin="round"
@@ -382,6 +398,7 @@ export const UploadIcon = ({ size = 16 }: { size?: number }) => {
 export const MenuIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -401,6 +418,7 @@ export const MenuIcon = ({ size = 16 }: { size?: number }) => {
 export const PencilEditIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -420,6 +438,7 @@ export const PencilEditIcon = ({ size = 16 }: { size?: number }) => {
 export const CheckedSquare = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -439,6 +458,7 @@ export const CheckedSquare = ({ size = 16 }: { size?: number }) => {
 export const UncheckedSquare = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -461,6 +481,7 @@ export const UncheckedSquare = ({ size = 16 }: { size?: number }) => {
 export const MoreIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -480,6 +501,7 @@ export const MoreIcon = ({ size = 16 }: { size?: number }) => {
 export const TrashIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -499,6 +521,7 @@ export const TrashIcon = ({ size = 16 }: { size?: number }) => {
 export const InfoIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -521,6 +544,7 @@ export const ArrowUpIcon = ({
 }: { size?: number } & React.SVGProps<SVGSVGElement>) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor", ...props.style }}
@@ -544,6 +568,7 @@ export const StopIcon = ({
 }: { size?: number } & React.SVGProps<SVGSVGElement>) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       style={{ color: "currentcolor", ...props.style }}
       viewBox="0 0 16 16"
@@ -566,6 +591,7 @@ export const PaperclipIcon = ({
 }: { size?: number } & React.SVGProps<SVGSVGElement>) => {
   return (
     <svg
+      aria-hidden="true"
       className="-rotate-45"
       height={size}
       strokeLinejoin="round"
@@ -587,6 +613,7 @@ export const PaperclipIcon = ({
 export const MoreHorizontalIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -606,6 +633,7 @@ export const MoreHorizontalIcon = ({ size = 16 }: { size?: number }) => {
 export const MessageIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -624,6 +652,7 @@ export const MessageIcon = ({ size = 16 }: { size?: number }) => {
 
 export const CrossIcon = ({ size = 16 }: { size?: number }) => (
   <svg
+    aria-hidden="true"
     height={size}
     strokeLinejoin="round"
     style={{ color: "currentcolor" }}
@@ -641,6 +670,7 @@ export const CrossIcon = ({ size = 16 }: { size?: number }) => (
 
 export const CrossSmallIcon = ({ size = 16 }: { size?: number }) => (
   <svg
+    aria-hidden="true"
     height={size}
     strokeLinejoin="round"
     style={{ color: "currentcolor" }}
@@ -658,6 +688,7 @@ export const CrossSmallIcon = ({ size = 16 }: { size?: number }) => (
 
 export const UndoIcon = ({ size = 16 }: { size?: number }) => (
   <svg
+    aria-hidden="true"
     height={size}
     strokeLinejoin="round"
     style={{ color: "currentcolor" }}
@@ -675,6 +706,7 @@ export const UndoIcon = ({ size = 16 }: { size?: number }) => (
 
 export const RedoIcon = ({ size = 16 }: { size?: number }) => (
   <svg
+    aria-hidden="true"
     height={size}
     strokeLinejoin="round"
     style={{ color: "currentcolor" }}
@@ -692,6 +724,7 @@ export const RedoIcon = ({ size = 16 }: { size?: number }) => (
 
 export const DeltaIcon = ({ size = 16 }: { size?: number }) => (
   <svg
+    aria-hidden="true"
     height={size}
     strokeLinejoin="round"
     style={{ color: "currentcolor" }}
@@ -709,6 +742,7 @@ export const DeltaIcon = ({ size = 16 }: { size?: number }) => (
 
 export const CpuIcon = ({ size = 16 }: { size?: number }) => (
   <svg
+    aria-hidden="true"
     fill="none"
     height={size}
     stroke="currentColor"
@@ -736,6 +770,7 @@ export const CpuIcon = ({ size = 16 }: { size?: number }) => (
 
 export const PenIcon = ({ size = 16 }: { size?: number }) => (
   <svg
+    aria-hidden="true"
     height={size}
     strokeLinejoin="round"
     style={{ color: "currentcolor" }}
@@ -753,6 +788,7 @@ export const PenIcon = ({ size = 16 }: { size?: number }) => (
 
 export const SummarizeIcon = ({ size = 16 }: { size?: number }) => (
   <svg
+    aria-hidden="true"
     height={size}
     strokeLinejoin="round"
     style={{ color: "currentcolor" }}
@@ -770,6 +806,7 @@ export const SummarizeIcon = ({ size = 16 }: { size?: number }) => (
 
 export const SidebarLeftIcon = ({ size = 16 }: { size?: number }) => (
   <svg
+    aria-hidden="true"
     height={size}
     strokeLinejoin="round"
     style={{ color: "currentcolor" }}
@@ -787,6 +824,7 @@ export const SidebarLeftIcon = ({ size = 16 }: { size?: number }) => (
 
 export const PlusIcon = ({ size = 16 }: { size?: number }) => (
   <svg
+    aria-hidden="true"
     height={size}
     strokeLinejoin="round"
     style={{ color: "currentcolor" }}
@@ -804,6 +842,7 @@ export const PlusIcon = ({ size = 16 }: { size?: number }) => (
 
 export const CopyIcon = ({ size = 16 }: { size?: number }) => (
   <svg
+    aria-hidden="true"
     height={size}
     strokeLinejoin="round"
     style={{ color: "currentcolor" }}
@@ -821,6 +860,7 @@ export const CopyIcon = ({ size = 16 }: { size?: number }) => (
 
 export const ThumbUpIcon = ({ size = 16 }: { size?: number }) => (
   <svg
+    aria-hidden="true"
     height={size}
     strokeLinejoin="round"
     style={{ color: "currentcolor" }}
@@ -838,6 +878,7 @@ export const ThumbUpIcon = ({ size = 16 }: { size?: number }) => (
 
 export const ThumbDownIcon = ({ size = 16 }: { size?: number }) => (
   <svg
+    aria-hidden="true"
     height={size}
     strokeLinejoin="round"
     style={{ color: "currentcolor" }}
@@ -855,6 +896,7 @@ export const ThumbDownIcon = ({ size = 16 }: { size?: number }) => (
 
 export const ChevronDownIcon = ({ size = 16 }: { size?: number }) => (
   <svg
+    aria-hidden="true"
     height={size}
     strokeLinejoin="round"
     style={{ color: "currentcolor" }}
@@ -872,6 +914,7 @@ export const ChevronDownIcon = ({ size = 16 }: { size?: number }) => (
 
 export const SparklesIcon = ({ size = 16 }: { size?: number }) => (
   <svg
+    aria-hidden="true"
     height={size}
     strokeLinejoin="round"
     style={{ color: "currentcolor" }}
@@ -896,6 +939,7 @@ export const SparklesIcon = ({ size = 16 }: { size?: number }) => (
 export const CheckCircleFillIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -915,6 +959,7 @@ export const CheckCircleFillIcon = ({ size = 16 }: { size?: number }) => {
 export const GlobeIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -934,6 +979,7 @@ export const GlobeIcon = ({ size = 16 }: { size?: number }) => {
 export const LockIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -953,6 +999,7 @@ export const LockIcon = ({ size = 16 }: { size?: number }) => {
 export const EyeIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -972,6 +1019,7 @@ export const EyeIcon = ({ size = 16 }: { size?: number }) => {
 export const ShareIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -991,6 +1039,7 @@ export const ShareIcon = ({ size = 16 }: { size?: number }) => {
 export const CodeIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -1010,6 +1059,7 @@ export const CodeIcon = ({ size = 16 }: { size?: number }) => {
 export const PlayIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -1029,6 +1079,7 @@ export const PlayIcon = ({ size = 16 }: { size?: number }) => {
 export const PythonIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -1050,6 +1101,7 @@ export const PythonIcon = ({ size = 16 }: { size?: number }) => {
 export const TerminalWindowIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -1069,6 +1121,7 @@ export const TerminalWindowIcon = ({ size = 16 }: { size?: number }) => {
 export const TerminalIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -1088,6 +1141,7 @@ export const TerminalIcon = ({ size = 16 }: { size?: number }) => {
 export const ClockRewind = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -1107,6 +1161,7 @@ export const ClockRewind = ({ size = 16 }: { size?: number }) => {
 export const LogsIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -1126,6 +1181,7 @@ export const LogsIcon = ({ size = 16 }: { size?: number }) => {
 export const ImageIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}
@@ -1144,6 +1200,7 @@ export const ImageIcon = ({ size = 16 }: { size?: number }) => {
 
 export const FullscreenIcon = ({ size = 16 }: { size?: number }) => (
   <svg
+    aria-hidden="true"
     height={size}
     strokeLinejoin="round"
     style={{ color: "currentcolor" }}
@@ -1161,6 +1218,7 @@ export const FullscreenIcon = ({ size = 16 }: { size?: number }) => (
 
 export const DownloadIcon = ({ size = 16 }: { size?: number }) => (
   <svg
+    aria-hidden="true"
     height={size}
     strokeLinejoin="round"
     style={{ color: "currentcolor" }}
@@ -1178,6 +1236,7 @@ export const DownloadIcon = ({ size = 16 }: { size?: number }) => (
 
 export const LineChartIcon = ({ size = 16 }: { size?: number }) => (
   <svg
+    aria-hidden="true"
     height={size}
     strokeLinejoin="round"
     style={{ color: "currentcolor" }}
@@ -1196,6 +1255,7 @@ export const LineChartIcon = ({ size = 16 }: { size?: number }) => (
 export const WarningIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
+      aria-hidden="true"
       height={size}
       strokeLinejoin="round"
       style={{ color: "currentcolor" }}

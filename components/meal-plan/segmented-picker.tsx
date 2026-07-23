@@ -25,6 +25,7 @@ export function SegmentedPicker<T extends string>({
   ariaLabel?: string;
 }) {
   return (
+    // biome-ignore lint/a11y/useSemanticElements: role="group" is the APG segmented-control pattern; a <fieldset> brings default chrome and grid layout quirks for zero AT gain.
     <div
       aria-label={ariaLabel}
       className={cn("grid grid-cols-2 gap-2", className)}

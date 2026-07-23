@@ -61,6 +61,7 @@ export function ActionSheet({
   // sheet would anchor to the DOCUMENT bottom (off-viewport on scrolled
   // pages, the WKT-9 bug) instead of the viewport bottom.
   return createPortal(
+    // biome-ignore lint/a11y/noStaticElementInteractions: scrim click-away is a pointer-only convenience; keyboard and AT users dismiss via the sheet's own controls.
     <div
       className="fixed inset-0 z-[75] flex items-end justify-center bg-black/70 backdrop-blur-sm"
       onClick={(e) => {

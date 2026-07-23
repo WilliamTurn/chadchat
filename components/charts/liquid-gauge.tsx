@@ -66,7 +66,7 @@ export function LiquidGauge({
       role="img"
       style={{ width: size, height: size }}
     >
-      <svg aria-hidden className="size-full" viewBox={`0 0 ${VIEW} ${VIEW}`}>
+      <svg aria-hidden="true" className="size-full" viewBox={`0 0 ${VIEW} ${VIEW}`}>
         <defs>
           <linearGradient id={`lg-grad-${uid}`} x1="0" x2="0" y1="0" y2="1">
             <stop offset="0%" stopColor={colors.surface} />
@@ -170,7 +170,7 @@ export function LiquidGauge({
             {/* Dark ink on the light liquid fill (the WaterMinder pattern):
                 sky-950 holds >= 5:1 on the sky-300..500 fill, both themes. */}
             <Check
-              aria-hidden
+              aria-hidden="true"
               className="size-7 text-sky-950"
               strokeWidth={3}
             />

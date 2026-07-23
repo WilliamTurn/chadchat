@@ -87,7 +87,7 @@ const STARS: Array<{ top: string; left: string; s: number; c: string; o: number;
    no stock icon matches the mock's glyph. */
 function DropletGlyph() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M12 2.8 C9 7.2, 5.9 10.7, 5.9 14.3 a6.1 6.1 0 0 0 12.2 0 C18.1 10.7, 15 7.2, 12 2.8 Z"
         stroke="#46c2ff"
@@ -107,7 +107,7 @@ function DropletGlyph() {
 /* Track nav glyph: dot inside a thin circle at icon size (C8). */
 function TrackGlyph() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <circle cx="12" cy="12" r="8.4" stroke="#46c2ff" strokeWidth="1.5" />
       <circle cx="12" cy="12" r="2.7" fill="#46c2ff" />
     </svg>
@@ -169,7 +169,7 @@ function TypeRow({
 
 function Spark() {
   return (
-    <svg className="spark" width="64" height="16" viewBox="0 0 64 16" fill="none" aria-hidden>
+    <svg className="spark" width="64" height="16" viewBox="0 0 64 16" fill="none" aria-hidden="true">
       <path
         d="M1 13 L12 11 L22 12 L32 8 L42 9 L52 4 L63 2"
         stroke="#3ce6a4"
@@ -221,12 +221,12 @@ export default function DesignSystemSheet() {
                 <div className="atmo-sleep" />
                 {/* ember filaments: mass on the right 45%, arcing from the
                     2,140 baseline region toward the top-right corner (C12) */}
-                <svg className="wisps" style={{ top: 0, right: 0 }} viewBox="0 0 430 300" fill="none" aria-hidden>
+                <svg className="wisps" style={{ top: 0, right: 0 }} viewBox="0 0 430 300" fill="none" aria-hidden="true">
                   <path d="M228 185 C315 150, 350 85, 432 20" stroke="#ff9a55" strokeWidth="2" opacity="0.7" />
                   <path d="M255 200 C335 168, 372 110, 432 60" stroke="#ffb475" strokeWidth="1.4" opacity="0.45" />
                   <path d="M285 215 C355 190, 398 145, 432 105" stroke="#ff8a45" strokeWidth="1" opacity="0.35" />
                 </svg>
-                <svg className="wisps-soft" style={{ top: 0, right: 0 }} viewBox="0 0 430 300" fill="none" aria-hidden>
+                <svg className="wisps-soft" style={{ top: 0, right: 0 }} viewBox="0 0 430 300" fill="none" aria-hidden="true">
                   <path d="M240 190 C320 155, 355 90, 432 32" stroke="#ff7a38" strokeWidth="9" opacity="0.45" />
                 </svg>
                 {STARS.map((st, i) => (
@@ -273,7 +273,7 @@ export default function DesignSystemSheet() {
                     viewBox="0 0 520 100"
                     preserveAspectRatio="none"
                     fill="none"
-                    aria-hidden
+                    aria-hidden="true"
                   >
                     <defs>
                       <linearGradient id="dsWave" x1="0" y1="0" x2="1" y2="0">
@@ -304,7 +304,7 @@ export default function DesignSystemSheet() {
                   </svg>
                   <div className="jug-slot">
                     <div className="halo" />
-                    <svg className="jug-ripples" viewBox="0 0 160 30" fill="none" aria-hidden>
+                    <svg className="jug-ripples" viewBox="0 0 160 30" fill="none" aria-hidden="true">
                       <ellipse cx="80" cy="15" rx="76" ry="9" stroke="#46c2ff" strokeWidth="1" opacity="0.3" />
                       <ellipse cx="80" cy="15" rx="52" ry="6" stroke="#9bd6ff" strokeWidth="0.8" opacity="0.25" />
                     </svg>
@@ -350,7 +350,7 @@ export default function DesignSystemSheet() {
                       <div className="big">8h</div>
                       <div className="cap t-label">Target</div>
                     </div>
-                    <svg viewBox="0 28 320 154" fill="none" aria-hidden>
+                    <svg viewBox="0 28 320 154" fill="none" aria-hidden="true">
                       <defs>
                         <radialGradient id="dsNebula" cx="0.5" cy="0.5" r="0.5">
                           <stop offset="0" stopColor="#7c5be0" stopOpacity="0.3" />
@@ -533,7 +533,7 @@ export default function DesignSystemSheet() {
               <div className="demo">
                 <div className="progress-ind">
                   <span className="line">
-                    <svg width="10" height="8" viewBox="0 0 10 8" fill="#3ce6a4" aria-hidden>
+                    <svg width="10" height="8" viewBox="0 0 10 8" fill="#3ce6a4" aria-hidden="true">
                       <path d="M5 0 L10 8 L0 8 Z" />
                     </svg>
                     2.4 lb closer to goal
@@ -547,7 +547,7 @@ export default function DesignSystemSheet() {
             <div className="sem">
               <div className="demo">
                 <span className="reward-chip">
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="#f5c95c" aria-hidden>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="#f5c95c" aria-hidden="true">
                     <path d="M7 0 L8.8 4.8 L14 5.2 L10 8.6 L11.3 14 L7 11 L2.7 14 L4 8.6 L0 5.2 L5.2 4.8 Z" />
                   </svg>
                   14 day streak
@@ -723,7 +723,7 @@ export default function DesignSystemSheet() {
             <div className="prim">
               <p className="t-spec prim-name">Radial gauge · compact variant</p>
               <div className="gauge">
-                <svg viewBox="0 0 168 168" fill="none" aria-hidden>
+                <svg viewBox="0 0 168 168" fill="none" aria-hidden="true">
                   <circle cx="84" cy="84" r="72" stroke="rgba(255,255,255,0.1)" strokeWidth="3" />
                   <circle
                     cx="84" cy="84" r="72"

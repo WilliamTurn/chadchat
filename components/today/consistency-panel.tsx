@@ -210,11 +210,14 @@ export function ConsistencyPanel({
                   return (
                     <Tooltip key={`dot-${d.dateLabel}`}>
                       <TooltipTrigger asChild>
+                        {/* biome-ignore-start lint/a11y/noNoninteractiveTabindex: keyboard users need focus on the dot to summon its tooltip (WCAG 1.4.13). */}
                         <div
                           aria-label={`${d.dateLabel}: ${value}`}
                           className="flex cursor-default items-center justify-center rounded py-0.5 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          role="img"
                           tabIndex={0}
                         >
+                          {/* biome-ignore-end lint/a11y/noNoninteractiveTabindex: see above. */}
                           <span
                             aria-hidden
                             className={cn(
@@ -251,6 +254,7 @@ export function ConsistencyPanel({
                 return (
                   <Tooltip key={row.id}>
                     <TooltipTrigger asChild>
+                      {/* biome-ignore-start lint/a11y/noNoninteractiveTabindex: keyboard users need focus on the row to summon its tooltip (WCAG 1.4.13). */}
                       <div
                         aria-label={`${row.label}: ${
                           loggedLabels.length > 0
@@ -258,8 +262,10 @@ export function ConsistencyPanel({
                             : "nothing logged this week"
                         }`}
                         className="col-span-8 grid cursor-default grid-cols-subgrid items-center rounded outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        role="img"
                         tabIndex={0}
                       >
+                        {/* biome-ignore-end lint/a11y/noNoninteractiveTabindex: see above. */}
                         <Icon
                           aria-hidden
                           className="mr-1 size-3 text-muted-foreground"

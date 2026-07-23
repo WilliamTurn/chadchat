@@ -60,6 +60,7 @@ export function ConfirmDialog({
   // overlay would anchor to the DOCUMENT (opening off-viewport on scrolled
   // pages) and its z-index would be trapped below the floating docks.
   return createPortal(
+    // biome-ignore lint/a11y/noStaticElementInteractions: scrim click-away is a pointer-only convenience; keyboard and AT users dismiss via the dialog's own buttons.
     <div
       // Centered (owner ruling, flaws RUN-29/RUN-49: never pinned to the
       // bottom three-quarters), and the panel caps at the small viewport

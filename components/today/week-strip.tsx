@@ -52,11 +52,14 @@ export function WeekStrip({ days }: { days: WeekStripDay[] }) {
           return (
             <Tooltip key={day.key}>
               <TooltipTrigger asChild>
+                {/* biome-ignore-start lint/a11y/noNoninteractiveTabindex: keyboard users need focus on the day to summon its tooltip (WCAG 1.4.13). */}
                 <div
                   aria-label={summary}
                   className="flex cursor-default flex-col items-center gap-1.5"
+                  role="img"
                   tabIndex={0}
                 >
+                  {/* biome-ignore-end lint/a11y/noNoninteractiveTabindex: see above. */}
                   <span
                     aria-hidden
                     className={cn(

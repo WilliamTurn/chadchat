@@ -72,7 +72,7 @@ export function CalorieArc({
       role="img"
       style={{ width: size, height: size }}
     >
-      <svg aria-hidden className="size-full" viewBox={`0 0 ${VIEW} ${VIEW}`}>
+      <svg aria-hidden="true" className="size-full" viewBox={`0 0 ${VIEW} ${VIEW}`}>
         {/* Track: the full gauge sweep */}
         <circle
           className="stroke-border"

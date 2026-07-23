@@ -51,7 +51,11 @@ const SLEEP_DOMAIN = LOGGABLE_DOMAINS.find((d) => d.domain === "sleep");
 
 function QualityStars({ value }: { value: number }) {
   return (
-    <span aria-label={`Quality ${value} of 5`} className="inline-flex items-center gap-0.5">
+    <span
+      aria-label={`Quality ${value} of 5`}
+      className="inline-flex items-center gap-0.5"
+      role="img"
+    >
       {[1, 2, 3, 4, 5].map((n) => (
         <Star
           aria-hidden

@@ -40,9 +40,10 @@
         "noExcessiveCognitiveComplexity": "off",
         "useSimplifiedLogicExpression": "off"
       },
-      "a11y": {
-        "noSvgWithoutTitle": "off"
-      },
+      // S0b-1 (2026-07-22): the full a11y group runs as errors. Genuinely
+      // intentional exceptions get inline suppressions with a justification,
+      // never a rule-level disable.
+      "a11y": "error",
       "correctness": {
         "useUniqueElementIds": "off",
         "useImageSize": "off"

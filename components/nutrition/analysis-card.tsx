@@ -54,7 +54,7 @@ function ScoreRing({ score }: { score: number }) {
   return (
     <div className="shrink-0 text-center">
       <div className="relative size-16">
-        <svg className="-rotate-90 size-16" viewBox="0 0 60 60">
+        <svg aria-hidden="true" className="-rotate-90 size-16" viewBox="0 0 60 60">
           <circle
             className="stroke-border/60"
             cx="30"

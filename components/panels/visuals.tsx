@@ -39,7 +39,7 @@ export function ProgressRing({
       style={{ width: size, height: size }}
     >
       <svg
-        aria-hidden
+        aria-hidden="true"
         className="-rotate-90"
         height={size}
         viewBox={`0 0 ${size} ${size}`}
@@ -222,7 +222,7 @@ export function PanelSparkline({
 
   return (
     <svg
-      aria-hidden
+      aria-hidden="true"
       className={cn("w-full", className)}
       preserveAspectRatio="xMidYMid meet"
       style={{ maxHeight: height }}

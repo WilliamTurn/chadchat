@@ -786,6 +786,7 @@ export function SessionPlayer({
 
   if (!ready) {
     return (
+      // biome-ignore lint/a11y/useSemanticElements: role="status" is the standard live-region idiom; swapping to <output> changes element semantics and default display for zero AT gain.
       <div className="py-24 text-center text-muted-foreground" role="status">
         Loading…
       </div>
@@ -908,6 +909,7 @@ export function SessionPlayer({
               className={`font-mono font-semibold text-[16px] tabular-nums max-[359px]:text-[13px] ${
                 session.timer.running ? "text-foreground" : "text-muted-foreground"
               }`}
+              role="timer"
             >
               {formatClock(elapsed)}
             </span>
@@ -1127,6 +1129,7 @@ export function SessionPlayer({
 
       {/* PR toast */}
       {prToast && (
+        // biome-ignore lint/a11y/useSemanticElements: role="status" is the standard live-region idiom; swapping to <output> changes element semantics and default display for zero AT gain.
         <div
           className="fixed top-4 left-1/2 z-[85] flex w-[calc(100%-32px)] max-w-[420px] -translate-x-1/2 animate-in items-center gap-2.5 rounded-2xl border border-amber-400/40 bg-popover px-4 py-3 shadow-[0_16px_48px_rgba(0,0,0,0.5)] duration-300 zoom-in-95"
           role="status"

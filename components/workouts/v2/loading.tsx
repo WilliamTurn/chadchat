@@ -3,6 +3,7 @@
 
 export function WorkoutsPageLoading() {
   return (
+    // biome-ignore lint/a11y/useSemanticElements: role="status" is the standard live-region idiom; swapping to <output> changes element semantics and default display for zero AT gain.
     <div aria-label="Loading" className="animate-pulse" role="status">
       <div className="h-8 w-56 rounded-lg bg-muted/60" />
       <div className="mt-3 h-4 w-80 max-w-full rounded bg-muted/40" />

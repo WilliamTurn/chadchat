@@ -618,6 +618,7 @@ function UploadCard({
 
   return (
     <div className="group relative flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card transition-colors hover:bg-muted/40">
+      {/* biome-ignore lint/a11y/useAnchorContent: the stretched-link pattern has no visible text by design; aria-label provides the accessible name. */}
       <a
         aria-label={`View ${upload.name} full size`}
         className="absolute inset-0 z-0"

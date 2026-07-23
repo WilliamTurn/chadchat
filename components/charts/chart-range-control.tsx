@@ -21,6 +21,7 @@ export function ChartRangeControl({
     return null;
   }
   return (
+    // biome-ignore lint/a11y/useSemanticElements: role="group" is the APG segmented-control pattern; a <fieldset> brings default chrome and flex/grid layout quirks for zero AT gain.
     <div
       aria-label="Time range"
       className={cn(

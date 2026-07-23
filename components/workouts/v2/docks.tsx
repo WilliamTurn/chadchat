@@ -146,6 +146,7 @@ function RestTimerDock() {
 
   if (remaining <= 0) {
     return (
+      // biome-ignore lint/a11y/useSemanticElements: role="status" is the standard live-region idiom; swapping to <output> changes element semantics and default display for zero AT gain.
       <div
         className="pointer-events-auto flex items-center justify-center gap-2 rounded-2xl border border-emerald-500/40 bg-card px-4 py-3.5 shadow-[0_12px_32px_rgba(0,0,0,0.45)]"
         role="status"

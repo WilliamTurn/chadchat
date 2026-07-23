@@ -149,6 +149,7 @@ export function ExercisePickerPage({
 
   if (!ready) {
     return (
+      // biome-ignore lint/a11y/useSemanticElements: role="status" is the standard live-region idiom; swapping to <output> changes element semantics and default display for zero AT gain.
       <div className="py-24 text-center text-muted-foreground" role="status">
         Loading…
       </div>

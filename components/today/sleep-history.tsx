@@ -165,6 +165,7 @@ export function SleepHistory({
                   <span
                     aria-label={`Quality ${quality} of 5`}
                     className="mt-0.5 inline-flex items-center gap-0.5"
+                    role="img"
                   >
                     {[1, 2, 3, 4, 5].map((n) => (
                       <Star
