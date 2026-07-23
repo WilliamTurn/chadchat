@@ -30,6 +30,30 @@ import type {
 
 const STORAGE_KEY = "chad-workouts-live-v1";
 
+/**
+ * Best-effort synchronous wipe of the persisted session, for the moment a
+ * workout has been SAVED but the in-memory session must survive until the
+ * complete page's navigation unmounts the player (the finish-flash fix). If
+ * that navigation degrades to a full document load (dev-server hiccup, RSC
+ * fetch failure), React unmount cleanup never runs; without this, the next
+ * page would rehydrate the already-saved session as a zombie.
+ */
+export function persistSessionCleared() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return;
+    }
+    const parsed = JSON.parse(raw) as State;
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ ...parsed, session: null, restTimer: null })
+    );
+  } catch {
+    // Storage unavailable: the unmount cleanup still clears the live state.
+  }
+}
+
 export function uid(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${Math.random()
     .toString(36)

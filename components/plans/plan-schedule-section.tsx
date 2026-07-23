@@ -87,21 +87,23 @@ export function PlanScheduleSection({
               </div>
               <ul className="mt-2 flex flex-col gap-1">
                 {session.exercises.map((ex) => (
-                  <li
-                    className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm"
-                    key={`${session.position}-${ex.name}`}
-                  >
-                    <span>{ex.name}</span>
-                    <span className="text-muted-foreground">
-                      {formatPlanTarget({
-                        name: ex.name,
-                        sets: ex.sets,
-                        reps: ex.reps,
-                        weight: ex.weight,
-                        unit: ex.unit,
-                        note: ex.note,
-                      })}
-                    </span>
+                  <li className="text-sm" key={`${session.position}-${ex.name}`}>
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+                      <span>{ex.name}</span>
+                      <span className="text-muted-foreground">
+                        {formatPlanTarget({
+                          name: ex.name,
+                          sets: ex.sets,
+                          reps: ex.reps,
+                          weight: ex.weight,
+                          unit: ex.unit,
+                          note: ex.note,
+                        })}
+                      </span>
+                    </div>
+                    {ex.note && (
+                      <p className="text-muted-foreground text-xs">{ex.note}</p>
+                    )}
                   </li>
                 ))}
               </ul>

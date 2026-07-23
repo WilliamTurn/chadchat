@@ -982,16 +982,10 @@ test("a workout note survives leaving the runner and coming back (canon 03)", as
   await noteField.fill(note);
 
   // Back out of the dialog, leave the runner entirely, and return.
-  // The Finish dialog's dismiss reads "Keep lifting", not "Cancel": the
-  // workouts-feature ConfirmDialog is a SECOND confirm primitive that does
-  // not compose ui/confirm-undo, and its themed dismiss label is already
-  // grandfathered in the design-lint baseline (rule `dialog-dismiss-label`,
-  // S0b-1). Matching both keeps this draft contract green through the wave
-  // that renames it.
   await page
     .locator('[role="alertdialog"]')
     .last()
-    .getByRole("button", { name: /^(Cancel|Keep lifting)$/ })
+    .getByRole("button", { name: "Cancel", exact: true })
     .click();
   await page.goto("/workouts", { waitUntil: "load" });
   await page.goto("/workouts/active", { waitUntil: "load" });
