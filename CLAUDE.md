@@ -26,3 +26,35 @@ Known expected failures: the old template suites (`api.test.ts`, `model-selector
 - `User.email` is unique, enforced by the database (`User_email_unique`, migration 0039, fixed 2026-07-16). If an insert loses a concurrent-signup race it throws a unique violation; the register action maps that to the "already exists" inline error.
 - The screenshot fixture diffs (`pnpm screenshot:*`) compare dev fixture pages, not real surfaces. Passing them proves nothing about the member-facing app.
 - The defect register for this app lives in `../chadlatest/audits/flaws-triage-2026-07-15/`.
+
+## UX conventions (hard rules)
+
+- Dialog dismiss buttons say "Cancel" (info-only dialogs: "Close"). Themed copy never goes on action buttons; Chad's voice lives in body text and chat only.
+- Never "tap" or "click" in copy any device can see. Write "select" or "choose".
+- Destructive buttons name verb + object ("Delete all sets for this exercise"), never OK / Yes / Confirm / bare "Delete all". Bulk actions state their scope in the label; the confirmation body states the count.
+- Commit model: a control changing ONE setting with a visible, immediate effect applies instantly. Anything batched, or whose effect isn't visible on screen, gets explicit Save + Cancel. Never silent auto-close; never auto-apply AND a Save button on the same surface.
+- Every destructive action has exactly ONE safety net: a confirmation (rare, severe, or bulk) or an undo toast (frequent, single item). Bulk destructive always confirms. Never zero.
+- If an action's result is not visible right where the user acted, show a toast. If it is plainly visible, stay quiet (or undo-toast only).
+- Anything slower than 1 second shows progress; button presses show a pressed or disabled state immediately.
+- Dialogs: Cancel on the left, confirming action on the right (top in stacked layouts); the SAFE action is the focused default; destructive actions use the destructive style.
+- Reordering uses visible drag handles (a menu path may exist as secondary).
+- Every empty state says why it is empty and offers the action that fills it, and never strands the user without a way back.
+- Type floor is 12px, labels 13px+ on phones (permanent owner order; the floors live in the ds.css tokens).
+
+The full canon: 1,311 principles in `docs/ux-canon/` (landing via S0b-3; until then `../chadlatest/audits/workout-overhaul-2026-07-22/ux-canon/`). The skills load the relevant domain automatically; read the owning section before building anything it covers.
+
+## The examples rule
+
+Examples are samples, never the list. When the owner gives examples of a problem, they are instances of a CLASS. Work out the class, state it back in one line, and fix/build for the whole class across the surface. Handling only the named examples is a failed task.
+
+## The convention-lookup mandate
+
+At any UX decision point the canon doesn't cover, STOP and establish the convention first: canon sources, real-app references (Mobbin), or the interaction-spec-advisor. No established convention → closest mainstream pattern or ask the owner. Deciding UX from imagination is a defect even when the result looks fine.
+
+## Exit gate 5
+
+Before calling a member-facing surface done: run the UX auditors whose domain you touched (copy → ux-copy-auditor; flows → ux-flow-auditor; layout/controls → ux-placement-auditor; new surface → all three, plus mobile-experience-auditor). Fix or report every BLOCKER and MAJOR.
+
+## Precedence note
+
+Vercel Web Interface Guidelines (installed) are the mechanics floor. Where they conflict with ds.css tokens or an owner decision, the owner's decision wins; log the conflict in the decision log.
