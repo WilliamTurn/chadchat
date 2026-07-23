@@ -32,4 +32,9 @@ public/today/*_on_*.jpg
 
 # session dev-server logs and local capture artifacts (P2-Z)
 .dev*.log
+# session gate/build/start run logs (S0c): these accumulate at the repo root
+# one-per-run and are never meant to be tracked.
+.*-gates.log
+.start*.log
+.build*.log
 artifacts/
