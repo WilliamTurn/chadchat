@@ -16,7 +16,7 @@ export default function ExercisesPage() {
     <PageShell active="/workouts" className="max-w-[1500px]">
       <WorkoutPageHeader
         back={{ href: "/workouts", label: "Workouts" }}
-        subtitle="Tap any exercise for how-to, your records, and your progress. Create your own for anything that's missing."
+        subtitle="Select any exercise for how-to, your records, and your progress. Create your own for anything that's missing."
         title="Exercises"
       />
       <Suspense fallback={<WorkoutsPageLoading />}>

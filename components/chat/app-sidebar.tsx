@@ -57,7 +57,14 @@ export function AppSidebar({
   plan?: PlanStatusSummary | null;
 }) {
   const router = useRouter();
-  const { setOpenMobile, toggleSidebar } = useSidebar();
+  const { isMobile, setOpenMobile, state, toggleSidebar } = useSidebar();
+  // The hover-overlay toggle below only makes sense while the menu is
+  // collapsed to the icon rail. It used to be hidden by CSS alone
+  // (`opacity-0` + `pointer-events-none`), which leaves it in the tab order
+  // and the accessibility tree in every other state - so once S0c gave it the
+  // name "Open menu" it announced that name, and closed the menu when
+  // activated, while the menu was open. Render it only where it is true.
+  const railCollapsed = state === "collapsed" && !isMobile;
   const { mutate } = useSWRConfig();
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
 
@@ -88,26 +95,41 @@ export function AppSidebar({
                     className="size-8 !px-0 items-center justify-center group-data-[collapsible=icon]:group-hover/logo:opacity-0"
                     tooltip="Chad"
                   >
-                    <Link href="/" onClick={() => setOpenMobile(false)}>
+                    {/* D5 (S0c): icon-only, so it was announced as a bare
+                        "link" (axe link-name). It names its destination, which
+                        routes.ts registers as "Chad". */}
+                    <Link
+                      aria-label="Chad"
+                      href="/"
+                      onClick={() => setOpenMobile(false)}
+                    >
                       <Dumbbell
+                        aria-hidden
                         className="size-4 text-blood"
                         strokeWidth={2.5}
                       />
                     </Link>
                   </SidebarMenuButton>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <SidebarMenuButton
-                        className="pointer-events-none absolute inset-0 size-8 opacity-0 group-data-[collapsible=icon]:pointer-events-auto group-data-[collapsible=icon]:group-hover/logo:opacity-100"
-                        onClick={() => toggleSidebar()}
-                      >
-                        <PanelLeftIcon className="size-4" />
-                      </SidebarMenuButton>
-                    </TooltipTrigger>
-                    <TooltipContent className="hidden md:block" side="right">
-                      Open sidebar
-                    </TooltipContent>
-                  </Tooltip>
+                  {railCollapsed && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <SidebarMenuButton
+                          // D5 (S0c): icon-only, so it was announced as a bare
+                          // "button" (axe button-name, critical) - a tooltip is
+                          // a description, never an accessible name. The name
+                          // matches the visible tooltip text (WCAG 2.5.3).
+                          aria-label="Open menu"
+                          className="absolute inset-0 size-8 opacity-0 group-hover/logo:opacity-100"
+                          onClick={() => toggleSidebar()}
+                        >
+                          <PanelLeftIcon aria-hidden className="size-4" />
+                        </SidebarMenuButton>
+                      </TooltipTrigger>
+                      <TooltipContent className="hidden md:block" side="right">
+                        Open menu
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
                 </div>
                 <Link
                   className="font-display font-bold text-[15px] text-sidebar-foreground tracking-[0.14em] group-data-[collapsible=icon]:hidden"
@@ -118,7 +140,14 @@ export function AppSidebar({
                 </Link>
               </div>
               <div className="group-data-[collapsible=icon]:hidden">
-                <SidebarTrigger className="text-sidebar-foreground/60 transition-colors duration-150 hover:text-sidebar-foreground" />
+                {/* Overrides the vendored primitive's title-case "Toggle
+                    Sidebar" sr-only default: sentence case, and the app's
+                    word for this panel. It only renders while the menu is
+                    open, so it always closes. */}
+                <SidebarTrigger
+                  aria-label="Close menu"
+                  className="text-sidebar-foreground/60 transition-colors duration-150 hover:text-sidebar-foreground"
+                />
               </div>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -199,7 +228,7 @@ export function AppSidebar({
                                     setOpenMobile(false);
                                     router.push("/");
                                   }}
-                                  tooltip="New Chat"
+                                  tooltip="New chat"
                                 >
                                   <PenSquareIcon className="size-4" />
                                   <span className="font-medium">New chat</span>
@@ -227,7 +256,7 @@ export function AppSidebar({
                         setOpenMobile(false);
                         router.push("/");
                       }}
-                      tooltip="New Chat"
+                      tooltip="New chat"
                     >
                       <PenSquareIcon className="size-4" />
                       <span className="font-medium">New chat</span>

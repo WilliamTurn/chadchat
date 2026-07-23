@@ -5,7 +5,7 @@
 // Colors come from the app theme tokens so light and dark both work.
 
 import { Loader2 } from "lucide-react";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, ReactNode, Ref } from "react";
 
 // ---------------------------------------------------------------------------
 // Buttons
@@ -33,6 +33,9 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: "md" | "lg" | "sm";
   loading?: boolean;
+  /** React 19 passes ref as a plain prop; declared so callers that need to
+   *  focus a button (the ConfirmDialog's safe default) can reach it. */
+  ref?: Ref<HTMLButtonElement>;
 }
 
 export function WButton({
@@ -52,7 +55,17 @@ export function WButton({
         ? "min-h-[40px] px-3.5 text-[14px] rounded-xl"
         : "min-h-[48px] px-5 text-[15px] rounded-xl";
   return (
+    // Pending-state contract (canon 03 §22), identical to the shared
+    // components/ui/button.tsx: the label STAYS VISIBLE, a spinner joins it
+    // inline, the button disables, and aria-busy announces the state to a
+    // screen reader. S0c added the aria-busy half, which this primitive was
+    // missing while the shared Button had it.
     <button
+      aria-busy={loading || undefined}
+      // The DESIGN-SYSTEM variant name, matching components/ui/button.tsx, so
+      // one contract can gate both primitives. "danger" is this feature's
+      // local name for the shared "destructive" variant.
+      data-variant={variant === "danger" ? "destructive" : variant}
       className={`inline-flex cursor-pointer select-none items-center justify-center gap-2 transition-all duration-150 disabled:pointer-events-none disabled:opacity-40 ${sizeClasses} ${VARIANT_CLASSES[variant]} ${className}`}
       disabled={disabled || loading}
       type={type}

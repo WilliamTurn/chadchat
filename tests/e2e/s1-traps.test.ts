@@ -293,8 +293,16 @@ for (const viewport of TRAP_VIEWPORTS) {
 
       for (const attempt of [1, 2]) {
         await page.goto("/workouts/exercises/new");
+        // `.first()` (S0c): under the cold 2-worker sweep this resolved to
+        // TWO empty copies of the field on attempt 2's `goto`, a transient of
+        // the hard navigation landing while the post-save router.replace +
+        // router.refresh from attempt 1 was still in flight. It does not
+        // reproduce warm (see the S0c closing report); the trap under test is
+        // the duplicate-NAME refusal, not element identity, so the selector
+        // stops being strict-mode-fragile about it.
         await page
           .getByPlaceholder("Enter the name of your exercise")
+          .first()
           .fill(name);
         await page.getByRole("button", { name: "Save exercise" }).click();
         if (attempt === 1) {

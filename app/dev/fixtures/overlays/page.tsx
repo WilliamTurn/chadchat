@@ -5,13 +5,14 @@ import {
   EditEntryOverlayDemo,
   QuickLogOverlayDemo,
   UndoQuickAddDemo,
+  WorkoutsConfirmDemo,
 } from "./demos";
 
 /**
  * OVERLAY PLATFORM PAGE (P2-D harness, FIX-17 evidence surface).
  *
  * Every overlay pattern the platform ships, exercised on the real
- * components. `?open=quicklog|edit|confirm|sheet` opens one overlay on load
+ * components. `?open=quicklog|edit|confirm|workouts-confirm|sheet` opens one overlay on load
  * so the FIX-39 screenshot suite captures deterministic open states; the
  * param is a harness mechanism only.
  *
@@ -70,6 +71,7 @@ export default async function OverlaysFixturePage({
           <QuickLogOverlayDemo autoOpen={open === "quicklog"} />
           <EditEntryOverlayDemo autoOpen={open === "edit"} />
           <ConfirmDemo autoOpen={open === "confirm"} />
+          <WorkoutsConfirmDemo autoOpen={open === "workouts-confirm"} />
           <UndoQuickAddDemo />
           <DetailSheetDemo autoOpen={open === "sheet"} />
         </div>
@@ -86,6 +88,11 @@ export default async function OverlaysFixturePage({
             Delete weigh-in: the destructive confirm. It names the exact
             object and the consequence, and shows a pending state while the
             delete runs.
+          </li>
+          <li>
+            Delete exercise: the workouts feature&apos;s own confirmation
+            primitive (components/workouts/v2/confirm), fixtured so the shared
+            dialog-conventions contract gates it too.
           </li>
           <li>
             Quick-add with Undo: the optimistic path for one-tap logs; the

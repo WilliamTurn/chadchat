@@ -28,16 +28,24 @@ function PureChatHeader({
           collapsed, so the header stays usable (and Share stays reachable)
           instead of disappearing entirely (NAV-24). */}
       <Button
+        // D5 (S0c): icon-only, so it was announced as a bare "button" (axe
+        // button-name, critical). "menu" is the app's word for this panel
+        // (nav/standalone-sidebar.tsx), and this control only renders while
+        // the menu is closed, so "Open menu" is true in every state it has.
+        aria-label="Open menu"
         className={collapsed ? undefined : "md:hidden"}
         onClick={toggleSidebar}
         size="icon-sm"
         variant="ghost"
       >
-        <PanelLeftIcon className="size-4" />
+        <PanelLeftIcon aria-hidden className="size-4" />
       </Button>
 
       <Link
-        aria-label="Chad — home"
+        // Names the destination, which routes.ts registers as "Chad". The old
+        // label carried an em dash (banned by lib/contracts/copy.ts) and named
+        // the wrong destination: Home is /home, a different screen.
+        aria-label="Chad"
         className="flex items-center gap-2"
         href="/"
       >

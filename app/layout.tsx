@@ -10,7 +10,10 @@ import { SessionProvider } from "next-auth/react";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://chat.vercel.ai"),
-  title: "Chad — Your AI Fitness Coach",
+  // Colon, not an em dash: `lib/contracts/copy.ts` (`em-dash`) forbids em/en
+  // dashes in customer-facing copy, and this is the browser-tab and
+  // share-preview title on EVERY route (D7, S0c).
+  title: "Chad: Your AI Fitness Coach",
   description: "Chad is a no-nonsense AI fitness coach who builds your training and nutrition plan and holds you to it.",
 };
 

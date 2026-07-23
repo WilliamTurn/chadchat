@@ -214,8 +214,17 @@ export function ExercisePickerPage({
           className="flex min-h-[64px] w-full cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 text-left transition hover:bg-muted/50"
           onClick={() =>
             router.push(
+              // `wex`, NOT `replace`: both readers of this id -
+              // app/workouts/exercises/new/page.tsx (which rebuilds the back
+              // href) and app/workouts/exercises/pick/page.tsx (which feeds
+              // replaceWexId) - key on `wex`. Emitting `replace` dropped the
+              // id on the round trip, so returning from "create a custom
+              // exercise" mid-swap left the picker with replaceWexId=null: it
+              // still promised "swap it in" but fell through to the ADD
+              // branch and appended a duplicate exercise to the live session.
+              // Found by the S0c ux-flow-auditor pass.
               `/workouts/exercises/new?from=pick&target=${target}${
-                replaceWexId ? `&replace=${replaceWexId}` : ""
+                replaceWexId ? `&wex=${replaceWexId}` : ""
               }`
             )
           }

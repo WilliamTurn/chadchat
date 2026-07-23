@@ -123,13 +123,13 @@ async function HeaderLogo() {
   const session = await auth();
   if (session?.user?.id) {
     return (
-      <Link aria-label="Chad — home" href="/home">
+      <Link aria-label="Chad home" href="/home">
         <LogoMark />
       </Link>
     );
   }
   return (
-    <a aria-label="Chad — home" href="https://chadcoach.ai">
+    <a aria-label="Chad home" href="https://chadcoach.ai">
       <LogoMark />
     </a>
   );

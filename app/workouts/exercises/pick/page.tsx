@@ -55,7 +55,7 @@ async function Content({
         }}
         subtitle={
           target === "replace"
-            ? "Tap an exercise to swap it in. Your sets and your place in the workout are kept."
+            ? "Select an exercise to swap it in. Your sets and your place in the workout are kept."
             : `Search or filter, tap to select, then add your picks to ${backLabel}.`
         }
         title={target === "replace" ? "Replace Exercise" : "Add Exercises"}
