@@ -37,6 +37,36 @@
  *                      ("domain", "trend smoothed", "all loaded history";
  *                      flaws PRG-03, TRN-24/29).
  *
+ * S0b-1 mechanical UX gates (2026-07-22; canon numbers refer to
+ * ../chadlatest/audits/workout-overhaul-2026-07-22/ux-canon/):
+ *   device-verb        "tap"/"click" in member copy (Microsoft Style Guide).
+ *   dialog-dismiss-label  Dismiss slots say Cancel / Close / Not now only.
+ *   vague-confirm-label   Confirm slots never say OK/Yes/Confirm/Continue.
+ *   generic-cta        Bare Submit / Click here / Learn more / Get started /
+ *                      OK button labels (canon 04 #128).
+ *   title-case-label   Title Case labels; sentence case is the house rule
+ *                      (canon 04 #127).
+ *   exclamation-copy   "!" in system-UI strings (canon 04 #134).
+ *   generic-error      "Something went wrong"-class errors (canon 03 #44).
+ *   emoji-icon         Emoji as icons in member UI.
+ *   native-tooltip     title= attributes on HTML tags (invisible on touch;
+ *                      use the shared Tooltip; canon 01 #109).
+ *   missing-inputmode  Number-fed inputs without inputMode (canon 01 #33).
+ *   page-autofocus     autoFocus outside dialogs/auth/search (canon 01 #40).
+ *   input-font-16      Sub-16px text utilities on inputs (canon 06 #90).
+ *   missing-autocomplete  Identity fields without autocomplete tokens
+ *                      (canon 01 #34, 06 #94/#129).
+ *   fake-link          <a>/<Link> with onClick and no real href (canon 05 #1).
+ *   window-alert-prompt   Native alert()/prompt() blocking dialogs.
+ *   swallowed-error    Empty catch blocks (canon 03 #29).
+ *   unformatted-number Per-component .toFixed()/.toLocaleString(); member
+ *                      numbers go through lib/contracts/units.ts (canon 04
+ *                      #143/#168).
+ *   toast-duration     Toast durations outside 4-10s, action toasts exempt
+ *                      (canon 03 #35/#38).
+ *   missing-reduced-motion  Animation with no reduced-motion story in the
+ *                      file (canon 04 #104, 05 #82).
+ *
  * New rules grandfather their current counts ONCE (tracked via "__rules__"
  * in the baseline), then ratchet down like everything else.
  *
@@ -93,7 +123,28 @@ type RuleId =
   | "silent-truncation"
   | "native-confirm"
   | "jargon-leak"
-  | "raw-photo-input";
+  | "raw-photo-input"
+  // S0b-1 mechanical UX gates (2026-07-22). Canon numbers cite
+  // ../chadlatest/audits/workout-overhaul-2026-07-22/ux-canon/.
+  | "device-verb"
+  | "dialog-dismiss-label"
+  | "vague-confirm-label"
+  | "generic-cta"
+  | "title-case-label"
+  | "exclamation-copy"
+  | "generic-error"
+  | "emoji-icon"
+  | "native-tooltip"
+  | "missing-inputmode"
+  | "page-autofocus"
+  | "input-font-16"
+  | "missing-autocomplete"
+  | "fake-link"
+  | "window-alert-prompt"
+  | "swallowed-error"
+  | "unformatted-number"
+  | "toast-duration"
+  | "missing-reduced-motion";
 
 type Violation = { file: string; rule: RuleId; line: number; excerpt: string };
 
@@ -106,7 +157,8 @@ const RAW_CONTROL_RE = /<(?:button|input|select|textarea)\b/;
 const EXAMPLE_PLACEHOLDER_RE = /\bplaceholder\s*[=:]\s*.{0,60}?\be\.?g\b/i;
 /** An onClick that calls a remove-/delete- handler in a file that never
  *  imports the confirm-or-undo machinery (charter LAW 7, flaws SYS-23). */
-const UNCONFIRMED_DELETE_RE = /onClick=\{[^}]*\b(?:remove|delete)[A-Z]\w*\(/;
+const UNCONFIRMED_DELETE_RE =
+  /onClick=\{[^}]*\b(?:remove|delete|clear|discard|reset)[A-Z]\w*\(/;
 const CONFIRM_MACHINERY_RE =
   /ConfirmActionDialog|ConfirmDialog|toastUndo|confirm-undo/;
 /** Overlay primitives (tooltips/popovers) carry the SYS-03/04 dismissal
@@ -141,6 +193,130 @@ const VOCABULARY_COPY_IDS = new Set([
  *  rule id so the patterns grandfather once instead of tripping the existing
  *  copy-vocabulary baseline. */
 const JARGON_COPY_IDS = new Set(["jargon-domain", "jargon-internal-phrase"]);
+/** S0b-1 copy patterns route 1:1 to a design-lint rule of the same name, so
+ *  each grandfathers once under its own id instead of tripping an old
+ *  baseline. */
+const DIRECT_COPY_RULE_IDS = new Set<string>([
+  "device-verb",
+  "exclamation-copy",
+  "generic-error",
+]);
+
+/* ----------------------------- S0b-1 rules ------------------------------ */
+
+/** Dismiss-slot labels are exactly Cancel / Close / Not now (S0 round-1
+ *  addendum; canon 03 confirmations). A creative dismiss label makes the
+ *  member read every dialog from scratch. */
+const DISMISS_LABEL_RE =
+  /\b(?:cancel|dismiss|secondary)(?:Label|Text|Title)\s*[=:]\s*\{?\s*["']([^"']+)["']/;
+const DISMISS_ALLOWED = new Set(["Cancel", "Close", "Not now"]);
+/** Confirm slots never say OK/Yes/Confirm/Continue: destructive confirms say
+ *  verb + object ("Delete workout"), canon 04 #128. */
+const VAGUE_CONFIRM_RE =
+  /\bconfirm(?:Label|Text|Title)\s*[=:]\s*\{?\s*["'](?:OK|Okay|Yes|Confirm|Continue)["']/;
+/** Buttons say what they do (canon 04 #128, #140): never bare
+ *  Submit / Click here / Learn more / Get started / OK. */
+const GENERIC_CTA_CHILD_RE =
+  />\s*(?:Submit|Click here|Learn more|Get started|OK)\s*</;
+const GENERIC_CTA_PROP_RE =
+  /\b(?:[a-zA-Z]*[lL]abel|aria-label)\s*[=:]\s*\{?\s*["'](?:Submit|Click here|Learn more|Get started|OK)["']/;
+/** Sentence case is the house rule (canon 04 #127; contested list resolved
+ *  by house decision). Three-plus words, each capitalized, in a label prop. */
+const TITLE_CASE_LABEL_RE =
+  /\b(?:[a-zA-Z]*[lL]abel|aria-label)\s*[=:]\s*\{?\s*["'](?:[A-Z][a-z']+ ){2,}[A-Z][a-z']+["']/;
+/** Emoji are not icons in member UI (canon 04 icon craft): they render
+ *  differently per platform and carry no accessible name. */
+const EMOJI_RE = /\p{Extended_Pictographic}/u;
+/** Native alert()/prompt() are unstyled blocking browser dialogs, the same
+ *  class as the banned native confirm(). */
+const ALERT_PROMPT_RE =
+  /(?:window\.(?:alert|prompt)\(|(?<![.\w$])(?:alert|prompt)\()/;
+/** Member numbers and dates go through lib/contracts/units.ts (canon 04
+ *  #143/#168: one shared formatting layer), never per-component .toFixed(). */
+const UNFORMATTED_NUMBER_RE =
+  /\.(?:toFixed|toLocaleString|toLocaleDateString)\(/;
+/** Transient toasts auto-dismiss in 4-10s (canon 03 #35); toasts carrying an
+ *  action must NOT auto-dismiss fast (canon 03 #38), so those are exempt
+ *  (Infinity/persistent allowed). Millisecond-scale literals only, so
+ *  framer-motion's seconds-scale durations never match. */
+const TOAST_DURATION_RE = /(?<![-\w])duration:\s*(\d[\d_]*)\b/;
+/** Empty catch blocks swallow the failure the member needed to see (canon 03
+ *  #29: never silently lose the change). Matched over the whole file so
+ *  multi-line `catch (e) {\n}` is caught too. */
+const SWALLOWED_ERROR_RE = /catch\s*(?:\([^)]*\))?\s*\{\s*\}/g;
+/** Motion sources that need a reduced-motion story (canon 04 #104, 05 #82).
+ *  animate-pulse/spin are globally neutralized in globals.css (FIX-19). */
+const MOTION_TRIGGER_RE =
+  /@keyframes|\banimate-(?!none\b|pulse\b|spin\b)[\w[]|transition=\{\{/;
+const REDUCED_MOTION_RE =
+  /prefers-reduced-motion|motion-safe:|motion-reduce:|useReducedMotion|MotionConfig|reducedMotion/;
+/** Files whose autoFocus is fine: dialogs/overlays (focus is trapped there),
+ *  auth and search surfaces (the input IS the page's single purpose). */
+const AUTOFOCUS_EXEMPT_PATH_RE =
+  /auth|search|command|dialog|drawer|sheet|popover|date-picker/i;
+const OVERLAY_CONTEXT_RE =
+  /<(?:Dialog|AdaptiveDialog|AlertDialog|Drawer|Sheet|CommandDialog|Popover)\b|components\/ui\/(?:adaptive-)?dialog|components\/ui\/(?:drawer|sheet|command|popover)/;
+/** Number-fed input heuristic for missing-inputmode (canon 01 #33/#37,
+ *  06 #93): the field's own name/id names a numeric quantity, or its change
+ *  handler is a camelCase setter for one. Deliberately structured so free
+ *  text like placeholder="e.g. reps" or setSelectedChip can't match. */
+const NUMBER_FIELD_HINT_RE =
+  /\b(?:name|id)=["'][^"']*(?:weight|reps|kcal|minutes|seconds|amount|sets)|\bset(?:Weight|Reps|Kcal|Minutes|Seconds|Amount|Sets)\b/i;
+/** Identity fields that need autocomplete tokens (canon 01 #34, 06 #94/#129). */
+const IDENTITY_TYPE_RE = /\btype=["'](?:email|password)["']/;
+const IDENTITY_NAME_RE =
+  /\b(?:name|id)=["'](?:email|password|current-password|new-password|name|firstName|lastName|fullName|given-name|family-name)["']/i;
+/** Unprefixed sub-16px text utilities on an input (canon 01 #39, 06 #90:
+ *  iOS zooms the page on focus below 16px). md:text-sm etc. stay legal. */
+const SMALL_INPUT_TEXT_RE = /(?<![:\w-])text-(?:xs|sm)\b/;
+
+type JsxTag = { name: string; attrs: string; line: number };
+
+/** Extracts JSX open tags (name + attribute source + line), tolerating
+ *  multi-line attributes, quoted strings, and arrow functions inside braces.
+ *  A `>` only ends the tag at brace depth 0 outside quotes, so
+ *  onClick={() => x} never terminates the scan early. */
+function extractJsxTags(source: string): JsxTag[] {
+  // Blank out comments (preserving newlines) so JSX examples inside JSDoc
+  // blocks are never scanned as real tags.
+  const text = source
+    .replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, " "))
+    .replace(/^[ \t]*\/\/.*$/gm, (c) => c.replace(/[^\n]/g, " "));
+  const tags: JsxTag[] = [];
+  const openRe = /<([A-Za-z][\w.-]*)/g;
+  let m = openRe.exec(text);
+  while (m) {
+    let i = openRe.lastIndex;
+    let brace = 0;
+    let quote: string | null = null;
+    while (i < text.length) {
+      const c = text[i];
+      if (quote) {
+        if (c === quote) {
+          quote = null;
+        }
+      } else if (c === '"' || c === "'" || c === "`") {
+        quote = c;
+      } else if (c === "{") {
+        brace++;
+      } else if (c === "}") {
+        brace--;
+      } else if ((c === ">" || c === "<") && brace <= 0) {
+        break;
+      }
+      i++;
+    }
+    if (i < text.length && text[i] === ">") {
+      tags.push({
+        name: m[1],
+        attrs: text.slice(openRe.lastIndex, i),
+        line: text.slice(0, m.index).split("\n").length,
+      });
+    }
+    m = openRe.exec(text);
+  }
+  return tags;
+}
 
 function* walk(dir: string): Generator<string> {
   for (const name of readdirSync(dir)) {
@@ -157,12 +333,17 @@ function* walk(dir: string): Generator<string> {
   }
 }
 
-function lintFile(rel: string, text: string, colorOnly: boolean): Violation[] {
+export function lintFile(
+  rel: string,
+  text: string,
+  colorOnly: boolean
+): Violation[] {
   const out: Violation[] = [];
   const isUiPrimitive = rel.startsWith(`components${sep}ui${sep}`);
   const hasConfirmMachinery = CONFIRM_MACHINERY_RE.test(text);
   const isPageFile = rel.endsWith(`${sep}page.tsx`);
   const isPhotoInputHome = rel === `components${sep}ui${sep}photo-input.tsx`;
+  const fileHasToast = /\btoast/i.test(text);
   const lines = text.split("\n");
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -211,6 +392,49 @@ function lintFile(rel: string, text: string, colorOnly: boolean): Violation[] {
       push("raw-photo-input");
     }
     if (rel.endsWith(".tsx")) {
+      const dismiss = DISMISS_LABEL_RE.exec(line);
+      if (dismiss && !DISMISS_ALLOWED.has(dismiss[1])) {
+        push("dialog-dismiss-label");
+      }
+      if (VAGUE_CONFIRM_RE.test(line)) {
+        push("vague-confirm-label");
+      }
+      if (GENERIC_CTA_CHILD_RE.test(line) || GENERIC_CTA_PROP_RE.test(line)) {
+        push("generic-cta");
+      }
+      if (TITLE_CASE_LABEL_RE.test(line)) {
+        push("title-case-label");
+      }
+      const trimmed = line.trimStart();
+      const isComment =
+        trimmed.startsWith("//") ||
+        trimmed.startsWith("*") ||
+        trimmed.startsWith("/*");
+      if (EMOJI_RE.test(line) && !isComment) {
+        push("emoji-icon");
+      }
+    }
+    if (ALERT_PROMPT_RE.test(line)) {
+      push("window-alert-prompt");
+    }
+    if (rel.endsWith(".tsx") && UNFORMATTED_NUMBER_RE.test(line)) {
+      push("unformatted-number");
+    }
+    const dur = TOAST_DURATION_RE.exec(line);
+    if (dur && fileHasToast) {
+      const ms = Number(dur[1].replace(/_/g, ""));
+      if (ms >= 1000 && (ms < 4000 || ms > 10_000)) {
+        // Toasts carrying an action are exempt (canon 03 #38): they must
+        // NOT auto-dismiss fast, so long/persistent durations are correct.
+        const windowText = lines
+          .slice(Math.max(0, i - 6), i + 7)
+          .join("\n");
+        if (!/\baction\s*[:=]/.test(windowText)) {
+          push("toast-duration");
+        }
+      }
+    }
+    if (rel.endsWith(".tsx")) {
       let sawBanned = false;
       let sawVocabulary = false;
       let sawJargon = false;
@@ -220,6 +444,8 @@ function lintFile(rel: string, text: string, colorOnly: boolean): Violation[] {
             sawVocabulary = true;
           } else if (JARGON_COPY_IDS.has(rule.id)) {
             sawJargon = true;
+          } else if (DIRECT_COPY_RULE_IDS.has(rule.id)) {
+            push(rule.id as RuleId);
           } else {
             sawBanned = true;
           }
@@ -233,6 +459,96 @@ function lintFile(rel: string, text: string, colorOnly: boolean): Violation[] {
       }
       if (sawJargon) {
         push("jargon-leak");
+      }
+    }
+  }
+
+  /* Tag-scoped rules: attributes span lines, so these run over extracted
+   * JSX open tags rather than raw lines. */
+  if (!colorOnly && rel.endsWith(".tsx")) {
+    const autofocusExempt =
+      isUiPrimitive ||
+      AUTOFOCUS_EXEMPT_PATH_RE.test(toPosix(rel)) ||
+      OVERLAY_CONTEXT_RE.test(text);
+    for (const tag of extractJsxTags(text)) {
+      const pushTag = (rule: RuleId) =>
+        out.push({
+          file: rel,
+          rule,
+          line: tag.line,
+          excerpt: `<${tag.name} ${tag.attrs.trim().replace(/\s+/g, " ")}`.slice(
+            0,
+            120
+          ),
+        });
+      if (
+        /^[a-z]/.test(tag.name) &&
+        tag.name !== "abbr" &&
+        /\btitle=/.test(tag.attrs)
+      ) {
+        pushTag("native-tooltip");
+      }
+      if (
+        (tag.name === "a" || tag.name === "Link") &&
+        (/\bhref=["']#["']/.test(tag.attrs) ||
+          (/\bonClick=/.test(tag.attrs) && !/\bhref\s*=/.test(tag.attrs)))
+      ) {
+        pushTag("fake-link");
+      }
+      const isInput = tag.name === "input" || tag.name === "Input";
+      const isTextField =
+        isInput || tag.name === "textarea" || tag.name === "Textarea";
+      if (
+        isInput &&
+        NUMBER_FIELD_HINT_RE.test(tag.attrs) &&
+        !/\binputMode=/.test(tag.attrs) &&
+        // A non-text type (number, date, time...) already summons its own
+        // keyboard; only bare/text inputs need an explicit inputMode.
+        !/\btype=["'](?!text["'])/.test(tag.attrs)
+      ) {
+        pushTag("missing-inputmode");
+      }
+      if (
+        isInput &&
+        (IDENTITY_TYPE_RE.test(tag.attrs) || IDENTITY_NAME_RE.test(tag.attrs)) &&
+        !/\bautoComplete=/.test(tag.attrs)
+      ) {
+        pushTag("missing-autocomplete");
+      }
+      if (isTextField && SMALL_INPUT_TEXT_RE.test(tag.attrs)) {
+        pushTag("input-font-16");
+      }
+      if (!autofocusExempt && /\bautoFocus\b/.test(tag.attrs)) {
+        pushTag("page-autofocus");
+      }
+    }
+  }
+
+  /* Whole-file rules. */
+  if (!colorOnly) {
+    if (/\.tsx?$/.test(rel)) {
+      SWALLOWED_ERROR_RE.lastIndex = 0;
+      let sm = SWALLOWED_ERROR_RE.exec(text);
+      while (sm) {
+        out.push({
+          file: rel,
+          rule: "swallowed-error",
+          line: text.slice(0, sm.index).split("\n").length,
+          excerpt: sm[0].replace(/\s+/g, " ").slice(0, 120),
+        });
+        sm = SWALLOWED_ERROR_RE.exec(text);
+      }
+    }
+    if (/\.(?:tsx|css)$/.test(rel)) {
+      const motion = MOTION_TRIGGER_RE.exec(text);
+      if (motion && !REDUCED_MOTION_RE.test(text)) {
+        const line = text.slice(0, motion.index).split("\n").length;
+        out.push({
+          file: rel,
+          rule: "missing-reduced-motion",
+          line,
+          excerpt: (lines[line - 1] ?? "").trim().slice(0, 120),
+        });
       }
     }
   }
@@ -331,6 +647,25 @@ function main() {
     "native-confirm",
     "jargon-leak",
     "raw-photo-input",
+    "device-verb",
+    "dialog-dismiss-label",
+    "vague-confirm-label",
+    "generic-cta",
+    "title-case-label",
+    "exclamation-copy",
+    "generic-error",
+    "emoji-icon",
+    "native-tooltip",
+    "missing-inputmode",
+    "page-autofocus",
+    "input-font-16",
+    "missing-autocomplete",
+    "fake-link",
+    "window-alert-prompt",
+    "swallowed-error",
+    "unformatted-number",
+    "toast-duration",
+    "missing-reduced-motion",
   ];
   for (const rule of ALL_RULES) {
     knownRules.add(rule);
@@ -391,4 +726,8 @@ function main() {
   console.log("design-lint: OK");
 }
 
-main();
+// Run the tree scan only when executed as a script (pnpm lint:design, the
+// build). The .claude hooks import lintFile without triggering a full scan.
+if (process.argv[1]?.includes("design-lint")) {
+  main();
+}

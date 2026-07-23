@@ -106,6 +106,33 @@ export const SYSTEM_COPY_BANNED: readonly BannedPattern[] = [
       "Internal analysis phrasing shown raw to members (flaws TRN-24/TRN-29). Say what it means in plain words.",
   },
   {
+    id: "device-verb",
+    // Quoted, sentence-like strings only (must contain a space) — the
+    // standard false-positive fence, so onClick handlers and identifiers
+    // stay legal.
+    pattern:
+      /(["'`])(?=[^"'`]* )[^"'`]*\b(?:tap|taps|tapping|click|clicks|clicking|double-click)\b[^"'`]*\1/i,
+    reason:
+      "Device-agnostic verbs only: 'select' or 'choose', never 'tap' or 'click' (Microsoft Style Guide; S0 guardrails 2026-07-22). The copy can't know whether the member is on a phone or a desktop.",
+  },
+  {
+    id: "exclamation-copy",
+    // A word character, then "!", then end-of-word: sentence punctuation, not
+    // != / !== / non-null assertions. The lookbehind skips Tailwind's
+    // important suffix on hyphenated utilities ("text-primary-foreground!").
+    // Quoted sentence-shape guard as usual.
+    pattern: /(["'`])(?=[^"'`]* )[^"'`]*\w!(?<!-[a-z0-9]{1,40}!)(?![\w=!.])[^"'`]*\1/,
+    reason:
+      "No exclamation marks in system UI copy: calm, direct tone (canon 04 §134). Chad's chat voice is out of scope by owner law.",
+  },
+  {
+    id: "generic-error",
+    // Exactly or leading: the quote is immediately followed by the phrase.
+    pattern: /(["'`])(?:something went wrong|an error occurred)/i,
+    reason:
+      "Errors answer what happened and what to do next; 'Something went wrong' answers neither (canon 03 §44, NN/g error guidelines). Name what failed and the way forward.",
+  },
+  {
     id: "session-vocab",
     // Quoted, sentence-like strings only (must contain a space), so route
     // paths ("/workouts/active") and identifiers stay legal. The lookaround
