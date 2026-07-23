@@ -55,10 +55,20 @@ function Button({
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
     /**
-     * Pending-state contract (FIX-38): the label goes invisible but keeps its
-     * box (zero layout shift), a centered spinner overlays it, the button
-     * disables, and aria-busy announces the state. Not supported with
-     * asChild (Slot requires a single child).
+     * Pending-state contract (FIX-38, rewritten by S0c on the owner ruling of
+     * 2026-07-23 to match canon 03 §22): the label STAYS VISIBLE and a spinner
+     * joins it inline, the button disables, and aria-busy announces the state.
+     * Canon 03 §22: "a button doing async work keeps its label and adds a
+     * spinner; it never turns into a bare spinner. Replacing the label removes
+     * the context exactly when it matters." The workouts-feature `WButton`
+     * (components/workouts/v2/ui.tsx) renders the identical contract, so the
+     * app has ONE pending state, not two. Not supported with asChild (Slot
+     * requires a single child).
+     *
+     * Superseded: the original FIX-38 contract hid the label behind
+     * `opacity-0` and overlaid a centered spinner. That bought zero layout
+     * shift at the cost of telling a sighted member nothing about what was in
+     * flight; the canon prices the context higher than the shift.
      */
     loading?: boolean
   }) {
@@ -87,26 +97,13 @@ function Button({
       data-loading={loading || undefined}
       aria-busy={loading || undefined}
       disabled={disabled || loading}
-      className={cn(
-        loading && "relative",
-        buttonVariants({ variant, size, className })
-      )}
+      className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     >
-      {loading ? (
-        <>
-          {/* opacity (not visibility) keeps the label in the accessible name
-              while it yields its pixels to the spinner. */}
-          <span className="pointer-events-none inline-flex items-center gap-1.5 opacity-0">
-            {children}
-          </span>
-          <span className="absolute inset-0 flex items-center justify-center">
-            <Spinner />
-          </span>
-        </>
-      ) : (
-        children
-      )}
+      {/* Inline, ahead of the label, so the label keeps its pixels and the
+          member can still read what is in flight (canon 03 §22). */}
+      {loading && <Spinner />}
+      {children}
     </Comp>
   )
 }

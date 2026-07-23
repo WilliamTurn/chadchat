@@ -187,9 +187,16 @@ function Sidebar({
           showCloseButton={false}
           side="bottom"
         >
+          {/* S0c: the app's word for this panel is "menu" (see
+              nav/standalone-sidebar, chat/app-sidebar). The vendored defaults
+              said "Sidebar" / "Displays the mobile sidebar", which is layout
+              vocabulary a member never uses, is device-referential, and
+              contradicted the labels on the controls that open it. */}
           <SheetHeader className="sr-only">
-            <SheetTitle>Sidebar</SheetTitle>
-            <SheetDescription>Displays the mobile sidebar.</SheetDescription>
+            <SheetTitle>Menu</SheetTitle>
+            <SheetDescription>
+              Every section of the app, plus your chat history.
+            </SheetDescription>
           </SheetHeader>
           <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-sidebar-foreground/20" />
           {/* flex-1 + min-h-0 + overflow-hidden (not overflow-y-auto): the drawer
@@ -270,7 +277,10 @@ function SidebarTrigger({
       {...props}
     >
       <PanelLeftIcon />
-      <span className="sr-only">Toggle Sidebar</span>
+      {/* Sentence case, and the app's word for this panel (S0c). Call sites
+          that know which way the toggle goes override this with an
+          aria-label ("Open menu" / "Close menu"), which wins. */}
+      <span className="sr-only">Toggle menu</span>
     </Button>
   )
 }
@@ -289,14 +299,14 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
     >
       <button
         data-sidebar="rail"
-        aria-label="Toggle Sidebar"
+        aria-hidden
         tabIndex={-1}
         onClick={toggleSidebar}
         className="absolute inset-y-0 left-0 w-4 cursor-w-resize [[data-side=left][data-state=collapsed]_&]:cursor-e-resize"
         {...props}
       />
       <button
-        aria-label="Toggle Sidebar"
+        aria-hidden
         tabIndex={-1}
         onClick={toggleSidebar}
         className={cn(
@@ -305,7 +315,7 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
         )}
       />
       <button
-        aria-label="Toggle Sidebar"
+        aria-hidden
         tabIndex={-1}
         onClick={toggleSidebar}
         className={cn(

@@ -11,6 +11,7 @@ import {
   addCustomExercise,
   editCustomExercise,
   removeCustomExercise,
+  type WorkoutActionState,
 } from "@/app/workouts/actions";
 import {
   EQUIPMENT,
@@ -73,9 +74,25 @@ export function CustomExerciseForm({
       kind,
       notes: notes.trim() ? notes.trim() : null,
     };
-    const result = existing
-      ? await editCustomExercise({ id: existing.id, ...payload })
-      : await addCustomExercise(payload);
+    // D3 (S0c): the REFUSAL path (the action returns {ok:false}) was handled;
+    // the THROWN path was not. When the request itself fails - offline, a
+    // dropped connection, a 500 - the rejection escaped, setSaving(false)
+    // never ran, and the member was left with a Save button spinning forever
+    // and no error at all. Canon 03 error anatomy / copy.ts errors-keep-data:
+    // name what failed, say the typed values are kept, offer the retry. Every
+    // field is still in state and still on screen, so nothing is lost.
+    let result: WorkoutActionState;
+    try {
+      result = existing
+        ? await editCustomExercise({ id: existing.id, ...payload })
+        : await addCustomExercise(payload);
+    } catch {
+      setSaving(false);
+      toast.error("Couldn't save your exercise.", {
+        description: "Everything you entered is still here. Try again.",
+      });
+      return;
+    }
     setSaving(false);
     if (!result.ok) {
       toast.error(result.error ?? "Couldn't save that exercise.");
@@ -93,7 +110,18 @@ export function CustomExerciseForm({
       return;
     }
     setDeleting(true);
-    const result = await removeCustomExercise(existing.id);
+    // Same class as handleSave above (D3): a thrown request left the confirm
+    // dialog open with a permanently busy Delete button and no explanation.
+    let result: WorkoutActionState;
+    try {
+      result = await removeCustomExercise(existing.id);
+    } catch {
+      setDeleting(false);
+      toast.error("Couldn't delete your exercise.", {
+        description: "It is still in your exercises. Try again.",
+      });
+      return;
+    }
     setDeleting(false);
     setConfirmingDelete(false);
     if (!result.ok) {
@@ -101,7 +129,15 @@ export function CustomExerciseForm({
       return;
     }
     toast.success("Exercise deleted.");
-    router.push("/workouts/exercises");
+    // replace, not push, for the same reason handleSave uses it: a push left
+    // this edit page in history, one back-press from a screen that claims the
+    // exercise "isn't one of your custom exercises" seconds after the member
+    // deleted it. NOTE (S0c): this drops the edit entry only. If the member
+    // arrived list -> detail -> edit, back still reaches the detail page,
+    // which renders a bare "Exercise not found". Making those two states
+    // honest about a just-deleted record is owed work, reported in the S0c
+    // closing report.
+    router.replace("/workouts/exercises");
     router.refresh();
   }
 

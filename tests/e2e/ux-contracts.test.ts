@@ -239,6 +239,22 @@ for (const viewport of [PHONE, DESKTOP]) {
     await alert.getByRole("button", { name: "Cancel" }).click();
     await expect(alert).toHaveCount(0, { timeout: 10_000 });
 
+    // The workouts feature's OWN confirmation primitive
+    // (components/workouts/v2/confirm). It does not compose ui/confirm-undo,
+    // so until S0c fixtured it (defect D6) it was the one confirmation class
+    // in the app this contract could not see - and it is the dialog every
+    // destructive workout action goes through.
+    await page.getByTestId("open-workouts-confirm").click();
+    const workoutsAlert = page.getByRole("alertdialog");
+    await expect(workoutsAlert).toBeVisible({ timeout: 15_000 });
+    await assertDialogConventions(page, workoutsAlert, {
+      label: `workouts ConfirmDialog @ ${widthLabel}`,
+      confirmName: /^Delete exercise$/,
+      destructive: true,
+    });
+    await workoutsAlert.getByRole("button", { name: "Cancel" }).click();
+    await expect(workoutsAlert).toHaveCount(0, { timeout: 10_000 });
+
     // The short-form overlay. Non-destructive, so only the dismiss control,
     // the placement, and the focus rule apply.
     await page.getByTestId("open-quicklog").click();
@@ -547,54 +563,49 @@ test("a shared button reports itself busy within 100ms and re-enables when the w
 });
 
 /**
- * PINNED PRODUCT DEFECT - shared Button, pending state (S0b-2, canon 03 s22:
- * "A button doing async work keeps its label and adds a spinner - it never
- * turns into a bare spinner. Replacing the label removes the context exactly
- * when it matters.").
+ * Canon 03 s22: "A button doing async work keeps its label and adds a spinner
+ * - it never turns into a bare spinner. Replacing the label removes the
+ * context exactly when it matters."
  *
- * ui/button.tsx renders the busy state by setting the label span to
- * `opacity-0` and absolutely positioning a Spinner over it. The accessible
- * name survives (screen readers still hear "Save entry"), but a SIGHTED
- * member sees a bare spinner and loses the one piece of context that says
- * what is in flight. The workouts-feature WButton (components/workouts/v2/ui)
- * does it the canon way - label plus an inline spinner - so the two button
- * primitives currently disagree with each other.
- *
- * S0b-2 was authorized to gate, not to fix. Promote this to a plain test in
- * the change that fixes the primitive; Playwright fails the run the moment it
- * starts passing.
+ * Pinned by S0b-2 as a product defect (D1/D2): ui/button.tsx hid the label
+ * behind `opacity-0` and overlaid a centered Spinner, so a SIGHTED member saw
+ * a bare spinner and lost the one piece of context saying what was in flight,
+ * while the workouts-feature WButton did it the canon way but shipped no
+ * aria-busy. Each primitive had exactly the half the other was missing.
+ * Unified and promoted to a plain test by S0c on the owner ruling of
+ * 2026-07-23: BOTH primitives now keep the label, add an inline spinner, and
+ * set aria-busy.
  */
-test.fail(
-  "a shared button keeps its label visible while busy (canon 03 section 22)",
-  async ({ browser }) => {
-    const { context, page } = await openPage(browser);
-    await page.goto("/dev/fixtures/forms");
+test("a shared button keeps its label visible while busy (canon 03 section 22)", async ({
+  browser,
+}) => {
+  const { context, page } = await openPage(browser);
+  await page.goto("/dev/fixtures/forms");
 
-    const button = page
-      .getByTestId("buttons-live-demo")
-      .getByRole("button", { name: "Save entry" });
-    await expect(button).toBeVisible({ timeout: 30_000 });
-    await button.click();
-    await expect(button).toHaveAttribute("aria-busy", "true");
+  const button = page
+    .getByTestId("buttons-live-demo")
+    .getByRole("button", { name: "Save entry" });
+  await expect(button).toBeVisible({ timeout: 30_000 });
+  await button.click();
+  await expect(button).toHaveAttribute("aria-busy", "true");
 
-    // The label must still be READABLE, not merely present in the a11y tree.
-    const labelOpacity = await button.evaluate((el) => {
-      for (const span of el.querySelectorAll<HTMLElement>("span")) {
-        if ((span.textContent ?? "").trim() === "Save entry") {
-          return Number.parseFloat(getComputedStyle(span).opacity);
-        }
+  // The label must still be READABLE, not merely present in the a11y tree.
+  const labelOpacity = await button.evaluate((el) => {
+    for (const span of el.querySelectorAll<HTMLElement>("span")) {
+      if ((span.textContent ?? "").trim() === "Save entry") {
+        return Number.parseFloat(getComputedStyle(span).opacity);
       }
-      // No wrapper span means the label is rendered directly: fully visible.
-      return Number.parseFloat(getComputedStyle(el).opacity);
-    });
-    expect(
-      labelOpacity,
-      "the label must stay visible while the button is busy; a bare spinner drops the context"
-    ).toBeGreaterThan(0.5);
+    }
+    // No wrapper span means the label is rendered directly: fully visible.
+    return Number.parseFloat(getComputedStyle(el).opacity);
+  });
+  expect(
+    labelOpacity,
+    "the label must stay visible while the button is busy; a bare spinner drops the context"
+  ).toBeGreaterThan(0.5);
 
-    await context.close();
-  }
-);
+  await context.close();
+});
 
 /* --------------------------------------------------------------------------
  * 5. FOCUS CONTRACT (canon 01 keyboard and focus; canon 05).
@@ -678,6 +689,17 @@ for (const viewport of [PHONE, DESKTOP]) {
       overlay: () => page.getByRole("alertdialog"),
     });
 
+    // The workouts feature's own confirmation. It is hand-rolled rather than
+    // composed from a Radix primitive, so it gets none of the focus behavior
+    // for free - the S0c flow audit found it took no focus at all and let Tab
+    // walk straight through the scrim into the live page behind it. Gated
+    // here now that the fixture exists.
+    await assertFocusContract(page, {
+      label: `workouts ConfirmDialog @ ${widthLabel}`,
+      triggerTestId: "open-workouts-confirm",
+      overlay: () => page.getByRole("alertdialog"),
+    });
+
     // The read-mostly side sheet.
     await assertFocusContract(page, {
       label: `Sheet @ ${widthLabel}`,
@@ -716,7 +738,13 @@ test("a refused submit keeps every typed value, explains itself, and allows a re
 
   // Create it once so the second attempt is a genuine refusal.
   await page.goto("/workouts/exercises/new");
-  const nameField = page.getByPlaceholder("Enter the name of your exercise");
+  // `.first()` throughout this file's custom-exercise legs (S0c): a repeat
+  // `goto` to this route during a cold compile can transiently resolve to two
+  // copies of the field, which is a navigation artifact rather than the
+  // behavior under test. See the S0c closing report.
+  const nameField = page
+    .getByPlaceholder("Enter the name of your exercise")
+    .first();
   await expect(nameField).toBeVisible({ timeout: 30_000 });
   await nameField.fill(exerciseName);
   await page.getByRole("button", { name: "Save exercise" }).click();
@@ -769,54 +797,58 @@ test("a refused submit keeps every typed value, explains itself, and allows a re
 });
 
 /**
- * PINNED PRODUCT DEFECT - custom-exercise form, network failure (S0b-2,
- * canon 03 error anatomy; copy.ts `errors-keep-data`).
+ * Canon 03 error anatomy; copy.ts `errors-keep-data`.
  *
- * The refusal path above is handled: the action RETURNS {ok:false} and the
- * form toasts it. The THROWN path is not. `handleSave` in
- * components/workouts/v2/custom-exercise-form.tsx awaits the server action
- * with no try/catch, so when the request itself fails (offline, dropped
- * connection, a 500 from the action route) the rejection escapes,
- * `setSaving(false)` never runs, and the member is left with a Save button
- * spinning forever and no error at all - the exact opposite of the law.
- *
- * S0b-2 was authorized to gate, not to fix. Promote this to a plain test in
- * the change that wraps handleSave.
+ * The refusal path above was always handled: the action RETURNS {ok:false}
+ * and the form toasts it. The THROWN path was not - pinned by S0b-2 as
+ * defect D3. `handleSave` in components/workouts/v2/custom-exercise-form.tsx
+ * awaited the server action with no try/catch, so when the request itself
+ * failed (offline, dropped connection, a 500 from the action route) the
+ * rejection escaped, `setSaving(false)` never ran, and the member was left
+ * with a Save button spinning forever and no error at all. S0c wrapped both
+ * of the form's async handlers and promoted this to a plain test.
  */
-test.fail(
-  "a submit that fails on the network still explains itself and allows a retry (canon 03)",
-  async ({ browser }) => {
-    const { context, page } = await openPage(browser, { authed: true });
+test("a submit that fails on the network still explains itself and allows a retry (canon 03)", async ({
+  browser,
+}) => {
+  const { context, page } = await openPage(browser, { authed: true });
 
-    await page.goto("/workouts/exercises/new");
-    const nameField = page.getByPlaceholder("Enter the name of your exercise");
-    await expect(nameField).toBeVisible({ timeout: 30_000 });
-    await nameField.fill(`Offline Lift ${Date.now()}`);
+  await page.goto("/workouts/exercises/new");
+  const nameField = page
+    .getByPlaceholder("Enter the name of your exercise")
+    .first();
+  await expect(nameField).toBeVisible({ timeout: 30_000 });
+  const typedName = `Offline Lift ${Date.now()}`;
+  await nameField.fill(typedName);
 
-    // Kill only the server-action POST, leaving navigation and assets alone.
-    await page.route("**/workouts/exercises/new*", async (route) => {
-      if (route.request().method() === "POST") {
-        await route.abort("failed");
-        return;
-      }
-      await route.fallback();
-    });
+  // Kill only the server-action POST, leaving navigation and assets alone.
+  await page.route("**/workouts/exercises/new*", async (route) => {
+    if (route.request().method() === "POST") {
+      await route.abort("failed");
+      return;
+    }
+    await route.fallback();
+  });
 
-    const save = page.getByRole("button", { name: "Save exercise" });
-    await save.click();
+  const save = page.getByRole("button", { name: "Save exercise" });
+  await save.click();
 
-    await expect(
-      page.locator("[data-sonner-toast]").first(),
-      "a failed request must tell the member it failed"
-    ).toBeVisible({ timeout: 20_000 });
-    await expect(
-      save,
-      "the member cannot retry: the submit control never re-enabled"
-    ).toBeEnabled({ timeout: 20_000 });
+  await expect(
+    page.locator("[data-sonner-toast]").first(),
+    "a failed request must tell the member it failed"
+  ).toBeVisible({ timeout: 20_000 });
+  await expect(
+    save,
+    "the member cannot retry: the submit control never re-enabled"
+  ).toBeEnabled({ timeout: 20_000 });
+  // And the law's other half: the typed value survived the failure.
+  await expect(
+    nameField,
+    "the failed request lost the member's typed name"
+  ).toHaveValue(typedName);
 
-    await context.close();
-  }
-);
+  await context.close();
+});
 
 /* --------------------------------------------------------------------------
  * 7. URL STATE (canon 02 section 5).
@@ -996,7 +1028,9 @@ test.fail(
     const draftName = `Draft Lift ${Date.now()}`;
 
     await page.goto("/workouts/exercises/new");
-    const nameField = page.getByPlaceholder("Enter the name of your exercise");
+    const nameField = page
+      .getByPlaceholder("Enter the name of your exercise")
+      .first();
     await expect(nameField).toBeVisible({ timeout: 30_000 });
     await nameField.fill(draftName);
     await page
@@ -1008,7 +1042,7 @@ test.fail(
     await page.goto("/workouts/exercises/new", { waitUntil: "load" });
 
     await expect(
-      page.getByPlaceholder("Enter the name of your exercise"),
+      page.getByPlaceholder("Enter the name of your exercise").first(),
       "the form lost the member's typing when they navigated away"
     ).toHaveValue(draftName, { timeout: 30_000 });
 

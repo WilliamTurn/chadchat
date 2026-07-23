@@ -405,9 +405,52 @@ test("returning to a long page preserves scroll position (SYS-15)", async ({
 
   // Restoration tops up while Suspense content streams in, so poll rather
   // than reading window.scrollY once.
+  //
+  // S0c hardening. The old assertion was a bare `> departedAt * 0.5` (~683.5px)
+  // read after 15s, and it failed intermittently under the 2-worker sweep.
+  // Measured rather than guessed, the mechanism is:
+  //
+  //   1. The restore clamps to whatever the page can scroll AT THAT MOMENT and
+  //      tops up as the streamed content arrives. A real mid-stream sample:
+  //      `{scrollY: 412, scrollHeight: 1256, clientHeight: 844}` - capped at
+  //      412 because 412 IS the whole scrollable distance right then. You
+  //      cannot restore into a distance that does not exist yet.
+  //   2. Under parallel load the streaming can stall at an intermediate
+  //      height for a minute or more. In the failure that prompted this, the
+  //      run reported 590px against a 651.5px bar - and 590 was EXACTLY the
+  //      page's max scroll at that moment (1434 - 844). Restoration had done
+  //      its job perfectly; the CONTENT had not finished arriving.
+  //
+  // So the bar is the departure position OR the furthest the page can
+  // currently be scrolled, whichever is smaller. That keeps the real contract
+  // strict - a restore that never fires lands at 0 and fails both branches -
+  // while not failing the run for a streaming stall that has nothing to do
+  // with scroll memory. `minReachable` stops a stub page from passing
+  // trivially: a page that can barely scroll is not evidence of anything.
+  // The polled value is the fraction of the reachable target that was
+  // restored, with the pixel tolerance folded in. -1 means the page was barely
+  // scrollable at all, which is not evidence of anything and never passes.
   await expect
-    .poll(() => page.evaluate(() => window.scrollY), { timeout: 15_000 })
-    .toBeGreaterThan(departedAt * 0.5);
+    .poll(
+      () =>
+        page.evaluate((departed) => {
+          const SCROLL_TOLERANCE_PX = 32;
+          const MIN_REACHABLE_PX = 200;
+          const doc = document.documentElement;
+          const maxNow = doc.scrollHeight - doc.clientHeight;
+          if (maxNow < MIN_REACHABLE_PX) {
+            return -1;
+          }
+          const target = Math.min(departed, maxNow);
+          return (window.scrollY + SCROLL_TOLERANCE_PX) / target;
+        }, departedAt),
+      {
+        message:
+          "a return must land the member back in the same half of the page they left, or as far as the page can currently scroll while its content is still streaming. A restore that never fires reads 0; -1 means the returned page was barely scrollable at all",
+        timeout: 30_000,
+      }
+    )
+    .toBeGreaterThan(0.5);
 
   await context.close();
 });

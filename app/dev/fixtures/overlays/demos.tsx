@@ -29,6 +29,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { ConfirmDialog as WorkoutsConfirmDialog } from "@/components/workouts/v2/confirm";
 import { formatQuantity, formatVsTarget } from "@/lib/contracts/units";
 
 /**
@@ -217,6 +218,49 @@ export function ConfirmDemo({ autoOpen = false }: { autoOpen?: boolean }) {
         </Button>
       }
     />
+  );
+}
+
+/**
+ * The workouts feature's own confirmation primitive
+ * (components/workouts/v2/confirm.tsx). It does NOT compose
+ * ui/confirm-undo, so before S0c it sat outside the shared dialog-conventions
+ * contract entirely (S0b-2 defect D6) even though it is the confirmation every
+ * destructive workout action goes through. Fixtured here so contract 1 gates
+ * its dismiss label, confirm placement, destructive variant, and default
+ * focus for free.
+ */
+export function WorkoutsConfirmDemo({ autoOpen = false }: { autoOpen?: boolean }) {
+  const [open, setOpen] = React.useState(autoOpen);
+  const [busy, setBusy] = React.useState(false);
+
+  return (
+    <>
+      <Button
+        className="min-h-11 sm:min-h-9"
+        data-testid="open-workouts-confirm"
+        onClick={() => setOpen(true)}
+        variant="outline"
+      >
+        Delete exercise
+      </Button>
+      <WorkoutsConfirmDialog
+        body='It will no longer appear in your exercise picker. Workouts you already logged with it stay in your history.'
+        busy={busy}
+        confirmLabel="Delete exercise"
+        destructive
+        onCancel={() => setOpen(false)}
+        onConfirm={async () => {
+          setBusy(true);
+          await new Promise((resolve) => setTimeout(resolve, 600));
+          setBusy(false);
+          setOpen(false);
+          toastReceipt('"Sled push" deleted from your exercises.');
+        }}
+        open={open}
+        title='Delete "Sled push"?'
+      />
+    </>
   );
 }
 

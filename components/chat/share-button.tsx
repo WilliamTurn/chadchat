@@ -73,7 +73,7 @@ export function ShareButton({
       toast.success("Link copied to clipboard.");
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error("Couldn't copy — copy it manually.");
+      toast.error("Couldn't copy the link. Select it and copy it manually.");
     }
   }
 
@@ -157,8 +157,8 @@ export function ShareButton({
           </div>
         ) : (
           <p className="text-muted-foreground text-sm">
-            Send Chad a message first — you can share the conversation once it
-            has something in it.
+            Send Chad a message first. You can share this chat once it has
+            something in it.
           </p>
         )}
       </DialogContent>

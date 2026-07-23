@@ -326,7 +326,15 @@ function PureMultimodalInput({
       {/* The empty-state example prompts moved into the Greeting hero (CHT-1)
           — see components/chat/greeting.tsx. */}
 
+      {/* D5 (S0c): axe flagged this as a form control with no programmatic
+          label (critical). It is opened by the paperclip button rather than
+          reached directly, but it is still in the accessibility tree, so it
+          gets a real name instead of being announced as an unlabeled input.
+          It carries the SAME name as the paperclip that opens it: they are one
+          affordance, and two names for one concept reads as two things
+          (canon 04 §132). */}
       <input
+        aria-label="Add a photo"
         className="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0"
         multiple
         onChange={handleFileChange}
@@ -519,12 +527,18 @@ function PureAttachmentsButton({
           : "text-muted-foreground/30",
         hasVision ? "" : "cursor-not-allowed"
       )}
+      // D5 (S0c): icon-only paperclip, announced as a bare "button" (axe
+      // button-name, critical). "Add a photo" is the app's existing photo
+      // affordance wording (kitchen-form, progress/log-entry-form).
+      aria-label="Add a photo"
       data-testid="attachments-button"
       disabled={status !== "ready" || !hasVision}
       onClick={(event) => {
         event.preventDefault();
         if (!photoAnalysis) {
-          toast.info("Photos are a Chad Pro feature — upgrade to send Chad a photo.");
+          toast.info(
+            "Photos are a Chad Pro feature. Upgrade to send Chad a photo."
+          );
           return;
         }
         fileInputRef.current?.click();

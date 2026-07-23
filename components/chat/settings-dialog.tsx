@@ -105,8 +105,8 @@ export function SettingsDialog({
               <div>
                 <h3 className="font-medium text-sm">Chad's memory</h3>
                 <p className="mt-1 text-muted-foreground text-sm">
-                  Let Chad remember you across chats — your stats, goals, plan,
-                  and progress — so every new chat picks up where you left off.{" "}
+                  Let Chad remember you across chats: your stats, goals, plan,
+                  and progress. Every new chat picks up where you left off.{" "}
                   <span className="text-foreground">
                     Recommended for best results.
                   </span>

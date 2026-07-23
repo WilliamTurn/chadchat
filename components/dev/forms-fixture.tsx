@@ -482,7 +482,7 @@ function ButtonsSection() {
   return (
     <section className="space-y-4" data-testid="section-buttons">
       <SectionHeader
-        description="Every button ships default, hover, focus-visible, loading, and disabled states. Loading keeps the button's exact size (the label yields to a centered spinner), disables it, and sets aria-busy; no form hand-rolls its own pending state."
+        description="Every button ships default, hover, focus-visible, loading, and disabled states. Loading keeps the label readable and adds an inline spinner (canon 03 §22), disables the button, and sets aria-busy; no form hand-rolls its own pending state."
         title="Button states"
       />
       <div className="space-y-3">
@@ -526,7 +526,8 @@ function ButtonsSection() {
             Save entry
           </Button>
           <p className="text-muted-foreground text-body-sm">
-            Click to run the 2 second pending demo. Width must not change.
+            Select to run the 2 second pending demo. The label must stay
+            readable and the spinner joins it inline (canon 03 §22).
           </p>
         </div>
       </div>

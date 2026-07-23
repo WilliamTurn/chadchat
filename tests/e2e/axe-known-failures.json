@@ -4,20 +4,6 @@
   "entries": [
     {
       "surface": "/",
-      "rule": "button-name",
-      "impact": "critical",
-      "widths": [
-        320,
-        360,
-        384,
-        390,
-        768,
-        1280
-      ],
-      "reason": "Critical: buttons with no discernible text (up to 3 nodes) - icon-only controls missing an accessible name. Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
-    },
-    {
-      "surface": "/",
       "rule": "color-contrast",
       "impact": "serious",
       "widths": [
@@ -29,30 +15,6 @@
         1280
       ],
       "reason": "Serious contrast failures (up to 3 nodes) at every width. Text and control colors come from the ds.css tokens, so this is ONE token-level fix across the app rather than a per-page repair; pinning per surface keeps the ratchet honest about which screens still carry it. Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
-    },
-    {
-      "surface": "/",
-      "rule": "label",
-      "impact": "critical",
-      "widths": [
-        320,
-        360,
-        384,
-        390,
-        768,
-        1280
-      ],
-      "reason": "Critical: form elements with no programmatic label (up to 1 nodes), so a screen-reader member hears an unnamed control and cannot tell what it sets. Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
-    },
-    {
-      "surface": "/",
-      "rule": "link-name",
-      "impact": "serious",
-      "widths": [
-        768,
-        1280
-      ],
-      "reason": "Serious: links with no discernible text (up to 1 nodes), so they are announced as bare \"link\". Pre-existing; found by the S0b-2 axe sweep 2026-07-22, which changed no product code."
     },
     {
       "surface": "/account",
