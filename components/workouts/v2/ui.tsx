@@ -11,7 +11,13 @@ import type { ButtonHTMLAttributes, ReactNode, Ref } from "react";
 // Buttons
 // ---------------------------------------------------------------------------
 
-type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "success";
+type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "ghost"
+  | "danger"
+  | "success"
+  | "start";
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   // RC-3 (Q-C): a primary CTA BEGINS or ADVANCES something (start / finish /
@@ -27,6 +33,12 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
     "bg-transparent text-blood border border-blood/40 font-semibold hover:bg-blood/10 active:scale-[0.98]",
   success:
     "bg-emerald-500 text-white font-bold hover:brightness-110 active:scale-[0.98]",
+  // S3: mid-emphasis start action (filled-tonal go-green). Per-card actions
+  // repeat down a grid, so they can't all take the full-emphasis primary fill
+  // (canon 04 §50 / 01 §9: one filled button per view). Green stays because
+  // green = start/save (owner color rule 2026-07-19); only the weight drops.
+  start:
+    "bg-[var(--go)]/12 text-[var(--go)] border border-[var(--go)]/25 font-semibold hover:bg-[var(--go)]/18 active:scale-98",
 };
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

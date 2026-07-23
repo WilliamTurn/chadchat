@@ -6,7 +6,6 @@
 
 import {
   ChevronRight,
-  Flame,
   Pencil,
   Play,
   Plus,
@@ -215,6 +214,10 @@ function TemplateCard({
         </p>
       )}
 
+      {/* S3: per-card starts repeat down the grid, so they take the shared
+          mid-emphasis "start" variant at md, label-only (Hevy's card button
+          is label-only); the full-emphasis primary fill can't repeat
+          per card (canon 04 §50). */}
       <div className="mt-auto pt-4">
         <WButton
           className="w-full"
@@ -223,10 +226,8 @@ function TemplateCard({
             startSession(sessionFromTemplate(template, lastSets, unit));
             router.push("/workouts/active");
           }}
-          size="lg"
-          variant="primary"
+          variant="start"
         >
-          <Play aria-hidden className="size-5 fill-current" />
           {busy
             ? "Finish your current workout first"
             : `Start ${template.name}`}
@@ -422,14 +423,15 @@ export function ChadPlanSection({
                   {day.exercises.length === 1 ? "exercise" : "exercises"}
                 </Pill>
               </div>
+              {/* Same action as the template cards, same treatment (one
+                  action, one look; canon 01 §10). */}
               <div className="mt-auto pt-4">
                 <WButton
                   className="w-full"
                   disabled={busy}
                   onClick={() => startDay(day)}
-                  size="lg"
+                  variant="start"
                 >
-                  <Play aria-hidden className="size-5" />
                   {busy
                     ? "Finish your current workout first"
                     : `Start ${day.name}`}
@@ -502,7 +504,6 @@ export function LogCardioSection() {
           onClick={() => router.push("/workouts/cardio")}
           size="lg"
         >
-          <Flame aria-hidden className="size-5" />
           Log cardio
         </WButton>
       </WCard>
@@ -538,8 +539,8 @@ export function StartEmptySection({ unit }: { unit: WeightUnit }) {
             router.push("/workouts/active");
           }}
           size="lg"
+          variant="start"
         >
-          <Play aria-hidden className="size-5" />
           {busy
             ? "Finish your current workout first"
             : "Start an empty workout"}
