@@ -80,7 +80,7 @@ const SEED_NAMES = [
   "Lateral Raise",
 ];
 
-function seedStateScript(weights: number[][] = []) {
+function seedStateScript(weights: [number, number][][] = []) {
   const exercises = SEED_NAMES.map((name, i) => ({
     id: `wex-${i}`,
     name,
@@ -124,7 +124,7 @@ function seedStateScript(weights: number[][] = []) {
   )})`;
 }
 
-async function seedAndOpen(page: Page, weights?: number[][]) {
+async function seedAndOpen(page: Page, weights?: [number, number][][]) {
   await page.goto("/workouts");
   await page.evaluate(seedStateScript(weights));
   await page.goto("/workouts/active");

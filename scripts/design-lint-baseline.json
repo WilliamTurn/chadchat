@@ -471,7 +471,6 @@
   "components/workouts/v2/progress-chart.tsx::unformatted-number": 2,
   "components/workouts/v2/session-player.tsx::arbitrary-utility": 53,
   "components/workouts/v2/session-player.tsx::banned-copy": 1,
-  "components/workouts/v2/session-player.tsx::device-verb": 1,
   "components/workouts/v2/session-player.tsx::dialog-form-overload": 1,
   "components/workouts/v2/session-player.tsx::missing-reduced-motion": 1,
   "components/workouts/v2/session-player.tsx::native-tooltip": 1,

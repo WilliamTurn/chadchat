@@ -316,8 +316,11 @@ function SetRow({
               : `${previous.weight != null ? formatWeight(previous.weight) : "-"}×${previous.reps ?? "-"}`}
           </button>
         ) : (
-          <span className="text-center text-[13px] text-muted-foreground/50">
-            .{" "}
+          <span
+            aria-hidden
+            className="text-center text-[13px] text-muted-foreground/50"
+          >
+            -
           </span>
         )}
 
@@ -408,7 +411,7 @@ function SetRow({
         footer={
           wex.equipment === "barbell" && set.weight && unit === "lb" ? (
             <div className="mt-3 rounded-xl bg-background px-3.5 py-3">
-              <div className="font-semibold text-[12px] text-muted-foreground uppercase tracking-wide">
+              <div className="font-semibold text-[12px] text-muted-foreground">
                 Plate math for {formatWeight(set.weight)} lb
               </div>
               <div className="mt-1 font-mono text-[14px] text-foreground">
@@ -634,7 +637,10 @@ function ExerciseCard({
             )}
           </div>
         </div>
-        <div className="flex shrink-0 items-center">
+        {/* gap-2 keeps the two 44px hit areas from touching (canon 01 §112:
+            adjacent targets need spacing; a reorder reach must not open the
+            menu). */}
+        <div className="flex shrink-0 items-center gap-2">
           {/* Drag handle (S5 #2): the one drag surface, so the card's inputs
               never fight the gesture. Keyboard path: space lifts, arrows
               move, space drops (the dnd keyboard sensor). Hidden when there
@@ -841,6 +847,48 @@ export function SessionPlayer({
       reorderSessionExercise(String(active.id), to);
     }
   }
+
+  // Screen-reader narration for the reorder drag, in product language: the
+  // dnd library's defaults read out internal ids ("Draggable item wex-1..."),
+  // which is member-facing jargon (flow audit F-3).
+  const exerciseName = (id: unknown) =>
+    session?.exercises.find((x) => x.id === id)?.name ?? "the exercise";
+  const exercisePosition = (id: unknown) => {
+    const i = session?.exercises.findIndex((x) => x.id === id) ?? -1;
+    return i === -1 ? "" : `, position ${i + 1} of ${session?.exercises.length}`;
+  };
+  const dragAccessibility = {
+    screenReaderInstructions: {
+      draggable:
+        "To reorder, press space to pick up the exercise, use the arrow keys to move it, and press space again to drop it. Press escape to cancel.",
+    },
+    announcements: {
+      onDragStart: ({ active }: { active: { id: unknown } }) =>
+        `Picked up ${exerciseName(active.id)}${exercisePosition(active.id)}.`,
+      onDragOver: ({
+        active,
+        over,
+      }: {
+        active: { id: unknown };
+        over: { id: unknown } | null;
+      }) =>
+        over
+          ? `${exerciseName(active.id)} is over${exercisePosition(over.id)}.`
+          : `${exerciseName(active.id)} is not over a drop position.`,
+      onDragEnd: ({
+        active,
+        over,
+      }: {
+        active: { id: unknown };
+        over: { id: unknown } | null;
+      }) =>
+        over
+          ? `${exerciseName(active.id)} dropped${exercisePosition(over.id)}.`
+          : `${exerciseName(active.id)} dropped, order unchanged.`,
+      onDragCancel: ({ active }: { active: { id: unknown } }) =>
+        `Reorder cancelled. ${exerciseName(active.id)} returned to its position.`,
+    },
+  };
 
   const [renaming, setRenaming] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
@@ -1049,7 +1097,7 @@ export function SessionPlayer({
     const payload = serializeSession(sessionForSave, durationSeconds);
     if (!payload) {
       toast.error(
-        "Nothing is checked off yet. Check your sets, or tick “Mark all unchecked sets as done”."
+        "Nothing is checked off yet. Check off your sets, or turn on “Mark all unchecked sets as done”."
       );
       return;
     }
@@ -1306,7 +1354,7 @@ export function SessionPlayer({
           {doneSets > 0 && (
             <WButton
               aria-label="Unmark every set in this workout"
-              className="gap-1.5"
+              className="min-h-11 gap-1.5"
               onClick={() => uncompleteAllSets()}
               size="sm"
               variant="ghost"
@@ -1318,7 +1366,7 @@ export function SessionPlayer({
           {uncheckedSets > 0 && (
             <WButton
               aria-label="Mark every set in this workout as done"
-              className="gap-1.5"
+              className="min-h-11 gap-1.5"
               onClick={() =>
                 completeAllSets(
                   collectRemainingPRs(
@@ -1366,6 +1414,7 @@ export function SessionPlayer({
            sortable context: dragging a card re-slots it live, at any
            distance, in one gesture. */
         <DndContext
+          accessibility={dragAccessibility}
           collisionDetection={closestCenter}
           onDragEnd={handleReorderEnd}
           sensors={dragSensors}
@@ -1556,7 +1605,7 @@ export function SessionPlayer({
                 {uncheckedSets === 1 ? "set" : "sets"} as done
               </span>
               <span className="mt-0.5 block text-[12.5px] text-muted-foreground leading-relaxed">
-                Did the work but didn't tap every checkmark? This saves every
+                Did the work but didn't check off every set? This saves every
                 remaining set with the weights and reps already shown.
               </span>
             </span>
