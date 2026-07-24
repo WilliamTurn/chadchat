@@ -110,6 +110,7 @@ function SessionMiniBar() {
 
 function RestTimerDock() {
   const { session, restTimer, adjustRest, skipRest } = useWorkouts();
+  const pathname = usePathname();
   const now = useNowTick();
 
   const remaining = restTimer ? Math.ceil((restTimer.endsAt - now) / 1000) : 0;
@@ -140,7 +141,12 @@ function RestTimerDock() {
     return null;
   })();
 
-  if (!restTimer) {
+  // Not on the finish step (W1): it is the commit surface, so a countdown
+  // prompting the next set contradicts the task, and the dock's tab-bar
+  // anchoring would slide under the step's taller pinned save bar
+  // (composition canon 08 §58: pinned elements displace, never overlap).
+  // The rest state itself survives; going back to the player revives it.
+  if (!restTimer || pathname.startsWith("/workouts/active/finish")) {
     return null;
   }
 

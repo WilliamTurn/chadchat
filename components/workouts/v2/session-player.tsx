@@ -52,18 +52,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
-import { toast } from "sonner";
-import { saveWorkout } from "@/app/workouts/actions";
-import { Input } from "@/components/ui/input";
-import type { TemplateExercise } from "@/lib/validation/workout-templates";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { LastExerciseLog, PrBaseline } from "@/lib/workouts/stats";
 import { exerciseSlug } from "./catalog";
 import { ConfirmDialog } from "./confirm";
@@ -77,10 +66,10 @@ import {
   sessionVolumeLb,
   weightMeaning,
 } from "./format";
-import { detectPRs, serializeSession } from "./session-factory";
+import { detectPRs } from "./session-factory";
 import { ActionSheet, type SheetAction } from "./sheet";
 import { primeStartCues, StartCountdown } from "./start-countdown";
-import { persistSessionCleared, useWorkouts } from "./store";
+import { useWorkouts } from "./store";
 import type { PRKind, SessionExercise, SessionSet } from "./types";
 import {
   REST_OPTIONS,
@@ -610,26 +599,26 @@ function ExerciseCard({
               <h3 className="truncate font-bold text-[17px] text-foreground">
                 {wex.name}
               </h3>
-            {/* All-done marker: a quiet check, not a green disc (S5 green
+              {/* All-done marker: a quiet check, not a green disc (S5 green
                 audit: on this page only a checked set reads green). */}
-            {allDone && (
-              <Check
-                aria-hidden
-                className="size-4 shrink-0 text-muted-foreground"
-                strokeWidth={3}
-              />
-            )}
-          </div>
-          <p className="mt-0.5 text-[12.5px] text-muted-foreground">
-            {weightMeaning(wex.equipment, wex.kind, unit)} · Rest{" "}
-            {wex.restSeconds === 0 ? "off" : restLabel}
-          </p>
-          {wex.targetLabel && (
+              {allDone && (
+                <Check
+                  aria-hidden
+                  className="size-4 shrink-0 text-muted-foreground"
+                  strokeWidth={3}
+                />
+              )}
+            </div>
             <p className="mt-0.5 text-[12.5px] text-muted-foreground">
-              <span className="font-semibold text-foreground">Plan:</span>{" "}
-              {wex.targetLabel}
+              {weightMeaning(wex.equipment, wex.kind, unit)} · Rest{" "}
+              {wex.restSeconds === 0 ? "off" : restLabel}
             </p>
-          )}
+            {wex.targetLabel && (
+              <p className="mt-0.5 text-[12.5px] text-muted-foreground">
+                <span className="font-semibold text-foreground">Plan:</span>{" "}
+                {wex.targetLabel}
+              </p>
+            )}
             {wex.note && (
               <p className="mt-1 rounded-lg bg-muted/50 px-2 py-1 text-[12.5px] text-muted-foreground">
                 {wex.note}
@@ -783,15 +772,6 @@ function ExerciseCard({
   );
 }
 
-/** Parse the Finish dialog's duration fields into clamped seconds (0 to 24h). */
-function draftDurationSeconds(draft: { min: string; sec: string }): number {
-  const min = Number.parseInt(draft.min, 10);
-  const sec = Number.parseInt(draft.sec, 10);
-  const total =
-    (Number.isNaN(min) ? 0 : min) * 60 + (Number.isNaN(sec) ? 0 : sec);
-  return Math.min(Math.max(total, 0), 86_400);
-}
-
 // ---------------------------------------------------------------------------
 // The player
 // ---------------------------------------------------------------------------
@@ -799,11 +779,9 @@ function draftDurationSeconds(draft: { min: string; sec: string }): number {
 export function SessionPlayer({
   lastSets,
   prBaseline,
-  templates,
 }: {
   lastSets: Record<string, LastExerciseLog>;
   prBaseline: Record<string, PrBaseline>;
-  templates: { id: string; name: string; exercises: TemplateExercise[] }[];
 }) {
   const {
     session,
@@ -811,14 +789,12 @@ export function SessionPlayer({
     completeAllSets,
     uncompleteAllSets,
     renameSession,
-    setSessionNotes,
     timerPlay,
     timerPause,
     timerReset,
     timerStartCountdown,
     timerFinishCountdown,
     timerCancelCountdown,
-    clearSession,
     discardSession,
     reorderSessionExercise,
   } = useWorkouts();
@@ -855,7 +831,9 @@ export function SessionPlayer({
     session?.exercises.find((x) => x.id === id)?.name ?? "the exercise";
   const exercisePosition = (id: unknown) => {
     const i = session?.exercises.findIndex((x) => x.id === id) ?? -1;
-    return i === -1 ? "" : `, position ${i + 1} of ${session?.exercises.length}`;
+    return i === -1
+      ? ""
+      : `, position ${i + 1} of ${session?.exercises.length}`;
   };
   const dragAccessibility = {
     screenReaderInstructions: {
@@ -892,41 +870,9 @@ export function SessionPlayer({
 
   const [renaming, setRenaming] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
-  const [finishing, setFinishing] = useState(false);
-  const [alsoUpdateTemplate, setAlsoUpdateTemplate] = useState(false);
-  const [completeRemaining, setCompleteRemaining] = useState(false);
-  // The finish save runs inside a transition: React requires server
-  // functions called from event handlers to run in one (S2 logged the
-  // useActionState warning against S1's plain-async version), and the
-  // pending flag then also holds the dialog busy until the complete page's
-  // navigation commits.
-  const [saving, startFinishTransition] = useTransition();
   const [discarding, setDiscarding] = useState(false);
   const [prToast, setPrToast] = useState<string | null>(null);
-  // Duration shown in the Finish dialog, frozen when the dialog opens so what
-  // the member reads is exactly what gets saved. Editable: people who get
-  // interrupted mid-workout shouldn't be forced to log a wrongly-timed session.
-  const [durationDraft, setDurationDraft] = useState({ min: "", sec: "" });
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Finish-flash fix: the session is cleared on UNMOUNT (after the complete
-  // page's navigation commits), never before router.push, so the player can't
-  // re-render into its "No workout is running" branch while the complete page
-  // is still server-rendering. The dispatch is deferred to a microtask: fired
-  // synchronously from the cleanup it lands MID-commit and re-renders the
-  // outgoing player with a null session (the flash this fix exists to kill);
-  // a microtask runs after the commit but before the browser paints, so the
-  // mini bar can't flash on the complete page either.
-  const clearOnUnmount = useRef(false);
-  const clearSessionRef = useRef(clearSession);
-  clearSessionRef.current = clearSession;
-  useLayoutEffect(
-    () => () => {
-      if (clearOnUnmount.current) {
-        queueMicrotask(() => clearSessionRef.current());
-      }
-    },
-    []
-  );
 
   // Start countdown (S4). `begunFlash` keeps the overlay up for the brief
   // "Go" moment after the clock has already started. Leaving the player
@@ -989,45 +935,6 @@ export function SessionPlayer({
     : 0;
   const uncheckedSets = totalSets - doneSets;
 
-  // Did today's structure drift from the source template? (Hevy's rule:
-  // only structural changes prompt; weights/reps never do.)
-  const sourceTemplate = useMemo(
-    () =>
-      session?.templateId
-        ? (templates.find((t) => t.id === session.templateId) ?? null)
-        : null,
-    [session?.templateId, templates]
-  );
-  const structureChanged = useMemo(() => {
-    if (!(session && sourceTemplate)) {
-      return false;
-    }
-    const planned = sourceTemplate.exercises.map((e) =>
-      e.name.trim().toLowerCase()
-    );
-    const actual = session.exercises
-      .filter((ex) => ex.sets.some((s) => s.completed))
-      .map((ex) => ex.name.trim().toLowerCase());
-    if (planned.join("|") !== actual.join("|")) {
-      return true;
-    }
-    for (const ex of session.exercises) {
-      const planEx = sourceTemplate.exercises.find(
-        (e) => e.name.trim().toLowerCase() === ex.name.trim().toLowerCase()
-      );
-      if (!planEx) {
-        continue;
-      }
-      const workingDone = ex.sets.filter(
-        (s) => s.completed && s.type !== "warmup"
-      ).length;
-      if (workingDone > 0 && workingDone !== planEx.targetSets) {
-        return true;
-      }
-    }
-    return false;
-  }, [session, sourceTemplate]);
-
   function showPR(message: string) {
     setPrToast(message);
     if (toastTimer.current) {
@@ -1073,87 +980,6 @@ export function SessionPlayer({
   const elapsed = timerElapsedSeconds(session.timer, now);
   const timerStarted = session.timer.running || elapsed > 0;
 
-  function handleFinishConfirmed() {
-    if (!session || saving) {
-      return;
-    }
-    // "Mark all unchecked sets as done" (owner s181): a lifter who did the
-    // work without tapping each checkmark saves everything in one go. Applied
-    // to a local copy so the payload is built from the completed state.
-    const sessionForSave = completeRemaining
-      ? {
-          ...session,
-          exercises: session.exercises.map((ex) => ({
-            ...ex,
-            sets: ex.sets.map((set) =>
-              set.completed ? set : { ...set, completed: true }
-            ),
-          })),
-        }
-      : session;
-    // The corrected duration also corrects the calorie estimate: duration is
-    // an input to the saved workout's energy computation.
-    const durationSeconds = draftDurationSeconds(durationDraft);
-    const payload = serializeSession(sessionForSave, durationSeconds);
-    if (!payload) {
-      toast.error(
-        "Nothing is checked off yet. Check off your sets, or turn on “Mark all unchecked sets as done”."
-      );
-      return;
-    }
-    startFinishTransition(async () => {
-      // Also rewrite the source template to match today's session, if asked.
-      if (alsoUpdateTemplate && sourceTemplate) {
-        const { saveTemplate } = await import("@/app/workouts/actions");
-        await saveTemplate({
-          id: sourceTemplate.id,
-          name: sourceTemplate.name,
-          exercises: sessionForSave.exercises
-            .filter((ex) => ex.sets.some((s) => s.completed))
-            .map((ex) => {
-              const existing = sourceTemplate.exercises.find(
-                (e) =>
-                  e.name.trim().toLowerCase() === ex.name.trim().toLowerCase()
-              );
-              const workingSets = ex.sets.filter(
-                (s) => s.completed && s.type !== "warmup"
-              ).length;
-              return {
-                name: ex.name,
-                muscleGroup: ex.muscleGroup,
-                kind: ex.kind,
-                equipment: ex.equipment,
-                targetSets: Math.max(workingSets, 1),
-                repRangeMin: existing?.repRangeMin ?? 8,
-                repRangeMax: existing?.repRangeMax ?? 12,
-                restSeconds: ex.restSeconds,
-                note: existing?.note ?? null,
-              };
-            }),
-        });
-      }
-      const result = await saveWorkout(
-        payload,
-        session.templateId ?? undefined,
-        session.planRef ?? undefined
-      );
-      if (!result.ok || !result.id) {
-        toast.error(result.error ?? "Couldn't save that workout. Try again.");
-        return;
-      }
-      // The transition keeps the dialog in its busy state until the complete
-      // page's navigation commits and unmounts this player; the unmount cleanup
-      // clears the session. Clearing here would flash "No workout is running"
-      // for the seconds the complete page takes to server-render. The persisted
-      // copy is wiped NOW, so even a navigation that degrades to a full page
-      // load can never rehydrate the saved workout as a zombie session.
-      clearOnUnmount.current = true;
-      persistSessionCleared();
-      router.push(`/workouts/history/${result.id}?new=1`);
-      router.refresh();
-    });
-  }
-
   return (
     <>
       {/* Sticky session header */}
@@ -1177,21 +1003,10 @@ export function SessionPlayer({
           <WButton
             className="min-h-[44px] shrink-0 px-4"
             disabled={totalSets === 0}
-            onClick={() => {
-              setAlsoUpdateTemplate(false);
-              // ALWAYS opt-in (flaws RUN-72): sets the member never checked
-              // are never marked done by default. With nothing checked and
-              // the box unticked, save is refused with a corrective toast.
-              setCompleteRemaining(false);
-              // Freeze the timed duration into the editable draft: the value
-              // the dialog shows is the value that saves, even if the clock
-              // keeps running behind the scrim.
-              setDurationDraft({
-                min: String(Math.floor(elapsed / 60)),
-                sec: String(elapsed % 60),
-              });
-              setFinishing(true);
-            }}
+            // The finish step is its own page (composition canon 04 §11/§12:
+            // the old confirm dialog outgrew its container), same mid-flow
+            // route grammar as the exercise picker.
+            onClick={() => router.push("/workouts/active/finish")}
             size="sm"
             variant="secondary"
           >
@@ -1499,139 +1314,6 @@ export function SessionPlayer({
           totalMs={START_COUNTDOWN_SECONDS * 1000}
         />
       )}
-
-      {/* Finish confirm */}
-      <ConfirmDialog
-        body={
-          `You logged ${doneSets} ${doneSets === 1 ? "set" : "sets"}` +
-          (volume > 0 ? ` and moved ${formatVolume(volume)} lb total` : "") +
-          "." +
-          (uncheckedSets > 0
-            ? completeRemaining
-              ? ` Your ${uncheckedSets} unchecked ${uncheckedSets === 1 ? "set" : "sets"} will be marked done and saved too.`
-              : ` ${uncheckedSets} unchecked ${uncheckedSets === 1 ? "set" : "sets"} won't be saved.`
-            : "")
-        }
-        busy={saving}
-        confirmLabel="Finish and save"
-        onCancel={() => setFinishing(false)}
-        onConfirm={handleFinishConfirmed}
-        open={finishing}
-        title="Finish workout?"
-      >
-        <div className="mt-4">
-          {/* One compact row: the finish dialog must keep its primary action
-              inside a 320x568 viewport (the RUN-70 fit gate). */}
-          <div className="flex items-center justify-between gap-2">
-            <span className="font-semibold text-muted-foreground text-sm">
-              Duration
-            </span>
-            <div className="flex items-center gap-1.5">
-              <Input
-                aria-label="Duration, minutes"
-                className="w-14 rounded-xl bg-background text-center font-bold font-mono tabular-nums"
-                inputMode="numeric"
-                onChange={(e) =>
-                  setDurationDraft((d) => ({
-                    ...d,
-                    min: e.target.value.replace(/\D/g, "").slice(0, 4),
-                  }))
-                }
-                onFocus={(e) => e.target.select()}
-                size="lg"
-                type="text"
-                value={durationDraft.min}
-              />
-              <span className="font-semibold text-muted-foreground text-sm">
-                min
-              </span>
-              <Input
-                aria-label="Duration, seconds"
-                className="w-14 rounded-xl bg-background text-center font-bold font-mono tabular-nums"
-                inputMode="numeric"
-                onBlur={(e) => {
-                  // Seconds settle into 0-59 on blur; whole-value clamping
-                  // (24h cap) happens in draftDurationSeconds on save.
-                  const n = Number.parseInt(e.target.value, 10);
-                  setDurationDraft((d) => ({
-                    ...d,
-                    sec: Number.isNaN(n) ? "0" : String(Math.min(n, 59)),
-                  }));
-                }}
-                onChange={(e) =>
-                  setDurationDraft((d) => ({
-                    ...d,
-                    sec: e.target.value.replace(/\D/g, "").slice(0, 2),
-                  }))
-                }
-                onFocus={(e) => e.target.select()}
-                size="lg"
-                type="text"
-                value={durationDraft.sec}
-              />
-              <span className="font-semibold text-muted-foreground text-sm">
-                sec
-              </span>
-            </div>
-          </div>
-          <p className="mt-1 text-muted-foreground text-xs">
-            Timed automatically. Adjust it if the timer ran while you were
-            interrupted.
-          </p>
-        </div>
-        <label className="mt-4 block">
-          <span className="mb-1.5 block font-semibold text-[13px] text-muted-foreground">
-            Workout notes (optional, saved with this workout)
-          </span>
-          <textarea
-            className="min-h-[64px] w-full rounded-xl border border-input bg-background px-3 py-2.5 text-[14.5px] text-foreground placeholder:text-muted-foreground/60 focus:border-blood/60 focus:outline-none"
-            maxLength={2000}
-            onChange={(e) => setSessionNotes(e.target.value)}
-            placeholder="Add a note about how this workout went"
-            value={session.notes}
-          />
-        </label>
-        {uncheckedSets > 0 && (
-          <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-background p-3.5">
-            <input
-              checked={completeRemaining}
-              className="mt-0.5 size-5 accent-[var(--go)]"
-              onChange={(e) => setCompleteRemaining(e.target.checked)}
-              type="checkbox"
-            />
-            <span>
-              <span className="block font-semibold text-[14px] text-foreground">
-                Mark all {uncheckedSets} unchecked{" "}
-                {uncheckedSets === 1 ? "set" : "sets"} as done
-              </span>
-              <span className="mt-0.5 block text-[12.5px] text-muted-foreground leading-relaxed">
-                Did the work but didn't check off every set? This saves every
-                remaining set with the weights and reps already shown.
-              </span>
-            </span>
-          </label>
-        )}
-        {structureChanged && sourceTemplate && (
-          <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-background p-3.5">
-            <input
-              checked={alsoUpdateTemplate}
-              className="mt-0.5 size-5 accent-[var(--go)]"
-              onChange={(e) => setAlsoUpdateTemplate(e.target.checked)}
-              type="checkbox"
-            />
-            <span>
-              <span className="block font-semibold text-[14px] text-foreground">
-                Also update &ldquo;{sourceTemplate.name}&rdquo;
-              </span>
-              <span className="mt-0.5 block text-[12.5px] text-muted-foreground leading-relaxed">
-                Today you changed the plan (different exercises or set counts).
-                Check this to make the saved workout match what you actually
-                did.
-              </span>
-            </span>
-          </label>
-        )}
-      </ConfirmDialog>
 
       {/* Discard confirm */}
       <ConfirmDialog

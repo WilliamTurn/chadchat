@@ -129,13 +129,7 @@ function isKnownAxeFailure(
  * `best-practice` rules are deliberately excluded: they are opinions, and the
  * canon — not axe — is this app's opinion.
  */
-const AXE_TAGS = [
-  "wcag2a",
-  "wcag2aa",
-  "wcag21a",
-  "wcag21aa",
-  "wcag22aa",
-];
+const AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 /** Only these two impact levels gate. Minor/moderate findings are surfaced by
  *  the auditors, which can judge whether they matter to a member. */
@@ -213,10 +207,7 @@ const VIEWPORTS = [
 ];
 
 // Console noise that is not a product defect.
-const CONSOLE_IGNORE = [
-  /Download the React DevTools/i,
-  /\[Fast Refresh\]/i,
-];
+const CONSOLE_IGNORE = [/Download the React DevTools/i, /\[Fast Refresh\]/i];
 
 let storageState: Awaited<ReturnType<BrowserContext["storageState"]>>;
 
@@ -377,11 +368,7 @@ async function clippedControls(page: Page): Promise<ClippedControl[]> {
       if (r.left < -0.5 || r.right > vw + 0.5) {
         out.push({
           name:
-            (
-              el.getAttribute("aria-label") ||
-              el.textContent ||
-              "(unnamed)"
-            )
+            (el.getAttribute("aria-label") || el.textContent || "(unnamed)")
               .trim()
               .slice(0, 60) || "(unnamed)",
           left: Math.round(r.left),
@@ -870,9 +857,7 @@ for (const viewport of VIEWPORTS) {
     await assertScreenClean(page, "flow:workout-session-pending", viewport);
 
     // --- Exercise picker, entered MID-FLOW from the session.
-    await page
-      .getByRole("button", { name: "Add your first exercise" })
-      .click();
+    await page.getByRole("button", { name: "Add your first exercise" }).click();
     await page.waitForURL("**/exercises/pick**");
     await assertScreenClean(page, "flow:exercise-picker-mid-flow", viewport);
     await page
@@ -884,9 +869,7 @@ for (const viewport of VIEWPORTS) {
 
     // --- ENGAGED session: Play pressed (through the S4 start countdown,
     //     skipped for speed), one set logged.
-    await page
-      .getByRole("button", { name: "Start the workout timer" })
-      .click();
+    await page.getByRole("button", { name: "Start the workout timer" }).click();
     await page.getByRole("button", { name: "Skip countdown" }).click();
     await page
       .getByRole("button", { name: "Pause the workout timer" })
@@ -904,18 +887,20 @@ for (const viewport of VIEWPORTS) {
     await page.goto("/workouts/active", { waitUntil: "load" });
     await assertScreenClean(page, "flow:player-reload-mid-session", viewport);
 
-    // --- Finish dialog OPEN.
+    // --- Finish step (its own page since W1; composition canon 04 §11/§12:
+    //     the finish form outgrew the confirm dialog it used to live in).
     await page.getByRole("button", { name: "Finish", exact: true }).click();
-    const dialog = page.locator('[role="alertdialog"]').last();
-    await expect(dialog).toBeVisible();
-    await assertScreenClean(page, "flow:finish-dialog-open", viewport);
+    await page.waitForURL("**/workouts/active/finish**", { timeout: 15_000 });
+    const finishSave = page.getByRole("button", { name: "Finish and save" });
+    await expect(finishSave).toBeVisible();
+    await assertScreenClean(page, "flow:finish-step", viewport);
 
     // --- Workout COMPLETE (the ?new=1 celebration view of history/[id]).
-    await dialog.getByRole("button", { name: "Finish and save" }).click();
+    await finishSave.click();
     await page.waitForURL("**/workouts/history/**", { timeout: 30_000 });
-    await expect(
-      page.getByText(/workout complete/i).first()
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/workout complete/i).first()).toBeVisible({
+      timeout: 15_000,
+    });
     await assertScreenClean(page, "flow:workout-complete", viewport);
 
     // --- Hydration logging overlay OPEN.

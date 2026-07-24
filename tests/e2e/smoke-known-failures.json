@@ -14,12 +14,6 @@
       "reason": "Controls ('Upload your own', 'Female', 'Account menu') sit partly outside the viewport at tablet, same root cause as the overflow pin above. Found by the extended smoke gate 2026-07-16. The desktop-1280 width started passing in the RC-5 sweep (reproduced twice) and was removed per the ratchet rule."
     },
     {
-      "surface": "flow:finish-dialog-open",
-      "check": "overlay-overflow",
-      "widths": [320],
-      "reason": "THE motivating defect (design flaw.png): the finish dialog's Duration row (label + min/sec inputs + unit labels) needs 260px but the 320px dialog content box gives 242px, producing internal horizontal overflow (composition canon 04 §22/§46). Pre-existing; the D1 gate was built to catch exactly this. Owed to the finish-flow composition rebuild (canon 04 §11/§12: this confirm outgrew its container and escalates to a finish step, per the overhaul-session wave on the workout runner) — not patchable in a gates-only session without redesigning the row canon 03 #23 says must FIT, not stack."
-    },
-    {
       "surface": "/progress/training",
       "check": "clipped-text",
       "widths": [320, 360, 384],
