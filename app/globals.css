@@ -722,10 +722,11 @@ html[data-vk-open] .pb-tabbar {
   bottom: calc(3.5rem + env(safe-area-inset-bottom) + 0.75rem);
 }
 
-/* Pinned action bars (the finish step's commit bar, the exercise picker's
-   confirm bar) join the fixed bottom stack ABOVE the phone tab bar, never
+/* Pinned action bars (finish commit, picker confirm, editor save, custom
+   exercise save) join the fixed bottom stack ABOVE the phone tab bar, never
    over it (placement canon 08 #58: pinned elements meet in fixed order and
-   displace, never overlap; owner order 2026-07-24). The offset collapses
+   displace, never overlap; owner order 2026-07-24: EVERY pinned bar). The
+   offset collapses
    while the software keyboard is up (the tab bar hides itself and stamps
    `data-vk-open`), and on md+ where the tab bar does not exist the bar
    sits on the viewport floor with its own safe-area padding. */
