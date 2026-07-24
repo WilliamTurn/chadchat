@@ -5,7 +5,12 @@
 // Colors come from the app theme tokens so light and dark both work.
 
 import { Loader2 } from "lucide-react";
-import type { ButtonHTMLAttributes, ReactNode, Ref } from "react";
+import type {
+  ButtonHTMLAttributes,
+  CSSProperties,
+  ReactNode,
+  Ref,
+} from "react";
 
 // ---------------------------------------------------------------------------
 // Buttons
@@ -116,12 +121,22 @@ export function Eyebrow({
 export function WCard({
   children,
   className = "",
+  style,
+  ref,
 }: {
   children: ReactNode;
   className?: string;
+  /** Inline style pass-through: the sortable exercise card animates position
+   *  via a transform the dnd library computes per frame. */
+  style?: CSSProperties;
+  ref?: Ref<HTMLDivElement>;
 }) {
   return (
-    <div className={`rounded-2xl border border-border bg-card ${className}`}>
+    <div
+      className={`rounded-2xl border border-border bg-card ${className}`}
+      ref={ref}
+      style={style}
+    >
       {children}
     </div>
   );

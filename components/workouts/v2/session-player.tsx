@@ -14,12 +14,28 @@
 //  · Clear, labeled navigation on every screen, you can always get back.
 
 import {
-  ArrowDown,
-  ArrowUp,
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  rectSortingStrategy,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
   Check,
   CheckCheck,
   ChevronLeft,
   Gauge,
+  GripVertical,
   Info,
   MoreHorizontal,
   Pause,
@@ -32,6 +48,7 @@ import {
   Timer,
   Trash2,
   Trophy,
+  Undo2,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -112,7 +129,10 @@ function NumberField({
   return (
     <input
       aria-label={ariaLabel}
-      className={`h-[52px] w-full min-w-0 rounded-xl border bg-background text-center font-bold font-mono text-[18px] text-foreground tabular-nums placeholder:text-muted-foreground/50 focus:outline-none ${
+      // The literal 16px is deliberate: it is the iOS no-zoom floor, and
+      // rem-based sizes inflate to 17px under the phone root boost, which
+      // clips a 222.5 weight in the 50px column at 320px.
+      className={`h-[52px] w-full min-w-0 rounded-xl border bg-background text-center font-bold font-mono text-[16px] text-foreground tabular-nums placeholder:text-muted-foreground/50 focus:outline-none sm:text-lg ${
         highlight
           ? "border-input focus:border-blood/70"
           : "border-border focus:border-blood/60"
@@ -165,10 +185,17 @@ function collectRemainingPRs(
 // One set row
 // ---------------------------------------------------------------------------
 
+/**
+ * The set-row column template (S5 rework). Sized so the worst realistic
+ * "Last time" value (222.5×12) renders in full at a 320px viewport with the
+ * boxed inputs kept: the min widths below add up to the space left inside
+ * page gutter + card padding + row padding at 320, and every flexible column
+ * carries a floor so nothing can ever be squeezed into an ellipsis.
+ */
 function gridCols(timed: boolean): string {
   return timed
-    ? "grid-cols-[44px_minmax(0,1.2fr)_minmax(0,1fr)_56px]"
-    : "grid-cols-[44px_minmax(0,0.95fr)_minmax(0,1.15fr)_minmax(0,0.9fr)_56px]";
+    ? "grid-cols-[32px_minmax(64px,1.2fr)_minmax(50px,1fr)_44px]"
+    : "grid-cols-[32px_minmax(64px,1.1fr)_minmax(50px,1fr)_minmax(34px,0.7fr)_44px]";
 }
 
 function SetRow({
@@ -204,7 +231,9 @@ function SetRow({
       setSetCompleted(wex.id, set.id, false);
     } else {
       const prs = detectPRs(prBaseline, wex, set, unit);
-      if (prs.length > 0) {
+      // The toast fires once per set per session: prAnnounced survives an
+      // unmark, so re-checking the same record can't celebrate it twice.
+      if (prs.length > 0 && !set.prAnnounced) {
         const what = prs.includes("heaviest-weight")
           ? `heaviest ${wex.name} yet: ${formatWeight(set.weight ?? 0)} ${unit}`
           : `strongest ${wex.name} set yet: ${formatWeight(set.weight ?? 0)} ${unit} × ${set.reps}`;
@@ -226,21 +255,26 @@ function SetRow({
   return (
     <>
       <div
-        className={`relative grid items-center gap-x-1.5 rounded-xl px-1.5 py-1.5 transition-colors ${gridCols(timed)} ${
+        className={`relative grid items-center gap-x-1 rounded-xl px-1.5 py-1.5 transition-colors ${gridCols(timed)} ${
           set.completed ? "bg-emerald-500/10" : isNext ? "bg-muted/40" : ""
         }`}
       >
+        {/* "You are here" marker: neutral foreground, not green (S5 green
+            audit; white = you-are-here matches the nav's active signal). */}
         {isNext && !set.completed && (
           <span
             aria-hidden
-            className="-left-2.5 absolute top-1/2 h-8 w-1 -translate-y-1/2 rounded-full bg-[var(--go)]"
+            className="-left-2.5 absolute top-1/2 h-8 w-1 -translate-y-1/2 rounded-full bg-foreground/70"
           />
         )}
 
-        {/* Set number = a real button that opens the set menu */}
+        {/* Set number = a real button that opens the set menu. Plain figure
+            (the Hevy/Strong cell), not a boxed control: the box read as an
+            input and its 44px width starved the Last-time column at 320px.
+            Hit area stays 32×52. */}
         <button
           aria-label={`Set ${index + 1} options: change set type, add RPE, or remove it`}
-          className="flex h-[52px] w-[44px] cursor-pointer items-center justify-center rounded-xl border border-border bg-background transition hover:border-input"
+          className="flex h-[52px] w-8 cursor-pointer items-center justify-center rounded-lg transition hover:bg-muted/60"
           onClick={() => setMenuOpen(true)}
           type="button"
         >
@@ -262,10 +296,10 @@ function SetRow({
           <button
             aria-label={
               timed
-                ? `Last time: ${previous.reps ?? 0} seconds. Tap to use that.`
-                : `Last time: ${formatWeight(previous.weight ?? 0)} ${unit} for ${previous.reps} reps. Tap to use those numbers.`
+                ? `Last time: ${previous.reps ?? 0} seconds. Select to use that.`
+                : `Last time: ${formatWeight(previous.weight ?? 0)} ${unit} for ${previous.reps} reps. Select to use those numbers.`
             }
-            className="h-[52px] cursor-pointer truncate rounded-xl px-0.5 text-center font-mono text-[13.5px] text-muted-foreground/80 tabular-nums transition hover:bg-muted/50 hover:text-muted-foreground disabled:pointer-events-none"
+            className="h-[52px] cursor-pointer whitespace-nowrap rounded-xl px-0.5 text-center font-mono text-[12.5px] text-muted-foreground/80 tabular-nums transition hover:bg-muted/50 hover:text-muted-foreground disabled:pointer-events-none"
             disabled={set.completed}
             onClick={() => {
               if (!timed) {
@@ -275,13 +309,18 @@ function SetRow({
             }}
             type="button"
           >
+            {/* Tight ×: the whole value must show at 320px, never an ellipsis
+                (owner order S5 #7). */}
             {timed
               ? `${previous.reps ?? 0}s`
-              : `${previous.weight != null ? formatWeight(previous.weight) : "-"} × ${previous.reps ?? "-"}`}
+              : `${previous.weight != null ? formatWeight(previous.weight) : "-"}×${previous.reps ?? "-"}`}
           </button>
         ) : (
-          <span className="text-center text-[13px] text-muted-foreground/50">
-            .{" "}
+          <span
+            aria-hidden
+            className="text-center text-[13px] text-muted-foreground/50"
+          >
+            -
           </span>
         )}
 
@@ -306,24 +345,29 @@ function SetRow({
           value={set.reps}
         />
 
-        {/* The big checkmark: always pressable, log the set your way. */}
+        {/* The done checkbox: EMPTY until logged (the Strong/Hevy standard;
+            a pre-drawn muted check read as "already done"). The check glyph
+            exists only in the checked state. Always pressable either way. */}
         <button
           aria-label={
             set.completed
-              ? `Set ${index + 1} of ${wex.name} is logged. Tap to un-log it.`
+              ? `Set ${index + 1} of ${wex.name} is logged. Select to un-log it.`
               : `Log set ${index + 1} of ${wex.name} as done`
           }
-          className={`flex h-[56px] w-[56px] cursor-pointer items-center justify-center rounded-xl border-2 transition-all active:scale-95 ${
+          aria-pressed={set.completed}
+          className={`flex h-[52px] w-11 cursor-pointer items-center justify-center rounded-xl border-2 transition-all active:scale-95 ${
             set.completed
               ? "border-emerald-500 bg-emerald-500 text-white"
-              : `bg-background text-muted-foreground hover:text-foreground ${
-                  isNext ? "border-[var(--go)]/70" : "border-input"
+              : `bg-background hover:border-foreground/40 ${
+                  isNext ? "border-foreground/50" : "border-input"
                 }`
           }`}
           onClick={handleCheck}
           type="button"
         >
-          <Check aria-hidden className="size-6" strokeWidth={3} />
+          {set.completed && (
+            <Check aria-hidden className="size-6" strokeWidth={3} />
+          )}
         </button>
 
         {/* PR trophy on the row, persisted */}
@@ -338,7 +382,7 @@ function SetRow({
 
         {/* RPE chip, when set */}
         {set.rpe != null && (
-          <span className="-bottom-1 absolute left-[50px] rounded-full bg-muted px-1.5 py-px font-semibold text-[10px] text-muted-foreground">
+          <span className="-bottom-1 absolute left-[38px] rounded-full bg-muted px-1.5 py-px font-semibold text-[10px] text-muted-foreground">
             RPE {set.rpe}
           </span>
         )}
@@ -367,7 +411,7 @@ function SetRow({
         footer={
           wex.equipment === "barbell" && set.weight && unit === "lb" ? (
             <div className="mt-3 rounded-xl bg-background px-3.5 py-3">
-              <div className="font-semibold text-[12px] text-muted-foreground uppercase tracking-wide">
+              <div className="font-semibold text-[12px] text-muted-foreground">
                 Plate math for {formatWeight(set.weight)} lb
               </div>
               <div className="mt-1 font-mono text-[14px] text-foreground">
@@ -423,7 +467,7 @@ function ExerciseCard({
   const {
     addSet,
     completeAllSets,
-    moveSessionExercise,
+    uncompleteAllSets,
     removeSessionExercise,
     setExerciseRest,
     setExerciseNote,
@@ -442,6 +486,20 @@ function ExerciseCard({
       ),
     [lastSets, wex.name]
   );
+
+  // Drag-to-reorder (S5): the whole card is the sortable item, but only the
+  // handle activates a drag, so the card's inputs and buttons never fight the
+  // gesture and scrolling stays free (canon 01 §129). With one exercise there
+  // is nothing to reorder, so the handle disappears entirely.
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: wex.id, disabled: count < 2 });
 
   const doneCount = wex.sets.filter((s) => s.completed).length;
   const allDone = wex.sets.length > 0 && doneCount === wex.sets.length;
@@ -464,7 +522,7 @@ function ExerciseCard({
     ...(wex.sets.some((s) => !s.completed)
       ? [
           {
-            label: "Mark all sets done",
+            label: "Mark all sets done for this exercise",
             hint: "Checks off every remaining set with the numbers shown",
             icon: <CheckCheck aria-hidden className="size-[18px]" />,
             onSelect: () =>
@@ -472,6 +530,16 @@ function ExerciseCard({
                 collectRemainingPRs([wex], prBaseline, unit),
                 wex.id
               ),
+          } satisfies SheetAction,
+        ]
+      : []),
+    ...(doneCount > 0
+      ? [
+          {
+            label: "Unmark all sets for this exercise",
+            hint: "Clears the done check on every set, your logged numbers stay",
+            icon: <Undo2 aria-hidden className="size-[18px]" />,
+            onSelect: () => uncompleteAllSets(wex.id),
           } satisfies SheetAction,
         ]
       : []),
@@ -503,24 +571,6 @@ function ExerciseCard({
       onSelect: () =>
         router.push(`/workouts/exercises/pick?target=replace&wex=${wex.id}`),
     },
-    ...(index > 0
-      ? [
-          {
-            label: "Move up",
-            icon: <ArrowUp aria-hidden className="size-[18px]" />,
-            onSelect: () => moveSessionExercise(wex.id, -1),
-          } satisfies SheetAction,
-        ]
-      : []),
-    ...(index < count - 1
-      ? [
-          {
-            label: "Move down",
-            icon: <ArrowDown aria-hidden className="size-[18px]" />,
-            onSelect: () => moveSessionExercise(wex.id, 1),
-          } satisfies SheetAction,
-        ]
-      : []),
     {
       label: "Remove exercise",
       hint: "Removes it and its sets from this workout",
@@ -532,19 +582,42 @@ function ExerciseCard({
 
   return (
     <WCard
-      className={`min-w-0 p-4 transition-opacity ${allDone ? "opacity-75" : ""}`}
+      className={`min-w-0 p-4 transition-opacity ${allDone ? "opacity-75" : ""} ${
+        isDragging ? "relative z-10 shadow-2xl ring-1 ring-foreground/25" : ""
+      }`}
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
     >
       {/* Card header */}
       <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="truncate font-bold text-[17px] text-foreground">
-              {wex.name}
-            </h3>
+        <div className="flex min-w-0 items-start gap-2.5">
+          {/* Position in the workout: sequence must be obvious at a glance
+              (owner order S5 #1), and it re-numbers live after a drag. */}
+          <span
+            aria-hidden
+            className="mt-0.5 font-bold font-mono text-base text-muted-foreground tabular-nums leading-6"
+          >
+            {index + 1}
+          </span>
+          <span className="sr-only">
+            Exercise {index + 1} of {count}
+          </span>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="truncate font-bold text-[17px] text-foreground">
+                {wex.name}
+              </h3>
+            {/* All-done marker: a quiet check, not a green disc (S5 green
+                audit: on this page only a checked set reads green). */}
             {allDone && (
-              <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
-                <Check aria-hidden className="size-3.5" strokeWidth={3.5} />
-              </span>
+              <Check
+                aria-hidden
+                className="size-4 shrink-0 text-muted-foreground"
+                strokeWidth={3}
+              />
             )}
           </div>
           <p className="mt-0.5 text-[12.5px] text-muted-foreground">
@@ -557,26 +630,51 @@ function ExerciseCard({
               {wex.targetLabel}
             </p>
           )}
-          {wex.note && (
-            <p className="mt-1 rounded-lg bg-muted/50 px-2 py-1 text-[12.5px] text-muted-foreground">
-              {wex.note}
-            </p>
-          )}
+            {wex.note && (
+              <p className="mt-1 rounded-lg bg-muted/50 px-2 py-1 text-[12.5px] text-muted-foreground">
+                {wex.note}
+              </p>
+            )}
+          </div>
         </div>
-        <button
-          aria-label={`Options for ${wex.name}`}
-          className="flex h-11 shrink-0 cursor-pointer items-center gap-1 rounded-xl px-2.5 text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
-          onClick={() => setMenuOpen(true)}
-          type="button"
-        >
-          <MoreHorizontal aria-hidden className="size-5" />
-          <span className="font-semibold text-[13px]">Options</span>
-        </button>
+        {/* gap-2 keeps the two 44px hit areas from touching (canon 01 §112:
+            adjacent targets need spacing; a reorder reach must not open the
+            menu). */}
+        <div className="flex shrink-0 items-center gap-2">
+          {/* Drag handle (S5 #2): the one drag surface, so the card's inputs
+              never fight the gesture. Keyboard path: space lifts, arrows
+              move, space drops (the dnd keyboard sensor). Hidden when there
+              is nothing to reorder. touch-action:none is required for the
+              long-press lift to win over scrolling. */}
+          {count > 1 && (
+            <WButton
+              {...attributes}
+              {...listeners}
+              aria-label={`Reorder ${wex.name}, position ${index + 1} of ${count}. Press space to pick up, use arrow keys to move, press space again to drop.`}
+              className="size-11 cursor-grab px-0 text-muted-foreground active:cursor-grabbing"
+              ref={setActivatorNodeRef}
+              size="sm"
+              style={{ touchAction: "none" }}
+              variant="ghost"
+            >
+              <GripVertical aria-hidden className="size-5" />
+            </WButton>
+          )}
+          <button
+            aria-label={`More options for ${wex.name}`}
+            className="flex size-11 cursor-pointer items-center justify-center rounded-xl text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
+            onClick={() => setMenuOpen(true)}
+            type="button"
+          >
+            <MoreHorizontal aria-hidden className="size-5" />
+          </button>
+        </div>
       </div>
 
-      {/* Column headers */}
+      {/* Column headers. Sentence case (Q-DS-4 sweep): tracked uppercase
+          "LAST TIME" cannot fit the column's 64px floor at 320px. */}
       <div
-        className={`mt-3 grid gap-x-1.5 px-1.5 text-center font-bold text-[12px] text-muted-foreground/80 uppercase tracking-wider ${gridCols(timed)}`}
+        className={`mt-3 grid gap-x-1 px-1.5 text-center font-semibold text-[12px] text-muted-foreground/80 ${gridCols(timed)}`}
       >
         <span>Set</span>
         <span>Last time</span>
@@ -711,6 +809,7 @@ export function SessionPlayer({
     session,
     ready,
     completeAllSets,
+    uncompleteAllSets,
     renameSession,
     setSessionNotes,
     timerPlay,
@@ -721,9 +820,75 @@ export function SessionPlayer({
     timerCancelCountdown,
     clearSession,
     discardSession,
+    reorderSessionExercise,
   } = useWorkouts();
   const router = useRouter();
   const now = useNowTick();
+
+  // Reorder = one drag (owner S5 #2). Mouse drags after 4px of travel so a
+  // plain click still clicks; touch lifts after a long-press (250ms) so
+  // scrolling never starts a drag; keyboard gets the full pick-up/move/drop
+  // path (WCAG 2.5.7, the Move up/down menu items are gone).
+  const dragSensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 250, tolerance: 8 },
+    }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  function handleReorderEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!(session && over) || active.id === over.id) {
+      return;
+    }
+    const to = session.exercises.findIndex((x) => x.id === over.id);
+    if (to !== -1) {
+      reorderSessionExercise(String(active.id), to);
+    }
+  }
+
+  // Screen-reader narration for the reorder drag, in product language: the
+  // dnd library's defaults read out internal ids ("Draggable item wex-1..."),
+  // which is member-facing jargon (flow audit F-3).
+  const exerciseName = (id: unknown) =>
+    session?.exercises.find((x) => x.id === id)?.name ?? "the exercise";
+  const exercisePosition = (id: unknown) => {
+    const i = session?.exercises.findIndex((x) => x.id === id) ?? -1;
+    return i === -1 ? "" : `, position ${i + 1} of ${session?.exercises.length}`;
+  };
+  const dragAccessibility = {
+    screenReaderInstructions: {
+      draggable:
+        "To reorder, press space to pick up the exercise, use the arrow keys to move it, and press space again to drop it. Press escape to cancel.",
+    },
+    announcements: {
+      onDragStart: ({ active }: { active: { id: unknown } }) =>
+        `Picked up ${exerciseName(active.id)}${exercisePosition(active.id)}.`,
+      onDragOver: ({
+        active,
+        over,
+      }: {
+        active: { id: unknown };
+        over: { id: unknown } | null;
+      }) =>
+        over
+          ? `${exerciseName(active.id)} is over${exercisePosition(over.id)}.`
+          : `${exerciseName(active.id)} is not over a drop position.`,
+      onDragEnd: ({
+        active,
+        over,
+      }: {
+        active: { id: unknown };
+        over: { id: unknown } | null;
+      }) =>
+        over
+          ? `${exerciseName(active.id)} dropped${exercisePosition(over.id)}.`
+          : `${exerciseName(active.id)} dropped, order unchanged.`,
+      onDragCancel: ({ active }: { active: { id: unknown } }) =>
+        `Reorder cancelled. ${exerciseName(active.id)} returned to its position.`,
+    },
+  };
 
   const [renaming, setRenaming] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
@@ -932,7 +1097,7 @@ export function SessionPlayer({
     const payload = serializeSession(sessionForSave, durationSeconds);
     if (!payload) {
       toast.error(
-        "Nothing is checked off yet. Check your sets, or tick “Mark all unchecked sets as done”."
+        "Nothing is checked off yet. Check off your sets, or turn on “Mark all unchecked sets as done”."
       );
       return;
     }
@@ -1063,7 +1228,7 @@ export function SessionPlayer({
             </form>
           ) : (
             <button
-              aria-label={`Workout name: ${session.name}. Tap to rename.`}
+              aria-label={`Workout name: ${session.name}. Select to rename.`}
               className="group flex min-h-[44px] max-w-full cursor-pointer items-center gap-2 rounded-lg text-left"
               onClick={() => {
                 setNameDraft(session.name);
@@ -1180,24 +1345,43 @@ export function SessionPlayer({
         </div>
       </div>
 
-      {/* Session-wide bulk check-off, visible at the top (owner order s181:
-          not only inside the per-exercise Options menu). One tap marks every
-          remaining set of every exercise as done. */}
-      {uncheckedSets > 0 && (
-        <div className="mb-3 flex justify-end">
-          <WButton
-            aria-label="Mark every set in this workout as done"
-            className="gap-1.5"
-            onClick={() =>
-              completeAllSets(
-                collectRemainingPRs(session.exercises, prBaseline, session.unit)
-              )
-            }
-            size="sm"
-          >
-            <CheckCheck aria-hidden className="size-4" />
-            Mark all sets done
-          </WButton>
+      {/* Session-wide bulk check-off (owner order s181: not only inside the
+          per-exercise menu), with its inverse beside it once anything is
+          checked (owner S5). Unmark clears only the done checks; numbers
+          stay, and PR toasts never re-fire on a later re-check. */}
+      {(uncheckedSets > 0 || doneSets > 0) && (
+        <div className="mb-3 flex flex-wrap justify-end gap-2">
+          {doneSets > 0 && (
+            <WButton
+              aria-label="Unmark every set in this workout"
+              className="min-h-11 gap-1.5"
+              onClick={() => uncompleteAllSets()}
+              size="sm"
+              variant="ghost"
+            >
+              <Undo2 aria-hidden className="size-4" />
+              Unmark all sets
+            </WButton>
+          )}
+          {uncheckedSets > 0 && (
+            <WButton
+              aria-label="Mark every set in this workout as done"
+              className="min-h-11 gap-1.5"
+              onClick={() =>
+                completeAllSets(
+                  collectRemainingPRs(
+                    session.exercises,
+                    prBaseline,
+                    session.unit
+                  )
+                )
+              }
+              size="sm"
+            >
+              <CheckCheck aria-hidden className="size-4" />
+              Mark all sets done
+            </WButton>
+          )}
         </div>
       )}
 
@@ -1223,24 +1407,39 @@ export function SessionPlayer({
           </WButton>
         </WCard>
       ) : (
-        /* Two-across on desktop (LAY-1); items-start so a card only grows
-           with its own sets. Explicit grid-cols-1 + min-w-0 cards so the
-           implicit column never sizes to max-content on phones. */
-        <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-2">
-          {session.exercises.map((wex, i) => (
-            <ExerciseCard
-              count={session.exercises.length}
-              index={i}
-              key={wex.id}
-              lastSets={lastSets}
-              nextSetId={nextSetId}
-              onPR={showPR}
-              prBaseline={prBaseline}
-              unit={session.unit}
-              wex={wex}
-            />
-          ))}
-        </div>
+        /* Two-across on desktop (LAY-1), kept for S5: the number badges make
+           the row-major reading order explicit. items-start so a card only
+           grows with its own sets; grid-cols-1 + min-w-0 so the implicit
+           column never sizes to max-content on phones. The whole list is one
+           sortable context: dragging a card re-slots it live, at any
+           distance, in one gesture. */
+        <DndContext
+          accessibility={dragAccessibility}
+          collisionDetection={closestCenter}
+          onDragEnd={handleReorderEnd}
+          sensors={dragSensors}
+        >
+          <SortableContext
+            items={session.exercises.map((x) => x.id)}
+            strategy={rectSortingStrategy}
+          >
+            <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-2">
+              {session.exercises.map((wex, i) => (
+                <ExerciseCard
+                  count={session.exercises.length}
+                  index={i}
+                  key={wex.id}
+                  lastSets={lastSets}
+                  nextSetId={nextSetId}
+                  onPR={showPR}
+                  prBaseline={prBaseline}
+                  unit={session.unit}
+                  wex={wex}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       {session.exercises.length > 0 && (
@@ -1406,7 +1605,7 @@ export function SessionPlayer({
                 {uncheckedSets === 1 ? "set" : "sets"} as done
               </span>
               <span className="mt-0.5 block text-[12.5px] text-muted-foreground leading-relaxed">
-                Did the work but didn't tap every checkmark? This saves every
+                Did the work but didn't check off every set? This saves every
                 remaining set with the weights and reps already shown.
               </span>
             </span>
