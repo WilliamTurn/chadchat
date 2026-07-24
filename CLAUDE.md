@@ -41,7 +41,7 @@ Known expected failures: the old template suites (`api.test.ts`, `model-selector
 - Every empty state says why it is empty and offers the action that fills it, and never strands the user without a way back.
 - Type floor is 12px, labels 13px+ on phones (permanent owner order; the floors live in the `app/globals.css` tokens (ds.css port pending — re-point on land)).
 
-The full canon lives in `docs/ux-canon/` (the ten `ux-canon/*.md` files, landed via S0b-3; the composition canon joins it via D2; the chadlatest copies are the frozen research artifacts). The skills load the relevant domain automatically; read the owning section before building anything it covers.
+The full canon lives in `docs/ux-canon/` (ten files, landed via S0b-3) and `docs/composition-canon/` (ten files, landed via D2 — grouping/containers, density, forms, overlays, screen recipes, rhythm, responsive, placement); the chadlatest copies are the frozen research artifacts. The skills load the relevant domain automatically (`ux-*` for element behavior/rendering, `composition-*` for assembly); read the owning section before building anything it covers. "Overhaul page X" sessions follow `docs/overhaul-session-template.md`.
 
 ## The examples rule
 
@@ -53,9 +53,11 @@ At any UX decision point the canon doesn't cover, STOP and establish the convent
 
 Building or changing any member-facing control, flow, or copy? Get the spec from `interaction-spec-advisor` / the strings from `member-copy-writer` FIRST, then implement. Don't invent.
 
+Assembling or modifying any screen region? Load the matching composition skill FIRST (`composition-grouping` for containers/gaps/headers/density, `composition-screens` for screen skeletons and reflow, `composition-forms-overlays` for forms, dialog interiors, and element placement) and follow the owning canon sections. Before adding or keeping ANY container (card, box, pill, outlined chip), it must pass composition canon 01 §4's earning tests — record the passing test (01 #74) or flatten it.
+
 ## Exit gate 5
 
-Before calling a member-facing surface done: run the UX auditors whose domain you touched (copy → ux-copy-auditor; flows → ux-flow-auditor; layout/controls → ux-placement-auditor; new surface → all three, plus mobile-experience-auditor). Fix or report every BLOCKER and MAJOR.
+Before calling a member-facing surface done: run the UX auditors whose domain you touched (copy → ux-copy-auditor; flows → ux-flow-auditor; layout/controls → ux-placement-auditor; screen assembly/grouping/density/recipes → ux-composition-auditor; new surface or surface fix/overhaul → all four, plus mobile-experience-auditor). Fix or report every BLOCKER and MAJOR.
 
 ## Precedence note
 
