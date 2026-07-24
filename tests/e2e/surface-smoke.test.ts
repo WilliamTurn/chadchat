@@ -882,10 +882,15 @@ for (const viewport of VIEWPORTS) {
     await page.getByRole("button", { name: /Add 1 exercise to/i }).click();
     await page.waitForURL("**/workouts/active**", { timeout: 15_000 });
 
-    // --- ENGAGED session: Play pressed, one set logged.
+    // --- ENGAGED session: Play pressed (through the S4 start countdown,
+    //     skipped for speed), one set logged.
     await page
       .getByRole("button", { name: "Start the workout timer" })
       .click();
+    await page.getByRole("button", { name: "Skip countdown" }).click();
+    await page
+      .getByRole("button", { name: "Pause the workout timer" })
+      .waitFor({ state: "visible" });
     await page.getByLabel(/Weight in lb for set 1/).fill("100");
     await page.getByLabel(/Reps for set 1/).fill("5");
     await page.getByRole("button", { name: /Log set 1 .* as done/ }).click();

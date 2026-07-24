@@ -469,7 +469,7 @@
   "components/workouts/v2/page-header.tsx::raw-control": 1,
   "components/workouts/v2/progress-chart.tsx::arbitrary-utility": 5,
   "components/workouts/v2/progress-chart.tsx::unformatted-number": 2,
-  "components/workouts/v2/session-player.tsx::arbitrary-utility": 58,
+  "components/workouts/v2/session-player.tsx::arbitrary-utility": 55,
   "components/workouts/v2/session-player.tsx::banned-copy": 1,
   "components/workouts/v2/session-player.tsx::device-verb": 4,
   "components/workouts/v2/session-player.tsx::dialog-form-overload": 1,

@@ -54,14 +54,25 @@ export type SessionExercise = {
 
 /**
  * The session clock. NOTHING starts it automatically, the member presses
- * Play. Pause folds elapsed time into accumulatedMs; Reset zeroes everything.
+ * Play. The FIRST Play press runs a short start countdown (5-4-3-2-1) before
+ * the clock begins; Skip inside it begins immediately. Pause/Resume never
+ * re-enters the countdown. Pause folds elapsed time into accumulatedMs;
+ * Reset zeroes everything, back to the pre-start state.
  */
 export type SessionTimer = {
   running: boolean;
   accumulatedMs: number;
   /** Epoch ms of the last Play press; null while paused. */
   startedAt: number | null;
+  /** Epoch ms when the start countdown ends; null when none is running. Set
+   * ONLY by the initial Play press, and never survives a reload (the store
+   * strips it on hydrate), so a countdown can only ever run from a live Play
+   * press. Optional: sessions persisted before S4 don't carry the field. */
+  countdownEndsAt?: number | null;
 };
+
+/** Length of the start countdown the first Play press runs. */
+export const START_COUNTDOWN_SECONDS = 5;
 
 /** The prescribed plan session a live session was started from (FIX-28), so
  * saving records a PlanSessionCompletion event for adherence/Up next. */
@@ -159,7 +170,11 @@ export const SET_TYPE_META: Record<
   },
 };
 
-export const RPE_OPTIONS: { value: number | null; label: string; hint: string }[] = [
+export const RPE_OPTIONS: {
+  value: number | null;
+  label: string;
+  hint: string;
+}[] = [
   { value: null, label: "No RPE", hint: "Skip effort tracking for this set" },
   { value: 6, label: "RPE 6", hint: "Easy: 4+ reps left in the tank" },
   { value: 7, label: "RPE 7", hint: "Moderate: about 3 reps left" },

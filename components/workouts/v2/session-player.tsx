@@ -35,7 +35,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { toast } from "sonner";
 import { saveWorkout } from "@/app/workouts/actions";
 import { Input } from "@/components/ui/input";
@@ -55,9 +62,15 @@ import {
 } from "./format";
 import { detectPRs, serializeSession } from "./session-factory";
 import { ActionSheet, type SheetAction } from "./sheet";
+import { primeStartCues, StartCountdown } from "./start-countdown";
 import { persistSessionCleared, useWorkouts } from "./store";
 import type { PRKind, SessionExercise, SessionSet } from "./types";
-import { REST_OPTIONS, RPE_OPTIONS, SET_TYPE_META } from "./types";
+import {
+  REST_OPTIONS,
+  RPE_OPTIONS,
+  SET_TYPE_META,
+  START_COUNTDOWN_SECONDS,
+} from "./types";
 import { WButton, WCard } from "./ui";
 
 // ---------------------------------------------------------------------------
@@ -88,7 +101,8 @@ function NumberField({
   }, [value]);
 
   function parse(raw: string): number | null {
-    const n = kind === "weight" ? Number.parseFloat(raw) : Number.parseInt(raw, 10);
+    const n =
+      kind === "weight" ? Number.parseFloat(raw) : Number.parseInt(raw, 10);
     if (Number.isNaN(n) || n < 0) {
       return null;
     }
@@ -99,7 +113,9 @@ function NumberField({
     <input
       aria-label={ariaLabel}
       className={`h-[52px] w-full min-w-0 rounded-xl border bg-background text-center font-bold font-mono text-[18px] text-foreground tabular-nums placeholder:text-muted-foreground/50 focus:outline-none ${
-        highlight ? "border-input focus:border-blood/70" : "border-border focus:border-blood/60"
+        highlight
+          ? "border-input focus:border-blood/70"
+          : "border-border focus:border-blood/60"
       }`}
       inputMode={kind === "weight" ? "decimal" : "numeric"}
       onBlur={() => {
@@ -184,7 +200,9 @@ function SetRow({
   const timed = wex.kind === "timed";
 
   function handleCheck() {
-    if (!set.completed) {
+    if (set.completed) {
+      setSetCompleted(wex.id, set.id, false);
+    } else {
       const prs = detectPRs(prBaseline, wex, set, unit);
       if (prs.length > 0) {
         const what = prs.includes("heaviest-weight")
@@ -193,8 +211,6 @@ function SetRow({
         onPR(`New record. ${what}`);
       }
       setSetCompleted(wex.id, set.id, true, prs);
-    } else {
-      setSetCompleted(wex.id, set.id, false);
     }
   }
 
@@ -211,11 +227,7 @@ function SetRow({
     <>
       <div
         className={`relative grid items-center gap-x-1.5 rounded-xl px-1.5 py-1.5 transition-colors ${gridCols(timed)} ${
-          set.completed
-            ? "bg-emerald-500/10"
-            : isNext
-              ? "bg-muted/40"
-              : ""
+          set.completed ? "bg-emerald-500/10" : isNext ? "bg-muted/40" : ""
         }`}
       >
         {isNext && !set.completed && (
@@ -233,7 +245,9 @@ function SetRow({
           type="button"
         >
           {meta.tag ? (
-            <span className={`font-bold font-mono text-[16px] ${meta.tagClass}`}>
+            <span
+              className={`font-bold font-mono text-[16px] ${meta.tagClass}`}
+            >
               {meta.tag}
             </span>
           ) : (
@@ -266,7 +280,9 @@ function SetRow({
               : `${previous.weight != null ? formatWeight(previous.weight) : "-"} × ${previous.reps ?? "-"}`}
           </button>
         ) : (
-          <span className="text-center text-[13px] text-muted-foreground/50">. </span>
+          <span className="text-center text-[13px] text-muted-foreground/50">
+            .{" "}
+          </span>
         )}
 
         {!timed && (
@@ -332,7 +348,10 @@ function SetRow({
         actions={[
           ...typeActions,
           {
-            label: set.rpe == null ? "Add effort rating (RPE)" : `Effort: RPE ${set.rpe}`,
+            label:
+              set.rpe == null
+                ? "Add effort rating (RPE)"
+                : `Effort: RPE ${set.rpe}`,
             hint: "How hard the set felt, 6 (easy) to 10 (max effort)",
             icon: <Gauge aria-hidden className="size-[18px]" />,
             onSelect: () => setRpeOpen(true),
@@ -439,7 +458,8 @@ function ExerciseCard({
       label: "Exercise info & your records",
       hint: "How to do it, your history and best lifts",
       icon: <Info aria-hidden className="size-[18px]" />,
-      onSelect: () => router.push(`/workouts/exercises/${exerciseSlug(wex.name)}`),
+      onSelect: () =>
+        router.push(`/workouts/exercises/${exerciseSlug(wex.name)}`),
     },
     ...(wex.sets.some((s) => !s.completed)
       ? [
@@ -511,7 +531,9 @@ function ExerciseCard({
   ];
 
   return (
-    <WCard className={`min-w-0 p-4 transition-opacity ${allDone ? "opacity-75" : ""}`}>
+    <WCard
+      className={`min-w-0 p-4 transition-opacity ${allDone ? "opacity-75" : ""}`}
+    >
       {/* Card header */}
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
@@ -694,6 +716,9 @@ export function SessionPlayer({
     timerPlay,
     timerPause,
     timerReset,
+    timerStartCountdown,
+    timerFinishCountdown,
+    timerCancelCountdown,
     clearSession,
     discardSession,
   } = useWorkouts();
@@ -705,7 +730,12 @@ export function SessionPlayer({
   const [finishing, setFinishing] = useState(false);
   const [alsoUpdateTemplate, setAlsoUpdateTemplate] = useState(false);
   const [completeRemaining, setCompleteRemaining] = useState(false);
-  const [saving, setSaving] = useState(false);
+  // The finish save runs inside a transition: React requires server
+  // functions called from event handlers to run in one (S2 logged the
+  // useActionState warning against S1's plain-async version), and the
+  // pending flag then also holds the dialog busy until the complete page's
+  // navigation commits.
+  const [saving, startFinishTransition] = useTransition();
   const [discarding, setDiscarding] = useState(false);
   const [prToast, setPrToast] = useState<string | null>(null);
   // Duration shown in the Finish dialog, frozen when the dialog opens so what
@@ -733,6 +763,41 @@ export function SessionPlayer({
     []
   );
 
+  // Start countdown (S4). `begunFlash` keeps the overlay up for the brief
+  // "Go" moment after the clock has already started. Leaving the player
+  // mid-countdown abandons it (back to pre-start on return): together with
+  // the hydrate strip in the store, a countdown can never outlive the Play
+  // press that opened it, so nothing ever auto-starts.
+  const [begunFlash, setBegunFlash] = useState(false);
+  const begunTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // When the overlay closes, focus lands on the transport control the Play
+  // press turned into (Pause), per the overlay focus-return contract.
+  const playPauseRef = useRef<HTMLButtonElement>(null);
+  const countingRef = useRef(false);
+  countingRef.current = Boolean(session?.timer.countdownEndsAt);
+  const cancelCountdownRef = useRef(timerCancelCountdown);
+  cancelCountdownRef.current = timerCancelCountdown;
+  useEffect(
+    () => () => {
+      if (begunTimer.current) {
+        clearTimeout(begunTimer.current);
+      }
+      if (countingRef.current) {
+        cancelCountdownRef.current();
+      }
+    },
+    []
+  );
+
+  function handleCountdownBegin() {
+    timerFinishCountdown();
+    setBegunFlash(true);
+    begunTimer.current = setTimeout(() => {
+      setBegunFlash(false);
+      playPauseRef.current?.focus();
+    }, 750);
+  }
+
   // Session-wide "you are here": the first unchecked set in order.
   const nextSetId = useMemo(() => {
     if (!session) {
@@ -751,9 +816,7 @@ export function SessionPlayer({
   const totalSets = session
     ? session.exercises.reduce((a, ex) => a + ex.sets.length, 0)
     : 0;
-  const volume = session
-    ? sessionVolumeLb(session.exercises, session.unit)
-    : 0;
+  const volume = session ? sessionVolumeLb(session.exercises, session.unit) : 0;
   const exercisesDone = session
     ? session.exercises.filter(
         (ex) => ex.sets.length > 0 && ex.sets.every((s) => s.completed)
@@ -845,7 +908,7 @@ export function SessionPlayer({
   const elapsed = timerElapsedSeconds(session.timer, now);
   const timerStarted = session.timer.running || elapsed > 0;
 
-  async function handleFinishConfirmed() {
+  function handleFinishConfirmed() {
     if (!session || saving) {
       return;
     }
@@ -873,65 +936,67 @@ export function SessionPlayer({
       );
       return;
     }
-    setSaving(true);
-    // Also rewrite the source template to match today's session, if asked.
-    if (alsoUpdateTemplate && sourceTemplate) {
-      const { saveTemplate } = await import("@/app/workouts/actions");
-      await saveTemplate({
-        id: sourceTemplate.id,
-        name: sourceTemplate.name,
-        exercises: sessionForSave.exercises
-          .filter((ex) => ex.sets.some((s) => s.completed))
-          .map((ex) => {
-            const existing = sourceTemplate.exercises.find(
-              (e) => e.name.trim().toLowerCase() === ex.name.trim().toLowerCase()
-            );
-            const workingSets = ex.sets.filter(
-              (s) => s.completed && s.type !== "warmup"
-            ).length;
-            return {
-              name: ex.name,
-              muscleGroup: ex.muscleGroup,
-              kind: ex.kind,
-              equipment: ex.equipment,
-              targetSets: Math.max(workingSets, 1),
-              repRangeMin: existing?.repRangeMin ?? 8,
-              repRangeMax: existing?.repRangeMax ?? 12,
-              restSeconds: ex.restSeconds,
-              note: existing?.note ?? null,
-            };
-          }),
-      });
-    }
-    const result = await saveWorkout(
-      payload,
-      session.templateId ?? undefined,
-      session.planRef ?? undefined
-    );
-    if (!result.ok || !result.id) {
-      setSaving(false);
-      toast.error(result.error ?? "Couldn't save that workout. Try again.");
-      return;
-    }
-    // Keep the dialog in its busy state until the complete page's navigation
-    // commits and unmounts this player; the unmount cleanup clears the
-    // session. Clearing here would flash "No workout is running" for the
-    // seconds the complete page takes to server-render. The persisted copy is
-    // wiped NOW, so even a navigation that degrades to a full page load can
-    // never rehydrate the saved workout as a zombie session.
-    clearOnUnmount.current = true;
-    persistSessionCleared();
-    router.push(`/workouts/history/${result.id}?new=1`);
-    router.refresh();
+    startFinishTransition(async () => {
+      // Also rewrite the source template to match today's session, if asked.
+      if (alsoUpdateTemplate && sourceTemplate) {
+        const { saveTemplate } = await import("@/app/workouts/actions");
+        await saveTemplate({
+          id: sourceTemplate.id,
+          name: sourceTemplate.name,
+          exercises: sessionForSave.exercises
+            .filter((ex) => ex.sets.some((s) => s.completed))
+            .map((ex) => {
+              const existing = sourceTemplate.exercises.find(
+                (e) =>
+                  e.name.trim().toLowerCase() === ex.name.trim().toLowerCase()
+              );
+              const workingSets = ex.sets.filter(
+                (s) => s.completed && s.type !== "warmup"
+              ).length;
+              return {
+                name: ex.name,
+                muscleGroup: ex.muscleGroup,
+                kind: ex.kind,
+                equipment: ex.equipment,
+                targetSets: Math.max(workingSets, 1),
+                repRangeMin: existing?.repRangeMin ?? 8,
+                repRangeMax: existing?.repRangeMax ?? 12,
+                restSeconds: ex.restSeconds,
+                note: existing?.note ?? null,
+              };
+            }),
+        });
+      }
+      const result = await saveWorkout(
+        payload,
+        session.templateId ?? undefined,
+        session.planRef ?? undefined
+      );
+      if (!result.ok || !result.id) {
+        toast.error(result.error ?? "Couldn't save that workout. Try again.");
+        return;
+      }
+      // The transition keeps the dialog in its busy state until the complete
+      // page's navigation commits and unmounts this player; the unmount cleanup
+      // clears the session. Clearing here would flash "No workout is running"
+      // for the seconds the complete page takes to server-render. The persisted
+      // copy is wiped NOW, so even a navigation that degrades to a full page
+      // load can never rehydrate the saved workout as a zombie session.
+      clearOnUnmount.current = true;
+      persistSessionCleared();
+      router.push(`/workouts/history/${result.id}?new=1`);
+      router.refresh();
+    });
   }
 
   return (
     <>
       {/* Sticky session header */}
       <div className="-mx-4 sticky top-0 z-30 mb-4 border-border border-b bg-background/95 px-4 pt-2 pb-3 backdrop-blur-xl sm:-mx-6 sm:px-6">
-        {/* Shrink discipline (flaws RUN-68): the back label is the only
-            flexible item, so the timer cluster and the Finish button can
-            never be pushed past the viewport edge. */}
+        {/* Utility row: navigation left, the commit action right (the
+            Hevy/Strong top-bar contract). Shrink discipline (flaws RUN-68):
+            the back label is the only flexible item, so the Finish button
+            can never be pushed past the viewport edge. */}
         <div className="flex items-center justify-between gap-2">
           <button
             aria-label="Back to Workouts"
@@ -943,50 +1008,6 @@ export function SessionPlayer({
             <span className="max-[359px]:hidden">Workouts</span>
             <span className="min-[360px]:hidden">Back</span>
           </button>
-
-          {/* Session clock: explicit Play / Pause / Reset. Never auto-starts. */}
-          <div className="flex shrink-0 items-center gap-1">
-            <span
-              aria-label={`Workout time: ${formatClock(elapsed)}${session.timer.running ? ", running" : ", paused"}`}
-              className={`font-mono font-semibold text-[16px] tabular-nums max-[359px]:text-[13px] ${
-                session.timer.running ? "text-foreground" : "text-muted-foreground"
-              }`}
-              role="timer"
-            >
-              {formatClock(elapsed)}
-            </span>
-            <button
-              aria-label={
-                session.timer.running
-                  ? "Pause the workout timer"
-                  : timerStarted
-                    ? "Resume the workout timer"
-                    : "Start the workout timer"
-              }
-              className={`flex size-11 cursor-pointer items-center justify-center rounded-xl transition ${
-                session.timer.running
-                  ? "bg-muted/70 text-foreground hover:bg-muted"
-                  : "bg-[var(--go)] text-[var(--bg)] hover:brightness-110"
-              }`}
-              onClick={() => (session.timer.running ? timerPause() : timerPlay())}
-              type="button"
-            >
-              {session.timer.running ? (
-                <Pause aria-hidden className="size-5 fill-current" />
-              ) : (
-                <Play aria-hidden className="size-5 fill-current" />
-              )}
-            </button>
-            <button
-              aria-label="Reset the workout timer to zero"
-              className="flex size-11 cursor-pointer items-center justify-center rounded-xl text-muted-foreground transition hover:bg-muted/60 hover:text-foreground disabled:opacity-30"
-              disabled={!timerStarted}
-              onClick={timerReset}
-              type="button"
-            >
-              <RotateCcw aria-hidden className="size-[18px]" />
-            </button>
-          </div>
 
           <WButton
             className="min-h-[44px] shrink-0 px-4"
@@ -1007,7 +1028,7 @@ export function SessionPlayer({
               setFinishing(true);
             }}
             size="sm"
-            variant="primary"
+            variant="secondary"
           >
             Finish
           </WButton>
@@ -1031,7 +1052,12 @@ export function SessionPlayer({
                 onChange={(e) => setNameDraft(e.target.value)}
                 value={nameDraft}
               />
-              <WButton className="min-h-[44px]" size="sm" type="submit" variant="primary">
+              <WButton
+                className="min-h-[44px]"
+                size="sm"
+                type="submit"
+                variant="secondary"
+              >
                 Save
               </WButton>
             </form>
@@ -1054,11 +1080,79 @@ export function SessionPlayer({
               />
             </button>
           )}
-          {!timerStarted && (
-            <p className="mt-1 text-[12.5px] text-muted-foreground">
-              When you are ready to begin the workout, press the play button.
-            </p>
-          )}
+          {/* The session timer: clock digits + transport controls composed
+              as ONE instrument in its own designated row (stopwatch
+              grammar). Explicit Play / Pause / Reset; nothing auto-starts;
+              the FIRST Play press runs the start countdown. */}
+          <div className="mt-1.5 flex min-h-11 items-center gap-2.5">
+            <span
+              aria-label={`Workout time: ${formatClock(elapsed)}${
+                session.timer.running
+                  ? ", running"
+                  : timerStarted
+                    ? ", paused"
+                    : ", not started"
+              }`}
+              className={`font-mono font-semibold text-2xl tabular-nums leading-none ${
+                session.timer.running
+                  ? "text-foreground"
+                  : "text-muted-foreground"
+              }`}
+              role="timer"
+            >
+              {formatClock(elapsed)}
+            </span>
+            <button
+              aria-label={
+                session.timer.running
+                  ? "Pause the workout timer"
+                  : timerStarted
+                    ? "Resume the workout timer"
+                    : "Start the workout timer"
+              }
+              className={`flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full transition ${
+                session.timer.running
+                  ? "bg-muted/70 text-foreground hover:bg-muted"
+                  : "bg-foreground text-background hover:opacity-90"
+              }`}
+              onClick={() => {
+                if (session.timer.running) {
+                  timerPause();
+                } else if (timerStarted) {
+                  timerPlay();
+                } else {
+                  // The Play gesture authorizes the countdown's audio.
+                  primeStartCues();
+                  timerStartCountdown();
+                }
+              }}
+              ref={playPauseRef}
+              type="button"
+            >
+              {session.timer.running ? (
+                <Pause aria-hidden className="size-5 fill-current" />
+              ) : (
+                <Play aria-hidden className="size-5 fill-current" />
+              )}
+            </button>
+            {timerStarted ? (
+              <button
+                aria-label="Reset the workout timer to zero"
+                className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
+                onClick={timerReset}
+                type="button"
+              >
+                <RotateCcw aria-hidden className="size-5" />
+              </button>
+            ) : (
+              <p className="min-w-0 text-muted-foreground text-sm">
+                Press play to begin
+              </p>
+            )}
+            {timerStarted && !session.timer.running && (
+              <span className="text-muted-foreground text-sm">Paused</span>
+            )}
+          </div>
           {totalSets > 0 && (
             <>
               <p className="mt-1 text-[12.5px] text-muted-foreground">
@@ -1075,7 +1169,7 @@ export function SessionPlayer({
                 role="progressbar"
               >
                 <div
-                  className="h-full rounded-full bg-[var(--progress)] transition-all duration-300"
+                  className="h-full rounded-full bg-foreground transition-all duration-300"
                   style={{
                     width: `${totalSets ? (doneSets / totalSets) * 100 : 0}%`,
                   }}
@@ -1118,7 +1212,9 @@ export function SessionPlayer({
           </p>
           <WButton
             className="mt-5"
-            onClick={() => router.push("/workouts/exercises/pick?target=session")}
+            onClick={() =>
+              router.push("/workouts/exercises/pick?target=session")
+            }
             size="lg"
             variant="primary"
           >
@@ -1183,11 +1279,26 @@ export function SessionPlayer({
           className="fixed top-4 left-1/2 z-[85] flex w-[calc(100%-32px)] max-w-[420px] -translate-x-1/2 animate-in items-center gap-2.5 rounded-2xl border border-amber-400/40 bg-popover px-4 py-3 shadow-[0_16px_48px_rgba(0,0,0,0.5)] duration-300 zoom-in-95"
           role="status"
         >
-          <Trophy aria-hidden className="size-5 shrink-0 text-amber-500 dark:text-amber-300" />
+          <Trophy
+            aria-hidden
+            className="size-5 shrink-0 text-amber-500 dark:text-amber-300"
+          />
           <span className="font-semibold text-[14.5px] text-foreground">
             {prToast}
           </span>
         </div>
+      )}
+
+      {/* Start countdown (S4): the moment between the first Play press and
+          the clock's first second, held briefly for the "Go" flash. */}
+      {(Boolean(session.timer.countdownEndsAt) || begunFlash) && (
+        <StartCountdown
+          endsAt={session.timer.countdownEndsAt ?? 0}
+          onBegin={handleCountdownBegin}
+          onCancel={timerCancelCountdown}
+          phase={session.timer.countdownEndsAt ? "counting" : "begun"}
+          totalMs={START_COUNTDOWN_SECONDS * 1000}
+        />
       )}
 
       {/* Finish confirm */}

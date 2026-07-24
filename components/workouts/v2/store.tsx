@@ -8,13 +8,13 @@
 
 import {
   createContext,
+  type ReactNode,
   useContext,
   useEffect,
   useLayoutEffect,
   useMemo,
   useReducer,
   useState,
-  type ReactNode,
 } from "react";
 import type { SetType } from "@/lib/workouts/stats";
 import { sessionEngaged } from "./format";
@@ -27,6 +27,7 @@ import type {
   SessionExercise,
   SessionSet,
 } from "./types";
+import { START_COUNTDOWN_SECONDS } from "./types";
 
 const STORAGE_KEY = "chad-workouts-live-v1";
 
@@ -78,6 +79,12 @@ type Action =
   | { type: "timer-play"; now: number }
   | { type: "timer-pause"; now: number }
   | { type: "timer-reset" }
+  // --- start countdown (S4): runs between the initial Play press and the
+  // clock's first second. Finish = the "workout begun" moment (natural end
+  // or Skip); cancel = back to the pre-start state, clock untouched. ---
+  | { type: "timer-countdown-start"; now: number }
+  | { type: "timer-countdown-finish"; now: number }
+  | { type: "timer-countdown-cancel" }
   | {
       type: "update-set";
       wexId: string;
@@ -107,7 +114,11 @@ type Action =
   | { type: "set-set-rpe"; wexId: string; setId: string; rpe: number | null }
   | { type: "remove-set"; wexId: string; setId: string }
   | { type: "add-session-exercises"; exercises: SessionExercise[] }
-  | { type: "replace-session-exercise"; wexId: string; exercise: SessionExercise }
+  | {
+      type: "replace-session-exercise";
+      wexId: string;
+      exercise: SessionExercise;
+    }
   | { type: "remove-session-exercise"; wexId: string }
   | { type: "move-session-exercise"; wexId: string; direction: -1 | 1 }
   | { type: "set-exercise-rest"; wexId: string; seconds: number }
@@ -191,7 +202,10 @@ function reducer(state: State, action: Action): State {
       return withSession(state, (s) =>
         s.timer.running
           ? s
-          : { ...s, timer: { ...s.timer, running: true, startedAt: action.now } }
+          : {
+              ...s,
+              timer: { ...s.timer, running: true, startedAt: action.now },
+            }
       );
 
     case "timer-pause":
@@ -213,8 +227,54 @@ function reducer(state: State, action: Action): State {
     case "timer-reset":
       return withSession(state, (s) => ({
         ...s,
-        timer: { running: false, startedAt: null, accumulatedMs: 0 },
+        timer: {
+          running: false,
+          startedAt: null,
+          accumulatedMs: 0,
+          countdownEndsAt: null,
+        },
       }));
+
+    case "timer-countdown-start":
+      // Initial start only: never while running, never a second countdown,
+      // and never on Resume (accumulated time means the workout already
+      // began; re-counting it was explicitly ruled out).
+      return withSession(state, (s) =>
+        s.timer.running || s.timer.countdownEndsAt || s.timer.accumulatedMs > 0
+          ? s
+          : {
+              ...s,
+              timer: {
+                ...s.timer,
+                countdownEndsAt: action.now + START_COUNTDOWN_SECONDS * 1000,
+              },
+            }
+      );
+
+    case "timer-countdown-finish":
+      // The "workout begun" moment: the countdown ended (or was skipped) and
+      // the clock starts NOW. Only valid while a countdown is running, so a
+      // stray dispatch can never start the clock on its own.
+      return withSession(state, (s) =>
+        s.timer.countdownEndsAt && !s.timer.running
+          ? {
+              ...s,
+              timer: {
+                running: true,
+                startedAt: action.now,
+                accumulatedMs: s.timer.accumulatedMs,
+                countdownEndsAt: null,
+              },
+            }
+          : s
+      );
+
+    case "timer-countdown-cancel":
+      return withSession(state, (s) =>
+        s.timer.countdownEndsAt
+          ? { ...s, timer: { ...s.timer, countdownEndsAt: null } }
+          : s
+      );
 
     case "update-set":
       return withSession(state, (s) =>
@@ -306,7 +366,8 @@ function reducer(state: State, action: Action): State {
                   const firstWorking = ex.sets.findIndex(
                     (x) => x.type === "working"
                   );
-                  const at = firstWorking === -1 ? ex.sets.length : firstWorking;
+                  const at =
+                    firstWorking === -1 ? ex.sets.length : firstWorking;
                   return [...ex.sets.slice(0, at), set, ...ex.sets.slice(at)];
                 })()
               : [...ex.sets, set];
@@ -459,7 +520,11 @@ function reducer(state: State, action: Action): State {
             ...state,
             draft: {
               ...state.draft,
-              exercises: move(state.draft.exercises, action.id, action.direction),
+              exercises: move(
+                state.draft.exercises,
+                action.id,
+                action.direction
+              ),
             },
           }
         : state;
@@ -488,6 +553,12 @@ interface WorkoutsStore {
   timerPlay: () => void;
   timerPause: () => void;
   timerReset: () => void;
+  /** Initial Play press only: opens the 5-second start countdown. */
+  timerStartCountdown: () => void;
+  /** Countdown over (naturally or via Skip): the clock starts now. */
+  timerFinishCountdown: () => void;
+  /** Abandon a running countdown, back to pre-start (unmount/reset). */
+  timerCancelCountdown: () => void;
   updateSet: (
     wexId: string,
     setId: string,
@@ -533,6 +604,15 @@ function loadInitialState(): State {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as State;
+      // A persisted start countdown never resumes: it runs only from a live
+      // Play press, so a reload mid-countdown lands back on pre-start
+      // (otherwise a stale countdown could auto-start the clock).
+      if (parsed.session?.timer?.countdownEndsAt) {
+        parsed.session = {
+          ...parsed.session,
+          timer: { ...parsed.session.timer, countdownEndsAt: null },
+        };
+      }
       return { ...EMPTY_STATE, ...parsed };
     }
   } catch {
@@ -571,10 +651,16 @@ export function WorkoutsProvider({ children }: { children: ReactNode }) {
       discardSession: () => dispatch({ type: "discard-session" }),
       clearSession: () => dispatch({ type: "clear-session" }),
       renameSession: (name) => dispatch({ type: "rename-session", name }),
-      setSessionNotes: (notes) => dispatch({ type: "set-session-notes", notes }),
+      setSessionNotes: (notes) =>
+        dispatch({ type: "set-session-notes", notes }),
       timerPlay: () => dispatch({ type: "timer-play", now: Date.now() }),
       timerPause: () => dispatch({ type: "timer-pause", now: Date.now() }),
       timerReset: () => dispatch({ type: "timer-reset" }),
+      timerStartCountdown: () =>
+        dispatch({ type: "timer-countdown-start", now: Date.now() }),
+      timerFinishCountdown: () =>
+        dispatch({ type: "timer-countdown-finish", now: Date.now() }),
+      timerCancelCountdown: () => dispatch({ type: "timer-countdown-cancel" }),
       updateSet: (wexId, setId, field, value) =>
         dispatch({ type: "update-set", wexId, setId, field, value }),
       setSetCompleted: (wexId, setId, completed, prs) =>
@@ -593,7 +679,8 @@ export function WorkoutsProvider({ children }: { children: ReactNode }) {
         dispatch({ type: "set-set-type", wexId, setId, setType }),
       setSetRpe: (wexId, setId, rpe) =>
         dispatch({ type: "set-set-rpe", wexId, setId, rpe }),
-      removeSet: (wexId, setId) => dispatch({ type: "remove-set", wexId, setId }),
+      removeSet: (wexId, setId) =>
+        dispatch({ type: "remove-set", wexId, setId }),
       addSessionExercises: (exercises) =>
         dispatch({ type: "add-session-exercises", exercises }),
       replaceSessionExercise: (wexId, exercise) =>
@@ -624,7 +711,9 @@ export function WorkoutsProvider({ children }: { children: ReactNode }) {
     [state, ready]
   );
 
-  return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
+  return (
+    <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
+  );
 }
 
 export function useWorkouts(): WorkoutsStore {

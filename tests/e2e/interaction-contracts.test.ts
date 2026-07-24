@@ -269,7 +269,13 @@ test("bottom nav tabs stay tappable while the active-workout dock is up (SYS-05)
     .first()
     .click();
   await page.waitForURL("**/workouts/active**");
+  // The first Play press opens the S4 start countdown; Skip engages the
+  // session immediately.
   await page.getByRole("button", { name: "Start the workout timer" }).click();
+  await page.getByRole("button", { name: "Skip countdown" }).click();
+  await expect(
+    page.getByRole("button", { name: "Pause the workout timer" })
+  ).toBeVisible();
   await page.goto("/workouts");
   await expect(
     page.getByRole("button", { name: "Stop this workout" })

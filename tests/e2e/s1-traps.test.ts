@@ -212,10 +212,16 @@ for (const viewport of TRAP_VIEWPORTS) {
       const { context, page } = await openContext(browser, viewport);
 
       // The live session lives in this context's localStorage: build it here.
+      // The first Play press opens the S4 start countdown; Skip begins the
+      // workout immediately.
       await startEmptyWorkout(page);
       await page
         .getByRole("button", { name: "Start the workout timer" })
         .click();
+      await page.getByRole("button", { name: "Skip countdown" }).click();
+      await expect(
+        page.getByRole("button", { name: "Pause the workout timer" })
+      ).toBeVisible();
       await page.goto("/workouts");
 
       const stop = page.getByRole("button", { name: "Stop this workout" });
