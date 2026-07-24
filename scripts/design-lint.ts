@@ -79,6 +79,13 @@
  *                      one simple input; §11(b): two or more input groups
  *                      means the wrong container was chosen — escalate to a
  *                      sheet or page, never a scrollbar).
+ *   orphanable-unit-label  A unit label (min, sec, kg, lb...) rendered as a
+ *                      loose sibling text node after an <Input>/<input>
+ *                      instead of affixed via the shared InputGroup slot
+ *                      (canon 03 #19: units live inside the field's
+ *                      connected construct so they can never wrap, orphan,
+ *                      or clip — the finish-dialog "0 min 0 s" failure;
+ *                      gap-audit A2.7, W1).
  *
  * New rules grandfather their current counts ONCE (tracked via "__rules__"
  * in the baseline), then ratchet down like everything else.
@@ -161,7 +168,8 @@ type RuleId =
   // D1 composition gates (2026-07-23). Canon numbers cite
   // ../chadlatest/audits/design-standards-2026-07-23/composition-canon/.
   | "nested-container"
-  | "dialog-form-overload";
+  | "dialog-form-overload"
+  | "orphanable-unit-label";
 
 type Violation = { file: string; rule: RuleId; line: number; excerpt: string };
 
@@ -446,6 +454,62 @@ function scanContainerRegions(text: string): ContainerRegion[] {
   return regions;
 }
 
+/** Unit words a loose sibling text node may not carry next to an input
+ *  (canon 03 #19 / gap A2.7). Matched against the WHOLE trimmed node. */
+const UNIT_WORD_RE =
+  /^(min|mins|minute|minutes|sec|secs|second|seconds|s|hr|hrs|hour|hours|kg|lb|lbs|g|oz|ml|l|mi|km|cal|kcal|%|rep|reps)$/i;
+
+/** Finds <Input>/<input> tags followed by a sibling that is nothing but a
+ *  unit word: bare JSX text, a {"..."} string expression, or a <span> whose
+ *  entire content is the unit. Units belong in the shared InputGroup affix
+ *  slot, where they cannot wrap, orphan, or clip. Static approximation on
+ *  the same quote/brace-aware tag walk extractJsxTags uses. */
+function scanOrphanUnitLabels(
+  source: string
+): { line: number; unit: string }[] {
+  const text = blankComments(source);
+  const out: { line: number; unit: string }[] = [];
+  const inputRe = /<(Input|input)\b/g;
+  let m = inputRe.exec(text);
+  while (m) {
+    let i = inputRe.lastIndex;
+    let brace = 0;
+    let quote: string | null = null;
+    while (i < text.length) {
+      const c = text[i];
+      if (quote) {
+        if (c === quote) {
+          quote = null;
+        }
+      } else if (c === '"' || c === "'" || c === "`") {
+        quote = c;
+      } else if (c === "{") {
+        brace++;
+      } else if (c === "}") {
+        brace--;
+      } else if ((c === ">" || c === "<") && brace <= 0) {
+        break;
+      }
+      i++;
+    }
+    if (i < text.length && text[i] === ">") {
+      const after = text.slice(i + 1, i + 240);
+      const sib = after.match(
+        /^\s*(?:\{\s*["'`]([^"'`]*)["'`]\s*\}|<span[^>]*>([^<{]*)<\/span>|([^<{]+))/
+      );
+      const unit = (sib?.[1] ?? sib?.[2] ?? sib?.[3])?.trim();
+      if (unit && UNIT_WORD_RE.test(unit)) {
+        out.push({
+          line: text.slice(0, m.index).split("\n").length,
+          unit,
+        });
+      }
+    }
+    m = inputRe.exec(text);
+  }
+  return out;
+}
+
 type JsxTag = { name: string; attrs: string; line: number };
 
 /** Extracts JSX open tags (name + attribute source + line), tolerating
@@ -520,7 +584,12 @@ export function lintFile(
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const push = (rule: RuleId) =>
-      out.push({ file: rel, rule, line: i + 1, excerpt: line.trim().slice(0, 120) });
+      out.push({
+        file: rel,
+        rule,
+        line: i + 1,
+        excerpt: line.trim().slice(0, 120),
+      });
 
     if (HEX_RE.test(line) || FUNC_COLOR_RE.test(line)) {
       push("raw-color");
@@ -598,9 +667,7 @@ export function lintFile(
       if (ms >= 1000 && (ms < 4000 || ms > 10_000)) {
         // Toasts carrying an action are exempt (canon 03 #38): they must
         // NOT auto-dismiss fast, so long/persistent durations are correct.
-        const windowText = lines
-          .slice(Math.max(0, i - 6), i + 7)
-          .join("\n");
+        const windowText = lines.slice(Math.max(0, i - 6), i + 7).join("\n");
         if (!/\baction\s*[:=]/.test(windowText)) {
           push("toast-duration");
         }
@@ -650,10 +717,11 @@ export function lintFile(
           file: rel,
           rule,
           line: tag.line,
-          excerpt: `<${tag.name} ${tag.attrs.trim().replace(/\s+/g, " ")}`.slice(
-            0,
-            120
-          ),
+          excerpt:
+            `<${tag.name} ${tag.attrs.trim().replace(/\s+/g, " ")}`.slice(
+              0,
+              120
+            ),
         });
       if (
         /^[a-z]/.test(tag.name) &&
@@ -684,7 +752,8 @@ export function lintFile(
       }
       if (
         isInput &&
-        (IDENTITY_TYPE_RE.test(tag.attrs) || IDENTITY_NAME_RE.test(tag.attrs)) &&
+        (IDENTITY_TYPE_RE.test(tag.attrs) ||
+          IDENTITY_NAME_RE.test(tag.attrs)) &&
         !/\bautoComplete=/.test(tag.attrs)
       ) {
         pushTag("missing-autocomplete");
@@ -794,13 +863,30 @@ export function lintFile(
             file: rel,
             rule: "dialog-form-overload",
             line: r.openLine,
-            excerpt: `${n} input controls inside <${r.name}> (budget ${DIALOG_INPUT_BUDGET}, canon 04 §10) — a form outgrew this dialog; escalate to a sheet or page (canon 04 §11)`.slice(
-              0,
-              120
-            ),
+            excerpt:
+              `${n} input controls inside <${r.name}> (budget ${DIALOG_INPUT_BUDGET}, canon 04 §10) — a form outgrew this dialog; escalate to a sheet or page (canon 04 §11)`.slice(
+                0,
+                120
+              ),
           });
         }
       }
+    }
+
+    /* orphanable-unit-label (A2.7, canon 03 #19): a unit word floating as
+     * the input's next sibling can wrap, orphan, or clip (the finish-dialog
+     * "0 min 0 s" screenshot). Affix it via the shared InputGroup slot. */
+    for (const hit of scanOrphanUnitLabels(text)) {
+      out.push({
+        file: rel,
+        rule: "orphanable-unit-label",
+        line: hit.line,
+        excerpt:
+          `unit label "${hit.unit}" floats beside an input — affix it with InputGroup + InputGroupAddon (canon 03 #19, A2.7)`.slice(
+            0,
+            120
+          ),
+      });
     }
   }
 
@@ -948,6 +1034,7 @@ function main() {
     "missing-reduced-motion",
     "nested-container",
     "dialog-form-overload",
+    "orphanable-unit-label",
   ];
   for (const rule of ALL_RULES) {
     knownRules.add(rule);

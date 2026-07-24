@@ -142,7 +142,10 @@ async function expectFullyInsideViewport(
   { vertical = false }: { vertical?: boolean } = {}
 ) {
   const box = await target.boundingBox();
-  expect(box, `${label} @ ${viewport.width}px: has no bounding box`).not.toBeNull();
+  expect(
+    box,
+    `${label} @ ${viewport.width}px: has no bounding box`
+  ).not.toBeNull();
   if (!box) {
     return;
   }
@@ -264,21 +267,26 @@ for (const viewport of TRAP_VIEWPORTS) {
       await addBenchPress(page);
 
       await page.getByRole("button", { name: "Finish", exact: true }).click();
+      await page.waitForURL("**/workouts/active/finish**", {
+        timeout: 15_000,
+      });
 
-      const dialog = page.locator('[role="alertdialog"]').last();
-      await expect(dialog).toBeVisible();
+      // The mark-all option always starts unchecked (never default-marked).
       await expect(
-        dialog.locator('input[type="checkbox"]').first()
+        page.getByRole("checkbox", { name: /unchecked set/ })
       ).not.toBeChecked();
 
-      await dialog.getByRole("button", { name: "Finish and save" }).click();
+      await page.getByRole("button", { name: "Finish and save" }).click();
       await expect(page.getByText(/Nothing is checked off yet/i)).toBeVisible({
         timeout: 10_000,
       });
-      expect(page.url()).toContain("/workouts/active");
+      expect(page.url()).toContain("/workouts/active/finish");
 
-      // Clean up: discard the session so later runs start clean.
-      await dialog.getByRole("button", { name: "Cancel" }).click();
+      // Clean up: back to the player, then discard, so later runs start clean.
+      await page
+        .getByRole("button", { name: "Back to your workout", exact: true })
+        .click();
+      await page.waitForURL("**/workouts/active", { timeout: 15_000 });
       await page
         .getByRole("button", { name: "Discard workout" })
         .first()
@@ -314,11 +322,9 @@ for (const viewport of TRAP_VIEWPORTS) {
           .fill(name);
         await page.getByRole("button", { name: "Save exercise" }).click();
         if (attempt === 1) {
-          await expect(page.getByText(/added to your exercises/i)).toBeVisible(
-            {
-              timeout: 10_000,
-            }
-          );
+          await expect(page.getByText(/added to your exercises/i)).toBeVisible({
+            timeout: 10_000,
+          });
         } else {
           await expect(
             page.getByText(/You already have an exercise named/i)
@@ -344,11 +350,10 @@ for (const viewport of TRAP_VIEWPORTS) {
       await page.getByLabel(/Reps for set 1/).fill("5");
       await page.getByRole("button", { name: /Log set 1 .* as done/ }).click();
       await page.getByRole("button", { name: "Finish", exact: true }).click();
-      await page
-        .locator('[role="alertdialog"]')
-        .last()
-        .getByRole("button", { name: "Finish and save" })
-        .click();
+      await page.waitForURL("**/workouts/active/finish**", {
+        timeout: 15_000,
+      });
+      await page.getByRole("button", { name: "Finish and save" }).click();
       await page.waitForURL("**/workouts/history/**", { timeout: 30_000 });
 
       await page.goto("/workouts");
@@ -360,21 +365,21 @@ for (const viewport of TRAP_VIEWPORTS) {
         page.locator('[data-slot="popover-content"]').count();
 
       await help.click();
-      await expect.poll(popoverOpen, { timeout: 5_000 }).toBeGreaterThan(0);
+      await expect.poll(popoverOpen, { timeout: 5000 }).toBeGreaterThan(0);
       await page.keyboard.press("Escape");
-      await expect.poll(popoverOpen, { timeout: 5_000 }).toBe(0);
+      await expect.poll(popoverOpen, { timeout: 5000 }).toBe(0);
 
       await help.click();
-      await expect.poll(popoverOpen, { timeout: 5_000 }).toBeGreaterThan(0);
+      await expect.poll(popoverOpen, { timeout: 5000 }).toBeGreaterThan(0);
       await page.mouse.wheel(0, 250);
-      await expect.poll(popoverOpen, { timeout: 5_000 }).toBe(0);
+      await expect.poll(popoverOpen, { timeout: 5000 }).toBe(0);
 
       // Tap-away closes it too (the third leg of the dismissal contract).
       await help.scrollIntoViewIfNeeded();
       await help.click();
-      await expect.poll(popoverOpen, { timeout: 5_000 }).toBeGreaterThan(0);
+      await expect.poll(popoverOpen, { timeout: 5000 }).toBeGreaterThan(0);
       await page.mouse.click(5, 5);
-      await expect.poll(popoverOpen, { timeout: 5_000 }).toBe(0);
+      await expect.poll(popoverOpen, { timeout: 5000 }).toBe(0);
 
       await context.close();
     });
@@ -382,13 +387,16 @@ for (const viewport of TRAP_VIEWPORTS) {
 }
 
 /**
- * RUN-68 / RUN-70: the Finish control and the finish dialog must be fully
- * visible and clickable at every phone width. This assertion did not exist
- * when RUN-68 shipped; it is the direct regression pin for "the red Finish
- * button is completely cut off by the right edge of the screen".
+ * RUN-68 / RUN-70: the Finish control and the finish step's primary action
+ * must be fully visible and clickable at every phone width. This assertion
+ * did not exist when RUN-68 shipped; it is the direct regression pin for
+ * "the red Finish button is completely cut off by the right edge of the
+ * screen". Since W1 the finish flow is its own page, so RUN-70's successor
+ * is composition canon 04 §24 stated for the step: the pinned "Finish and
+ * save" bar sits fully inside the viewport with no scrolling.
  */
 for (const viewport of FINISH_VIEWPORTS) {
-  test(`Finish button and finish dialog fit the viewport and work (RUN-68/70) @ ${viewport.width}px`, async ({
+  test(`Finish button and finish step fit the viewport and work (RUN-68/70) @ ${viewport.width}px`, async ({
     browser,
   }) => {
     const { context, page } = await openContext(browser, viewport);
@@ -406,21 +414,37 @@ for (const viewport of FINISH_VIEWPORTS) {
     });
     await finish.click();
 
-    // The finish dialog: fits the viewport on all four edges (RUN-70 was the
-    // dialog cut off at the top), and its own primary action is reachable.
-    const dialog = page.locator('[role="alertdialog"]').last();
-    await expect(dialog).toBeVisible();
-    await expectFullyInsideViewport(dialog, viewport, "finish dialog", {
-      vertical: true,
-    });
-    const save = dialog.getByRole("button", { name: "Finish and save" });
+    // The finish step: its pinned primary action is reachable WITHOUT
+    // scrolling, at every width (canon 04 §24: the action never scrolls out
+    // of reach).
+    await page.waitForURL("**/workouts/active/finish**", { timeout: 15_000 });
+    const save = page.getByRole("button", { name: "Finish and save" });
     await expect(save).toBeVisible();
     await expectFullyInsideViewport(
       save,
       viewport,
-      "finish dialog primary action",
+      "finish step primary action",
       { vertical: true }
     );
+
+    // Owner order 2026-07-24: the pinned bar joins the bottom stack ABOVE
+    // the tab nav, never covering it (canon 08 #58) - the tabs stay fully
+    // visible and tappable while the finish step is up. The shell keeps
+    // previously visited pages' DOM cached, so scope to the VISIBLE nav.
+    const tabNav = page.locator('nav[aria-label="Primary"]:visible');
+    await expect(tabNav).toBeVisible();
+    const pinnedBar = page.locator("div.bottom-pinned-bar:visible");
+    await expect(pinnedBar).toBeVisible();
+    const navBox = await tabNav.boundingBox();
+    const pinnedBarBox = await pinnedBar.boundingBox();
+    expect(navBox).not.toBeNull();
+    expect(pinnedBarBox).not.toBeNull();
+    if (navBox && pinnedBarBox) {
+      expect(
+        pinnedBarBox.y + pinnedBarBox.height,
+        `finish bar must end above the tab nav @ ${viewport.width}px`
+      ).toBeLessThanOrEqual(navBox.y + 1);
+    }
 
     // Prove clickability end to end: the empty save is refused with the
     // corrective message (RUN-72 contract), which also confirms the tap
@@ -433,6 +457,70 @@ for (const viewport of FINISH_VIEWPORTS) {
     await context.close();
   });
 }
+
+/**
+ * W1 void fix (owner: "Why leave a ton of empty space between the fields and
+ * the actual button?"): at desktop widths the finish step's primary action
+ * sits in normal flow directly after the last field group (placement canon
+ * 08 #8), NOT in a viewport-pinned bar floating a dead band below the short
+ * form (08 #9: pin only when pinning is valid the whole time). The phone
+ * pinned-bar contract stays asserted by the FINISH_VIEWPORTS sweep above.
+ */
+test("finish step action sits in flow directly after the fields at desktop", async ({
+  browser,
+}) => {
+  const { context, page } = await openContext(browser, {
+    width: 1280,
+    height: 900,
+  });
+
+  await startEmptyWorkout(page);
+  await addBenchPress(page);
+  await page.getByRole("button", { name: "Finish", exact: true }).click();
+  await page.waitForURL("**/workouts/active/finish**", { timeout: 15_000 });
+
+  const save = page.getByRole("button", { name: "Finish and save" });
+  await expect(save).toBeVisible();
+
+  // In flow means no fixed-position ancestor (the phone bar is one).
+  const positioning = await save.evaluate((el) => {
+    for (
+      let node: HTMLElement | null = el as HTMLElement;
+      node;
+      node = node.parentElement
+    ) {
+      if (getComputedStyle(node).position === "fixed") {
+        return "fixed";
+      }
+    }
+    return "in-flow";
+  });
+  expect(
+    positioning,
+    "desktop finish action must not live in a viewport-pinned bar"
+  ).toBe("in-flow");
+
+  // And it sits close after the last field group: standard form spacing,
+  // not a ~320px void. The mark-all checkbox row is the last group in this
+  // empty-workout flow.
+  const lastGroup = page
+    .getByRole("checkbox", { name: /unchecked set/ })
+    .locator("xpath=ancestor::label");
+  const groupBox = await lastGroup.boundingBox();
+  const saveBox = await save.boundingBox();
+  expect(groupBox).not.toBeNull();
+  expect(saveBox).not.toBeNull();
+  if (groupBox && saveBox) {
+    const gap = saveBox.y - (groupBox.y + groupBox.height);
+    expect(
+      gap,
+      `gap between the last field group and the action is ${Math.round(gap)}px`
+    ).toBeLessThanOrEqual(120);
+    expect(gap).toBeGreaterThanOrEqual(0);
+  }
+
+  await context.close();
+});
 
 /**
  * FINISH-FLOW FIXES (owner flaw list 2026-07-22, S1 session):
@@ -531,25 +619,32 @@ test.describe("finish-flow fixes (2026-07-22)", () => {
       await page.getByLabel(/Reps for set 1/).fill("5");
       await page.getByRole("button", { name: /Log set 1 .* as done/ }).click();
       await page.getByRole("button", { name: "Finish", exact: true }).click();
+      await page.waitForURL("**/workouts/active/finish**", {
+        timeout: 15_000,
+      });
 
-      const dialog = page.locator('[role="alertdialog"]').last();
-      await expect(dialog).toBeVisible();
-      // The dismiss is the standard Cancel, never themed copy.
+      // The way out is the standard labeled back control, never themed copy.
       await expect(
-        dialog.getByRole("button", { name: "Cancel", exact: true })
+        page.getByRole("button", { name: "Back to your workout", exact: true })
       ).toBeVisible();
       await expect(
-        dialog.getByRole("button", { name: "Keep lifting" })
+        page.getByRole("button", { name: "Keep lifting" })
       ).toHaveCount(0);
 
+      // The rest countdown (running from the set just logged) never renders
+      // on the commit surface (W1; canon 08 §58 displacement rule).
+      await expect(page.getByRole("timer", { name: /Rest timer/ })).toHaveCount(
+        0
+      );
+
       // The timed duration is shown and editable.
-      const minField = dialog.getByLabel("Duration, minutes");
+      const minField = page.getByLabel("Duration in minutes");
       await expect(minField).toBeVisible();
       await minField.fill(String(minutes));
-      await dialog.getByLabel("Duration, seconds").fill("0");
+      await page.getByLabel("Duration in seconds").fill("0");
 
       await armFlashDetector(page);
-      await dialog.getByRole("button", { name: "Finish and save" }).click();
+      await page.getByRole("button", { name: "Finish and save" }).click();
       await page.waitForURL("**/workouts/history/**", { timeout: 30_000 });
       await expect(page.getByText("Workout complete")).toBeVisible({
         timeout: 60_000,
@@ -629,9 +724,9 @@ test.describe("finish-flow fixes (2026-07-22)", () => {
     // Same no-flash contract when a plan day finishes.
     await page.getByRole("button", { name: /Log set 1 .* as done/ }).click();
     await page.getByRole("button", { name: "Finish", exact: true }).click();
-    const dialog = page.locator('[role="alertdialog"]').last();
+    await page.waitForURL("**/workouts/active/finish**", { timeout: 15_000 });
     await armFlashDetector(page);
-    await dialog.getByRole("button", { name: "Finish and save" }).click();
+    await page.getByRole("button", { name: "Finish and save" }).click();
     await page.waitForURL("**/workouts/history/**", { timeout: 30_000 });
     await expect(page.getByText("Workout complete")).toBeVisible({
       timeout: 15_000,

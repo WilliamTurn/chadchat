@@ -169,11 +169,9 @@ test("chart tooltips dismiss on Escape, tap-away, and scroll (SYS-03)", async ({
           }
           await page.mouse.move(box.x - 40, box.y + box.height / 2);
           await page.mouse.move(box.x + 10, box.y + box.height / 2);
-          await page.mouse.move(
-            box.x + box.width / 2,
-            box.y + box.height / 2,
-            { steps: 4 }
-          );
+          await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
+            steps: 4,
+          });
           return await tooltipVisible();
         },
         { timeout: 15_000 }
@@ -184,7 +182,7 @@ test("chart tooltips dismiss on Escape, tap-away, and scroll (SYS-03)", async ({
   // Escape clears it (pointer still hovering the chart).
   await summonTooltip();
   await page.keyboard.press("Escape");
-  await expect.poll(tooltipVisible, { timeout: 5_000 }).toBe(false);
+  await expect.poll(tooltipVisible, { timeout: 5000 }).toBe(false);
 
   // Tap-away clears it: a pointerdown outside the chart, without moving the
   // hover pointer off the chart (the touch case that trapped six surfaces).
@@ -194,12 +192,12 @@ test("chart tooltips dismiss on Escape, tap-away, and scroll (SYS-03)", async ({
       new PointerEvent("pointerdown", { bubbles: true })
     );
   });
-  await expect.poll(tooltipVisible, { timeout: 5_000 }).toBe(false);
+  await expect.poll(tooltipVisible, { timeout: 5000 }).toBe(false);
 
   // Scroll clears it.
   await summonTooltip();
   await page.mouse.wheel(0, 200);
-  await expect.poll(tooltipVisible, { timeout: 5_000 }).toBe(false);
+  await expect.poll(tooltipVisible, { timeout: 5000 }).toBe(false);
 
   await context.close();
 });
@@ -219,14 +217,14 @@ test("destructive actions confirm with a named object, or offer a lasting Undo (
   await page.getByTestId("open-confirm").click();
   const dialog = page.getByRole("alertdialog");
   await expect(dialog).toBeVisible({ timeout: 10_000 });
-  await expect(
-    dialog.getByText(/Delete the .* weigh-in of .*\?/i)
-  ).toBeVisible({ timeout: 5_000 });
+  await expect(dialog.getByText(/Delete the .* weigh-in of .*\?/i)).toBeVisible(
+    { timeout: 5000 }
+  );
   await expect(
     dialog.getByText(/This will update your weight trend/i)
-  ).toBeVisible({ timeout: 5_000 });
+  ).toBeVisible({ timeout: 5000 });
   await dialog.getByRole("button", { name: "Cancel" }).click();
-  await expect(dialog).toHaveCount(0, { timeout: 5_000 });
+  await expect(dialog).toHaveCount(0, { timeout: 5000 });
 
   // Confirming actually runs the action and reports a receipt.
   await page.getByTestId("open-confirm").click();
@@ -242,8 +240,8 @@ test("destructive actions confirm with a named object, or offer a lasting Undo (
   // (LAW 7 says destructive/optimistic actions confirm OR undo).
   await page.getByTestId("open-undo").click();
   const undo = page.getByRole("button", { name: "Undo" }).first();
-  await expect(undo).toBeVisible({ timeout: 5_000 });
-  await page.waitForTimeout(5_000);
+  await expect(undo).toBeVisible({ timeout: 5000 });
+  await page.waitForTimeout(5000);
   await expect(
     undo,
     "the Undo action must persist at least 5 seconds"
@@ -545,11 +543,8 @@ test("workout complete has a top back control (CMP-15/16)", async ({
   await page.getByLabel(/Reps for set 1/).fill("5");
   await page.getByRole("button", { name: /Log set 1 .* as done/ }).click();
   await page.getByRole("button", { name: "Finish", exact: true }).click();
-  await page
-    .locator('[role="alertdialog"]')
-    .last()
-    .getByRole("button", { name: "Finish and save" })
-    .click();
+  await page.waitForURL("**/workouts/active/finish**", { timeout: 15_000 });
+  await page.getByRole("button", { name: "Finish and save" }).click();
   await page.waitForURL("**/workouts/history/**", { timeout: 30_000 });
   expect(page.url()).toContain("new=1");
 
@@ -600,7 +595,7 @@ test("the picker add confirmation survives the navigation it triggers (XPK-15)",
   await page.waitForURL("**/workouts/active**", { timeout: 15_000 });
   await expect(
     page.getByText(/Barbell Bench Press added to your workout/i)
-  ).toBeVisible({ timeout: 5_000 });
+  ).toBeVisible({ timeout: 5000 });
 
   await context.close();
 });
@@ -662,9 +657,7 @@ test("the photo input offers Take photo and Choose from gallery on a phone (RC-4
   // real camera): capture="environment" is what opens the rear camera in one
   // tap, and the gallery input must NOT carry capture, because capture on a
   // single input forces camera-only on many Android browsers.
-  const cameraInput = zone.locator(
-    'input[type="file"][capture="environment"]'
-  );
+  const cameraInput = zone.locator('input[type="file"][capture="environment"]');
   await expect(cameraInput).toHaveCount(1);
   await expect(cameraInput).toHaveAttribute("accept", /image\//);
   await expect(zone.locator('input[type="file"]:not([capture])')).toHaveCount(

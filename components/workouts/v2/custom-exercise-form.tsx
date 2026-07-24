@@ -265,8 +265,9 @@ export function CustomExerciseForm({
       {mounted &&
         createPortal(
           <div
-            className="fixed inset-x-0 bottom-0 z-50 border-border border-t bg-background/95 px-4 py-3 backdrop-blur-xl"
-            style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}
+            // Above the phone tab bar, never covering it (placement canon
+            // 08 #58; owner order 2026-07-24, same stack as the finish bar).
+            className="bottom-pinned-bar fixed inset-x-0 z-50 border-border border-t bg-background/95 px-4 pt-3 backdrop-blur-xl"
           >
             <div className="mx-auto w-full max-w-[560px]">
               {!canSave && (

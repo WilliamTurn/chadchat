@@ -106,7 +106,11 @@ export function sessionVolumeLb(
  * (charter LAW 9; flaws SYS-06/RUN-06/RUN-08). */
 export function sessionEngaged(
   session: {
-    timer: { running: boolean; startedAt: number | null; accumulatedMs: number };
+    timer: {
+      running: boolean;
+      startedAt: number | null;
+      accumulatedMs: number;
+    };
     exercises: SessionExercise[];
   } | null
 ): boolean {
@@ -184,4 +188,16 @@ export function weightMeaning(
     default:
       return `Weight in ${unit}`;
   }
+}
+
+/** Parse the finish step's duration fields into clamped seconds (0 to 24h). */
+export function draftDurationSeconds(draft: {
+  min: string;
+  sec: string;
+}): number {
+  const min = Number.parseInt(draft.min, 10);
+  const sec = Number.parseInt(draft.sec, 10);
+  const total =
+    (Number.isNaN(min) ? 0 : min) * 60 + (Number.isNaN(sec) ? 0 : sec);
+  return Math.min(Math.max(total, 0), 86_400);
 }

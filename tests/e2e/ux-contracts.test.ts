@@ -87,7 +87,9 @@ test.beforeAll(async ({ browser }, workerInfo) => {
       RETURNING id
     `;
     if (updated.length !== 1) {
-      throw new Error(`ux-contract setup: provisioning failed for ${memberEmail}`);
+      throw new Error(
+        `ux-contract setup: provisioning failed for ${memberEmail}`
+      );
     }
   } finally {
     await sql.end();
@@ -315,9 +317,7 @@ test("a shared overlay's save produces visible confirmation, and dismissing it c
 
   // --- Dismiss: closes, writes nothing, says nothing. A receipt here would
   //     mean the overlay committed a value the member cancelled.
-  await expect
-    .poll(() => toasts(page).count(), { timeout: 20_000 })
-    .toBe(0);
+  await expect.poll(() => toasts(page).count(), { timeout: 20_000 }).toBe(0);
   await page.getByTestId("open-edit").click();
   const edit = page.getByRole("dialog").last();
   await expect(edit).toBeVisible({ timeout: 15_000 });
@@ -386,9 +386,7 @@ async function readEmptyState(page: Page): Promise<EmptyStateReading> {
     // Explanation: a leaf text block of real sentence length that is not the
     // page title. A heading alone ("No workouts") says what, never why.
     let explanation: string | null = null;
-    for (const el of main.querySelectorAll<HTMLElement>(
-      "p, li, span, div"
-    )) {
+    for (const el of main.querySelectorAll<HTMLElement>("p, li, span, div")) {
       if (el.children.length > 0) {
         continue;
       }
@@ -431,7 +429,7 @@ async function readEmptyState(page: Page): Promise<EmptyStateReading> {
 
     // A way back: the labeled back control, or the primary nav.
     const hasWayBack =
-      Boolean(main.querySelector('a[href], button')) &&
+      Boolean(main.querySelector("a[href], button")) &&
       (Array.from(main.querySelectorAll("a, button")).some((el) =>
         /^Back to /i.test((el.textContent ?? "").trim())
       ) ||
@@ -554,7 +552,10 @@ test("a shared button reports itself busy within 100ms and re-enables when the w
 
   // And it comes back. A button that stays disabled after its work is done
   // is the stranded-member failure the register keeps finding.
-  await expect(button, "the button must re-enable once the work completes").toBeEnabled({
+  await expect(
+    button,
+    "the button must re-enable once the work completes"
+  ).toBeEnabled({
     timeout: 15_000,
   });
   await expect(button).not.toHaveAttribute("aria-busy", "true");
@@ -655,13 +656,10 @@ async function assertFocusContract(
 
   // And focus came home to the trigger.
   await expect
-    .poll(
-      () => trigger.evaluate((el) => document.activeElement === el),
-      {
-        timeout: 10_000,
-        message: `${label}: focus was not returned to the trigger on close`,
-      }
-    )
+    .poll(() => trigger.evaluate((el) => document.activeElement === el), {
+      timeout: 10_000,
+      message: `${label}: focus was not returned to the trigger on close`,
+    })
     .toBe(true);
 }
 
@@ -762,10 +760,9 @@ test("a refused submit keeps every typed value, explains itself, and allows a re
 
   // (a) An error the member can act on. Not a bare "Error".
   const errorToast = page.locator("[data-sonner-toast]").first();
-  await expect(
-    errorToast,
-    "a refused submit must say something"
-  ).toBeVisible({ timeout: 20_000 });
+  await expect(errorToast, "a refused submit must say something").toBeVisible({
+    timeout: 20_000,
+  });
   const errorText = ((await errorToast.textContent()) ?? "").trim();
   expect(
     errorText.length,
@@ -880,9 +877,10 @@ test("a filter selection survives a refresh (canon 02 section 5)", async ({
     page.getByRole("tab", { name: "Chest" }),
     "the filter did not survive a refresh"
   ).toHaveAttribute("aria-selected", "true", { timeout: 30_000 });
-  await expect(
-    page.getByRole("tab", { name: "All muscles" })
-  ).toHaveAttribute("aria-selected", "false");
+  await expect(page.getByRole("tab", { name: "All muscles" })).toHaveAttribute(
+    "aria-selected",
+    "false"
+  );
 
   await context.close();
 });
@@ -958,7 +956,8 @@ test("a workout note survives leaving the runner and coming back (canon 03)", as
   const { context, page } = await openPage(browser, { authed: true });
   const note = "Right knee twinged on set 2.";
 
-  // A live session with one exercise: the Finish dialog owns the note field.
+  // A live session with one exercise: the finish step (its own page since
+  // W1) owns the note field.
   await page.goto("/workouts");
   await page
     .getByRole("button", { name: /start an empty workout/i })
@@ -974,23 +973,21 @@ test("a workout note survives leaving the runner and coming back (canon 03)", as
   await page.getByRole("button", { name: /Add 1 exercise to/i }).click();
   await page.waitForURL("**/workouts/active**", { timeout: 15_000 });
 
-  const noteField = page.getByPlaceholder(
-    "Add a note about how this workout went"
-  );
+  const noteField = page.getByLabel("Workout notes (optional)");
   await page.getByRole("button", { name: "Finish", exact: true }).click();
+  await page.waitForURL("**/workouts/active/finish**", { timeout: 15_000 });
   await expect(noteField).toBeVisible({ timeout: 15_000 });
   await noteField.fill(note);
 
-  // Back out of the dialog, leave the runner entirely, and return.
+  // Back out of the step, leave the runner entirely, and return.
   await page
-    .locator('[role="alertdialog"]')
-    .last()
-    .getByRole("button", { name: "Cancel", exact: true })
+    .getByRole("button", { name: "Back to your workout", exact: true })
     .click();
   await page.goto("/workouts", { waitUntil: "load" });
   await page.goto("/workouts/active", { waitUntil: "load" });
 
   await page.getByRole("button", { name: "Finish", exact: true }).click();
+  await page.waitForURL("**/workouts/active/finish**", { timeout: 15_000 });
   await expect(
     noteField,
     "the workout note did not survive leaving the runner"

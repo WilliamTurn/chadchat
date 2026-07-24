@@ -722,6 +722,45 @@ html[data-vk-open] .pb-tabbar {
   bottom: calc(3.5rem + env(safe-area-inset-bottom) + 0.75rem);
 }
 
+/* Pinned action bars (finish commit, picker confirm, editor save, custom
+   exercise save) join the fixed bottom stack ABOVE the phone tab bar, never
+   over it (placement canon 08 #58: pinned elements meet in fixed order and
+   displace, never overlap; owner order 2026-07-24: EVERY pinned bar). The
+   offset collapses
+   while the software keyboard is up (the tab bar hides itself and stamps
+   `data-vk-open`), and on md+ where the tab bar does not exist the bar
+   sits on the viewport floor with its own safe-area padding. */
+.bottom-pinned-bar {
+  bottom: calc(3.5rem + env(safe-area-inset-bottom));
+  padding-bottom: 0.75rem;
+}
+
+html[data-vk-open] .bottom-pinned-bar {
+  bottom: 0;
+}
+
+@media (min-width: 48rem) {
+  .bottom-pinned-bar {
+    bottom: 0;
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* When a pinned action bar is up (the picker's confirm bar), the floating
+   docks displace ABOVE it instead of hiding behind it (canon 08 #58: the
+   bottom stack is tab bar, then pinned CTA, then floating chrome, each
+   displacing the next). 5rem = the bar's height (0.75rem padding x2 +
+   the 3.5rem lg button). */
+body:has(.bottom-pinned-bar) .bottom-above-tabbar {
+  bottom: calc(3.5rem + env(safe-area-inset-bottom) + 5rem + 0.75rem);
+}
+
+@media (min-width: 48rem) {
+  body:has(.bottom-pinned-bar) .bottom-above-tabbar {
+    bottom: calc(5rem + env(safe-area-inset-bottom) + 0.75rem);
+  }
+}
+
 /* Dialog panels cap at the small viewport height (minus the overlay's p-4)
    and scroll internally, so a tall body or an open software keyboard can
    never clip them off-screen (flaws RUN-70/RUN-75..77). */
