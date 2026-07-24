@@ -61,7 +61,7 @@ export function uid(prefix: string): string {
     .slice(2, 8)}`;
 }
 
-type State = {
+export type State = {
   session: ActiveSession | null;
   restTimer: RestTimer | null;
   draft: BuilderDraft | null;
@@ -109,6 +109,14 @@ type Action =
       wexId?: string;
       prsBySetId: Record<string, PRKind[]>;
     }
+  | {
+      // The inverse (owner S5): un-check every completed set, per exercise or
+      // session-wide. Clears `completed` and `prs` only; weights, reps, RPE,
+      // and the prAnnounced memory all survive, so numbers stay put and PR
+      // toasts can't re-fire on a later re-check.
+      type: "uncomplete-all-sets";
+      wexId?: string;
+    }
   | { type: "add-set"; wexId: string; setType: SetType }
   | { type: "set-set-type"; wexId: string; setId: string; setType: SetType }
   | { type: "set-set-rpe"; wexId: string; setId: string; rpe: number | null }
@@ -121,6 +129,7 @@ type Action =
     }
   | { type: "remove-session-exercise"; wexId: string }
   | { type: "move-session-exercise"; wexId: string; direction: -1 | 1 }
+  | { type: "reorder-session-exercise"; wexId: string; toIndex: number }
   | { type: "set-exercise-rest"; wexId: string; seconds: number }
   | { type: "set-exercise-note"; wexId: string; note: string }
   | { type: "clear-session" }
@@ -174,7 +183,8 @@ function move<T extends { id: string }>(
   return next;
 }
 
-function reducer(state: State, action: Action): State {
+/** Exported for the unit suite: the session state machine, pure. */
+export function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "hydrate":
       return action.state;
@@ -300,10 +310,17 @@ function reducer(state: State, action: Action): State {
             return set;
           }
           if (!action.completed) {
+            // prAnnounced deliberately survives: the record was already
+            // celebrated once this session.
             return { ...set, completed: false, prs: undefined };
           }
           restSource = ex;
-          return { ...set, completed: true, prs: action.prs };
+          return {
+            ...set,
+            completed: true,
+            prs: action.prs,
+            prAnnounced: set.prAnnounced || (action.prs?.length ?? 0) > 0,
+          };
         }),
       }));
       let restTimer = state.restTimer;
@@ -334,7 +351,27 @@ function reducer(state: State, action: Action): State {
                         ...set,
                         completed: true,
                         prs: action.prsBySetId[set.id],
+                        prAnnounced:
+                          set.prAnnounced ||
+                          (action.prsBySetId[set.id]?.length ?? 0) > 0,
                       }
+                ),
+              }
+        ),
+      }));
+
+    case "uncomplete-all-sets":
+      return withSession(state, (s) => ({
+        ...s,
+        exercises: s.exercises.map((ex) =>
+          action.wexId && ex.id !== action.wexId
+            ? ex
+            : {
+                ...ex,
+                sets: ex.sets.map((set) =>
+                  set.completed
+                    ? { ...set, completed: false, prs: undefined }
+                    : set
                 ),
               }
         ),
@@ -428,6 +465,24 @@ function reducer(state: State, action: Action): State {
         ...s,
         exercises: move(s.exercises, action.wexId, action.direction),
       }));
+
+    case "reorder-session-exercise":
+      // Arbitrary-distance move (the drag drop): lift the exercise out and
+      // re-insert it at the target index. Out-of-range targets clamp.
+      return withSession(state, (s) => {
+        const from = s.exercises.findIndex((x) => x.id === action.wexId);
+        if (from === -1) {
+          return s;
+        }
+        const to = Math.max(0, Math.min(action.toIndex, s.exercises.length - 1));
+        if (from === to) {
+          return s;
+        }
+        const next = [...s.exercises];
+        const [lifted] = next.splice(from, 1);
+        next.splice(to, 0, lifted);
+        return { ...s, exercises: next };
+      });
 
     case "set-exercise-rest":
       return withSession(state, (s) =>
@@ -576,6 +631,8 @@ interface WorkoutsStore {
     prsBySetId: Record<string, PRKind[]>,
     wexId?: string
   ) => void;
+  /** Un-check every completed set (one exercise, or all). Numbers stay. */
+  uncompleteAllSets: (wexId?: string) => void;
   addSet: (wexId: string, setType: SetType) => void;
   setSetType: (wexId: string, setId: string, setType: SetType) => void;
   setSetRpe: (wexId: string, setId: string, rpe: number | null) => void;
@@ -584,6 +641,8 @@ interface WorkoutsStore {
   replaceSessionExercise: (wexId: string, exercise: SessionExercise) => void;
   removeSessionExercise: (wexId: string) => void;
   moveSessionExercise: (wexId: string, direction: -1 | 1) => void;
+  /** Drop an exercise at an arbitrary position (the drag-reorder commit). */
+  reorderSessionExercise: (wexId: string, toIndex: number) => void;
   setExerciseRest: (wexId: string, seconds: number) => void;
   setExerciseNote: (wexId: string, note: string) => void;
   adjustRest: (deltaSeconds: number) => void;
@@ -674,6 +733,8 @@ export function WorkoutsProvider({ children }: { children: ReactNode }) {
         }),
       completeAllSets: (prsBySetId, wexId) =>
         dispatch({ type: "complete-all-sets", wexId, prsBySetId }),
+      uncompleteAllSets: (wexId) =>
+        dispatch({ type: "uncomplete-all-sets", wexId }),
       addSet: (wexId, setType) => dispatch({ type: "add-set", wexId, setType }),
       setSetType: (wexId, setId, setType) =>
         dispatch({ type: "set-set-type", wexId, setId, setType }),
@@ -689,6 +750,8 @@ export function WorkoutsProvider({ children }: { children: ReactNode }) {
         dispatch({ type: "remove-session-exercise", wexId }),
       moveSessionExercise: (wexId, direction) =>
         dispatch({ type: "move-session-exercise", wexId, direction }),
+      reorderSessionExercise: (wexId, toIndex) =>
+        dispatch({ type: "reorder-session-exercise", wexId, toIndex }),
       setExerciseRest: (wexId, seconds) =>
         dispatch({ type: "set-exercise-rest", wexId, seconds }),
       setExerciseNote: (wexId, note) =>

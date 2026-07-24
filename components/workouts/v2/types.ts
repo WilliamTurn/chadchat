@@ -37,6 +37,9 @@ export type SessionSet = {
   completed: boolean;
   /** Personal-record flags computed when the set is checked off. */
   prs?: PRKind[];
+  /** True once a PR toast has fired for this set. Survives unchecking (unlike
+   * `prs`), so unmark → re-check can never announce the same record twice. */
+  prAnnounced?: boolean;
 };
 
 export type SessionExercise = {
