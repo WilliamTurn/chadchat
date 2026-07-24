@@ -1,9 +1,9 @@
-import { Suspense } from "react";
-import { ChevronRight, PartyPopper, Trophy } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { WorkoutsPageLoading } from "@/components/workouts/v2/loading";
+import { Suspense } from "react";
 import { PageShell } from "@/components/nav/page-shell";
 import { exerciseSlug } from "@/components/workouts/v2/catalog";
+import { CompleteCelebration } from "@/components/workouts/v2/complete-celebration";
 import {
   formatClock,
   formatDay,
@@ -15,11 +15,12 @@ import {
   DoneButton,
   RepeatWorkoutButton,
 } from "@/components/workouts/v2/history-actions";
+import { WorkoutsPageLoading } from "@/components/workouts/v2/loading";
 import {
   WorkoutBackLink,
   WorkoutPageHeader,
 } from "@/components/workouts/v2/page-header";
-import { Pill, WButton, WCard } from "@/components/workouts/v2/ui";
+import { WButton, WCard } from "@/components/workouts/v2/ui";
 import { getLatestWeighIn, getWorkoutById } from "@/lib/db/queries";
 import {
   isCardioOnlySession,
@@ -27,10 +28,7 @@ import {
 } from "@/lib/energy/workout-energy";
 import { weighInKg } from "@/lib/progress/weight";
 import { toWorkoutData } from "@/lib/workouts/serialize";
-import {
-  workoutSetCount,
-  workoutVolumeLb,
-} from "@/lib/workouts/stats";
+import { workoutSetCount, workoutVolumeLb } from "@/lib/workouts/stats";
 import { loadWorkoutContext, requireWorkoutsUser } from "../../data";
 
 export const metadata = { title: "Workout" };
@@ -108,12 +106,12 @@ async function Content({
   if (!row) {
     return (
       <div className="py-24 text-center">
-          <p className="font-bold text-[17px] text-foreground">
-            This workout isn&apos;t here
-          </p>
-          <p className="mt-1.5 text-[14px] text-muted-foreground">
-            It may have been deleted.
-          </p>
+        <p className="font-bold text-[17px] text-foreground">
+          This workout isn&apos;t here
+        </p>
+        <p className="mt-1.5 text-[14px] text-muted-foreground">
+          It may have been deleted.
+        </p>
         <Link className="mt-5 inline-block" href="/workouts/history">
           <WButton variant="primary">Back to Workout History</WButton>
         </Link>
@@ -148,17 +146,10 @@ async function Content({
               surface. The bottom "Done, back to Workouts" stays, so both
               destinations are reachable and neither is duplicated. */}
           <WorkoutBackLink href="/home" label="Home" />
-          <div className="mb-6 animate-in text-center duration-500 slide-in-from-bottom-4">
-            <div className="mx-auto mb-4 flex size-16 animate-in items-center justify-center rounded-3xl bg-blood text-white shadow-[0_16px_48px_rgba(164,22,26,0.35)] zoom-in-75 duration-500">
-              <PartyPopper aria-hidden className="size-8" />
-            </div>
-            <h1 className="font-black font-display text-[32px] text-foreground uppercase leading-none tracking-tight">
-              Workout complete
-            </h1>
-            <p className="mt-2 text-[14.5px] text-muted-foreground">
-              {workout.title} · saved to your history. Chad sees it too.
-            </p>
-          </div>
+          {/* S2 (owner order 2026-07-22): the struck-gold medal celebration
+              replaces the red PartyPopper square. Gold = earned (Q-C reward);
+              motion + reduced-motion story live in complete-celebration.css. */}
+          <CompleteCelebration title={workout.title} />
         </>
       ) : (
         <WorkoutPageHeader

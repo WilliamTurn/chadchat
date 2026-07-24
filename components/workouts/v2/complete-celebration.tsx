@@ -1,0 +1,210 @@
+// Workout-complete celebration header (S2, owner order 2026-07-22): the red
+// PartyPopper square becomes a struck gold medal: reward gold is the EARNED
+// color (Q-C; --reward ramp in globals.css): with the title stamped in by
+// the impact. All motion lives in complete-celebration.css (reduced-motion
+// variant included there). Server component: the sequence is pure CSS.
+
+import localFont from "next/font/local";
+import "./complete-celebration.css";
+
+/* The approved display face (wave0 Q-DS), registered scoped to this surface
+   exactly like app/dev/design-system/fonts.ts does for the sheet: the
+   variable resolves under this component's root only, so no other member
+   surface pays for the font until the design-system port lands. Only the
+   italic file loads: the title is the sheet-title voice (italic 400). */
+const bodoni = localFont({
+  src: [
+    {
+      path: "../../../app/fonts/BodoniModa-Italic-Variable.ttf",
+      weight: "400 900",
+      style: "italic",
+    },
+  ],
+  variable: "--ds-bodoni",
+  display: "swap",
+});
+
+/* Forge sparks thrown by the strike: fixed vectors (px), deterministic so
+   server and client render identically. Upward-biased, max travel 76px -
+   well inside a 320px viewport. */
+const SPARKS: {
+  dx: number;
+  dy: number;
+  s: number;
+  delay: number;
+  dur: number;
+}[] = [
+  { dx: -58, dy: -34, s: 3, delay: 0.5, dur: 0.62 },
+  { dx: 44, dy: -52, s: 2.5, delay: 0.5, dur: 0.58 },
+  { dx: -30, dy: -64, s: 2, delay: 0.52, dur: 0.7 },
+  { dx: 62, dy: -18, s: 3, delay: 0.51, dur: 0.55 },
+  { dx: 18, dy: -70, s: 2.5, delay: 0.53, dur: 0.75 },
+  { dx: -70, dy: -8, s: 2, delay: 0.5, dur: 0.6 },
+  { dx: 34, dy: -40, s: 2, delay: 0.54, dur: 0.52 },
+  { dx: -46, dy: -50, s: 2.5, delay: 0.55, dur: 0.66 },
+  { dx: 70, dy: -36, s: 2, delay: 0.52, dur: 0.72 },
+  { dx: -16, dy: -56, s: 3, delay: 0.56, dur: 0.58 },
+  { dx: 52, dy: 8, s: 2, delay: 0.53, dur: 0.5 },
+  { dx: -60, dy: 18, s: 2, delay: 0.55, dur: 0.54 },
+];
+
+/* Reeded coin edge: 56 radial ticks between r=50.5 and r=55, the struck-coin
+   signature detail. Deterministic module-scope math. */
+const REEDING = Array.from({ length: 56 }, (_, i) => {
+  const a = (i * Math.PI * 2) / 56;
+  return {
+    x1: 60 + Math.cos(a) * 50.5,
+    y1: 60 + Math.sin(a) * 50.5,
+    x2: 60 + Math.cos(a) * 55,
+    y2: 60 + Math.sin(a) * 55,
+  };
+});
+
+/* The app's own barbell mark (app/icon.svg geometry) engraved on the face:
+   a medal carries its issuer's mark. Rendered twice: a warm highlight
+   copy offset 1.1px below the dark cut, the classic engraving bevel. */
+function EngravedMark({ variant }: { variant: "cut" | "bevel" }) {
+  return (
+    <g
+      fill="none"
+      stroke={variant === "cut" ? "var(--reward-shadow)" : "var(--reward-hot)"}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeOpacity={variant === "cut" ? 0.85 : 0.5}
+      strokeWidth={1.8}
+      transform={`translate(29.6 ${variant === "cut" ? 29.6 : 30.7}) scale(1.9)`}
+    >
+      <path d="M10 16 H22" />
+      <path d="M8 11.5 V20.5" />
+      <path d="M11 13 V19" />
+      <path d="M24 11.5 V20.5" />
+      <path d="M21 13 V19" />
+    </g>
+  );
+}
+
+function MedalCoin() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="cc-coin"
+      role="presentation"
+      viewBox="0 0 120 120"
+    >
+      <defs>
+        <linearGradient id="cc-rim" x1="0" x2="1" y1="1" y2="0">
+          <stop offset="0" style={{ stopColor: "var(--reward-shadow)" }} />
+          <stop offset="0.35" style={{ stopColor: "var(--reward-deep)" }} />
+          <stop offset="0.7" style={{ stopColor: "var(--reward)" }} />
+          <stop offset="1" style={{ stopColor: "var(--reward-hot)" }} />
+        </linearGradient>
+        <linearGradient id="cc-face" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0" style={{ stopColor: "var(--reward-hot)" }} />
+          <stop offset="0.42" style={{ stopColor: "var(--reward)" }} />
+          <stop offset="0.8" style={{ stopColor: "var(--reward-deep)" }} />
+          <stop offset="1" style={{ stopColor: "var(--reward-shadow)" }} />
+        </linearGradient>
+        <radialGradient cx="0.38" cy="0.32" id="cc-face-light" r="0.75">
+          <stop
+            offset="0"
+            style={{ stopColor: "var(--reward-hot)", stopOpacity: 0.55 }}
+          />
+          <stop
+            offset="1"
+            style={{ stopColor: "var(--reward-hot)", stopOpacity: 0 }}
+          />
+        </radialGradient>
+      </defs>
+      {/* rim (bevel gradient runs opposite the face) */}
+      <circle cx="60" cy="60" fill="url(#cc-rim)" r="57" />
+      <circle
+        cx="60"
+        cy="60"
+        fill="none"
+        r="56.5"
+        stroke="var(--reward-shadow)"
+        strokeOpacity="0.55"
+        strokeWidth="1"
+      />
+      {/* reeded edge */}
+      <g stroke="var(--reward-shadow)" strokeOpacity="0.3" strokeWidth="1">
+        {REEDING.map((t) => (
+          <line
+            key={`${t.x1}-${t.y1}`}
+            x1={t.x1}
+            x2={t.x2}
+            y1={t.y1}
+            y2={t.y2}
+          />
+        ))}
+      </g>
+      {/* polished face */}
+      <circle cx="60" cy="60" fill="url(#cc-face)" r="49" />
+      <circle cx="60" cy="60" fill="url(#cc-face-light)" r="49" />
+      {/* engraved inner ring: dark cut with a light lower bevel */}
+      <circle
+        cx="60"
+        cy="60.8"
+        fill="none"
+        r="43.5"
+        stroke="var(--reward-hot)"
+        strokeOpacity="0.4"
+        strokeWidth="1"
+      />
+      <circle
+        cx="60"
+        cy="60"
+        fill="none"
+        r="43.5"
+        stroke="var(--reward-shadow)"
+        strokeOpacity="0.45"
+        strokeWidth="1"
+      />
+      {/* the issuer's mark, struck into the face */}
+      <EngravedMark variant="bevel" />
+      <EngravedMark variant="cut" />
+    </svg>
+  );
+}
+
+export function CompleteCelebration({ title }: { title: string }) {
+  return (
+    <div className={`cc-root ${bodoni.variable}`}>
+      <div aria-hidden="true" className="cc-atmo" />
+      <div aria-hidden="true" className="cc-stage">
+        <div className="cc-bloom" />
+        <div className="cc-halo" />
+        <div className="cc-medal-drop">
+          <div className="cc-medal-settle">
+            <MedalCoin />
+            <div className="cc-sheen-clip">
+              <div className="cc-sheen" />
+            </div>
+          </div>
+        </div>
+        <div className="cc-ring" />
+        {SPARKS.map((p) => (
+          <span
+            className="cc-spark"
+            key={`${p.dx}-${p.dy}`}
+            style={
+              {
+                "--dx": `${p.dx}px`,
+                "--dy": `${p.dy}px`,
+                "--s": `${p.s}px`,
+                "--delay": `${p.delay}s`,
+                "--dur": `${p.dur}s`,
+              } as React.CSSProperties
+            }
+          />
+        ))}
+      </div>
+      <h1 className="cc-title">
+        <span className="cc-title-sweep">Workout complete</span>
+      </h1>
+      <p className="cc-sub">
+        {title} · saved to your history. Chad sees it too.
+      </p>
+    </div>
+  );
+}

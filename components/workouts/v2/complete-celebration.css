@@ -1,0 +1,367 @@
+/* Workout-complete celebration — "the strike" (S2, owner order 2026-07-22).
+ *
+ * A forged-gold medal lands with weight; its impact stamps the title into
+ * existence and one light sweep passes across medal then glyphs; everything
+ * settles to a calm gold afterglow. Routine-completion tier (canon 08 §17):
+ * a header moment on a fully interactive page, never an interstitial —
+ * inherently skippable (§19), plays once on entry (§18), ~2s to rest.
+ *
+ * Every animated property is transform / opacity / background-position on
+ * text-sized areas; all effect layers are absolutely positioned inside a
+ * fixed-size stage, so nothing below ever moves (no layout shift). Effect
+ * travel stays within ±80px of the stage center, inside a 320px viewport.
+ *
+ * Colors: the --reward forged-gold ramp only (gold = earned, Q-C).
+ */
+
+.cc-root {
+  position: relative;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+/* Warm ambient wash behind the whole moment (figure-ground atmosphere,
+   north star): fades in and stays. Sized against the CONTENT COLUMN
+   (100%), never the viewport: at tablet widths the sidebar narrows the
+   column and a viewport-sized wash would hang past the page edge. */
+.cc-atmo {
+  position: absolute;
+  left: 50%;
+  top: -56px;
+  width: min(560px, 100%);
+  height: 340px;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    closest-side,
+    var(--reward-glow-faint),
+    var(--reward-glow-0) 72%
+  );
+  opacity: 0;
+  animation: cc-atmo-in 1.2s ease-out 0.3s forwards;
+  pointer-events: none;
+}
+
+/* ---- the stage: fixed box, all layers centered inside it ---- */
+
+.cc-stage {
+  position: relative;
+  width: 5.5rem;
+  height: 5.5rem;
+  margin: 0 auto 1.25rem;
+}
+@media (min-width: 640px) {
+  .cc-stage {
+    width: 6.25rem;
+    height: 6.25rem;
+  }
+}
+
+/* Impact flash behind the medal. */
+.cc-bloom {
+  position: absolute;
+  inset: -70%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    var(--reward-hot-glow),
+    var(--reward-glow-0) 70%
+  );
+  animation: cc-bloom 0.8s ease-out 0.48s both;
+  pointer-events: none;
+}
+
+/* Resting afterglow: fades up after the strike, then breathes very slowly.
+   Two animations on different properties (opacity in, transform breathe). */
+.cc-halo {
+  position: absolute;
+  inset: -34%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    var(--reward-glow-soft),
+    var(--reward-glow-0) 70%
+  );
+  animation:
+    cc-halo-in 0.9s ease-out 0.55s both,
+    cc-halo-breathe 6s ease-in-out 2.5s infinite;
+  pointer-events: none;
+}
+
+/* The medal drop (the strike) and its impact compression. */
+.cc-medal-drop {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  animation: cc-strike 0.42s cubic-bezier(0.2, 0.7, 0.3, 1) 0.1s both;
+}
+.cc-medal-settle {
+  width: 100%;
+  height: 100%;
+  animation: cc-settle 0.26s ease-out 0.5s both;
+  filter: drop-shadow(0 8px 26px var(--reward-glow-soft));
+}
+.cc-coin {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Specular sheen sweeping the coin face, clipped to the coin. */
+.cc-sheen-clip {
+  position: absolute;
+  inset: 6%;
+  border-radius: 50%;
+  overflow: hidden;
+  pointer-events: none;
+}
+.cc-sheen {
+  position: absolute;
+  top: -30%;
+  bottom: -30%;
+  left: 26%;
+  width: 38%;
+  background: linear-gradient(
+    90deg,
+    var(--reward-glow-0),
+    var(--reward-hot-glow) 50%,
+    var(--reward-glow-0)
+  );
+  animation: cc-sheen 0.7s ease-in-out 0.72s both;
+}
+
+/* Shockwave ring from the impact. */
+.cc-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid var(--reward-glow-strong);
+  box-shadow:
+    0 0 12px var(--reward-glow-soft),
+    inset 0 0 8px var(--reward-glow-faint);
+  animation: cc-ring 0.8s cubic-bezier(0.2, 0.6, 0.35, 1) 0.5s both;
+  pointer-events: none;
+}
+
+/* Forge sparks: a dozen embers thrown by the strike, each with its own
+   vector and timing via inline custom properties. */
+.cc-spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  background: var(--reward-hot);
+  box-shadow: 0 0 6px var(--reward-glow-strong);
+  animation: cc-spark var(--dur) cubic-bezier(0.15, 0.6, 0.4, 1) var(--delay)
+    both;
+  pointer-events: none;
+}
+
+/* ---- typography ---- */
+
+/* The approved sheet-title voice (ds.css): Bodoni italic 400, sentence
+   case. Stamped into existence by the impact, then swept by the same
+   light that crossed the medal. */
+.cc-title {
+  font-family: var(--ds-bodoni), "Bodoni MT", Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(2rem, 1.45rem + 2.4vw, 2.875rem);
+  line-height: 1.08;
+  letter-spacing: 0.01em;
+  color: var(--foreground);
+  animation: cc-title-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.48s both;
+}
+.cc-title-sweep {
+  background-image: linear-gradient(
+    105deg,
+    var(--foreground) 0%,
+    var(--foreground) 42%,
+    var(--reward-hot) 50%,
+    var(--reward) 53%,
+    var(--foreground) 61%,
+    var(--foreground) 100%
+  );
+  background-size: 320% 100%;
+  background-position: 0% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: cc-title-sweep 0.9s ease-in-out 0.95s both;
+}
+
+.cc-sub {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+  margin-top: 0.625rem;
+  animation: cc-sub-in 0.5s ease-out 0.95s both;
+}
+
+/* ---- keyframes ---- */
+
+@keyframes cc-atmo-in {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes cc-strike {
+  0% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes cc-settle {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(0.965, 0.94);
+  }
+}
+@keyframes cc-bloom {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  18% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.15);
+  }
+}
+@keyframes cc-halo-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.9;
+  }
+}
+@keyframes cc-halo-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+@keyframes cc-sheen {
+  0% {
+    opacity: 0;
+    transform: translateX(-160%);
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(210%);
+  }
+}
+@keyframes cc-ring {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.55);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.05);
+  }
+}
+@keyframes cc-spark {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%);
+  }
+  8% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)))
+      scale(0.4);
+  }
+}
+@keyframes cc-title-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes cc-title-sweep {
+  from {
+    background-position: 0% 0;
+  }
+  to {
+    background-position: 100% 0;
+  }
+}
+@keyframes cc-sub-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes cc-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---- reduced motion: the dignified still (canon 08 §23, canon 04 §104) ----
+   The finished composition at rest — medal, glow, title, subtitle — with a
+   single opacity fade and no movement of any kind. */
+@media (prefers-reduced-motion: reduce) {
+  .cc-root {
+    animation: cc-fade 0.4s ease-out both;
+  }
+  .cc-atmo,
+  .cc-halo,
+  .cc-medal-drop,
+  .cc-medal-settle,
+  .cc-title,
+  .cc-sub {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .cc-atmo {
+    transform: translateX(-50%);
+  }
+  .cc-bloom,
+  .cc-ring,
+  .cc-spark,
+  .cc-sheen {
+    display: none;
+  }
+  .cc-title-sweep {
+    animation: none;
+    background: none;
+    color: var(--foreground);
+  }
+}

@@ -358,6 +358,17 @@
   --go: #2fd478;       /* begin / advance actions */
   --progress: #3ce6a4; /* movement toward a goal, may glow */
   --reward: #f5c95c;   /* celebrations only, glows */
+  /* S2 (workout complete): the forged-gold ramp — metallic shades and
+     alpha glows derived from --reward for the struck-medal celebration.
+     Celebration surfaces only; gold stays EARNED (Q-C / owner 2026-07-19). */
+  --reward-hot: #ffedbe;
+  --reward-deep: #c98e2f;
+  --reward-shadow: #6e4d14;
+  --reward-hot-glow: rgba(255, 237, 190, 0.75);
+  --reward-glow-strong: rgba(245, 201, 92, 0.6);
+  --reward-glow-soft: rgba(245, 201, 92, 0.32);
+  --reward-glow-faint: rgba(245, 201, 92, 0.14);
+  --reward-glow-0: rgba(245, 201, 92, 0);
 
   /* ---- atmosphere families (zone + data) ---- */
   --energy: #ffa14f;
