@@ -107,6 +107,26 @@ function FinishForm({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, startFinishTransition] = useTransition();
 
+  // Phones pin the commitment to the viewport edge (canon 04 §24: the
+  // action never scrolls out of reach). Desktop does NOT: the whole short
+  // form fits the window, so a viewport-pinned bar fails placement canon
+  // 08 #9's test ("pin only when pinning is valid the whole time") and
+  // leaves a dead band between the last field and the action. At md+ the
+  // primary returns to 08 #8's canonical home: the bottom of its flow's
+  // content, directly after the last field group. Reading matchMedia in
+  // the initializer is safe: FinishForm mounts client-side only, after
+  // the store hydrates.
+  const [pinned, setPinned] = useState(
+    () => !window.matchMedia("(min-width: 768px)").matches
+  );
+  useLayoutEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const update = () => setPinned(!mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
   // The pinned bar is portaled to <body> (the shell's <main> carries a
   // transform that would re-anchor position:fixed), so it must mirror the
   // content area's box itself: on desktop <main> sits beside the collapsible
@@ -289,8 +309,32 @@ function FinishForm({
     });
   }
 
+  // ONE instance of the commitment zone in either mode, so the aria-live
+  // region never duplicates. The error line is a permanently reserved slot
+  // adjacent to the action (comp-canon 03 #29; owner decision 2026-07-23:
+  // nothing ever jumps).
+  const actionZone = (
+    <>
+      <p
+        aria-live="polite"
+        className="mb-1.5 min-h-5 text-blood text-sm leading-5"
+      >
+        {saveError}
+      </p>
+      <WButton
+        className="w-full"
+        loading={saving}
+        onClick={handleFinish}
+        size="lg"
+        variant="primary"
+      >
+        Finish and save
+      </WButton>
+    </>
+  );
+
   return (
-    <div className="mx-auto max-w-lg pb-40">
+    <div className={`mx-auto max-w-lg ${pinned ? "pb-40" : "pb-12"}`}>
       <WorkoutPageHeader
         back={{ href: "/workouts/active", label: "your workout" }}
         subtitle={summary}
@@ -371,7 +415,6 @@ function FinishForm({
           id="finish-notes"
           maxLength={2000}
           onChange={(e) => setSessionNotes(e.target.value)}
-          placeholder="Felt strong, upped the weight"
           value={session.notes}
         />
       </div>
@@ -429,40 +472,30 @@ function FinishForm({
         </div>
       )}
 
-      {/* Commitment zone, pinned (owner decision 2026-07-23: pinned actions;
-          canon 04 §24: the action never scrolls out of reach). Portaled to
-          <body>: the shell's <main> carries a transform that would otherwise
-          anchor this "fixed" bar to the document floor. Renders post-mount
-          only (FinishForm mounts after the store hydrates). The error line
-          is a permanently reserved slot so the button never moves. */}
-      {createPortal(
-        <div
-          className="fixed bottom-0 z-50 border-border border-t bg-background/95 px-4 py-3 backdrop-blur-xl"
-          style={{
-            left: barBox?.left ?? 0,
-            width: barBox?.width ?? "100%",
-            paddingBottom: "calc(12px + env(safe-area-inset-bottom))",
-          }}
-        >
-          <div className="mx-auto w-full max-w-lg">
-            <p
-              aria-live="polite"
-              className="mb-1.5 min-h-5 text-blood text-sm leading-5"
-            >
-              {saveError}
-            </p>
-            <WButton
-              className="w-full"
-              loading={saving}
-              onClick={handleFinish}
-              size="lg"
-              variant="primary"
-            >
-              Finish and save
-            </WButton>
-          </div>
-        </div>,
-        document.body
+      {/* Commitment zone. Phones: pinned to the viewport edge (owner
+          decision 2026-07-23: pinned actions; canon 04 §24), portaled to
+          <body> because the shell's <main> carries a transform that would
+          otherwise re-anchor position:fixed, and stacked ABOVE the phone
+          tab bar via bottom-pinned-bar (canon 08 #58; owner order
+          2026-07-24). Desktop: in normal flow at the bottom of the form
+          column (placement canon 08 #8/#9: the short form fits the window,
+          so a viewport-pinned bar would strand the action far below the
+          fields). */}
+      {pinned ? (
+        createPortal(
+          <div
+            className="bottom-pinned-bar fixed z-50 border-border border-t bg-background/95 px-4 pt-3 backdrop-blur-xl"
+            style={{
+              left: barBox?.left ?? 0,
+              width: barBox?.width ?? "100%",
+            }}
+          >
+            <div className="mx-auto w-full max-w-lg">{actionZone}</div>
+          </div>,
+          document.body
+        )
+      ) : (
+        <div className="mt-8">{actionZone}</div>
       )}
     </div>
   );

@@ -427,6 +427,25 @@ for (const viewport of FINISH_VIEWPORTS) {
       { vertical: true }
     );
 
+    // Owner order 2026-07-24: the pinned bar joins the bottom stack ABOVE
+    // the tab nav, never covering it (canon 08 #58) - the tabs stay fully
+    // visible and tappable while the finish step is up. The shell keeps
+    // previously visited pages' DOM cached, so scope to the VISIBLE nav.
+    const tabNav = page.locator('nav[aria-label="Primary"]:visible');
+    await expect(tabNav).toBeVisible();
+    const pinnedBar = page.locator("div.bottom-pinned-bar:visible");
+    await expect(pinnedBar).toBeVisible();
+    const navBox = await tabNav.boundingBox();
+    const pinnedBarBox = await pinnedBar.boundingBox();
+    expect(navBox).not.toBeNull();
+    expect(pinnedBarBox).not.toBeNull();
+    if (navBox && pinnedBarBox) {
+      expect(
+        pinnedBarBox.y + pinnedBarBox.height,
+        `finish bar must end above the tab nav @ ${viewport.width}px`
+      ).toBeLessThanOrEqual(navBox.y + 1);
+    }
+
     // Prove clickability end to end: the empty save is refused with the
     // corrective message (RUN-72 contract), which also confirms the tap
     // landed on the control rather than a covering element.
@@ -438,6 +457,70 @@ for (const viewport of FINISH_VIEWPORTS) {
     await context.close();
   });
 }
+
+/**
+ * W1 void fix (owner: "Why leave a ton of empty space between the fields and
+ * the actual button?"): at desktop widths the finish step's primary action
+ * sits in normal flow directly after the last field group (placement canon
+ * 08 #8), NOT in a viewport-pinned bar floating a dead band below the short
+ * form (08 #9: pin only when pinning is valid the whole time). The phone
+ * pinned-bar contract stays asserted by the FINISH_VIEWPORTS sweep above.
+ */
+test("finish step action sits in flow directly after the fields at desktop", async ({
+  browser,
+}) => {
+  const { context, page } = await openContext(browser, {
+    width: 1280,
+    height: 900,
+  });
+
+  await startEmptyWorkout(page);
+  await addBenchPress(page);
+  await page.getByRole("button", { name: "Finish", exact: true }).click();
+  await page.waitForURL("**/workouts/active/finish**", { timeout: 15_000 });
+
+  const save = page.getByRole("button", { name: "Finish and save" });
+  await expect(save).toBeVisible();
+
+  // In flow means no fixed-position ancestor (the phone bar is one).
+  const positioning = await save.evaluate((el) => {
+    for (
+      let node: HTMLElement | null = el as HTMLElement;
+      node;
+      node = node.parentElement
+    ) {
+      if (getComputedStyle(node).position === "fixed") {
+        return "fixed";
+      }
+    }
+    return "in-flow";
+  });
+  expect(
+    positioning,
+    "desktop finish action must not live in a viewport-pinned bar"
+  ).toBe("in-flow");
+
+  // And it sits close after the last field group: standard form spacing,
+  // not a ~320px void. The mark-all checkbox row is the last group in this
+  // empty-workout flow.
+  const lastGroup = page
+    .getByRole("checkbox", { name: /unchecked set/ })
+    .locator("xpath=ancestor::label");
+  const groupBox = await lastGroup.boundingBox();
+  const saveBox = await save.boundingBox();
+  expect(groupBox).not.toBeNull();
+  expect(saveBox).not.toBeNull();
+  if (groupBox && saveBox) {
+    const gap = saveBox.y - (groupBox.y + groupBox.height);
+    expect(
+      gap,
+      `gap between the last field group and the action is ${Math.round(gap)}px`
+    ).toBeLessThanOrEqual(120);
+    expect(gap).toBeGreaterThanOrEqual(0);
+  }
+
+  await context.close();
+});
 
 /**
  * FINISH-FLOW FIXES (owner flaw list 2026-07-22, S1 session):
