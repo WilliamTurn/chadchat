@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { PageShell } from "@/components/nav/page-shell";
 import { exerciseSlug } from "@/components/workouts/v2/catalog";
 import { CompleteCelebration } from "@/components/workouts/v2/complete-celebration";
+import { FactsBand } from "@/components/workouts/v2/facts-band";
 import {
   formatClock,
   formatDay,
@@ -54,19 +55,6 @@ function volumeComparison(lb: number): string | null {
     return "about the weight of a grand piano";
   }
   return null;
-}
-
-function StatTile({ value, label }: { value: string; label: string }) {
-  return (
-    <WCard className="p-4 text-center">
-      <div className="font-bold font-mono text-[24px] text-foreground leading-none tabular-nums">
-        {value}
-      </div>
-      <div className="mt-1.5 text-[12px] text-muted-foreground leading-snug">
-        {label}
-      </div>
-    </WCard>
-  );
 }
 
 export default function WorkoutDetailPage({
@@ -159,40 +147,39 @@ async function Content({
         />
       )}
 
-      {/* Stats. Cardio-only sessions drop the lifting tiles (set count,
+      {/* Stats: the flat key-facts band (W5, audit F-2; comp-canon 05
+          #35/#87: the boxed StatTile grid passed none of 01 §4's earning
+          tests). Cardio-only sessions drop the lifting facts (set count,
           "0 lb moved"); the burn estimate renders whenever it's computable
           and is always labeled estimated (Phase 3). */}
       {(() => {
-        const tiles: { label: string; value: string }[] = [
+        /* Peer unit grammar (W5 comp-audit F-4): labels are the measures'
+           names, figures carry their units inline ("11,895 lb", "~253
+           cal"); a bare count ("9") is named by its label. "Volume" is the
+           established member-facing name for weight x reps (the
+           /progress/training label), one term per concept. */
+        const facts: { label: string; value: string }[] = [
           ...(duration ? [{ label: "Duration", value: duration }] : []),
           ...(cardioOnly
             ? []
             : [
                 { label: "Sets logged", value: String(sets) },
-                { label: "lb moved", value: formatVolume(volume) },
+                { label: "Volume", value: `${formatVolume(volume)} lb` },
               ]),
           ...(estimatedKcal != null
             ? [
                 {
-                  label: "cal estimated",
-                  value: `~${estimatedKcal.toLocaleString()}`,
+                  label: "Calories",
+                  value: `~${estimatedKcal.toLocaleString()} cal`,
                 },
               ]
             : []),
         ];
-        const gridClass =
-          tiles.length === 4
-            ? "grid-cols-2 sm:grid-cols-4"
-            : tiles.length === 3
-              ? "grid-cols-3"
-              : tiles.length === 2
-                ? "grid-cols-2"
-                : "grid-cols-1";
         const notes = [
           ...(cardioOnly
             ? []
             : [
-                `“lb moved” is weight × reps, added up across every set${
+                `Volume is the total weight you moved: weight × reps, added up across every set${
                   comparison
                     ? `. ${formatVolume(volume)} lb is ${comparison}`
                     : ""
@@ -206,19 +193,20 @@ async function Content({
         ];
         return (
           <>
-            {tiles.length > 0 && (
-              <div className={`grid gap-3 ${gridClass}`}>
-                {tiles.map((tile) => (
-                  <StatTile
-                    key={tile.label}
-                    label={tile.label}
-                    value={tile.value}
-                  />
-                ))}
-              </div>
+            {/* mt-4 + the 24px above it = the page's 40px zone seam
+                (comp-audit F-1: seams must clear 2x the 16px in-zone
+                gaps; the header's mb-6 and the celebration's mb both
+                measure 24px, and flex-col margins do not collapse). */}
+            {facts.length > 0 && (
+              <FactsBand center={isNew} className="mt-4" facts={facts} />
             )}
             {notes.length > 0 && (
-              <p className="mt-2.5 text-center text-[13px] text-muted-foreground leading-relaxed">
+              /* Explanatory footnote: bound to the band (12px), on the
+                 left spine in both states at a capped measure. A centered
+                 3-4 line paragraph re-hunts its left edge on every line
+                 (taste-audit F-4), so only the band centers on the
+                 celebration; the footnote opens the read register. */
+              <p className="mt-3 max-w-prose text-[13px] text-muted-foreground leading-relaxed">
                 {notes.join(" ")}
               </p>
             )}
@@ -226,19 +214,24 @@ async function Content({
         );
       })()}
 
+      {/* mt-10 zone seams below here (comp-audit F-1): three rhythm tiers,
+          8px inside a lockup, 12-16px inside a zone, 40px between zones. */}
       {workout.notes && (
-        <WCard className="mt-5 p-4">
-          <h2 className="font-black text-[13px] text-muted-foreground/80 uppercase tracking-[0.14em]">
+        <WCard className="mt-10 p-4">
+          {/* Full-strength muted ink on the 13px headers and set indexes:
+              the /80 alpha put them under 4.5:1 (this surface's pinned
+              axe nodes; W5 owns the call-site fixes). */}
+          <h2 className="font-black text-[13px] text-muted-foreground uppercase tracking-[0.14em]">
             Your notes
           </h2>
-          <p className="mt-1.5 whitespace-pre-wrap text-[14.5px] text-foreground leading-relaxed">
+          <p className="mt-1.5 max-w-prose whitespace-pre-wrap text-[14.5px] text-foreground leading-relaxed">
             {workout.notes}
           </p>
         </WCard>
       )}
 
       {/* Per-exercise breakdown */}
-      <h2 className="mt-7 mb-2.5 font-black font-display text-[13px] text-muted-foreground/80 uppercase tracking-[0.14em]">
+      <h2 className="mt-10 mb-2.5 font-black font-display text-[13px] text-muted-foreground uppercase tracking-[0.14em]">
         What you did
       </h2>
       {/* Two-across on desktop (LAY-1); explicit grid-cols-1 + min-w-0 cards
@@ -257,8 +250,11 @@ async function Content({
                   <h3 className="truncate font-bold text-[15.5px] text-foreground group-hover:underline">
                     {ex.name}
                   </h3>
-                  <p className="text-[12px] text-muted-foreground/80">
-                    Tap for your records &amp; progress
+                  {/* Device-neutral verb (copy law device-verb) at the
+                      13px label floor, full-strength muted ink (the
+                      pinned axe contrast node class; taste-audit F-1). */}
+                  <p className="text-meta text-muted-foreground">
+                    See your records &amp; progress
                   </p>
                 </div>
                 <ChevronRight
@@ -278,14 +274,20 @@ async function Content({
                   }
                   const isWarmup = set.setType === "warmup";
                   return (
+                    /* Warm-up rows dim via muted ink, not a row-level
+                       opacity-60: the compounded alpha put 13px text at
+                       2.5:1 (pinned axe node). Working rows keep bright
+                       set values, so the three-state read survives. */
                     <div
-                      className={`flex items-center gap-3 rounded-lg px-2 py-1.5 ${isWarmup ? "opacity-60" : ""}`}
+                      className="flex items-center gap-3 rounded-lg px-2 py-1.5"
                       key={`${ex.name}-${setIndex}`}
                     >
-                      <span className="w-8 text-center font-bold font-mono text-[13px] text-muted-foreground/80">
+                      <span className="w-8 text-center font-bold font-mono text-[13px] text-muted-foreground">
                         {isWarmup ? "W" : workingIndex}
                       </span>
-                      <span className="flex-1 font-mono text-[15px] text-foreground tabular-nums">
+                      <span
+                        className={`flex-1 font-mono text-[15px] tabular-nums ${isWarmup ? "text-muted-foreground" : "text-foreground"}`}
+                      >
                         {(() => {
                           if (timed) {
                             if (set.reps == null) {
@@ -303,23 +305,29 @@ async function Content({
                           return `${set.weight ?? 0} ${set.unit} × ${set.reps ?? 0}`;
                         })()}
                       </span>
+                      {/* Set annotations: one quiet muted treatment at the
+                          13px floor (taste-audit F-1: 11.5px broke the
+                          permanent type floor; F-5: stock purple belongs
+                          to sleep). "to failure" alone keeps the red
+                          family in its AA text form (blood-text, 5.7:1
+                          dark) as the max-effort marker. */}
                       {set.rpe != null && (
-                        <span className="text-[11.5px] text-muted-foreground">
+                        <span className="text-meta text-muted-foreground">
                           RPE {set.rpe}
                         </span>
                       )}
                       {isWarmup && (
-                        <span className="text-[11.5px] text-muted-foreground/80">
+                        <span className="text-meta text-muted-foreground">
                           warm-up
                         </span>
                       )}
                       {set.setType === "dropset" && (
-                        <span className="text-[11.5px] text-purple-500 dark:text-purple-300">
+                        <span className="text-meta text-muted-foreground">
                           drop set
                         </span>
                       )}
                       {set.setType === "failure" && (
-                        <span className="text-[11.5px] text-blood">
+                        <span className="text-meta text-blood-text">
                           to failure
                         </span>
                       )}

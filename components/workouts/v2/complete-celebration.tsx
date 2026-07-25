@@ -203,7 +203,12 @@ export function CompleteCelebration({ title }: { title: string }) {
         <span className="cc-title-sweep">Workout complete</span>
       </h1>
       <p className="cc-sub">
-        {title} · saved to your history. Chad sees it too.
+        {/* Explicit separator string: JSX dropped the space between the
+            title expression and the middot. Non-breaking space before
+            "too": at 384-390px the line wrapped with "too." alone under
+            the headline (taste-audit F-9). */}
+        {title}
+        {" · "}saved to your history. Chad sees it&nbsp;too.
       </p>
     </div>
   );

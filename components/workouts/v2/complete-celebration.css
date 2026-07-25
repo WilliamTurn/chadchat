@@ -170,18 +170,21 @@
   font-size: clamp(2rem, 1.45rem + 2.4vw, 2.875rem);
   line-height: 1.08;
   letter-spacing: 0.01em;
-  color: var(--foreground);
+  /* --ink, not --foreground: the verdict is the page's brightest neutral
+     (ds.css serif-headline ink; W5 taste-audit F-8 measured the headline
+     duller than the band figures below it). */
+  color: var(--ink);
   animation: cc-title-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.48s both;
 }
 .cc-title-sweep {
   background-image: linear-gradient(
     105deg,
-    var(--foreground) 0%,
-    var(--foreground) 42%,
+    var(--ink) 0%,
+    var(--ink) 42%,
     var(--reward-hot) 50%,
     var(--reward) 53%,
-    var(--foreground) 61%,
-    var(--foreground) 100%
+    var(--ink) 61%,
+    var(--ink) 100%
   );
   background-size: 320% 100%;
   background-position: 0% 0;
@@ -362,6 +365,6 @@
   .cc-title-sweep {
     animation: none;
     background: none;
-    color: var(--foreground);
+    color: var(--ink);
   }
 }

@@ -34,8 +34,11 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
     "bg-card text-foreground border border-input font-semibold hover:bg-muted/60 active:scale-[0.98]",
   ghost:
     "text-muted-foreground hover:text-foreground hover:bg-muted/60 active:scale-[0.98]",
+  // text-blood-text, not text-blood: the fill-form red sits at ~2.6:1 as
+  // text on the dark canvas (pinned axe class); blood-text is the AA text
+  // form of the same family (5.7:1 dark). Border stays the quiet fill form.
   danger:
-    "bg-transparent text-blood border border-blood/40 font-semibold hover:bg-blood/10 active:scale-[0.98]",
+    "bg-transparent text-blood-text border border-blood/40 font-semibold hover:bg-blood/10 active:scale-[0.98]",
   success:
     "bg-emerald-500 text-white font-bold hover:brightness-110 active:scale-[0.98]",
   // S3: mid-emphasis start action (filled-tonal go-green). Per-card actions

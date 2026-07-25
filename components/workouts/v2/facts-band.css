@@ -1,0 +1,97 @@
+/* Key-facts band (W5, audit F-2): the session's 2–4 summary figures as a
+ * FLAT band — figures with spaced-caps labels, separated by rhythm and
+ * alignment only. No boxes: the figures are the page's own summary, not
+ * tappable, not a collection, single provenance — they pass none of
+ * comp-canon 01 §4's earning tests, so they render at rung 0
+ * (comp-canon 05 #35/#87, 01 #38/#50; lockup anatomy 06 #33).
+ *
+ * Geometry is the ds.css lockup: label above numeral, --sp-2 between,
+ * serif figure at --t-stat in --ink with inline units at 0.6em in
+ * --ink-soft. Stroke spec is the sheet's .sp-stat primitive: weight 500 +
+ * opsz 12 (owner numeral ruling 2026-07-19: upright data numerals never
+ * render as 400-weight hairlines; italic editorial headlines keep theirs).
+ *
+ * Width behavior: 2-column flat grid below 1024px, one row above. The
+ * recipe's one-row band (05 #35) cannot hold four spaced-caps labels
+ * without clipping below ~600px (07 #50), and between 640 and 1023 the
+ * fourth fact orphans onto its own row (the desktop nav rail retakes the
+ * width from 768; re-measured 3+1 at 960): W5 comp-audit F-2. The switch
+ * sits at 1024 where one row deterministically fits beside the rail. The
+ * grid wraps as a unit, no orphan (07 #13). Stated deviation from the
+ * one-row rule, sub-1024 widths only.
+ *
+ * Rhythm (W5 comp-audit F-1): gaps inside the band are group-level
+ * (--sp-4 = 16px both axes, equal so the four peers read as one group,
+ * 01 #8) and must stay below the page's 40px zone seams. */
+
+.fb-root {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--sp-4);
+  row-gap: var(--sp-4);
+}
+
+/* Odd fact counts (3, or a lone 1): the trailing lockup spans the full
+   band width instead of stranding in the left cell, so the centered
+   celebration variant stays symmetric and the phone grid never shows a
+   half-empty final row (07 #13: peers wrap as a unit, no orphan). */
+.fb-root > div:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 1024px) {
+  .fb-root {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: var(--sp-7);
+    row-gap: var(--sp-4);
+  }
+}
+
+/* The celebration state is a centered composition (comp-canon 05 #86);
+   the plain detail state stays on the page's left spine (06 #26). */
+.fb-center {
+  text-align: center;
+}
+@media (min-width: 1024px) {
+  .fb-center {
+    justify-content: center;
+  }
+}
+
+.fb-label {
+  font-family: var(--f-label);
+  font-size: var(--t-micro);
+  font-weight: 500;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--mute);
+}
+
+.fb-figure {
+  margin: var(--sp-2) 0 0;
+  font-family: var(--fb-bodoni), "Bodoni MT", Georgia, serif;
+  font-weight: 500;
+  font-variation-settings: "opsz" 12;
+  font-size: var(--t-stat);
+  line-height: 1.1;
+  color: var(--ink);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* On the celebration the verdict headline is the protagonist (05 #86,
+   02 #9): its clamp bottoms out at 34px on phones, so celebration
+   figures step down one token (--t-headline, 25.5 -> 34px) to keep the
+   verdict decisively loudest at every width (W5 comp-audit F-5). The
+   detail state keeps --t-stat: its 30px display-caps identity still
+   outranks the serif figures there. */
+.fb-center .fb-figure {
+  font-size: var(--t-headline);
+}
+
+.fb-unit {
+  font-size: 0.6em;
+  color: var(--ink-soft);
+}
