@@ -37,8 +37,10 @@ Sessions must not silently pick a side on these; borderline cases go to the deci
 **Genuinely unsettled in the field (judgment per case, watch for recurrence):**
 - Cards with both a whole-card target and nested actions (01 #2); bordered groups inside large desktop windows/panes (01 #4); zebra striping thresholds (01 #6); expert-density vs whitespace-comprehension boundary cases and the fold (02); density toggles (02); one-question-per-screen onboarding (02); floating labels; which field pairs may row; asterisk vs "(optional)"; placeholder contrast (03); stacked-button order, X-plus-Cancel, centered-vs-left small-confirm titles, inputs in confirms (04); chevrons on rows, divider-vs-whitespace crossover in lists, list-detail vs routed pages, customizable overviews, tabs-vs-scroll on details, live-hero scale (05); baseline grids, per-zone atmosphere support in the literature, header presence on self-identifying zones off Home (06); exact measure number, CSS authoring order, container-query-only architectures, mobile carousels, two-column enterprise forms, M3-dp-as-px, desktop density for consumer apps (07); timestamp slot per list archetype, status chip/dot/text weight, info-affordance vs inline help, top+bottom CTA repeats (08).
 
-## DS gaps flagged for the chadchat port session (H3)
+## DS gaps flagged for the chadchat port session (H3) — CLOSED by W2 (2026-07-24)
 
-1. Surface-ramp / tint-zone token — rung 5 needs it; ds.css ships only `--bg` (06 #23).
-2. Input-component tokens — control height, affix slot, focus ring; only `--r-control` exists (03 #45).
-3. The rung-to-meaning containment mapping recorded beside the tokens (01 #68).
+All three landed as tokens in `app/globals.css` (the single token home):
+
+1. Surface-ramp / tint-zone token — `--bg-raised`, exactly one full-bleed step above `--bg` (06 #23).
+2. Input-component tokens — `--control-h`, `--control-h-lg` (44px phone / 40px pointer), `--control-pad-x`, `--control-ring-w`; the ui input / input-group / select / button primitives read them (03 #45).
+3. The rung-to-meaning containment map — recorded beside the tokens in `app/globals.css` (01 #68).
