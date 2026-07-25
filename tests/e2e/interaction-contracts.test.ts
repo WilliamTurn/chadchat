@@ -751,3 +751,52 @@ test("retired routes permanently redirect to their new home (RC-11)", async ({
 
   await context.close();
 });
+
+/* --------------------------------------------------------------------------
+ * W4: the /account/profile stats form never loses work (ux-canon 01 #22,
+ * 02 #44, 03 #83). Dirty state is visible, Save confirms inline and
+ * persists, and an unsaved edit survives leaving and returning (the draft
+ * guard). Regression for the W4 split of the form out of /account.
+ * ------------------------------------------------------------------------ */
+
+test("the stats form flags edits, saves inline, and drafts survive navigation (W4)", async ({
+  browser,
+}) => {
+  const { context, page } = await openPage(browser, { authed: true });
+
+  await page.goto("/account/profile");
+  await page
+    .getByRole("heading", { name: "Your goals", exact: true })
+    .waitFor({ timeout: 30_000 });
+
+  // Edit -> the dirty indicator appears (ux-canon 01 #82).
+  await page.getByLabel("Age").fill("41");
+  await expect(page.getByText("Unsaved changes")).toBeVisible();
+
+  // Save -> inline "Saved" confirmation (ux-canon 03 #25, #91), no toast.
+  await page.getByRole("button", { name: "Save stats" }).click();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible({
+    timeout: 20_000,
+  });
+
+  // The save is real: a reload renders the stored value.
+  await page.reload();
+  await page
+    .getByRole("heading", { name: "Your goals", exact: true })
+    .waitFor({ timeout: 30_000 });
+  await expect(page.getByLabel("Age")).toHaveValue("41");
+
+  // An unsaved edit survives leaving and returning (draft persistence,
+  // ux-canon 03 #83: back never loses work).
+  await page.getByLabel("Age").fill("42");
+  await page.getByRole("link", { name: "Back to Account" }).click();
+  await page.waitForURL(/\/account(?:$|\?)/);
+  await page.goto("/account/profile");
+  await page
+    .getByRole("heading", { name: "Your goals", exact: true })
+    .waitFor({ timeout: 30_000 });
+  await expect(page.getByLabel("Age")).toHaveValue("42");
+  await expect(page.getByText("Unsaved changes")).toBeVisible();
+
+  await context.close();
+});

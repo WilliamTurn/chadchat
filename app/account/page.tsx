@@ -1,79 +1,254 @@
-import {
-  Crown,
-  Dumbbell,
-  GlassWater,
-  Moon,
-  Ruler,
-  Salad,
-  Scale,
-  Sparkles,
-  TriangleAlert,
-} from "lucide-react";
+import { Crown, Sparkles, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { auth } from "@/app/(auth)/auth";
 import { CheckInSettings } from "@/components/account/check-in-settings";
 import { DeleteDataButton } from "@/components/account/delete-data-button";
+import { ExerciseCaloriesSettings } from "@/components/account/exercise-calories-settings";
 import { IntensitySettings } from "@/components/account/intensity-settings";
 import { MemorySettings } from "@/components/account/memory-settings";
-import { ExerciseCaloriesSettings } from "@/components/account/exercise-calories-settings";
 import { QuitDateSettings } from "@/components/account/quit-date-settings";
 import { SensorySettings } from "@/components/account/sensory-settings";
-import { WeeklyReportSettings } from "@/components/account/weekly-report-settings";
-import { ProfileForm } from "@/components/account/profile-form";
+import {
+  SettingsLinkRow,
+  SettingsRow,
+  SettingsZone,
+} from "@/components/account/settings-row";
 import { TimezonePreference } from "@/components/account/timezone-preference";
 import { UnitPreference } from "@/components/account/unit-preference";
+import { WeeklyReportSettings } from "@/components/account/weekly-report-settings";
 import { PageShell } from "@/components/nav/page-shell";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { canAccessEliteFeatures } from "@/lib/admin";
 import { sanitizeCheckInDays } from "@/lib/checkins/schedule";
 import { getUserById } from "@/lib/db/queries";
 import { ELITE_PERKS, PRO_PERKS } from "@/lib/plans";
 import { PLANS } from "@/lib/stripe";
-import { hasActiveAccess, type PlanTier } from "@/lib/subscription";
-import { cn } from "@/lib/utils";
+import { hasActiveAccess } from "@/lib/subscription";
+import { formatBillingDate, formatBillingDateShort } from "@/lib/date";
 import { openBillingPortal, startPlanChange } from "./actions";
 
-/** The top-accent color for the membership card, by status/tier (ACC-7). */
-function accentForCard({
-  isPastDue,
-  tier,
-}: {
-  isPastDue: boolean;
-  tier: PlanTier | null;
-}): string {
-  if (isPastDue) {
-    return "bg-destructive";
-  }
-  // Elite's accent is deliberately NOT red — red stays Pro's "pick me" color.
-  if (tier === "elite") {
-    return "bg-foreground/70";
-  }
-  if (tier === "pro") {
-    return "bg-blood";
-  }
-  if (tier === "basic") {
-    return "bg-muted-foreground/30";
-  }
-  return "bg-border";
+/**
+ * The "cancel anytime" phrase as a real submit button (ACC-21). Rendered inside
+ * a form whose action is `openBillingPortal`, so the promise is one click away
+ * instead of making the member hunt through the billing page.
+ */
+function CancelAnytimeButton({ capitalized }: { capitalized?: boolean }) {
+  return (
+    <button
+      aria-label="Cancel anytime in the billing page"
+      className="underline underline-offset-4 transition-colors hover:text-foreground"
+      type="submit"
+    >
+      {capitalized ? "Cancel anytime" : "cancel anytime"}
+    </button>
+  );
+}
+
+
+/**
+ * /account, the Form/settings archetype (composition canon 05 §6): grouped
+ * rows under spaced-caps zone headers on the bare page surface — no boxed
+ * panels (05 #52; canon 01 #38: topical grouping earns no container; north
+ * star: cardless). Zones separated by header + whitespace (the sanctioned
+ * pair, canon 06 #4); rows inside a zone by hairline dividers (rung 4).
+ * Desktop keeps the LAY-1 full-page frame (owner law, s177/s178) with two
+ * independently packed zone columns; each column caps at a readable band so
+ * label/control pairing survives the width (canon 08 #48, 02 #44). Phones
+ * stack: membership → profile → preferences → data → delete, with the
+ * destructive zone isolated last (05 #57).
+ */
+export default function AccountPage() {
+  return (
+    <PageShell active="/account" className="max-w-[1500px]">
+      <div className="mb-8">
+        <h1 className="font-semibold text-2xl tracking-tight">Account</h1>
+        <p className="mt-1 text-muted-foreground text-sm">
+          Your membership, profile, preferences, and data.
+        </p>
+      </div>
+
+      <Suspense
+        fallback={
+          <SettingsZone title="Membership">
+            <MembershipSkeleton />
+          </SettingsZone>
+        }
+      >
+        <AccountZones />
+      </Suspense>
+    </PageShell>
+  );
 }
 
 /**
- * Loading placeholder that mirrors the real membership card's shape — accent
- * strip, plan-name + badge row, status line, and action buttons — instead of a
- * bare grey rectangle, so the page doesn't visibly reflow when data lands.
+ * All zones, one member fetch. Phone renders one column in canonical order
+ * (membership → profile → emails → preferences → intensity → data → delete,
+ * destructive last, canon 05 #57) via `order-*` on the flattened zones; at lg
+ * the `display: contents` wrappers materialize into two real columns packed
+ * for near-equal height on every tier (canon 02 #21: no content-free column
+ * tail), keeping the owner's LAY-1 full-page frame. items-start (ACC-22):
+ * columns keep their natural height. Zone beat: 56px phones, 96px desktop
+ * (canon 06 #8).
  */
-function MembershipCardSkeleton() {
+async function AccountZones() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+  const user = await getUserById(session.user.id);
+  if (!user) {
+    redirect("/login");
+  }
+
+  const usesCustomPhoto = user.heroFigure === "custom" && user.heroImageUrl;
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+  // Every log the app collects is here (LC-16) — "your data" that skipped
+  // hydration, sleep, and measurements was only half the promise.
+  const exports: { dataset: string; label: string }[] = [
+    { dataset: "weighins", label: "Weigh-ins" },
+    { dataset: "meals", label: "Nutrition" },
+    { dataset: "workouts", label: "Workouts" },
+    { dataset: "hydration", label: "Hydration" },
+    { dataset: "sleep", label: "Sleep" },
+    { dataset: "measurements", label: "Measurements" },
+  ];
+
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-float)]">
-      <div className="absolute inset-x-0 top-0 h-1 bg-border" />
-      <div className="mb-3 flex items-center gap-3">
+    <div className="flex flex-col gap-14 lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-16">
+      <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-24">
+        <SettingsZone className="order-1" title="Membership">
+          <MembershipZone user={user} />
+        </SettingsZone>
+
+        <SettingsZone className="order-2" title="Profile">
+          {/* The stats form lives on its own sub-screen so this surface stays
+              purely instant-apply (canon 05 #56: commit models never mix). A
+              multi-field row shows supporting text, not a concatenated value
+              (Hevy/MyFitnessPal/Strava convention; canon 05 #53). */}
+          <SettingsLinkRow
+            href="/account/profile"
+            label="Your stats"
+            supporting="Sex, age, height, activity, experience, goals, and training days."
+          />
+          <SettingsLinkRow
+            href="/account/appearance"
+            label="Appearance"
+            supporting="The figure that represents you: a silhouette or your own photo."
+            value={usesCustomPhoto ? "Your photo" : "Silhouette"}
+          />
+        </SettingsZone>
+
+        {/* Proactive check-ins (FEAT-11) + the weekly report (FEAT-12) —
+            Elite only, so members who don't have the features never see a
+            dead control. */}
+        {canAccessEliteFeatures(user) && (
+          <SettingsZone
+            className="order-3"
+            footer={
+              <>
+                Chad&apos;s emails come from noreply@send.chadcoach.ai. If one
+                doesn&apos;t arrive, check spam and mark it &quot;Not
+                spam&quot;.
+              </>
+            }
+            title="Emails from Chad"
+          >
+            <CheckInSettings
+              initialDays={sanitizeCheckInDays(user.checkInDays)}
+              initialEnabled={user.checkInsEnabled}
+              initialEveningHour={user.checkInEveningHour}
+              initialFrequency={user.checkInFrequency}
+              initialMorningHour={user.checkInMorningHour}
+            />
+            <WeeklyReportSettings
+              initialDay={user.weeklyReportDay}
+              initialEnabled={user.weeklyReportsEnabled}
+              initialHour={user.weeklyReportHour}
+            />
+          </SettingsZone>
+        )}
+
+        <SettingsZone className="order-6" title="Your data">
+          <SettingsRow
+            label="Export as CSV"
+            supporting="Download any of your logs, yours to take anywhere."
+          >
+            {/* A fixed chip grid so no dataset ever orphan-wraps alone
+                (canon 07 #13). Accessible names carry the action the bare
+                nouns omit (canon 04 §128, §140). */}
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {exports.map(({ dataset, label }) => (
+                <Button asChild key={dataset} variant="outline">
+                  <a
+                    aria-label={`Export ${label.toLowerCase()} as CSV`}
+                    download
+                    href={`${basePath}/api/me/export?dataset=${dataset}`}
+                  >
+                    {label}
+                  </a>
+                </Button>
+              ))}
+            </div>
+          </SettingsRow>
+        </SettingsZone>
+
+        {/* Delete everything (owner ask, s157): the member's one-button wipe.
+            Its own final zone, isolated from every safe action by position
+            and spacing (canon 05 #57). */}
+        <SettingsZone className="order-7" title="Delete your data">
+          <div className="py-4">
+            <p className="text-muted-foreground text-sm">
+              Permanently deletes your chats, logs, photos, and everything
+              Chad has recorded about you. Your account and membership stay.
+            </p>
+            <div className="mt-4">
+              <DeleteDataButton />
+            </div>
+          </div>
+        </SettingsZone>
+      </div>
+
+      <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-24">
+        {/* Ordered by frequency of use (canon 05 #54). */}
+        <SettingsZone className="order-4" title="Preferences">
+          <UnitPreference initialUnit={user.weightUnit} />
+          <TimezonePreference initialTimezone={user.timezone} />
+          <ExerciseCaloriesSettings
+            initialEnabled={user.exerciseCalorieAddBack}
+          />
+          <SensorySettings
+            initialHaptics={user.hapticsEnabled}
+            initialSound={user.soundEnabled}
+          />
+          <MemorySettings initialEnabled={user.memoryEnabled} />
+          <QuitDateSettings initialEnabled={user.quitDateEnabled} />
+        </SettingsZone>
+
+        {/* Chad's intensity is its own zone: three described option tiles
+            outgrew the settings-row rhythm (canon 06 #8/#9: the zone beat
+            must stay ≥2x the row beat). */}
+        <SettingsZone className="order-5" title="Chad's intensity">
+          <IntensitySettings initialIntensity={user.chadIntensity} />
+        </SettingsZone>
+      </div>
+    </div>
+  );
+}
+
+/** Flat loading placeholder mirroring the membership zone's real shape (plan
+ *  line, status line, action row), so the page doesn't reflow when data
+ *  lands — no card chrome (canon 01 #73: states keep their group's rung). */
+function MembershipSkeleton() {
+  return (
+    <div className="py-4">
+      <div className="flex items-center gap-3">
         <div className="h-6 w-32 animate-pulse rounded-md bg-muted-foreground/20" />
         <div className="h-5 w-16 animate-pulse rounded-full bg-muted-foreground/20" />
       </div>
-      <div className="h-4 w-64 max-w-full animate-pulse rounded bg-muted-foreground/20" />
+      <div className="mt-3 h-4 w-64 max-w-full animate-pulse rounded bg-muted-foreground/20" />
       <div className="mt-6 flex gap-3">
         <div className="h-9 w-32 animate-pulse rounded-lg bg-muted-foreground/20" />
         <div className="h-9 w-28 animate-pulse rounded-lg bg-muted-foreground/20" />
@@ -82,445 +257,176 @@ function MembershipCardSkeleton() {
   );
 }
 
-/**
- * The "cancel anytime" phrase as a real submit button (ACC-21). Rendered inside
- * a form whose action is `openBillingPortal`, so the promise is one click away
- * instead of making the member hunt through the billing page.
- */
-function CancelAnytimeButton() {
-  return (
-    <button
-      className="underline underline-offset-4 transition-colors hover:text-foreground"
-      type="submit"
-    >
-      cancel anytime
-    </button>
-  );
-}
-
-function formatDate(date: Date | null): string {
-  if (!date) {
-    return "—";
-  }
-  return date.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
-export default function AccountPage() {
-  return (
-    // Full-width desktop layout (LAY-1): two independently packed columns —
-    // Membership, Profile, and the Elite email settings down the left;
-    // Preferences and Your data down the right — so the page fills the wide
-    // frame with no dead bands (a row-aligned grid left the short Membership
-    // cell stranded above a tall Profile card). Phones stack in that order.
-    <PageShell active="/account" className="max-w-[1500px]">
-      <div className="mb-8">
-        <h1 className="font-semibold text-2xl tracking-tight">Account</h1>
-        <p className="mt-1 text-muted-foreground text-sm">
-          Your membership, preferences, and your data.
-        </p>
-      </div>
-
-      {/* items-start (ACC-22): columns keep their natural height instead of
-          the shorter one stretching to match the taller one. */}
-      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
-        <div className="flex min-w-0 flex-col gap-8">
-          <section className="min-w-0">
-            <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-              Membership
-            </h2>
-            <Suspense fallback={<MembershipCardSkeleton />}>
-              <MembershipCard />
-            </Suspense>
-            {/* "cancel anytime" is a real one-click promise (ACC-21): the
-                phrase itself opens the Stripe billing portal. */}
-            <form action={openBillingPortal}>
-              <p className="mt-4 text-muted-foreground text-xs">
-                Billing is handled securely by Stripe. Update your card, switch
-                plans, or <CancelAnytimeButton /> from the billing page.
-              </p>
-            </form>
-          </section>
-
-          <Suspense fallback={null}>
-            <ProfileAndEmailSettings />
-          </Suspense>
-        </div>
-
-        <Suspense fallback={null}>
-          <PreferencesAndDataSettings />
-        </Suspense>
-      </div>
-    </PageShell>
-  );
-}
-
-/**
- * The rest of the left column (LAY-1): Profile, then the Elite email settings
- * under it so the two page columns stay roughly balanced for both tiers.
- */
-async function ProfileAndEmailSettings() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-  const user = await getUserById(session.user.id);
-  if (!user) {
-    redirect("/login");
-  }
-
-  return (
-    <>
-      {/* Profile / stats (ONB-2) — the trusted source of truth Chad reads. */}
-      <section className="min-w-0">
-        <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-          Profile
-        </h2>
-        <ProfileForm
-          initial={{
-            sex: user.sex,
-            age: user.age,
-            heightCm: user.heightCm,
-            activityLevel: user.activityLevel,
-            experienceLevel: user.experienceLevel,
-            primaryGoal: user.primaryGoal,
-            primaryGoals: user.primaryGoals,
-            trainingDaysPerWeek: user.trainingDaysPerWeek,
-            primaryGoalDetail: user.primaryGoalDetail,
-            trainingDescription: user.trainingDescription,
-          }}
-          weightUnit={user.weightUnit}
-        />
-      </section>
-
-      {/* Proactive check-ins (FEAT-11) + the weekly report (FEAT-12) —
-          Elite only, so members who don't have the features never see a
-          dead control. */}
-      {canAccessEliteFeatures(user) && (
-        <section className="min-w-0">
-          <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-            Emails from Chad
-          </h2>
-          <div className="rounded-2xl border border-border bg-card p-6">
-            <CheckInSettings
-              initialDays={sanitizeCheckInDays(user.checkInDays)}
-              initialEnabled={user.checkInsEnabled}
-              initialEveningHour={user.checkInEveningHour}
-              initialFrequency={user.checkInFrequency}
-              initialMorningHour={user.checkInMorningHour}
-            />
-            <div className="mt-6 border-border border-t pt-6">
-              <WeeklyReportSettings
-                initialDay={user.weeklyReportDay}
-                initialEnabled={user.weeklyReportsEnabled}
-                initialHour={user.weeklyReportHour}
-              />
-            </div>
-          </div>
-        </section>
-      )}
-    </>
-  );
-}
-
-/**
- * The right column (LAY-1): Preferences + data export — the account table
- * stakes beyond billing (ACC-13).
- */
-async function PreferencesAndDataSettings() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-  const user = await getUserById(session.user.id);
-  if (!user) {
-    redirect("/login");
-  }
-
-  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-  // Every log the app collects is here (LC-16) — "your data" that skipped
-  // hydration, sleep, and measurements was only half the promise.
-  const exports: { dataset: string; label: string; icon: typeof Scale }[] = [
-    { dataset: "weighins", label: "Weigh-ins", icon: Scale },
-    { dataset: "meals", label: "Nutrition", icon: Salad },
-    { dataset: "workouts", label: "Workouts", icon: Dumbbell },
-    { dataset: "hydration", label: "Hydration", icon: GlassWater },
-    { dataset: "sleep", label: "Sleep", icon: Moon },
-    { dataset: "measurements", label: "Measurements", icon: Ruler },
-  ];
-
-  return (
-    <div className="flex min-w-0 flex-col gap-8">
-      {/* Preferences */}
-      <section className="min-w-0">
-        <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-          Preferences
-        </h2>
-        <div className="rounded-2xl border border-border bg-card p-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h3 className="font-medium text-sm">Units</h3>
-              <p className="mt-1 text-muted-foreground text-sm">
-                How your body weight shows across the app and the default for
-                new weigh-ins.
-              </p>
-            </div>
-            <UnitPreference initialUnit={user.weightUnit} />
-          </div>
-
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-border border-t pt-6">
-            <div>
-              <h3 className="font-medium text-sm">Time zone</h3>
-              <p className="mt-1 text-muted-foreground text-sm">
-                Detected automatically from your browser. It decides when
-                your day rolls over — streaks, today's log, and when Chad's
-                emails land.
-              </p>
-            </div>
-            <TimezonePreference initialTimezone={user.timezone} />
-          </div>
-
-          {/* Exercise calories (calories-burned Phase 3, D2): whether logged
-              workouts raise the day's calorie budget. */}
-          <div className="mt-6 border-border border-t pt-6">
-            <ExerciseCaloriesSettings
-              initialEnabled={user.exerciseCalorieAddBack}
-            />
-          </div>
-
-          {/* Logging feedback (DSH-54): the success chime + phone vibration. */}
-          <div className="mt-6 border-border border-t pt-6">
-            <SensorySettings
-              initialHaptics={user.hapticsEnabled}
-              initialSound={user.soundEnabled}
-            />
-          </div>
-
-          {/* Chad's intensity dial — how harsh he is with this member. */}
-          <div className="mt-6 border-border border-t pt-6">
-            <IntensitySettings initialIntensity={user.chadIntensity} />
-          </div>
-
-          {/* Chad's memory (owner order, s157): the chat Settings popup has
-              the same switch; members expect it here too. */}
-          <div className="mt-6 border-border border-t pt-6">
-            <MemorySettings initialEnabled={user.memoryEnabled} />
-          </div>
-
-          {/* The Quit Date on/off switch (FEAT-25, all members). */}
-          <div className="mt-6 border-border border-t pt-6">
-            <QuitDateSettings initialEnabled={user.quitDateEnabled} />
-          </div>
-
-          {/* Appearance (DEC-05): the relocated figure customizer's owned
-              destination. */}
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-border border-t pt-6">
-            <div>
-              <h3 className="font-medium text-sm">Appearance</h3>
-              <p className="mt-1 text-muted-foreground text-sm">
-                The figure that represents you: pick a silhouette or upload
-                your own image.
-              </p>
-            </div>
-            <Link
-              className={cn(
-                buttonVariants({ variant: "outline", size: "sm" }),
-                "min-h-11 sm:min-h-8"
-              )}
-              href="/account/appearance"
-            >
-              Open Appearance
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Your data */}
-      <section className="min-w-0">
-        <h2 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-          Your data
-        </h2>
-        <div className="rounded-2xl border border-border bg-card p-6">
-          <h3 className="font-medium text-sm">Export</h3>
-          <p className="mt-1 text-muted-foreground text-sm">
-            Download your logged data as CSV — it's yours, take it anywhere.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {exports.map(({ dataset, label, icon: Icon }) => (
-              <a
-                className={cn(
-                  buttonVariants({ variant: "outline" }),
-                  "gap-2"
-                )}
-                download
-                href={`${basePath}/api/me/export?dataset=${dataset}`}
-                key={dataset}
-              >
-                <Icon className="size-4" />
-                {label}
-              </a>
-            ))}
-          </div>
-
-          {/* Delete everything (owner ask, s157): the member's one-button
-              wipe — every log, chat, and Chad's whole file, keeping the
-              account + membership. */}
-          <div className="mt-6 border-border border-t pt-6">
-            <h3 className="font-medium text-sm">Delete</h3>
-            <p className="mt-1 text-muted-foreground text-sm">
-              Permanently delete all of your data — chats, logs, photos,
-              and everything Chad knows about you. Your account and
-              membership stay.
-            </p>
-            <div className="mt-4">
-              <DeleteDataButton />
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-}
-
-async function MembershipCard() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  const user = await getUserById(session.user.id);
-  if (!user) {
-    redirect("/login");
-  }
-
+function MembershipZone({
+  user,
+}: {
+  user: NonNullable<Awaited<ReturnType<typeof getUserById>>>;
+}) {
   const hasAccess = hasActiveAccess(user);
   const tier = user.subscriptionTier;
   // A lapsed row can still carry its old tier; only name the plan while it is
-  // actually usable, so the card never reads "Chad Pro" next to "You don't
-  // have an active plan right now" (ACC-29).
+  // actually usable, so the zone never reads "Chad Pro" next to a no-plan
+  // status line (ACC-29).
   const planName = tier && hasAccess ? PLANS[tier].name : "No active plan";
   const priceLabel = tier ? PLANS[tier].monthlyPriceLabel : null;
   const status = user.subscriptionStatus;
 
-  // Members with live access who can move up a tier. Each upgrade goes through
-  // Stripe's hosted plan-change flow (no second subscription). Basic sees the
-  // Pro card (the primary path); Pro sees the Elite card (ACC-17).
-  const canUpgradeToPro = hasAccess && tier === "basic";
-  const canUpgradeToElite = hasAccess && tier === "pro";
-
-  // Revenue at risk: a past-due card is a failed payment one update away from a
-  // churned member, so the card itself goes destructive-tinted (not just a faint
-  // badge) and the primary action becomes a red "fix it now" button.
+  // Revenue at risk: a failed payment is one card update away from a churned
+  // member, so the status renders as a destructive interjection banner (the
+  // one container this zone earns, canon 01 #43) and the primary action
+  // becomes "Update payment".
   const isPastDue = status === "past_due";
 
-  // Tier-colored top accent so the membership card reads its status at a glance:
-  // Pro = brand blood-red, Basic = a calm neutral, past-due = destructive.
-  const accentClass = accentForCard({
-    isPastDue,
-    tier: hasAccess ? tier : null,
-  });
+  // Members with live access who can move up a tier. Each upgrade goes through
+  // Stripe's hosted plan-change flow (no second subscription). Basic sees the
+  // Pro card (the primary path); Pro sees the Elite card (ACC-17). A past-due
+  // member sees no upsell: fixing the payment is the one job on screen.
+  const canUpgradeToPro = hasAccess && tier === "basic" && !isPastDue;
+  const canUpgradeToElite = hasAccess && tier === "pro" && !isPastDue;
 
-  // Friendly, retention-minded status line. We always surface the actual price
-  // so a renewal never reads as a surprise charge.
+  const isCancelling = Boolean(
+    hasAccess &&
+      status === "active" &&
+      user.cancelAtPeriodEnd &&
+      user.currentPeriodEnd
+  );
+
+  // A member with live access but no Stripe record (comped/admin-granted) has
+  // nothing to manage and must never be told to choose a plan they have, be
+  // promised a renewal charge, or be upsold a Stripe plan change.
+  const isComped = hasAccess && !user.stripeCustomerId;
+
+  // Status lines never interpolate a missing date or price — each state
+  // branches to a value-free variant instead (missing-said-plainly; the old
+  // fallback rendered a bare dash glyph). A comped row never promises a
+  // charge the no-payment-method fine print contradicts (canon 06 §165).
   let statusLine: string;
   if (!(hasAccess || isPastDue)) {
-    // Whatever the row's last Stripe status was, without live access there is
-    // no plan to describe; a stale "trialing"/"active" line here would
-    // contradict the "No active plan" name above (ACC-29).
-    statusLine = "You don't have an active plan right now.";
+    statusLine = "Choose a plan to start training with Chad.";
+  } else if (isComped) {
+    statusLine = "Your plan is active. No renewal is scheduled.";
   } else if (status === "trialing") {
-    statusLine = `Free trial — your first charge${priceLabel ? ` of ${priceLabel}` : ""} is on ${formatDate(user.trialEndsAt ?? user.currentPeriodEnd)}.`;
-  } else if (
-    status === "active" &&
-    user.cancelAtPeriodEnd &&
-    user.currentPeriodEnd
-  ) {
-    statusLine = `Active until ${formatDate(user.currentPeriodEnd)}. We'd love to keep training with you — you can resume anytime before then.`;
+    // The "Free trial" badge already names the state, so the line starts at
+    // the fact (canon 04 §130).
+    const trialEnd = user.trialEndsAt ?? user.currentPeriodEnd;
+    if (trialEnd && priceLabel) {
+      statusLine = `First charge of ${priceLabel} on ${formatBillingDate(trialEnd)}.`;
+    } else if (priceLabel) {
+      statusLine = `Your first charge is ${priceLabel} when the trial ends.`;
+    } else if (trialEnd) {
+      statusLine = `Your first charge lands on ${formatBillingDate(trialEnd)}.`;
+    } else {
+      statusLine = "Free trial.";
+    }
+  } else if (isCancelling && user.currentPeriodEnd) {
+    statusLine = `Ends ${formatBillingDate(user.currentPeriodEnd)}. You keep full access until then, and you can resume from Manage billing any time before that date.`;
   } else if (status === "active") {
-    // A row with no period end (e.g. a comped membership) must not render
-    // "Renews on" with a bare dash where the date belongs.
-    statusLine = user.currentPeriodEnd
-      ? `${priceLabel ? `${priceLabel}/month · ` : ""}Renews on ${formatDate(user.currentPeriodEnd)}.`
-      : "Your plan is active.";
-  } else if (status === "past_due") {
-    statusLine =
-      "There's a hiccup with your payment. Update your card to keep your access uninterrupted.";
+    if (user.currentPeriodEnd) {
+      statusLine = priceLabel
+        ? `${priceLabel}/month. Renews on ${formatBillingDate(user.currentPeriodEnd)}.`
+        : `Renews on ${formatBillingDate(user.currentPeriodEnd)}.`;
+    } else {
+      statusLine = "Your plan is active. No renewal is scheduled.";
+    }
+  } else if (isPastDue) {
+    statusLine = "Your last payment failed. Update your card to keep your access.";
   } else {
-    statusLine = "You don't have an active plan right now.";
+    statusLine = "Choose a plan to start training with Chad.";
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      <div
-        className={cn(
-          "relative overflow-hidden rounded-2xl border p-6 shadow-[var(--shadow-float)]",
-          isPastDue
-            ? "border-destructive/50 bg-destructive/[0.06] ring-1 ring-destructive/20"
-            : "border-border bg-card"
-        )}
-      >
-        <div className={cn("absolute inset-x-0 top-0 h-1", accentClass)} />
-
-        <div className="mb-3 flex flex-wrap items-center gap-3">
+    <div className="flex flex-col gap-5 py-4">
+      <div>
+        <div className="flex flex-wrap items-center gap-3">
           <span className="font-medium text-lg">{planName}</span>
           {hasAccess && status === "trialing" && (
             <Badge variant="secondary">Free trial</Badge>
           )}
-          {hasAccess && status === "active" && <Badge>Active</Badge>}
+          {isCancelling && user.currentPeriodEnd ? (
+            <Badge variant="secondary">
+              Ends {formatBillingDateShort(user.currentPeriodEnd)}
+            </Badge>
+          ) : (
+            hasAccess && status === "active" && <Badge>Active</Badge>
+          )}
           {isPastDue && <Badge variant="destructive">Payment needed</Badge>}
         </div>
 
-        <p
-          className={cn(
-            "text-sm",
-            isPastDue
-              ? "flex items-start gap-2 font-medium text-foreground"
-              : "text-muted-foreground"
-          )}
-        >
-          {isPastDue && (
+        {isPastDue ? (
+          <p className="mt-3 flex items-start gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-3 font-medium text-foreground text-sm">
             <TriangleAlert className="mt-0.5 size-4 shrink-0 text-destructive" />
-          )}
-          <span>{statusLine}</span>
-        </p>
+            <span>{statusLine}</span>
+          </p>
+        ) : (
+          <p className="mt-2 text-muted-foreground text-sm">{statusLine}</p>
+        )}
 
-        <div className="mt-6 flex flex-wrap gap-3">
-          {user.stripeCustomerId ? (
-            <form action={openBillingPortal}>
-              <Button
-                type="submit"
-                variant={
-                  isPastDue
-                    ? "destructive"
-                    : canUpgradeToPro || canUpgradeToElite
-                      ? "outline"
-                      : "default"
-                }
-              >
-                {isPastDue ? "Update payment" : "Manage billing"}
+        {/* Membership actions only: navigation to Chad lives in the app
+            chrome, never duplicated here (canon 08 #15/#16). */}
+        {(user.stripeCustomerId || !hasAccess) && (
+          <div className="mt-5 flex flex-wrap gap-3">
+            {user.stripeCustomerId ? (
+              <form action={openBillingPortal}>
+                <Button
+                  type="submit"
+                  variant={
+                    isPastDue
+                      ? "destructive"
+                      : canUpgradeToPro || canUpgradeToElite
+                        ? "outline"
+                        : "default"
+                  }
+                >
+                  {isPastDue ? "Update payment" : "Manage billing"}
+                </Button>
+              </form>
+            ) : (
+              <Button asChild>
+                <Link href="/pricing">Choose a plan</Link>
               </Button>
-            </form>
-          ) : (
-            <Button asChild>
-              <Link href="/pricing">Choose a plan</Link>
-            </Button>
-          )}
+            )}
 
-          {hasAccess ? (
-            <Button asChild variant="outline">
-              <Link href="/home">Open Chad</Link>
-            </Button>
-          ) : (
-            <Button asChild variant="outline">
-              <Link href="/pricing">See plans</Link>
-            </Button>
-          )}
-        </div>
+            {!hasAccess && user.stripeCustomerId && (
+              // "See plans" only when the primary isn't already "Choose a
+              // plan": two buttons to /pricing would be one action twice.
+              <Button asChild variant="outline">
+                <Link href="/pricing">See plans</Link>
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* The qualifier sits with the block it qualifies, never below the
+            promo (canon 08 #34, #38). */}
+        {user.stripeCustomerId ? (
+          // "cancel anytime" is a real one-click promise (ACC-21): the
+          // phrase itself opens the Stripe billing portal.
+          <form action={openBillingPortal}>
+            <p className="mt-3 text-muted-foreground text-xs">
+              Stripe handles billing securely. Update your card, switch
+              plans, or <CancelAnytimeButton />.
+            </p>
+          </form>
+        ) : (
+          isComped && (
+            <p className="mt-3 text-muted-foreground text-xs">
+              No payment method is on file for this membership. Questions
+              about plans go to{" "}
+              <Link
+                className="underline underline-offset-4 transition-colors hover:text-foreground"
+                href="/help#plans"
+              >
+                Plans &amp; billing
+              </Link>
+              .
+            </p>
+          )
+        )}
       </div>
 
+      {/* The upsell renders LAST in its zone, below the member's own plan
+          facts and their fine print: the zone's protagonist is the plan, not
+          the promo (canon 05 #2, #54). */}
       {canUpgradeToPro && (
         <UpgradeToProCard price={PLANS.pro.monthlyPriceLabel} />
       )}
@@ -533,28 +439,25 @@ async function MembershipCard() {
 
 /**
  * The in-app upgrade path for Basic members. Without this, a Basic user who
- * comes to "manage their account" hits a dead end — the page only offered
- * "Manage billing" and "Open Chad", and nothing actually moved them to Pro.
- * The button posts to the `startPlanChange` server action, which opens Stripe's
- * hosted plan-change flow (real proration, no duplicate subscription).
+ * comes to "manage their account" hits a dead end. The button posts to the
+ * `startPlanChange` server action, which opens Stripe's hosted plan-change
+ * flow (real proration, no duplicate subscription). The bordered container is
+ * EARNED: a promotional unit is provenance-marked so members see exactly
+ * where the offer begins and ends (canon 01 #41).
  */
 function UpgradeToProCard({ price }: { price: string }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-blood/40 bg-card p-6 ring-1 ring-blood/20">
-      <div
-        aria-hidden
-        className="-right-12 -top-12 pointer-events-none absolute size-40 rounded-full bg-blood/20 blur-3xl"
-      />
+    <div className="relative overflow-hidden rounded-2xl border border-blood/40 bg-card p-5">
       <div className="relative">
         <div className="flex items-center gap-2">
           <Sparkles className="size-4 text-blood" />
-          <h2 className="font-display font-bold text-lg tracking-tight">
+          <h3 className="font-semibold text-base tracking-tight">
             Upgrade to Chad Pro
-          </h2>
+          </h3>
         </div>
         <p className="mt-1.5 text-muted-foreground text-sm">
-          Unlock everything Basic has, plus the features that make Chad a real
-          coach — not just a chat.
+          Everything in Basic, plus Future You, form reviews, and custom
+          workout &amp; meal plans.
         </p>
 
         <ul className="mt-4 flex flex-col gap-2.5">
@@ -573,6 +476,8 @@ function UpgradeToProCard({ price }: { price: string }) {
           ))}
         </ul>
 
+        {/* The price lives in the fine print, not the button, so the label
+            can never clip at 320px (canon 03 #18; the pinned defect). */}
         <form action={startPlanChange}>
           <Button
             className="mt-5 w-full gap-1.5 sm:w-auto"
@@ -580,13 +485,14 @@ function UpgradeToProCard({ price }: { price: string }) {
             type="submit"
           >
             <Sparkles className="size-4" />
-            Upgrade to Pro — {price}/month
+            Upgrade to Pro
           </Button>
         </form>
         <form action={openBillingPortal}>
           <p className="mt-2.5 text-muted-foreground text-xs">
-            You'll see the exact prorated amount before you confirm. Billed
-            securely by Stripe · <CancelAnytimeButton />.
+            {price}/month. You&apos;ll see the exact prorated amount before
+            you confirm. Billed securely by Stripe.{" "}
+            <CancelAnytimeButton capitalized />.
           </p>
         </form>
       </div>
@@ -597,25 +503,22 @@ function UpgradeToProCard({ price }: { price: string }) {
 /**
  * The Pro→Elite upgrade path (ACC-17). Same hosted plan-change flow as the
  * Basic→Pro card. Deliberately NOT red — red stays Pro's "pick me" color; the
- * Elite card reads premium via the neutral bone/white accent instead.
+ * Elite card reads premium via the neutral bone/white accent instead. Earned
+ * container: promotional unit (canon 01 #41).
  */
 function UpgradeToEliteCard({ price }: { price: string }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-foreground/25 bg-card p-6 ring-1 ring-foreground/10">
-      <div
-        aria-hidden
-        className="-right-12 -top-12 pointer-events-none absolute size-40 rounded-full bg-foreground/10 blur-3xl"
-      />
+    <div className="relative overflow-hidden rounded-2xl border border-foreground/25 bg-card p-5">
       <div className="relative">
         <div className="flex items-center gap-2">
           <Crown className="size-4" />
-          <h2 className="font-display font-bold text-lg tracking-tight">
+          <h3 className="font-semibold text-base tracking-tight">
             Upgrade to Chad Elite
-          </h2>
+          </h3>
         </div>
         <p className="mt-1.5 text-muted-foreground text-sm">
-          Maximum accountability — Chad doesn't wait for you to show up. He
-          comes to you.
+          Chad reaches out first: morning briefs, missed-workout callouts, and
+          a written weekly report.
         </p>
 
         <ul className="mt-4 flex flex-col gap-2.5">
@@ -627,6 +530,7 @@ function UpgradeToEliteCard({ price }: { price: string }) {
           ))}
         </ul>
 
+        {/* Price in the fine print, never the button (canon 03 #18). */}
         <form action={startPlanChange}>
           <Button
             className="mt-5 w-full gap-1.5 sm:w-auto"
@@ -635,13 +539,14 @@ function UpgradeToEliteCard({ price }: { price: string }) {
             variant="outline"
           >
             <Crown className="size-4" />
-            Upgrade to Elite — {price}/month
+            Upgrade to Elite
           </Button>
         </form>
         <form action={openBillingPortal}>
           <p className="mt-2.5 text-muted-foreground text-xs">
-            You'll see the exact prorated amount before you confirm. Billed
-            securely by Stripe · <CancelAnytimeButton />.
+            {price}/month. You&apos;ll see the exact prorated amount before
+            you confirm. Billed securely by Stripe.{" "}
+            <CancelAnytimeButton capitalized />.
           </p>
         </form>
       </div>

@@ -1,14 +1,15 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { toast } from "sonner";
 import { saveChadIntensity } from "@/app/account/actions";
+import { cn } from "@/lib/utils";
 
 type Intensity = "full" | "medium" | "low";
 
 // Clear, exact labels + a plain blurb under each so members know precisely how
 // the choice changes Chad. Order is strongest → softest; full is the default
-// and carries the "Recommended" tag.
+// and carries the "Recommended" tag. Sentence case (canon 04 §127) and one
+// scale register (full / medium / low).
 const OPTIONS: {
   value: Intensity;
   label: string;
@@ -17,34 +18,33 @@ const OPTIONS: {
 }[] = [
   {
     value: "full",
-    label: "Full Intensity",
+    label: "Full intensity",
     recommended: true,
     blurb:
-      "Chad holds nothing back. Expect to get your feelings hurt when you slack off — profanity, insults, and ruthless accountability.",
+      "Chad holds nothing back: profanity, insults, and blunt accountability when you fall short.",
   },
   {
     value: "medium",
-    label: "Medium Intensity",
+    label: "Medium intensity",
     blurb:
-      "Firm but not fully intense. Chad still calls out every excuse and pushes you hard, with far less profanity and no personal insults.",
+      "Firm, with far less profanity and no personal insults. Chad still calls out every excuse.",
   },
   {
     value: "low",
-    label: "Lowest Intensity",
+    label: "Low intensity",
     blurb:
-      "No cursing, no insults, and Chad never goes too hard on you. He stays direct and honest, and still holds you fully accountable.",
+      "No profanity and no insults. Chad stays direct and honest, and still holds you accountable.",
   },
 ];
 
-const CONFIRMATION: Record<Intensity, string> = {
-  full: "Full intensity. Chad holds nothing back.",
-  medium: "Medium intensity. Firm, with the edges taken off.",
-  low: "Lowest intensity. Direct and honest, never harsh.",
-};
-
 /**
- * Chad's harshness dial on /account. Same optimistic pattern as the other
- * account switches: flip immediately, roll back and toast on failure.
+ * Chad's harshness dial: its own zone on /account (the three described option
+ * tiles outgrew the settings-row rhythm, comp-canon 06 #8/#9; the zone header
+ * carries the name). Optimistic like the sibling rows: flip immediately, roll
+ * back on failure. The selected tile is the feedback, no toast (ux-canon 03
+ * #32); failure renders inline (ux-canon 03 #29, #40). Tiles are the app's
+ * one option-tile species (aria-pressed bordered buttons, selected =
+ * blood-tinted, comp-canon 01 #4/#39).
  */
 export function IntensitySettings({
   initialIntensity,
@@ -52,6 +52,7 @@ export function IntensitySettings({
   initialIntensity: Intensity;
 }) {
   const [intensity, setIntensity] = useState<Intensity>(initialIntensity);
+  const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function save(next: Intensity) {
@@ -60,69 +61,66 @@ export function IntensitySettings({
     }
     const prev = intensity;
     setIntensity(next);
+    setError(null);
     startTransition(async () => {
       try {
         await saveChadIntensity(next);
-        toast.success(CONFIRMATION[next]);
       } catch {
         setIntensity(prev);
-        toast.error("Couldn't save that. Try again.");
+        setError("Chad's intensity didn't save. Try again.");
       }
     });
   }
 
   return (
-    <div>
-      <h3 className="font-medium text-sm">Chad&apos;s intensity</h3>
-      <p className="mt-1 text-muted-foreground text-sm">
-        How hard Chad goes on you. He&apos;s an expert who stays honest and holds
-        you accountable at every setting — this only changes how harshly he
-        delivers it.
-      </p>
+    <div className="py-1">
+      {error ? (
+        <p className="text-destructive text-sm" role="status">
+          {error}
+        </p>
+      ) : (
+        <p className="text-muted-foreground text-sm">
+          How harsh his delivery is. He holds you accountable at every
+          setting.
+        </p>
+      )}
 
-      <fieldset
+      <div
         aria-label="Chad's intensity"
         className="mt-4 flex flex-col gap-3"
-        disabled={isPending}
+        role="group"
       >
         {OPTIONS.map((option) => {
           const selected = intensity === option.value;
           return (
-            <label
-              className={`flex cursor-pointer gap-3 rounded-xl border p-4 transition-colors ${
+            <button
+              aria-pressed={selected}
+              className={cn(
+                "min-w-0 rounded-lg border px-3 py-2.5 text-left transition-colors",
                 selected
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:border-muted-foreground/40"
-              }`}
-              htmlFor={`intensity-${option.value}`}
+                  ? "border-blood bg-blood/10"
+                  : "border-border bg-background/40 hover:border-muted-foreground/40"
+              )}
+              disabled={isPending}
               key={option.value}
+              onClick={() => save(option.value)}
+              type="button"
             >
-              <input
-                checked={selected}
-                className="mt-1 size-4 shrink-0 accent-primary"
-                id={`intensity-${option.value}`}
-                name="chad-intensity"
-                onChange={() => save(option.value)}
-                type="radio"
-                value={option.value}
-              />
-              <span className="flex flex-col gap-1">
-                <span className="flex items-center gap-2 font-medium text-sm">
-                  {option.label}
-                  {option.recommended && (
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary text-xs">
-                      Recommended
-                    </span>
-                  )}
-                </span>
-                <span className="text-muted-foreground text-sm">
-                  {option.blurb}
-                </span>
+              <span className="flex items-center gap-2 font-medium text-sm">
+                {option.label}
+                {option.recommended && (
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary text-xs">
+                    Recommended
+                  </span>
+                )}
               </span>
-            </label>
+              <span className="mt-1 block font-normal text-muted-foreground text-sm">
+                {option.blurb}
+              </span>
+            </button>
           );
         })}
-      </fieldset>
+      </div>
     </div>
   );
 }

@@ -187,6 +187,7 @@ const SURFACE_GROUPS: Record<string, string[]> = {
   "account-misc": [
     "/kitchen",
     "/account",
+    "/account/profile",
     "/account/appearance",
     "/help",
     "/files",

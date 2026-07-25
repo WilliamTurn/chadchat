@@ -17,20 +17,6 @@
       "reason": "Re-attributed by W2 (2026-07-24): the failing nodes are NOT ds.css tokens - the W2 port reconciled the token layer 1:1 against the approved ds.css and no pin moved (85/85 gates, zero PINNED ENTRY NOW PASSING). Actual cause: call-site opacity-modified muted text (text-muted-foreground/40-/80, computing to ~#36373b-#69696b on the ink surfaces); use full-strength --muted-foreground text forms. Per-surface call-site fix owed to the W3-W5 waves. Originally pinned by the S0b-2 sweep 2026-07-22 with a token-level attribution now known to be wrong."
     },
     {
-      "surface": "/account",
-      "rule": "color-contrast",
-      "impact": "serious",
-      "widths": [
-        320,
-        360,
-        384,
-        390,
-        768,
-        1280
-      ],
-      "reason": "Re-attributed by W2 (2026-07-24): the failing nodes are NOT ds.css tokens - the W2 port reconciled the token layer 1:1 against the approved ds.css and no pin moved (85/85 gates, zero PINNED ENTRY NOW PASSING). Actual causes: brand blood #a4161a as text (DSH-61: fill-only in dark; use --color-blood-text) and plain muted text on the inset surface. Per-surface call-site fix owed to the W3-W5 waves. Originally pinned by the S0b-2 sweep 2026-07-22 with a token-level attribution now known to be wrong."
-    },
-    {
       "surface": "/account/appearance",
       "rule": "label",
       "impact": "critical",

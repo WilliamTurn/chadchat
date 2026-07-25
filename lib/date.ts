@@ -89,6 +89,24 @@ export function formatCalendarDay(
   return date.toLocaleDateString("en-US", { timeZone: "UTC", ...opts });
 }
 
+/**
+ * Format a billing timestamp (renewal, trial end) for display in the viewer's
+ * own timezone: "August 24, 2026". Billing moments are real instants, not
+ * stored calendar days, so no UTC anchoring (unlike `formatCalendarDay`).
+ */
+export function formatBillingDate(date: Date): string {
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+/** Short badge form of `formatBillingDate`: "Aug 24" (canon 04 §144). */
+export function formatBillingDateShort(date: Date): string {
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
 /** Like `formatCalendarDay` but takes an epoch-ms timestamp (for chart ticks). */
 export function formatCalendarDayMs(
   t: number,

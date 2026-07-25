@@ -18,12 +18,6 @@
       "check": "clipped-text",
       "widths": [320, 360, 384],
       "reason": "'Next milestone · 1st workout' and the 'Strength and records' / 'Records and milestones' h2s overflow their boxes by 8-16px at phone widths (composition canon 04 §15: never make content fit by clipping it). Pre-existing; found by the D1 clipped-text gate 2026-07-23, which changed no product code. Owed to the /progress/training overhaul session (overhaul-session-template.md wave)."
-    },
-    {
-      "surface": "/account",
-      "check": "clipped-text",
-      "widths": [320, 360, 384],
-      "reason": "The timezone value 'Los Angeles (Pacific) (GMT-7)' overflows its box at 320-384, and the 'Upgrade to Elite' button label overflows at 320 (composition canon 04 §15). Pre-existing; found by the D1 clipped-text gate 2026-07-23, which changed no product code. Owed to the /account overhaul session (overhaul-session-template.md wave)."
     }
   ]
 }

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { toast } from "sonner";
 import { saveTimezone } from "@/app/account/actions";
+import { SettingsRow } from "@/components/account/settings-row";
 import {
   Select,
   SelectContent,
@@ -25,14 +25,32 @@ function fallbackLabel(tz: string): string {
 }
 
 /**
- * The /account timezone dropdown (FEAT-8). The zone is normally captured
+ * The short label the closed trigger shows: the curated city label with no
+ * offset ("Los Angeles (Pacific)"). The live GMT offset is decision support
+ * while choosing, so it stays on the LIST items only; with it, the longest
+ * stored value overflowed the trigger at every width (the pinned clipped-text
+ * defect, canon 04 §15; forms canon 03 #18: design the row at 320px first).
+ */
+function triggerLabel(tz: string): string {
+  for (const group of TIMEZONE_GROUPS) {
+    const zone = group.zones.find((z) => z.id === tz);
+    if (zone) {
+      return zone.label;
+    }
+  }
+  return fallbackLabel(tz);
+}
+
+/**
+ * The /account time-zone row (FEAT-8). The zone is normally captured
  * silently from the browser (TimezoneSync / the report-settings save), so most
  * members never touch this — it exists so the value is visible and fixable.
  * The list is the CURATED major-city set every mainstream app shows, grouped
  * by region with live GMT offsets — never the browser's full IANA dump. A
  * stored or detected zone outside the curated set is appended so it stays
- * selectable. Optimistic like the sibling preference controls — flips
- * instantly, rolls back on failure.
+ * selectable. Optimistic like the sibling preference rows — flips instantly,
+ * rolls back on failure. The trigger's new value is the success feedback, no
+ * toast (ux-canon 03 #32); failure renders inline (ux-canon 03 #29, #40).
  */
 export function TimezonePreference({
   initialTimezone,
@@ -40,6 +58,7 @@ export function TimezonePreference({
   initialTimezone: string | null;
 }) {
   const [timezone, setTimezone] = useState(initialTimezone);
+  const [error, setError] = useState<string | null>(null);
   const [detected, setDetected] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -91,13 +110,13 @@ export function TimezonePreference({
     }
     const prev = timezone;
     setTimezone(next);
+    setError(null);
     startTransition(async () => {
       try {
         await saveTimezone(next);
-        toast.success("Time zone saved.");
       } catch {
         setTimezone(prev);
-        toast.error("Couldn't save that. Try again.");
+        setError("Time zone didn't save. Try again.");
       }
     });
   }
@@ -108,32 +127,48 @@ export function TimezonePreference({
   }
 
   return (
-    <Select disabled={isPending} onValueChange={save} value={effective ?? undefined}>
-      <SelectTrigger aria-label="Time zone" className="w-[15rem] max-w-full">
-        <SelectValue placeholder="Set your time zone" />
-      </SelectTrigger>
-      <SelectContent>
-        {extraZones.length > 0 && (
-          <SelectGroup>
-            <SelectLabel>Your zone</SelectLabel>
-            {extraZones.map((z) => (
-              <SelectItem key={z} value={z}>
-                {itemText(fallbackLabel(z), z)}
-              </SelectItem>
+    <SettingsRow
+      control={
+        <Select
+          disabled={isPending}
+          onValueChange={save}
+          value={effective ?? undefined}
+        >
+          <SelectTrigger aria-label="Time zone" className="w-[15rem] max-w-full">
+            {/* Children override Radix's default item text: the closed
+                trigger renders the short label so the value never clips
+                (canon 04 §15). */}
+            <SelectValue placeholder="Set your time zone">
+              {effective ? triggerLabel(effective) : null}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {extraZones.length > 0 && (
+              <SelectGroup>
+                <SelectLabel>Your zone</SelectLabel>
+                {extraZones.map((z) => (
+                  <SelectItem key={z} value={z}>
+                    {itemText(fallbackLabel(z), z)}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            )}
+            {TIMEZONE_GROUPS.map((group) => (
+              <SelectGroup key={group.region}>
+                <SelectLabel>{group.region}</SelectLabel>
+                {group.zones.map((z) => (
+                  <SelectItem key={z.id} value={z.id}>
+                    {itemText(z.label, z.id)}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
             ))}
-          </SelectGroup>
-        )}
-        {TIMEZONE_GROUPS.map((group) => (
-          <SelectGroup key={group.region}>
-            <SelectLabel>{group.region}</SelectLabel>
-            {group.zones.map((z) => (
-              <SelectItem key={z.id} value={z.id}>
-                {itemText(z.label, z.id)}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        ))}
-      </SelectContent>
-    </Select>
+          </SelectContent>
+        </Select>
+      }
+      error={error}
+      label="Time zone"
+      supporting="Sets when your day rolls over: streaks, today's log, and Chad's emails. Detected from your browser."
+    />
   );
 }

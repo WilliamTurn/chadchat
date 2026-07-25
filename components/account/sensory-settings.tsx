@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { toast } from "sonner";
+import { useId, useState, useTransition } from "react";
 import { saveSensorySettings } from "@/app/account/actions";
+import { SettingsRow } from "@/components/account/settings-row";
 import { Switch } from "@/components/ui/switch";
 
 /**
- * The sound + vibration controls for logging feedback (DSH-54): every log
+ * The sound + vibration rows for logging feedback (DSH-54): every log
  * plays a short success chime and, on phones, a light vibration. Two
- * independent switches, optimistic like CheckInSettings: flip instantly,
- * roll back on failure.
+ * independent switches, optimistic like the other /account rows: flip
+ * instantly, roll back on failure. The moved switch is the feedback, no
+ * toast (ux-canon 03 #32); failure renders inline (ux-canon 03 #29, #40).
  */
 export function SensorySettings({
   initialSound,
@@ -18,71 +19,80 @@ export function SensorySettings({
   initialSound: boolean;
   initialHaptics: boolean;
 }) {
+  const soundId = useId();
+  const hapticsId = useId();
   const [sound, setSound] = useState(initialSound);
   const [haptics, setHaptics] = useState(initialHaptics);
+  const [soundError, setSoundError] = useState<string | null>(null);
+  const [hapticsError, setHapticsError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  function save(next: { sound: boolean; haptics: boolean }, message: string) {
+  function save(
+    next: { sound: boolean; haptics: boolean },
+    onError: (message: string) => void,
+    errorMessage: string
+  ) {
     const prev = { sound, haptics };
     setSound(next.sound);
     setHaptics(next.haptics);
+    setSoundError(null);
+    setHapticsError(null);
     startTransition(async () => {
       try {
         await saveSensorySettings({
           soundEnabled: next.sound,
           hapticsEnabled: next.haptics,
         });
-        toast.success(message);
       } catch {
         setSound(prev.sound);
         setHaptics(prev.haptics);
-        toast.error("Couldn't save that. Try again.");
+        onError(errorMessage);
       }
     });
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h3 className="font-medium text-sm">Sound effects</h3>
-          <p className="mt-1 text-muted-foreground text-sm">
-            A short chime when you log a workout, meal, weigh-in, or anything
-            else, and when the rest timer finishes.
-          </p>
-        </div>
-        <Switch
-          aria-label="Sound effects"
-          checked={sound}
-          disabled={isPending}
-          onCheckedChange={(next) =>
-            save(
-              { sound: next, haptics },
-              next ? "Sound is on." : "Sound is off."
-            )
-          }
-        />
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h3 className="font-medium text-sm">Vibration</h3>
-          <p className="mt-1 text-muted-foreground text-sm">
-            A light buzz on logs and timers, on phones that support it.
-          </p>
-        </div>
-        <Switch
-          aria-label="Vibration"
-          checked={haptics}
-          disabled={isPending}
-          onCheckedChange={(next) =>
-            save(
-              { sound, haptics: next },
-              next ? "Vibration is on." : "Vibration is off."
-            )
-          }
-        />
-      </div>
-    </div>
+    <>
+      <SettingsRow
+        control={
+          <Switch
+            checked={sound}
+            disabled={isPending}
+            id={soundId}
+            onCheckedChange={(next) =>
+              save(
+                { sound: next, haptics },
+                setSoundError,
+                "Sound effects didn't save. Try again."
+              )
+            }
+          />
+        }
+        controlId={soundId}
+        error={soundError}
+        label="Sound effects"
+        supporting="A short chime when you log something or a timer ends."
+      />
+      <SettingsRow
+        control={
+          <Switch
+            checked={haptics}
+            disabled={isPending}
+            id={hapticsId}
+            onCheckedChange={(next) =>
+              save(
+                { sound, haptics: next },
+                setHapticsError,
+                "Vibration didn't save. Try again."
+              )
+            }
+          />
+        }
+        controlId={hapticsId}
+        error={hapticsError}
+        label="Vibration"
+        supporting="A light buzz on logs and timers, on phones that support it."
+      />
+    </>
   );
 }

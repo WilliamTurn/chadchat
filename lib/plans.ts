@@ -30,7 +30,7 @@ export const PRO_PERKS: ProPerk[] = [
     icon: Eye,
     label: "Future You: see photos of yourself at your goal, before you get there",
   },
-  { icon: Camera, label: "Progress photo analysis — Chad reviews your form" },
+  { icon: Camera, label: "Progress photo analysis: Chad reviews your form" },
   {
     icon: Sparkles,
     label: "Custom workout & meal plans built for you",
@@ -48,12 +48,12 @@ export const ELITE_PERKS: ProPerk[] = [
   {
     icon: BellRing,
     label:
-      "Chad checks in first — morning brief, missed-workout callouts, weigh-in nudges",
+      "Chad checks in first: morning briefs, missed-workout callouts, weigh-in nudges",
   },
   {
     icon: FileText,
     label:
-      "Your weekly report — a full written review of your week + next week's adjustments",
+      "Your weekly report: a full written review of your week, plus next week's adjustments",
   },
   { icon: Rocket, label: "Every new feature ships to Elite first" },
 ];
