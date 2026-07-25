@@ -227,6 +227,18 @@ function SetRow({
   // trigger on close, never <body> (canon 01 §89).
   const setTriggerRef = useRef<HTMLButtonElement>(null);
 
+  // The set's SPOKEN identity matches its VISIBLE one (mobile audit; WCAG
+  // 2.5.3 Label in Name): the cell shows "W" for warm-ups and the working
+  // count for the rest, so "set {array index}" drifted off by one the moment
+  // a warm-up existed and "Remove set 2" named a different row than the one
+  // selected.
+  const setName =
+    set.type === "warmup" ? "warm-up set" : `set ${workingIndex}`;
+  const setTitle =
+    set.type === "warmup"
+      ? `Warm-up set · ${wex.name}`
+      : `Set ${workingIndex} · ${wex.name}`;
+
   // Undo toast: the set menu's destructive row gets exactly one safety net
   // (frequent, single item, so undo beats a confirm; CLAUDE.md destructive
   // rule). Restore puts the row back at its old position. 8s window: an
@@ -235,13 +247,16 @@ function SetRow({
     const snapshot = { ...set };
     const at = wex.sets.findIndex((s) => s.id === set.id);
     removeSet(wex.id, set.id);
-    toast(`Set ${index + 1} of ${wex.name} removed.`, {
-      action: {
-        label: "Undo",
-        onClick: () => restoreSet(wex.id, snapshot, at),
-      },
-      duration: 8000,
-    });
+    toast(
+      `${set.type === "warmup" ? "Warm-up set" : `Set ${workingIndex}`} of ${wex.name} removed.`,
+      {
+        action: {
+          label: "Undo",
+          onClick: () => restoreSet(wex.id, snapshot, at),
+        },
+        duration: 8000,
+      }
+    );
   }
 
   function handleCheck() {
@@ -304,7 +319,10 @@ function SetRow({
               onSelect: () => setRpeOpen(true),
             },
             {
-              label: `Remove set ${index + 1}`,
+              label:
+                set.type === "warmup"
+                  ? "Remove warm-up set"
+                  : `Remove set ${workingIndex}`,
               hint: "Takes this row out of this workout. Your other sets stay.",
               danger: true,
               dividerBefore: true,
@@ -333,10 +351,10 @@ function SetRow({
           onOpenChange={setMenuOpen}
           open={menuOpen}
           subtitle="Change the set type, rate the effort, or remove it."
-          title={`Set ${index + 1} · ${wex.name}`}
+          title={setTitle}
           trigger={
             <button
-              aria-label={`Options for set ${index + 1} of ${wex.name}`}
+              aria-label={`Options for ${setName} of ${wex.name}`}
               className="flex h-[52px] w-8 cursor-pointer items-center justify-center rounded-lg transition hover:bg-muted/60"
               onClick={() => setMenuOpen(true)}
               ref={setTriggerRef}
@@ -392,7 +410,7 @@ function SetRow({
 
         {!timed && (
           <NumberField
-            ariaLabel={`Weight in ${unit} for set ${index + 1} of ${wex.name}`}
+            ariaLabel={`Weight in ${unit} for ${setName} of ${wex.name}`}
             highlight={isNext}
             kind="weight"
             onCommit={(v) => updateSet(wex.id, set.id, "weight", v)}
@@ -402,8 +420,8 @@ function SetRow({
         <NumberField
           ariaLabel={
             timed
-              ? `Seconds for set ${index + 1} of ${wex.name}`
-              : `Reps for set ${index + 1} of ${wex.name}`
+              ? `Seconds for ${setName} of ${wex.name}`
+              : `Reps for ${setName} of ${wex.name}`
           }
           highlight={isNext}
           kind="reps"
@@ -417,8 +435,8 @@ function SetRow({
         <button
           aria-label={
             set.completed
-              ? `Set ${index + 1} of ${wex.name} is logged. Select to un-log it.`
-              : `Log set ${index + 1} of ${wex.name} as done`
+              ? `${set.type === "warmup" ? "Warm-up set" : `Set ${workingIndex}`} of ${wex.name} is logged. Select to un-log it.`
+              : `Log ${setName} of ${wex.name} as done`
           }
           aria-pressed={set.completed}
           className={`flex h-[52px] w-11 cursor-pointer items-center justify-center rounded-xl border-2 transition-all active:scale-95 ${
@@ -461,7 +479,7 @@ function SetRow({
         onSelect={(rpe) => setSetRpe(wex.id, set.id, rpe)}
         open={rpeOpen}
         returnFocusTo={setTriggerRef}
-        setIndex={index}
+        setLabel={setName}
       />
     </>
   );
@@ -873,7 +891,7 @@ function ExerciseCard({
           </label>
           <textarea
             aria-describedby={`${noteFieldId}-count`}
-            className="mt-1.5 min-h-20 w-full resize-none rounded-xl border border-input bg-background px-3 py-2.5 text-[15px] text-foreground placeholder:text-muted-foreground/60 focus:border-blood/60 focus:outline-none"
+            className="mt-1.5 min-h-20 w-full resize-none rounded-xl border border-input bg-background px-3 py-2.5 text-base text-foreground placeholder:text-muted-foreground/60 focus:border-blood/60 focus:outline-none"
             id={noteFieldId}
             maxLength={1000}
             onChange={(e) => {

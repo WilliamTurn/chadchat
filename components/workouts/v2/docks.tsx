@@ -122,7 +122,7 @@ function SessionMiniBar() {
           {/* The number says what it is (canon 04 §93); suppressed pre-start
               so "Elapsed" never labels "Not started" (copy audit F-13). */}
           {started && (
-            <span className="block font-semibold text-[11px] text-[var(--go)]/70 uppercase tracking-wider">
+            <span className="block font-semibold text-[var(--go)]/70 text-xs uppercase tracking-wider">
               Elapsed
             </span>
           )}
@@ -256,7 +256,8 @@ function RestTimerDock() {
       role="timer"
     >
       <div className="px-3.5 pt-2 pb-2.5">
-        <div className="flex items-center gap-1.5 font-semibold text-[11.5px] text-muted-foreground uppercase tracking-wider">
+        {/* text-xs: the 12px owner type floor is permanent (mobile audit). */}
+        <div className="flex items-center gap-1.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
           <Timer aria-hidden className="size-3.5 text-[var(--progress)]" />
           {/* The frozen clock is explained in words (canon 03 §127). */}
           <span className="truncate">

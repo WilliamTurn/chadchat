@@ -173,7 +173,9 @@ export function ExercisePickerPage({
         />
         <input
           aria-label="Search exercises"
-          className="h-[52px] w-full rounded-xl border border-input bg-card pr-4 pl-10 text-[15px] text-foreground placeholder:text-muted-foreground/60 focus:border-blood/60 focus:outline-none"
+          // text-base: the 16px iOS no-zoom floor on the first field a
+          // member touches on this page (mobile audit; canon 06 §90).
+          className="h-[52px] w-full rounded-xl border border-input bg-card pr-4 pl-10 text-base text-foreground placeholder:text-muted-foreground/60 focus:border-blood/60 focus:outline-none"
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search exercises…"
           type="search"

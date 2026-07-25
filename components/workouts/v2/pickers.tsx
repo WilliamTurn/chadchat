@@ -27,9 +27,12 @@ import {
 } from "./types";
 import { WButton } from "./ui";
 
-/** Parse a typed duration: "2:30" (min:sec), "2" (whole minutes), or a bare
- * seconds count like "90" once it exceeds 59 on its own. Returns seconds, or
- * null when the text does not resolve to a duration. */
+/** Parse a typed duration: "2:30" (min:sec), "2" (whole minutes), or a
+ * colon-free "245" read microwave-style (last two digits are seconds), since
+ * the numeric phone keypad this field summons has no colon key (mobile
+ * audit; canon 06 §93). Returns seconds, or null when the text does not
+ * resolve to a duration. The echo line restates every interpretation so
+ * nothing lands silently (canon 01 §157/§163). */
 function parseCustomRest(raw: string): number | null {
   const text = raw.trim();
   if (text === "") {
@@ -47,14 +50,21 @@ function parseCustomRest(raw: string): number | null {
     }
     return min * 60 + sec;
   }
-  const min = Number.parseInt(text, 10);
-  if (Number.isNaN(min)) {
+  if (!/^\d+$/.test(text)) {
     return null;
   }
-  // A bare number reads as minutes ("2" is 2 min), matching the label's
-  // min-first order; the echo line restates it so nothing lands silently
-  // (canon 01 §157/§163).
-  return min * 60;
+  // Three or more digits: microwave entry, "245" is 2:45, "1030" is 10:30.
+  if (text.length >= 3) {
+    const sec = Number.parseInt(text.slice(-2), 10);
+    const min = Number.parseInt(text.slice(0, -2), 10);
+    if (sec > 59) {
+      return null;
+    }
+    return min * 60 + sec;
+  }
+  // One or two digits read as minutes ("2" is 2 min), matching the label's
+  // min-first order.
+  return Number.parseInt(text, 10) * 60;
 }
 
 /**
@@ -356,7 +366,7 @@ export function RestTimerPicker({
  * close.
  */
 export function RpePicker({
-  setIndex,
+  setLabel,
   exerciseName,
   current,
   open,
@@ -364,7 +374,9 @@ export function RpePicker({
   onSelect,
   returnFocusTo,
 }: {
-  setIndex: number;
+  /** The set's VISIBLE identity ("set 2", "warm-up set"), never the array
+   * index (mobile audit: warm-ups shifted every spoken number off by one). */
+  setLabel: string;
   /** Carried in the title (copy audit F-17): three exercises can each have
    * a set 2, so "Effort for set 2" alone is ambiguous. */
   exerciseName: string;
@@ -388,7 +400,7 @@ export function RpePicker({
       >
         <AdaptiveDialogHeader>
           <AdaptiveDialogTitle>
-            Effort for set {setIndex + 1} · {exerciseName}
+            Effort for {setLabel} · {exerciseName}
           </AdaptiveDialogTitle>
           <AdaptiveDialogDescription>
             Rate of perceived exertion, how hard the set felt.
