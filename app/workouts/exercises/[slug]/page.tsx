@@ -78,24 +78,36 @@ function pastSessions(workouts: WorkoutData[], name: string) {
 
 export default function ExerciseDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ from?: string }>;
 }) {
   return (
     // Full-width desktop layout (LAY-1): how-to/records/progress beside the
     // past-session log on desktop, stacked on phones.
     <PageShell active="/workouts" className="max-w-[1500px]">
       <Suspense fallback={<WorkoutsPageLoading />}>
-        <Content params={params} />
+        <Content params={params} searchParams={searchParams} />
       </Suspense>
     </PageShell>
   );
 }
 
-async function Content({ params }: { params: Promise<{ slug: string }> }) {
+async function Content({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ from?: string }>;
+}) {
   const user = await requireWorkoutsUser();
   const context = await loadWorkoutContext(user);
   const { slug } = await params;
+  // S6 #6: the session player links here with ?from=workout so back controls
+  // return to the active workout instead of dumping into the library.
+  const { from } = await searchParams;
+  const fromWorkout = from === "workout";
   const name = decodeURIComponent(slug);
   const catalog = mergeCatalog(context.customExercises);
   const entry = findInCatalog(catalog, name);
@@ -110,13 +122,25 @@ async function Content({ params }: { params: Promise<{ slug: string }> }) {
   const loggedHere = pastSessions(context.canonicalWorkouts, analyticsName);
 
   if (!entry && loggedHere.length === 0) {
+    // Error state, not an empty state (canon 03 §65): the slug is unknown, so
+    // never show first-use copy here. Canon 03 §51: statement + way forward,
+    // never strand; canon 04 §140: the link names its destination.
     return (
       <div className="py-24 text-center">
-          <p className="font-bold text-[17px] text-foreground">
-            Exercise not found
-          </p>
-        <Link className="mt-5 inline-block" href="/workouts/exercises">
-          <WButton variant="primary">Back to Exercises</WButton>
+        <p className="font-bold text-[17px] text-foreground">
+          Exercise not found
+        </p>
+        <p className="mx-auto mt-2 max-w-xs text-sm text-muted-foreground">
+          No exercise matches this link. It may have been renamed or deleted.
+          Search your exercise library to find it.
+        </p>
+        <Link
+          className="mt-5 inline-block"
+          href={fromWorkout ? "/workouts/active" : "/workouts/exercises"}
+        >
+          <WButton variant="primary">
+            {fromWorkout ? "Back to your workout" : "Back to Exercises"}
+          </WButton>
         </Link>
       </div>
     );
@@ -148,7 +172,13 @@ async function Content({ params }: { params: Promise<{ slug: string }> }) {
             </Link>
           ) : undefined
         }
-        back={{ href: "/workouts/exercises", label: "Exercises" }}
+        back={
+          // S6 #6: arriving from the active workout, back returns to it
+          // (canon 04 §140: the control names its destination).
+          fromWorkout
+            ? { href: "/workouts/active", label: "your workout" }
+            : { href: "/workouts/exercises", label: "Exercises" }
+        }
         title={displayName}
       />
       <div className="-mt-2 mb-5 flex flex-wrap gap-1.5">
@@ -196,9 +226,10 @@ async function Content({ params }: { params: Promise<{ slug: string }> }) {
                     <p className="font-semibold text-[15px] text-foreground">
                       No records yet
                     </p>
+                    {/* Canon 03 §62: empty states say why and how to fill. */}
                     <p className="mx-auto mt-1 max-w-[300px] text-[13.5px] text-muted-foreground">
-                      Log this exercise in a workout and your best lifts will show up
-                      here.
+                      Your heaviest lift and estimated strength appear after
+                      your first logged set.
                     </p>
                   </WCard>
                 ) : (
@@ -266,9 +297,13 @@ async function Content({ params }: { params: Promise<{ slug: string }> }) {
             Every time you&apos;ve done it
           </h2>
           {loggedHere.length === 0 ? (
+            // Canon 03 §62: empty states say why and how to fill.
             <WCard className="p-6 text-center">
-              <p className="text-[13.5px] text-muted-foreground">
-                Nothing logged yet.
+              <p className="font-semibold text-[15px] text-foreground">
+                Not logged yet
+              </p>
+              <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
+                Every workout you do this exercise in will be listed here.
               </p>
             </WCard>
           ) : (

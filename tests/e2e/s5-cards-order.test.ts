@@ -289,12 +289,13 @@ test("mark/unmark scopes: per-exercise touches only its exercise; unmark never w
       JSON.parse(localStorage.getItem("chad-workouts-live-v1") as string)
     );
 
-  // Per-exercise mark-all: only Bench (2 sets) completes.
+  // Per-exercise mark-all: only Bench (2 sets) completes. (S6: the menu is a
+  // role=dialog sheet at phone widths, rows are buttons, labels carry counts.)
   await page
-    .getByRole("button", { name: "More options for Barbell Bench Press" })
+    .getByRole("button", { name: "Options for Barbell Bench Press" })
     .click();
   await page
-    .getByRole("menuitem", { name: /Mark all sets done for this exercise/ })
+    .getByRole("button", { name: /Mark \d+ remaining sets? done/ })
     .click();
   await page.waitForTimeout(200);
   let s = await stored();
@@ -306,10 +307,10 @@ test("mark/unmark scopes: per-exercise touches only its exercise; unmark never w
 
   // Per-exercise unmark: checks clear, weights/reps stay.
   await page
-    .getByRole("button", { name: "More options for Barbell Bench Press" })
+    .getByRole("button", { name: "Options for Barbell Bench Press" })
     .click();
   await page
-    .getByRole("menuitem", { name: /Unmark all sets for this exercise/ })
+    .getByRole("button", { name: /Unmark (all \d+ sets|1 set)/ })
     .click();
   await page.waitForTimeout(200);
   s = await stored();
@@ -391,10 +392,10 @@ test("PR toast fires once: unmark then re-check must not re-celebrate", async ({
 
   // Unmark the exercise, wait out the toast, re-check: silence.
   await page
-    .getByRole("button", { name: "More options for Barbell Bench Press" })
+    .getByRole("button", { name: "Options for Barbell Bench Press" })
     .click();
   await page
-    .getByRole("menuitem", { name: /Unmark all sets for this exercise/ })
+    .getByRole("button", { name: /Unmark (all \d+ sets|1 set)/ })
     .click();
   await expect(toast).toBeHidden({ timeout: 6000 });
   await page

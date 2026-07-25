@@ -117,7 +117,12 @@ export function ExercisePickerPage({
           id: replaceWexId,
           restSeconds: old?.restSeconds ?? fresh.restSeconds,
         });
-        toast.success(`Swapped in ${ref.name}.`);
+        // One term per concept: "replace", never "swap" (canon 04 §132).
+        toast.success(
+          old
+            ? `${old.name} replaced with ${ref.name}.`
+            : `Replaced with ${ref.name}.`
+        );
       }
     } else {
       addSessionExercises(refs.map((ref) => exerciseFromRef(ref, lastSets)));

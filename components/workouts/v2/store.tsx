@@ -121,6 +121,9 @@ type Action =
   | { type: "set-set-type"; wexId: string; setId: string; setType: SetType }
   | { type: "set-set-rpe"; wexId: string; setId: string; rpe: number | null }
   | { type: "remove-set"; wexId: string; setId: string }
+  // Undo for remove-set (S6): puts the removed row back where it was, so the
+  // set menu's destructive row gets its one safety net (undo toast).
+  | { type: "restore-set"; wexId: string; set: SessionSet; index: number }
   | { type: "add-session-exercises"; exercises: SessionExercise[] }
   | {
       type: "replace-session-exercise";
@@ -135,6 +138,8 @@ type Action =
   | { type: "clear-session" }
   // --- rest timer ---
   | { type: "adjust-rest"; deltaSeconds: number; now: number }
+  | { type: "pause-rest"; now: number }
+  | { type: "resume-rest"; now: number }
   | { type: "skip-rest" }
   // --- builder draft ---
   | { type: "init-draft"; draft: BuilderDraft }
@@ -440,6 +445,24 @@ export function reducer(state: State, action: Action): State {
         }))
       );
 
+    case "restore-set":
+      // Re-insert at the original index, clamped; skip if the id already
+      // exists (a double-fired Undo must not duplicate the row).
+      return withSession(state, (s) =>
+        mapExercise(s, action.wexId, (ex) => {
+          if (ex.sets.some((set) => set.id === action.set.id)) {
+            return ex;
+          }
+          const sets = [...ex.sets];
+          sets.splice(
+            Math.max(0, Math.min(action.index, sets.length)),
+            0,
+            action.set
+          );
+          return { ...ex, sets };
+        })
+      );
+
     case "add-session-exercises":
       return withSession(state, (s) => ({
         ...s,
@@ -504,19 +527,61 @@ export function reducer(state: State, action: Action): State {
       if (!state.restTimer) {
         return state;
       }
+      const totalSeconds = Math.max(
+        state.restTimer.totalSeconds + action.deltaSeconds,
+        1
+      );
+      // Paused (S6): ±15s moves the frozen remaining value, never endsAt
+      // (which is stale while paused; resume recomputes it).
+      if (state.restTimer.pausedRemaining != null) {
+        const pausedRemaining =
+          state.restTimer.pausedRemaining + action.deltaSeconds;
+        if (pausedRemaining <= 0) {
+          return { ...state, restTimer: null };
+        }
+        return {
+          ...state,
+          restTimer: { ...state.restTimer, pausedRemaining, totalSeconds },
+        };
+      }
       const endsAt = state.restTimer.endsAt + action.deltaSeconds * 1000;
       if (endsAt <= action.now) {
         return { ...state, restTimer: null };
       }
       return {
         ...state,
+        restTimer: { ...state.restTimer, endsAt, totalSeconds },
+      };
+    }
+
+    // Pause freezes the REMAINING seconds (timestamp math, canon 03 §126):
+    // resume recomputes endsAt from now + remaining, so a locked phone or a
+    // backgrounded tab can never drift the countdown (canon 03 §129: every
+    // rest timer offers pause/skip/extend without restart).
+    case "pause-rest": {
+      if (!state.restTimer || state.restTimer.pausedRemaining != null) {
+        return state;
+      }
+      const remaining = Math.ceil((state.restTimer.endsAt - action.now) / 1000);
+      if (remaining <= 0) {
+        return state;
+      }
+      return {
+        ...state,
+        restTimer: { ...state.restTimer, pausedRemaining: remaining },
+      };
+    }
+
+    case "resume-rest": {
+      if (!state.restTimer || state.restTimer.pausedRemaining == null) {
+        return state;
+      }
+      return {
+        ...state,
         restTimer: {
           ...state.restTimer,
-          endsAt,
-          totalSeconds: Math.max(
-            state.restTimer.totalSeconds + action.deltaSeconds,
-            1
-          ),
+          endsAt: action.now + state.restTimer.pausedRemaining * 1000,
+          pausedRemaining: null,
         },
       };
     }
@@ -637,6 +702,8 @@ interface WorkoutsStore {
   setSetType: (wexId: string, setId: string, setType: SetType) => void;
   setSetRpe: (wexId: string, setId: string, rpe: number | null) => void;
   removeSet: (wexId: string, setId: string) => void;
+  /** Undo for removeSet: re-inserts the removed row at its old position. */
+  restoreSet: (wexId: string, set: SessionSet, index: number) => void;
   addSessionExercises: (exercises: SessionExercise[]) => void;
   replaceSessionExercise: (wexId: string, exercise: SessionExercise) => void;
   removeSessionExercise: (wexId: string) => void;
@@ -646,6 +713,8 @@ interface WorkoutsStore {
   setExerciseRest: (wexId: string, seconds: number) => void;
   setExerciseNote: (wexId: string, note: string) => void;
   adjustRest: (deltaSeconds: number) => void;
+  pauseRest: () => void;
+  resumeRest: () => void;
   skipRest: () => void;
   initDraft: (draft: BuilderDraft) => void;
   setDraftName: (name: string) => void;
@@ -742,6 +811,8 @@ export function WorkoutsProvider({ children }: { children: ReactNode }) {
         dispatch({ type: "set-set-rpe", wexId, setId, rpe }),
       removeSet: (wexId, setId) =>
         dispatch({ type: "remove-set", wexId, setId }),
+      restoreSet: (wexId, set, index) =>
+        dispatch({ type: "restore-set", wexId, set, index }),
       addSessionExercises: (exercises) =>
         dispatch({ type: "add-session-exercises", exercises }),
       replaceSessionExercise: (wexId, exercise) =>
@@ -758,6 +829,8 @@ export function WorkoutsProvider({ children }: { children: ReactNode }) {
         dispatch({ type: "set-exercise-note", wexId, note }),
       adjustRest: (deltaSeconds) =>
         dispatch({ type: "adjust-rest", deltaSeconds, now: Date.now() }),
+      pauseRest: () => dispatch({ type: "pause-rest", now: Date.now() }),
+      resumeRest: () => dispatch({ type: "resume-rest", now: Date.now() }),
       skipRest: () => dispatch({ type: "skip-rest" }),
       initDraft: (draft) => dispatch({ type: "init-draft", draft }),
       setDraftName: (name) => dispatch({ type: "set-draft-name", name }),

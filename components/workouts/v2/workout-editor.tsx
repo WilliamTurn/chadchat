@@ -23,7 +23,7 @@ import { equipmentLabel, muscleLabel } from "./catalog";
 import { ConfirmDialog } from "./confirm";
 import { useWorkouts } from "./store";
 import type { BuilderDraft, DraftExercise } from "./types";
-import { REST_OPTIONS } from "./types";
+import { formatRestSeconds, REST_OPTIONS } from "./types";
 import { Eyebrow, WButton, WCard } from "./ui";
 
 function draftBaseline(name: string, exercises: DraftExercise[]): string {
@@ -229,6 +229,14 @@ function ExerciseRow({
                 {o.label}
               </option>
             ))}
+            {/* A saved value outside the presets (a pre-S6 4/5 min template,
+                or a custom duration set in the player) stays selectable and
+                is never silently rewritten. */}
+            {!REST_OPTIONS.some((o) => o.seconds === rex.restSeconds) && (
+              <option value={rex.restSeconds}>
+                {formatRestSeconds(rex.restSeconds)}
+              </option>
+            )}
           </select>
         </div>
       </div>
