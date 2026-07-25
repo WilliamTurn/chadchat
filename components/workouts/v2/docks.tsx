@@ -137,6 +137,11 @@ function SessionMiniBar() {
           Same ConfirmDialog primitive, title, and consequence as the player's
           discard (placement audit F-7; canon 02 §171: one action, one dialog
           layout everywhere). */}
+      {/* Seam before the destructive X (composition audit F-10): the bar's
+          edge promises one tap target; the divider marks where the return
+          link's promise ends and the discard control begins (comp 01 #39
+          corollary; 08 #19). */}
+      <span aria-hidden className="h-7 w-px shrink-0 bg-border" />
       <Button
         aria-label="Discard this workout"
         className="size-11 shrink-0 text-muted-foreground hover:text-foreground"

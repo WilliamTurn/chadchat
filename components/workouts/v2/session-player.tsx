@@ -312,13 +312,16 @@ function SetRow({
               onSelect: handleRemoveSet,
             },
           ]}
-          footer={
+          intro={
             wex.equipment === "barbell" && set.weight && unit === "lb" ? (
-              <div className="mt-3 rounded-xl bg-background px-3.5 py-3">
-                <div className="font-semibold text-[12px] text-muted-foreground">
+              // Flat reference text, no box (composition audit F-1: an inert
+              // block passes none of comp 01 §4's earning tests), above the
+              // rows so the destructive row stays last (comp 08 #18).
+              <div className="mb-2 px-3">
+                <div className="font-semibold text-muted-foreground text-xs">
                   Plate math for {formatWeight(set.weight)} lb
                 </div>
-                <div className="mt-1 font-mono text-[14px] text-foreground">
+                <div className="mt-0.5 font-mono text-foreground text-sm">
                   {plateMath(set.weight)}
                 </div>
               </div>
@@ -595,6 +598,7 @@ function ExerciseCard({
       label: "Exercise details",
       hint: "How to do it, your records, and your past sets.",
       dividerBefore: count > 1,
+      navigates: true,
       icon: <Info aria-hidden className="size-4.5" />,
       // from=workout: the details page's back control returns HERE, not to
       // the exercise library (owner order S6 #6).
@@ -655,7 +659,10 @@ function ExerciseCard({
       onSelect: () => setRestOpen(true),
     },
     {
-      label: "Replace exercise…",
+      // The chevron carries "leaves this screen" (comp 08 #40); the ellipsis
+      // stays for overlay-openers only, so one glyph means one thing.
+      label: "Replace exercise",
+      navigates: true,
       hint:
         doneCount === 0
           ? "Choose a different exercise for this spot in your workout."
@@ -855,15 +862,18 @@ function ExerciseCard({
           open
           title={`Note for ${wex.name}`}
         >
+          {/* mt-5: the title-to-form boundary must outrank the intra-form
+              gaps (composition audit minor; comp 04 §5). resize-none: the
+              member must not be able to break the dialog's height budget. */}
           <label
-            className="mt-3 block font-semibold text-foreground text-sm"
+            className="mt-5 block font-semibold text-foreground text-sm"
             htmlFor={noteFieldId}
           >
             Your note
           </label>
           <textarea
             aria-describedby={`${noteFieldId}-count`}
-            className="mt-1.5 min-h-20 w-full rounded-xl border border-input bg-background px-3 py-2.5 text-[15px] text-foreground placeholder:text-muted-foreground/60 focus:border-blood/60 focus:outline-none"
+            className="mt-1.5 min-h-20 w-full resize-none rounded-xl border border-input bg-background px-3 py-2.5 text-[15px] text-foreground placeholder:text-muted-foreground/60 focus:border-blood/60 focus:outline-none"
             id={noteFieldId}
             maxLength={1000}
             onChange={(e) => {

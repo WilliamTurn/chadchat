@@ -252,9 +252,10 @@ export function RestTimerPicker({
                 // h-11, not min-h-11 (placement audit F-9): size="sm" sets
                 // its own 40px min-height and two min-heights race in the
                 // cascade; an explicit height wins and holds the 44px floor.
+                // Uniform cells (composition audit F-6; comp 01 #69):
+                // collection members share one size; a full-width "off" chip
+                // made the rarest option the hero and orphaned the last row.
                 className={`h-11 w-full px-2 text-sm ${
-                  o.seconds === 0 ? "col-span-2 sm:col-span-3" : ""
-                } ${
                   isSelected
                     ? "border-emerald-500 bg-emerald-500/10 text-foreground"
                     : "text-muted-foreground"

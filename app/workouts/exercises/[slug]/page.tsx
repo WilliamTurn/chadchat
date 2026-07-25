@@ -124,32 +124,42 @@ async function Content({
   if (!entry && loggedHere.length === 0) {
     // Error state, not an empty state (canon 03 §65): the slug is unknown, so
     // never show first-use copy here. Canon 03 §51: statement + way forward,
-    // never strand; canon 04 §140: the link names its destination.
+    // never strand; canon 04 §140: the link names its destination. The page
+    // keeps its detail-archetype skeleton, header and back control included
+    // (composition audit F-9; comp 05 #10: states render in the content's
+    // zone, never as a bare region under the app chrome).
     return (
-      <div className="py-24 text-center">
-        <p className="font-bold text-[17px] text-foreground">
-          Exercise not found
-        </p>
-        <p className="mx-auto mt-2 max-w-xs text-sm text-muted-foreground">
-          No exercise matches this link. It may have been renamed or deleted.
-          Search your exercise library to find it.
-        </p>
-        <Link
-          className="mt-5 inline-block"
-          href={fromWorkout ? "/workouts/active" : "/workouts/exercises"}
-        >
-          <WButton variant="primary">
-            {fromWorkout ? "Back to your workout" : "Back to Exercises"}
-          </WButton>
-        </Link>
-        {/* The body's next step (search the library) needs a control on the
-            page (copy audit F-20; canon 03 §51 never strand). */}
-        {fromWorkout && (
-          <Link className="mt-3 block" href="/workouts/exercises">
-            <WButton variant="ghost">Back to Exercises</WButton>
+      <>
+        <WorkoutPageHeader
+          back={
+            fromWorkout
+              ? { href: "/workouts/active", label: "your workout" }
+              : { href: "/workouts/exercises", label: "Exercises" }
+          }
+          title="Exercise not found"
+        />
+        <div className="py-10 text-center">
+          <p className="mx-auto max-w-xs text-muted-foreground text-sm">
+            No exercise matches this link. It may have been renamed or
+            deleted. Search your exercise library to find it.
+          </p>
+          <Link
+            className="mt-5 inline-block"
+            href={fromWorkout ? "/workouts/active" : "/workouts/exercises"}
+          >
+            <WButton variant="primary">
+              {fromWorkout ? "Back to your workout" : "Back to Exercises"}
+            </WButton>
           </Link>
-        )}
-      </div>
+          {/* The body's next step (search the library) needs a control on the
+              page (copy audit F-20; canon 03 §51 never strand). */}
+          {fromWorkout && (
+            <Link className="mt-3 block" href="/workouts/exercises">
+              <WButton variant="ghost">Back to Exercises</WButton>
+            </Link>
+          )}
+        </div>
+      </>
     );
   }
 

@@ -16,7 +16,7 @@
 // Move down, which reorder live behind the open menu (owner ruling
 // 2026-07-24).
 
-import { X } from "lucide-react";
+import { ChevronRight, X } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -47,6 +47,10 @@ export interface SheetAction {
    * §134) and after the act-in-place group (comp 08 §19: a destructive row
    * never sits directly under a repeatedly-pressed control). */
   dividerBefore?: boolean;
+  /** This row leaves the current screen: it gets a trailing chevron (comp 08
+   * #39/#40: chevron-right = navigates), so leaving rows are distinguishable
+   * from act-in-place and overlay-opening rows. */
+  navigates?: boolean;
   onSelect: () => void;
 }
 
@@ -61,7 +65,7 @@ function MobileSheet({
   subtitle,
   actions,
   onClose,
-  footer,
+  intro,
   liveMessage,
 }: {
   open: boolean;
@@ -69,7 +73,7 @@ function MobileSheet({
   subtitle?: string;
   actions: SheetAction[];
   onClose: () => void;
-  footer?: ReactNode;
+  intro?: ReactNode;
   liveMessage?: string;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -159,7 +163,9 @@ function MobileSheet({
         style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}
         tabIndex={-1}
       >
-        <div className="mb-3 flex items-start justify-between gap-3 px-1">
+        {/* px-3, the rows' inset: the title shares the icon spine instead of
+            adding a fourth left edge (composition audit minor; comp 08 #47). */}
+        <div className="mb-3 flex items-start justify-between gap-3 px-3">
           <div className="min-w-0">
             <h2 className="truncate font-bold text-[16.5px] text-foreground">
               {title}
@@ -179,9 +185,10 @@ function MobileSheet({
             <X aria-hidden className="size-5" />
           </button>
         </div>
-        {/* The footer scrolls WITH the rows (placement audit F-3): pinned
-            outside the scroller, passive reference content held the sheet's
-            bottom and clipped the destructive row at 320px (comp 08 §2). */}
+        {/* Reference content sits ABOVE the actions, flat on the surface
+            (composition audit F-1; comp 04 §1: title then supporting content
+            then actions; 08 #18: the destructive row stays last). */}
+        {intro}
         <div className="flex max-h-[60dvh] flex-col gap-0.5 overflow-y-auto">
           {actions.map((action) => (
             <div className="contents" key={action.label}>
@@ -196,7 +203,7 @@ function MobileSheet({
                 // flex column must never be compressed into each other when
                 // the list exceeds the sheet's max height; it scrolls instead.
                 aria-disabled={action.disabled || undefined}
-                className={`flex min-h-[52px] w-full shrink-0 cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-left transition ${
+                className={`flex min-h-[52px] w-full shrink-0 cursor-pointer items-start gap-3 rounded-xl px-3 py-3.5 text-left transition ${
                   action.disabled ? "cursor-default opacity-50" : ""
                 } ${
                   action.danger
@@ -216,9 +223,14 @@ function MobileSheet({
                 }}
                 type="button"
               >
-                {action.icon && (
-                  <span className="shrink-0 opacity-80">{action.icon}</span>
-                )}
+                {/* items-start + a top nudge locks the icon to its LABEL's
+                    line, never the centroid of a wrapping hint block
+                    (composition audit F-3; comp 08 #44). The empty spacer
+                    keeps iconless rows on the shared label edge (F-2; comp
+                    08 #47: one spine, indentation never from icon variety). */}
+                <span aria-hidden className="mt-px size-4.5 shrink-0 opacity-80">
+                  {action.icon}
+                </span>
                 <span className="min-w-0 flex-1">
                   <span className="block font-semibold text-[15px]">
                     {action.label}
@@ -235,6 +247,12 @@ function MobileSheet({
                     </span>
                   )}
                 </span>
+                {action.navigates && (
+                  <ChevronRight
+                    aria-hidden
+                    className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                  />
+                )}
                 {action.selected && (
                   <span className="shrink-0 font-bold text-[12px] text-[var(--go)]">
                     Current
@@ -243,7 +261,6 @@ function MobileSheet({
               </button>
             </div>
           ))}
-          {footer && <div className="shrink-0">{footer}</div>}
         </div>
         {/* Position feedback for act-in-place rows (canon 03 §137: calm,
             polite, announces the settled result). */}
@@ -267,7 +284,7 @@ export function ActionMenu({
   title,
   subtitle,
   actions,
-  footer,
+  intro,
   open,
   onOpenChange,
   liveMessage,
@@ -279,8 +296,11 @@ export function ActionMenu({
   actions: SheetAction[];
   onOpenChange: (open: boolean) => void;
   open: boolean;
-  /** Optional custom content below the actions (e.g. plate math). */
-  footer?: ReactNode;
+  /** Optional FLAT reference content between the header and the rows (e.g.
+   * plate math). Never a box (comp 01 §4: an inert text block earns no
+   * container; 04 #16: content sits directly on the overlay surface), and
+   * never below the actions (the destructive row stays last, 08 #18). */
+  intro?: ReactNode;
   /** Politely announced to screen readers while open (Move up/down feedback). */
   liveMessage?: string;
   /** Desktop anchoring. "end" for trailing-edge ⋯ triggers; "start" for a
@@ -302,7 +322,7 @@ export function ActionMenu({
         {trigger}
         <MobileSheet
           actions={actions}
-          footer={footer}
+          intro={intro}
           liveMessage={liveMessage}
           onClose={() => onOpenChange(false)}
           open={open}
@@ -342,6 +362,7 @@ export function ActionMenu({
           )}
         </div>
         <DropdownMenuSeparator />
+        {intro}
         {actions.map((action) => (
           <div className="contents" key={action.label}>
             {action.dividerBefore && <DropdownMenuSeparator />}
@@ -375,11 +396,10 @@ export function ActionMenu({
               }}
               variant={action.danger ? "destructive" : "default"}
             >
-              {action.icon && (
-                <span className="mt-0.5 shrink-0 opacity-80">
-                  {action.icon}
-                </span>
-              )}
+              {/* Same spine + chevron grammar as the phone sheet (F-2/F-8). */}
+              <span aria-hidden className="mt-0.5 size-4.5 shrink-0 opacity-80">
+                {action.icon}
+              </span>
               <span className="min-w-0 flex-1">
                 <span className="block font-semibold text-sm">
                   {action.label}
@@ -394,6 +414,12 @@ export function ActionMenu({
                   </span>
                 )}
               </span>
+              {action.navigates && (
+                <ChevronRight
+                  aria-hidden
+                  className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                />
+              )}
               {action.selected && (
                 <span className="shrink-0 font-bold text-emerald-600 text-xs dark:text-emerald-400">
                   Current
@@ -402,7 +428,6 @@ export function ActionMenu({
             </DropdownMenuItem>
           </div>
         ))}
-        {footer}
         <div aria-live="polite" className="sr-only">
           {liveMessage}
         </div>
