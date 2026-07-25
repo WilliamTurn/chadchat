@@ -8,7 +8,18 @@ import {
 import { WorkoutPageHeader } from "@/components/workouts/v2/page-header";
 import { loadWorkoutContext, requireWorkoutsUser } from "../../data";
 
-export const metadata = { title: "Add Exercises" };
+// The tab title matches the label the user selected (flow audit F-14;
+// canon 02 §33): "Replace exercise" in replace mode, "Add exercises" else.
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ target?: string }>;
+}) {
+  const params = await searchParams;
+  return {
+    title: params.target === "replace" ? "Replace exercise" : "Add exercises",
+  };
+}
 
 /**
  * The Add Exercises page, a dedicated full page (never a cramped panel).
@@ -55,10 +66,15 @@ async function Content({
         }}
         subtitle={
           target === "replace"
-            ? "Select an exercise to swap it in. Your sets and your place in the workout are kept."
-            : `Search or filter, tap to select, then add your picks to ${backLabel}.`
+            ? // Honest promise (canon 03 §44-46): replace keeps only the slot's
+              // position and rest timer; logged sets are NOT carried over
+              // (store "replace-session-exercise" + exerciseFromRef build a
+              // fresh exercise). Never claim sets survive.
+              "Select the exercise to put in this spot. It keeps the same position and rest timer, and starts with empty sets."
+            : `Search or filter, select what you want, then add your picks to ${backLabel}.`
         }
-        title={target === "replace" ? "Replace Exercise" : "Add Exercises"}
+        // Sentence case for titles (canon 04 §127 / Q-DS-4).
+        title={target === "replace" ? "Replace exercise" : "Add exercises"}
       />
       <ExercisePickerPage
         customExercises={context.customExercises}

@@ -105,6 +105,11 @@ export type RestTimer = {
   endsAt: number;
   totalSeconds: number;
   exerciseName: string;
+  /** Remaining seconds frozen by Pause; absent/null while counting down.
+   * Resume recomputes endsAt from this (timestamp math, canon 03 §126), so a
+   * locked phone or backgrounded tab never drifts the countdown. Optional:
+   * timers persisted before S6 don't carry the field. */
+  pausedRemaining?: number | null;
 };
 
 /** One exercise row inside the template builder. */
@@ -132,16 +137,41 @@ export type BuilderDraft = {
   baseline: string;
 };
 
+/** The rest presets (owner order S6 #3, 2026-07-22): six options, 2 min the
+ * default for new exercises. 4/5 min dropped; longer rests go through the
+ * picker's custom minutes:seconds field instead. Labels spell the units out
+ * ("1 min 30 sec", never "1½ min"): a vulgar fraction reads unreliably in
+ * screen readers and does not localize (canon 04 §131/§148). */
 export const REST_OPTIONS: { seconds: number; label: string }[] = [
   { seconds: 0, label: "No rest timer" },
   { seconds: 60, label: "1 min" },
-  { seconds: 90, label: "1½ min" },
+  { seconds: 90, label: "1 min 30 sec" },
   { seconds: 120, label: "2 min" },
-  { seconds: 150, label: "2½ min" },
+  { seconds: 150, label: "2 min 30 sec" },
   { seconds: 180, label: "3 min" },
-  { seconds: 240, label: "4 min" },
-  { seconds: 300, label: "5 min" },
 ];
+
+/** Custom rest bounds (S6 #3). Floor keeps a mis-set timer from firing
+ * instantly; the ceiling keeps a fat-fingered 20:00 from parking the
+ * countdown. Stated as a hint in the picker before any error (canon 01 §140). */
+export const REST_MIN_SECONDS = 5;
+export const REST_MAX_SECONDS = 600;
+
+/** One duration format for rest values app-wide (canon 01 §162): "45 sec",
+ * "2 min", "2 min 30 sec". Zero is the picker's "No rest timer" option; in
+ * running copy callers render it as "off". */
+export function formatRestSeconds(seconds: number): string {
+  const preset = REST_OPTIONS.find((o) => o.seconds === seconds);
+  if (preset && seconds !== 0) {
+    return preset.label;
+  }
+  const min = Math.floor(seconds / 60);
+  const sec = seconds % 60;
+  if (min === 0) {
+    return `${sec} sec`;
+  }
+  return sec === 0 ? `${min} min` : `${min} min ${sec} sec`;
+}
 
 export const SET_TYPE_META: Record<
   SetType,

@@ -4,13 +4,14 @@
 // countdown and the workout-in-progress mini bar (music-player pattern), so a
 // live session is always one tap away and never silently lost.
 
-import { Play, Timer, X } from "lucide-react";
+import { ChevronRight, Pause, Play, Timer, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ConfirmActionDialog } from "@/components/ui/confirm-undo";
+import { ConfirmDialog } from "./confirm";
 import { formatClock, sessionCompletedSets, sessionEngaged } from "./format";
+import { playRestOverCue } from "./start-countdown";
 import { useWorkouts } from "./store";
 
 /** Ticks once a second while mounted. Starts at 0 (not the real clock) so
@@ -23,6 +24,18 @@ export function useNowTick(): number {
     return () => clearInterval(t);
   }, []);
   return now;
+}
+
+/** Elapsed time spelled in units for screen readers ("12 min 4 sec"), the
+ * one duration format used app-wide (canon 01 §162): a colon clock like
+ * "12:04" reads as a ratio or a time of day in AT. */
+function elapsedInUnits(totalSeconds: number): string {
+  const min = Math.floor(totalSeconds / 60);
+  const sec = totalSeconds % 60;
+  if (min === 0) {
+    return `${sec} sec`;
+  }
+  return sec === 0 ? `${min} min` : `${min} min ${sec} sec`;
 }
 
 /** Live elapsed seconds of the session clock (play/pause aware). */
@@ -39,6 +52,7 @@ function SessionMiniBar() {
   const { session, ready, discardSession } = useWorkouts();
   const pathname = usePathname();
   const now = useNowTick();
+  const [discarding, setDiscarding] = useState(false);
   // Hidden on the player itself, and on every page with its own fixed
   // bottom action bar (picker confirm, builder/custom-exercise save): the
   // shell's stacking context paints this dock above those bars, so it would
@@ -56,69 +70,132 @@ function SessionMiniBar() {
   }
   const done = sessionCompletedSets(session.exercises);
   const elapsed = timerElapsedSeconds(session.timer, now);
+  const started = session.timer.running || elapsed > 0;
+  // Screen-reader label for the whole-bar link: sets and elapsed spelled in
+  // units, plural-aware; the zero case is honest, never a bare "0 sets done".
+  const setsClause =
+    done === 0
+      ? "no sets done yet"
+      : `${done} ${done === 1 ? "set" : "sets"} done`;
+  const elapsedClause = started
+    ? `${elapsedInUnits(elapsed)} elapsed`
+    : "not started yet";
   return (
-    <div className="pointer-events-auto flex items-center gap-1 rounded-2xl border border-[var(--go)]/40 bg-card py-2 pr-1.5 pl-4 shadow-[var(--shadow-float)]">
+    // gap-2: ≥8px between the return target's chevron and the destructive
+    // X (placement audit F-6; canon 06 §82, canon 01 §134).
+    <div className="pointer-events-auto flex items-center gap-2 rounded-2xl border border-[var(--go)]/40 bg-card py-2 pr-1.5 pl-4 shadow-[var(--shadow-float)]">
+      {/* One tappable return action (music-player pattern): no decorative
+          Play square, since a control-shaped icon must be a control (canon 01
+          §2) and the ticking clock is already the liveness signal (canon 03
+          §128). The trailing chevron is the navigation glyph (comp 08 §39);
+          a "go here" microlabel next to it would be redundant (comp 08 §41). */}
       <Link
+        aria-label={`Back to your workout: ${session.name}. ${setsClause}, ${elapsedClause}.`}
         className="flex min-w-0 flex-1 items-center gap-3 py-1 transition-transform active:scale-[0.99]"
         href="/workouts/active"
       >
-        <span className="relative flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--go)] text-[var(--bg)]">
-          <Play aria-hidden className="size-5 fill-current" />
-        </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate font-semibold text-[15px] text-foreground">
             {session.name}
           </span>
+          {/* The count leads and the static prefix is gone (copy audit
+              F-12): the bar's presence already says a workout is running,
+              and truncation must never eat the one variable fact. */}
           <span className="block truncate text-[12.5px] text-muted-foreground">
-            Workout in progress · {done} {done === 1 ? "set" : "sets"} done
+            {done === 0
+              ? "No sets done yet"
+              : `${done} ${done === 1 ? "set" : "sets"} done`}
           </span>
         </span>
         <span className="shrink-0 text-right">
-          <span className="block font-mono font-semibold text-[17px] text-[var(--go)] tabular-nums">
-            {session.timer.running || elapsed > 0 ? formatClock(elapsed) : "-"}
-          </span>
-          <span className="block font-semibold text-[11px] text-[var(--go)]/70 uppercase tracking-wider">
-            Back to your workout
-          </span>
+          {started ? (
+            <span className="block font-mono font-semibold text-[17px] text-[var(--go)] tabular-nums">
+              {formatClock(elapsed)}
+            </span>
+          ) : (
+            // The pre-start state says so in words, never a dash the member
+            // must decode (canon 03 §61).
+            <span className="block font-semibold text-[var(--go)] text-sm">
+              Not started
+            </span>
+          )}
+          {/* The number says what it is (canon 04 §93); suppressed pre-start
+              so "Elapsed" never labels "Not started" (copy audit F-13). */}
+          {started && (
+            <span className="block font-semibold text-[var(--go)]/70 text-xs uppercase tracking-wider">
+              Elapsed
+            </span>
+          )}
         </span>
+        <ChevronRight
+          aria-hidden
+          className="size-5 shrink-0 text-muted-foreground"
+        />
       </Link>
       {/* The one way OUT of a live workout from the bar (flaws RUN-02):
-          confirmed, never silent, since logged sets are unsaved until Finish. */}
-      <ConfirmActionDialog
-        confirmLabel="Discard workout"
-        consequence={
+          confirmed, never silent, since logged sets are unsaved until Finish.
+          Same ConfirmDialog primitive, title, and consequence as the player's
+          discard (placement audit F-7; canon 02 §171: one action, one dialog
+          layout everywhere). */}
+      {/* Seam before the destructive X (composition audit F-10): the bar's
+          edge promises one tap target; the divider marks where the return
+          link's promise ends and the discard control begins (comp 01 #39
+          corollary; 08 #19). */}
+      <span aria-hidden className="h-7 w-px shrink-0 bg-border" />
+      <Button
+        aria-label="Discard this workout"
+        className="size-11 shrink-0 text-muted-foreground hover:text-foreground"
+        onClick={() => setDiscarding(true)}
+        size="icon"
+        variant="ghost"
+      >
+        <X aria-hidden className="size-5" />
+      </Button>
+      <ConfirmDialog
+        body={
           done > 0
             ? `The ${done} ${done === 1 ? "set" : "sets"} you logged will not be saved.`
             : "Its timer will be cleared. Nothing has been saved yet."
         }
-        onConfirm={() => discardSession()}
-        title={`Stop and discard "${session.name}"?`}
-        trigger={
-          <Button
-            aria-label="Stop this workout"
-            className="size-11 shrink-0 text-muted-foreground hover:text-foreground"
-            size="icon"
-            variant="ghost"
-          >
-            <X aria-hidden className="size-5" />
-          </Button>
-        }
+        confirmLabel="Discard workout"
+        destructive
+        onCancel={() => setDiscarding(false)}
+        onConfirm={() => {
+          discardSession();
+          setDiscarding(false);
+        }}
+        open={discarding}
+        // One verb per action (canon 04 §132; canon 01 §131-132): the X
+        // discards, it does not also "stop".
+        title={`Discard "${session.name}"?`}
       />
     </div>
   );
 }
 
 function RestTimerDock() {
-  const { session, restTimer, adjustRest, skipRest } = useWorkouts();
+  const { session, restTimer, adjustRest, pauseRest, resumeRest, skipRest } =
+    useWorkouts();
   const pathname = usePathname();
   const now = useNowTick();
 
-  const remaining = restTimer ? Math.ceil((restTimer.endsAt - now) / 1000) : 0;
+  // The one remaining value the whole component uses (countdown, flash,
+  // progress, aria). While paused the frozen pausedRemaining wins; endsAt is
+  // stale then, so reading it would tick the clock and fire the auto-skip
+  // mid-pause (canon 03 §127: the display must match the real state).
+  const paused = restTimer ? restTimer.pausedRemaining != null : false;
+  const remaining = restTimer
+    ? (restTimer.pausedRemaining ?? Math.ceil((restTimer.endsAt - now) / 1000))
+    : 0;
 
-  // When the countdown hits zero, show a brief "rest over" flash then clear.
+  // When the countdown hits zero: sound + vibration alongside the visual
+  // flash (S6 flow audit F-6; canon 03 §130: completion signals through
+  // every appropriate channel at once), held long enough to be seen (5s)
+  // before the dock clears.
   useEffect(() => {
     if (restTimer && remaining <= 0) {
-      const t = setTimeout(() => skipRest(), 2600);
+      playRestOverCue();
+      const t = setTimeout(() => skipRest(), 5000);
       return () => clearTimeout(t);
     }
   }, [restTimer, remaining <= 0]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -158,8 +235,10 @@ function RestTimerDock() {
         role="status"
       >
         <Timer aria-hidden className="size-5 text-emerald-500" />
+        {/* Calm fact, no exclamation (copy audit F-1; copy.ts
+            exclamation-copy). */}
         <span className="font-semibold text-[15px] text-emerald-600 dark:text-emerald-400">
-          Rest over. Next set!
+          Rest over.
         </span>
       </div>
     );
@@ -168,20 +247,33 @@ function RestTimerDock() {
   const progress = Math.max(0, Math.min(1, remaining / restTimer.totalSeconds));
   return (
     <div
-      aria-label={`Rest timer: ${remaining} seconds left`}
+      aria-label={
+        paused
+          ? `Rest timer paused: ${remaining} seconds left`
+          : `Rest timer: ${remaining} seconds left`
+      }
       className="pointer-events-auto overflow-hidden rounded-2xl border border-input bg-popover shadow-[0_12px_32px_rgba(0,0,0,0.45)]"
       role="timer"
     >
       <div className="px-3.5 pt-2 pb-2.5">
-        <div className="flex items-center gap-1.5 font-semibold text-[11.5px] text-muted-foreground uppercase tracking-wider">
+        {/* text-xs: the 12px owner type floor is permanent (mobile audit). */}
+        <div className="flex items-center gap-1.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
           <Timer aria-hidden className="size-3.5 text-[var(--progress)]" />
-          <span className="truncate">Resting · {restTimer.exerciseName}</span>
+          {/* The frozen clock is explained in words (canon 03 §127). */}
+          <span className="truncate">
+            Resting · {restTimer.exerciseName}
+            {paused && " · Paused"}
+          </span>
         </div>
-        <div className="mt-0.5 flex items-center justify-between gap-2">
+        {/* Clock and controls share a row where they fit; when tight the
+            control group wraps beneath the clock as one unit, never an
+            orphan control (comp 07 §13). 44px targets, 8px gaps (comp 07
+            §51). */}
+        <div className="mt-0.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5">
           <div className="shrink-0 font-bold font-mono text-[30px] text-foreground leading-none tabular-nums">
             {formatClock(remaining)}
           </div>
-          <div className="flex shrink-0 items-center gap-1.5">
+          <div className="flex shrink-0 items-center gap-2">
             <button
               aria-label="Shorten rest by 15 seconds"
               className="min-h-[44px] cursor-pointer rounded-lg bg-muted/70 px-2.5 font-semibold text-[13px] text-muted-foreground transition hover:text-foreground"
@@ -198,12 +290,31 @@ function RestTimerDock() {
             >
               +15s
             </button>
+            {/* Pause swaps in place to Resume: one control, stopwatch
+                grammar (canon 01 §135); rest timers offer pause as a
+                visible one-tap control (canon 03 §129). */}
+            <Button
+              aria-label={
+                paused ? "Resume the rest timer" : "Pause the rest timer"
+              }
+              className="size-11 rounded-lg bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
+              onClick={paused ? resumeRest : pauseRest}
+              size="icon"
+              variant="ghost"
+            >
+              {paused ? (
+                <Play aria-hidden className="size-4 fill-current" />
+              ) : (
+                <Pause aria-hidden className="size-4 fill-current" />
+              )}
+            </Button>
             <button
               className="min-h-[44px] cursor-pointer rounded-lg bg-muted/70 px-3 font-semibold text-[13px] text-foreground transition hover:bg-muted"
               onClick={skipRest}
               type="button"
             >
-              Skip
+              {/* Verb + object like its siblings (copy audit F-11). */}
+              Skip rest
             </button>
           </div>
         </div>

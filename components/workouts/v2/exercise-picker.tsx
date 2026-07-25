@@ -117,7 +117,12 @@ export function ExercisePickerPage({
           id: replaceWexId,
           restSeconds: old?.restSeconds ?? fresh.restSeconds,
         });
-        toast.success(`Swapped in ${ref.name}.`);
+        // One term per concept: "replace", never "swap" (canon 04 §132).
+        toast.success(
+          old
+            ? `${old.name} replaced with ${ref.name}.`
+            : `Replaced with ${ref.name}.`
+        );
       }
     } else {
       addSessionExercises(refs.map((ref) => exerciseFromRef(ref, lastSets)));
@@ -168,7 +173,9 @@ export function ExercisePickerPage({
         />
         <input
           aria-label="Search exercises"
-          className="h-[52px] w-full rounded-xl border border-input bg-card pr-4 pl-10 text-[15px] text-foreground placeholder:text-muted-foreground/60 focus:border-blood/60 focus:outline-none"
+          // text-base: the 16px iOS no-zoom floor on the first field a
+          // member touches on this page (mobile audit; canon 06 §90).
+          className="h-[52px] w-full rounded-xl border border-input bg-card pr-4 pl-10 text-base text-foreground placeholder:text-muted-foreground/60 focus:border-blood/60 focus:outline-none"
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search exercises…"
           type="search"

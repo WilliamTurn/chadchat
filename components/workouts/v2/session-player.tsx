@@ -31,6 +31,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
+  ArrowDown,
+  ArrowUp,
   Check,
   CheckCheck,
   ChevronLeft,
@@ -52,7 +54,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import type { LastExerciseLog, PrBaseline } from "@/lib/workouts/stats";
 import { exerciseSlug } from "./catalog";
 import { ConfirmDialog } from "./confirm";
@@ -66,14 +69,14 @@ import {
   sessionVolumeLb,
   weightMeaning,
 } from "./format";
+import { RestTimerPicker, RpePicker } from "./pickers";
 import { detectPRs } from "./session-factory";
-import { ActionSheet, type SheetAction } from "./sheet";
+import { ActionMenu, type SheetAction } from "./sheet";
 import { primeStartCues, StartCountdown } from "./start-countdown";
 import { useWorkouts } from "./store";
 import type { PRKind, SessionExercise, SessionSet } from "./types";
 import {
-  REST_OPTIONS,
-  RPE_OPTIONS,
+  formatRestSeconds,
   SET_TYPE_META,
   START_COUNTDOWN_SECONDS,
 } from "./types";
@@ -208,12 +211,53 @@ function SetRow({
   prBaseline: Record<string, PrBaseline>;
   onPR: (message: string) => void;
 }) {
-  const { updateSet, setSetCompleted, setSetType, setSetRpe, removeSet } =
-    useWorkouts();
+  const {
+    updateSet,
+    setSetCompleted,
+    setSetType,
+    setSetRpe,
+    removeSet,
+    restoreSet,
+  } = useWorkouts();
   const [menuOpen, setMenuOpen] = useState(false);
   const [rpeOpen, setRpeOpen] = useState(false);
   const meta = SET_TYPE_META[set.type];
   const timed = wex.kind === "timed";
+  // Focus home for the RPE picker (flow audit F-5): back to the set-number
+  // trigger on close, never <body> (canon 01 §89).
+  const setTriggerRef = useRef<HTMLButtonElement>(null);
+
+  // The set's SPOKEN identity matches its VISIBLE one (mobile audit; WCAG
+  // 2.5.3 Label in Name): the cell shows "W" for warm-ups and the working
+  // count for the rest, so "set {array index}" drifted off by one the moment
+  // a warm-up existed and "Remove set 2" named a different row than the one
+  // selected.
+  const setName =
+    set.type === "warmup" ? "warm-up set" : `set ${workingIndex}`;
+  const setTitle =
+    set.type === "warmup"
+      ? `Warm-up set · ${wex.name}`
+      : `Set ${workingIndex} · ${wex.name}`;
+
+  // Undo toast: the set menu's destructive row gets exactly one safety net
+  // (frequent, single item, so undo beats a confirm; CLAUDE.md destructive
+  // rule). Restore puts the row back at its old position. 8s window: an
+  // action-carrying toast needs reachable time (canon 01 §130, 03 §38).
+  function handleRemoveSet() {
+    const snapshot = { ...set };
+    const at = wex.sets.findIndex((s) => s.id === set.id);
+    removeSet(wex.id, set.id);
+    toast(
+      `${set.type === "warmup" ? "Warm-up set" : `Set ${workingIndex}`} of ${wex.name} removed.`,
+      {
+        action: {
+          label: "Undo",
+          onClick: () => restoreSet(wex.id, snapshot, at),
+        },
+        duration: 8000,
+      }
+    );
+  }
 
   function handleCheck() {
     if (set.completed) {
@@ -260,25 +304,76 @@ function SetRow({
         {/* Set number = a real button that opens the set menu. Plain figure
             (the Hevy/Strong cell), not a boxed control: the box read as an
             input and its 44px width starved the Last-time column at 320px.
-            Hit area stays 32×52. */}
-        <button
-          aria-label={`Set ${index + 1} options: change set type, add RPE, or remove it`}
-          className="flex h-[52px] w-8 cursor-pointer items-center justify-center rounded-lg transition hover:bg-muted/60"
-          onClick={() => setMenuOpen(true)}
-          type="button"
-        >
-          {meta.tag ? (
-            <span
-              className={`font-bold font-mono text-[16px] ${meta.tagClass}`}
+            Hit area stays 32×52. The menu anchors here on desktop and rises
+            as a sheet on phones (S6 #1). */}
+        <ActionMenu
+          actions={[
+            ...typeActions,
+            {
+              label:
+                set.rpe == null
+                  ? "Add effort rating (RPE)…"
+                  : `Effort rating: RPE ${set.rpe}…`,
+              hint: "How hard the set felt, 6 (easy) to 10 (max effort).",
+              icon: <Gauge aria-hidden className="size-4.5" />,
+              onSelect: () => setRpeOpen(true),
+            },
+            {
+              label:
+                set.type === "warmup"
+                  ? "Remove warm-up set"
+                  : `Remove set ${workingIndex}`,
+              hint: "Takes this row out of this workout. Your other sets stay.",
+              danger: true,
+              dividerBefore: true,
+              icon: <Trash2 aria-hidden className="size-4.5" />,
+              onSelect: handleRemoveSet,
+            },
+          ]}
+          intro={
+            wex.equipment === "barbell" && set.weight && unit === "lb" ? (
+              // Flat reference text, no box (composition audit F-1: an inert
+              // block passes none of comp 01 §4's earning tests), above the
+              // rows so the destructive row stays last (comp 08 #18).
+              <div className="mb-2 px-3">
+                <div className="font-semibold text-muted-foreground text-xs">
+                  Plate math for {formatWeight(set.weight)} lb
+                </div>
+                <div className="mt-0.5 font-mono text-foreground text-sm">
+                  {plateMath(set.weight)}
+                </div>
+              </div>
+            ) : undefined
+          }
+          // The set number is a leading-edge trigger: the desktop menu hangs
+          // toward its own row (placement audit F-4).
+          align="start"
+          onOpenChange={setMenuOpen}
+          open={menuOpen}
+          subtitle="Change the set type, rate the effort, or remove it."
+          title={setTitle}
+          trigger={
+            <button
+              aria-label={`Options for ${setName} of ${wex.name}`}
+              className="flex h-[52px] w-8 cursor-pointer items-center justify-center rounded-lg transition hover:bg-muted/60"
+              onClick={() => setMenuOpen(true)}
+              ref={setTriggerRef}
+              type="button"
             >
-              {meta.tag}
-            </span>
-          ) : (
-            <span className="font-bold font-mono text-[16px] text-muted-foreground">
-              {workingIndex}
-            </span>
-          )}
-        </button>
+              {meta.tag ? (
+                <span
+                  className={`font-bold font-mono text-[16px] ${meta.tagClass}`}
+                >
+                  {meta.tag}
+                </span>
+              ) : (
+                <span className="font-bold font-mono text-[16px] text-muted-foreground">
+                  {workingIndex}
+                </span>
+              )}
+            </button>
+          }
+        />
 
         {/* Last time: tap to copy into this row */}
         {previous ? (
@@ -315,7 +410,7 @@ function SetRow({
 
         {!timed && (
           <NumberField
-            ariaLabel={`Weight in ${unit} for set ${index + 1} of ${wex.name}`}
+            ariaLabel={`Weight in ${unit} for ${setName} of ${wex.name}`}
             highlight={isNext}
             kind="weight"
             onCommit={(v) => updateSet(wex.id, set.id, "weight", v)}
@@ -325,8 +420,8 @@ function SetRow({
         <NumberField
           ariaLabel={
             timed
-              ? `Seconds for set ${index + 1} of ${wex.name}`
-              : `Reps for set ${index + 1} of ${wex.name}`
+              ? `Seconds for ${setName} of ${wex.name}`
+              : `Reps for ${setName} of ${wex.name}`
           }
           highlight={isNext}
           kind="reps"
@@ -340,8 +435,8 @@ function SetRow({
         <button
           aria-label={
             set.completed
-              ? `Set ${index + 1} of ${wex.name} is logged. Select to un-log it.`
-              : `Log set ${index + 1} of ${wex.name} as done`
+              ? `${set.type === "warmup" ? "Warm-up set" : `Set ${workingIndex}`} of ${wex.name} is logged. Select to un-log it.`
+              : `Log ${setName} of ${wex.name} as done`
           }
           aria-pressed={set.completed}
           className={`flex h-[52px] w-11 cursor-pointer items-center justify-center rounded-xl border-2 transition-all active:scale-95 ${
@@ -377,54 +472,14 @@ function SetRow({
         )}
       </div>
 
-      <ActionSheet
-        actions={[
-          ...typeActions,
-          {
-            label:
-              set.rpe == null
-                ? "Add effort rating (RPE)"
-                : `Effort: RPE ${set.rpe}`,
-            hint: "How hard the set felt, 6 (easy) to 10 (max effort)",
-            icon: <Gauge aria-hidden className="size-[18px]" />,
-            onSelect: () => setRpeOpen(true),
-          },
-          {
-            label: "Remove this set",
-            hint: "Deletes the row from this workout",
-            danger: true,
-            icon: <Trash2 aria-hidden className="size-[18px]" />,
-            onSelect: () => removeSet(wex.id, set.id),
-          },
-        ]}
-        footer={
-          wex.equipment === "barbell" && set.weight && unit === "lb" ? (
-            <div className="mt-3 rounded-xl bg-background px-3.5 py-3">
-              <div className="font-semibold text-[12px] text-muted-foreground">
-                Plate math for {formatWeight(set.weight)} lb
-              </div>
-              <div className="mt-1 font-mono text-[14px] text-foreground">
-                {plateMath(set.weight)}
-              </div>
-            </div>
-          ) : undefined
-        }
-        onClose={() => setMenuOpen(false)}
-        open={menuOpen}
-        subtitle="What kind of set is this?"
-        title={`Set ${index + 1} · ${wex.name}`}
-      />
-      <ActionSheet
-        actions={RPE_OPTIONS.map((o) => ({
-          label: o.label,
-          hint: o.hint,
-          selected: set.rpe === o.value,
-          onSelect: () => setSetRpe(wex.id, set.id, o.value),
-        }))}
-        onClose={() => setRpeOpen(false)}
+      <RpePicker
+        current={set.rpe}
+        exerciseName={wex.name}
+        onOpenChange={setRpeOpen}
+        onSelect={(rpe) => setSetRpe(wex.id, set.id, rpe)}
         open={rpeOpen}
-        subtitle="Rate of perceived exertion, how hard the set felt"
-        title={`Effort for set ${index + 1}`}
+        returnFocusTo={setTriggerRef}
+        setLabel={setName}
       />
     </>
   );
@@ -458,15 +513,29 @@ function ExerciseCard({
     completeAllSets,
     uncompleteAllSets,
     removeSessionExercise,
+    moveSessionExercise,
     setExerciseRest,
     setExerciseNote,
   } = useWorkouts();
   const router = useRouter();
+  const noteFieldId = useId();
   const [menuOpen, setMenuOpen] = useState(false);
   const [restOpen, setRestOpen] = useState(false);
   const [confirmingRemove, setConfirmingRemove] = useState(false);
+  const [confirmingReplace, setConfirmingReplace] = useState(false);
   const [editingNote, setEditingNote] = useState(false);
   const [noteDraft, setNoteDraft] = useState(wex.note ?? "");
+  // Typed note text survives Escape and scrim dismissal (flow audit F-1;
+  // canon 01 §22, the house useOverlayDraft contract): the draft is only
+  // re-seeded from the store while it is untouched, and a successful save
+  // marks it clean again.
+  const noteDraftDirty = useRef(false);
+  // Screen-reader receipt for the act-in-place Move rows (canon 03 §137).
+  const [moveAnnouncement, setMoveAnnouncement] = useState("");
+  // Focus home for the pickers (flow audit F-5): they open from a menu row
+  // that unmounts with the menu, so on close they hand focus back to the
+  // card's ⋯ trigger instead of dropping it on <body> (canon 01 §89).
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
 
   const previous = useMemo(
     () =>
@@ -491,29 +560,80 @@ function ExerciseCard({
   } = useSortable({ id: wex.id, disabled: count < 2 });
 
   const doneCount = wex.sets.filter((s) => s.completed).length;
+  const remainingCount = wex.sets.length - doneCount;
   const allDone = wex.sets.length > 0 && doneCount === wex.sets.length;
   const restLabel =
-    REST_OPTIONS.find((o) => o.seconds === wex.restSeconds)?.label ??
-    `${wex.restSeconds}s`;
+    wex.restSeconds === 0 ? "off" : formatRestSeconds(wex.restSeconds);
   const timed = wex.kind === "timed";
 
   // Warm-ups keep their own numbering; working/drop/failure share one count.
   let workingCounter = 0;
 
+  // Act-in-place move (owner ruling 2026-07-24): the menu STAYS OPEN so the
+  // member selects repeatedly; the hint predicts the exact landing position
+  // and the live region announces the settled result (canon 03 §137).
+  function moveExercise(direction: -1 | 1) {
+    const to = index + 1 + direction;
+    moveSessionExercise(wex.id, direction);
+    setMoveAnnouncement(`${wex.name} moved to position ${to} of ${count}.`);
+  }
+
+  function goToPicker() {
+    router.push(`/workouts/exercises/pick?target=replace&wex=${wex.id}`);
+  }
+
   const menuActions: SheetAction[] = [
-    {
-      label: "Exercise info & your records",
-      hint: "How to do it, your history and best lifts",
-      icon: <Info aria-hidden className="size-[18px]" />,
-      onSelect: () =>
-        router.push(`/workouts/exercises/${exerciseSlug(wex.name)}`),
-    },
-    ...(wex.sets.some((s) => !s.completed)
+    // Move rows sit at the top as their own group, the whole width of the
+    // menu away from the destructive row (comp 08 §18/§19: a destructive
+    // item never sits directly under a repeatedly-pressed control).
+    ...(count > 1
       ? [
           {
-            label: "Mark all sets done for this exercise",
-            hint: "Checks off every remaining set with the numbers shown",
-            icon: <CheckCheck aria-hidden className="size-[18px]" />,
+            label: "Move up",
+            hint:
+              index === 0
+                ? "Already first in this workout."
+                : `Moves to position ${index} of ${count}.`,
+            disabled: index === 0,
+            keepOpen: true,
+            icon: <ArrowUp aria-hidden className="size-4.5" />,
+            onSelect: () => moveExercise(-1),
+          } satisfies SheetAction,
+          {
+            label: "Move down",
+            hint:
+              index === count - 1
+                ? "Already last in this workout."
+                : `Moves to position ${index + 2} of ${count}.`,
+            disabled: index === count - 1,
+            keepOpen: true,
+            icon: <ArrowDown aria-hidden className="size-4.5" />,
+            onSelect: () => moveExercise(1),
+          } satisfies SheetAction,
+        ]
+      : []),
+    {
+      label: "Exercise details",
+      hint: "How to do it, your records, and your past sets.",
+      dividerBefore: count > 1,
+      navigates: true,
+      icon: <Info aria-hidden className="size-4.5" />,
+      // from=workout: the details page's back control returns HERE, not to
+      // the exercise library (owner order S6 #6).
+      onSelect: () =>
+        router.push(
+          `/workouts/exercises/${exerciseSlug(wex.name)}?from=workout`
+        ),
+    },
+    ...(remainingCount > 0
+      ? [
+          {
+            label:
+              remainingCount === 1
+                ? "Mark 1 remaining set done"
+                : `Mark ${remainingCount} remaining sets done`,
+            hint: "Checks off the rest of this exercise using the numbers shown.",
+            icon: <CheckCheck aria-hidden className="size-4.5" />,
             onSelect: () =>
               completeAllSets(
                 collectRemainingPRs([wex], prBaseline, unit),
@@ -525,46 +645,61 @@ function ExerciseCard({
     ...(doneCount > 0
       ? [
           {
-            label: "Unmark all sets for this exercise",
-            hint: "Clears the done check on every set, your logged numbers stay",
-            icon: <Undo2 aria-hidden className="size-[18px]" />,
+            label:
+              doneCount === 1 ? "Unmark 1 set" : `Unmark all ${doneCount} sets`,
+            hint: "Clears the done check on this exercise. Your logged numbers stay.",
+            icon: <Undo2 aria-hidden className="size-4.5" />,
             onSelect: () => uncompleteAllSets(wex.id),
           } satisfies SheetAction,
         ]
       : []),
     {
-      label: "Add a warm-up set",
-      hint: "Goes above your working sets, not counted in totals",
-      icon: <Plus aria-hidden className="size-[18px]" />,
+      label: "Add warm-up set",
+      hint: "Lighter prep set above your working sets. Not counted in totals or records.",
+      icon: <Plus aria-hidden className="size-4.5" />,
       onSelect: () => addSet(wex.id, "warmup"),
     },
     {
-      label: wex.note ? "Edit exercise note" : "Add exercise note",
-      hint: "A note saved with this exercise in today's log",
-      icon: <StickyNote aria-hidden className="size-[18px]" />,
+      label: wex.note ? "Edit exercise note…" : "Add exercise note…",
+      hint: "Saved with this exercise in today's workout.",
+      icon: <StickyNote aria-hidden className="size-4.5" />,
       onSelect: () => {
-        setNoteDraft(wex.note ?? "");
+        if (!noteDraftDirty.current) {
+          setNoteDraft(wex.note ?? "");
+        }
         setEditingNote(true);
       },
     },
     {
-      label: `Rest timer: ${wex.restSeconds === 0 ? "off" : restLabel}`,
-      hint: "How long the countdown runs after each set",
-      icon: <Timer aria-hidden className="size-[18px]" />,
+      label: `Rest timer: ${restLabel}…`,
+      hint: "Counts down after you check off each set.",
+      icon: <Timer aria-hidden className="size-4.5" />,
       onSelect: () => setRestOpen(true),
     },
     {
+      // The chevron carries "leaves this screen" (comp 08 #40); the ellipsis
+      // stays for overlay-openers only, so one glyph means one thing.
       label: "Replace exercise",
-      hint: "Swap the movement, keep your place in the workout",
-      icon: <Repeat aria-hidden className="size-[18px]" />,
+      navigates: true,
+      hint:
+        doneCount === 0
+          ? "Choose a different exercise for this spot in your workout."
+          : doneCount === 1
+            ? "Choose a different exercise for this spot. The set you logged here is removed."
+            : `Choose a different exercise for this spot. The ${doneCount} sets you logged here are removed.`,
+      icon: <Repeat aria-hidden className="size-4.5" />,
+      // Logged sets do NOT survive a replace (store: replace-session-exercise
+      // keeps only position and rest), so with sets logged this is
+      // destructive and gets its one safety net, a confirm.
       onSelect: () =>
-        router.push(`/workouts/exercises/pick?target=replace&wex=${wex.id}`),
+        doneCount > 0 ? setConfirmingReplace(true) : goToPicker(),
     },
     {
       label: "Remove exercise",
-      hint: "Removes it and its sets from this workout",
+      hint: "Takes it and its sets out of this workout.",
       danger: true,
-      icon: <Trash2 aria-hidden className="size-[18px]" />,
+      dividerBefore: true,
+      icon: <Trash2 aria-hidden className="size-4.5" />,
       onSelect: () => setConfirmingRemove(true),
     },
   ];
@@ -610,8 +745,8 @@ function ExerciseCard({
               )}
             </div>
             <p className="mt-0.5 text-[12.5px] text-muted-foreground">
-              {weightMeaning(wex.equipment, wex.kind, unit)} · Rest{" "}
-              {wex.restSeconds === 0 ? "off" : restLabel}
+              {weightMeaning(wex.equipment, wex.kind, unit)} · Rest timer{" "}
+              {restLabel}
             </p>
             {wex.targetLabel && (
               <p className="mt-0.5 text-[12.5px] text-muted-foreground">
@@ -649,14 +784,25 @@ function ExerciseCard({
               <GripVertical aria-hidden className="size-5" />
             </WButton>
           )}
-          <button
-            aria-label={`More options for ${wex.name}`}
-            className="flex size-11 cursor-pointer items-center justify-center rounded-xl text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
-            onClick={() => setMenuOpen(true)}
-            type="button"
-          >
-            <MoreHorizontal aria-hidden className="size-5" />
-          </button>
+          <ActionMenu
+            actions={menuActions}
+            liveMessage={moveAnnouncement}
+            onOpenChange={setMenuOpen}
+            open={menuOpen}
+            subtitle={`Exercise ${index + 1} of ${count} in this workout`}
+            title={wex.name}
+            trigger={
+              <button
+                aria-label={`Options for ${wex.name}`}
+                className="flex size-11 cursor-pointer items-center justify-center rounded-xl text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
+                onClick={() => setMenuOpen(true)}
+                ref={menuTriggerRef}
+                type="button"
+              >
+                <MoreHorizontal aria-hidden className="size-5" />
+              </button>
+            }
+          />
         </div>
       </div>
 
@@ -713,23 +859,14 @@ function ExerciseCard({
         Add set
       </button>
 
-      {/* Sheets & dialogs */}
-      <ActionSheet
-        actions={menuActions}
-        onClose={() => setMenuOpen(false)}
-        open={menuOpen}
-        title={wex.name}
-      />
-      <ActionSheet
-        actions={REST_OPTIONS.map((o) => ({
-          label: o.label,
-          selected: wex.restSeconds === o.seconds,
-          onSelect: () => setExerciseRest(wex.id, o.seconds),
-        }))}
-        onClose={() => setRestOpen(false)}
+      {/* Pickers & dialogs (each opens AFTER the menu closed; overlays never
+          stack). */}
+      <RestTimerPicker
+        onOpenChange={setRestOpen}
+        onSave={(seconds) => setExerciseRest(wex.id, seconds)}
         open={restOpen}
-        subtitle="The countdown starts each time you check off a set"
-        title={`Rest after each set of ${wex.name}`}
+        returnFocusTo={menuTriggerRef}
+        wex={wex}
       />
       {editingNote && (
         <ConfirmDialog
@@ -737,26 +874,59 @@ function ExerciseCard({
           onCancel={() => setEditingNote(false)}
           onConfirm={() => {
             setExerciseNote(wex.id, noteDraft);
+            noteDraftDirty.current = false;
             setEditingNote(false);
           }}
           open
           title={`Note for ${wex.name}`}
         >
+          {/* mt-5: the title-to-form boundary must outrank the intra-form
+              gaps (composition audit minor; comp 04 §5). resize-none: the
+              member must not be able to break the dialog's height budget. */}
+          <label
+            className="mt-5 block font-semibold text-foreground text-sm"
+            htmlFor={noteFieldId}
+          >
+            Your note
+          </label>
           <textarea
-            aria-label={`Note for ${wex.name}`}
-            className="mt-3 min-h-[80px] w-full rounded-xl border border-input bg-background px-3 py-2.5 text-[15px] text-foreground placeholder:text-muted-foreground/60 focus:border-blood/60 focus:outline-none"
+            aria-describedby={`${noteFieldId}-count`}
+            className="mt-1.5 min-h-20 w-full resize-none rounded-xl border border-input bg-background px-3 py-2.5 text-base text-foreground placeholder:text-muted-foreground/60 focus:border-blood/60 focus:outline-none"
+            id={noteFieldId}
             maxLength={1000}
-            onChange={(e) => setNoteDraft(e.target.value)}
-            placeholder="Add a note for this exercise"
+            onChange={(e) => {
+              noteDraftDirty.current = true;
+              setNoteDraft(e.target.value);
+            }}
+            placeholder="Felt heavy, drop to 185 next time."
             value={noteDraft}
           />
+          {/* Counter slot (S6 #4, comp 03 §26/§33: after the input, on a real
+              limit). Space is reserved so nothing jumps; the count appears
+              from 900 characters (the goal-form precedent) so it is not
+              permanent noise. */}
+          {/* Advisory, not an error (flow audit F-10): the note saves fine. */}
+          <div className="mt-1 flex min-h-5 items-center justify-between gap-2">
+            <span className="text-muted-foreground text-xs" role="status">
+              {/* No "saved" claim before Save is pressed (copy audit F-2). */}
+              {noteDraft.length >= 1000 ? "1,000 character limit reached." : ""}
+            </span>
+            {noteDraft.length >= 900 && (
+              <span className="shrink-0 text-muted-foreground text-xs tabular-nums">
+                {noteDraft.length}/1000
+              </span>
+            )}
+          </div>
+          <span className="sr-only" id={`${noteFieldId}-count`}>
+            Note length: {noteDraft.length} of 1000 characters.
+          </span>
         </ConfirmDialog>
       )}
       <ConfirmDialog
         body={
           doneCount > 0
-            ? `You already logged ${doneCount} ${doneCount === 1 ? "set" : "sets"} of it in this workout, they'll be removed too.`
-            : "It will be removed from this workout only. Your saved workout plan is not changed."
+            ? `The ${doneCount} ${doneCount === 1 ? "set" : "sets"} you logged for it will be removed too. Your saved workout plan is not changed.`
+            : "Your saved workout plan is not changed."
         }
         confirmLabel="Remove exercise"
         destructive
@@ -766,7 +936,25 @@ function ExerciseCard({
           setConfirmingRemove(false);
         }}
         open={confirmingRemove}
-        title={`Remove ${wex.name}?`}
+        title={`Remove ${wex.name} from this workout?`}
+      />
+      {/* Replace with logged sets = destructive (the store's replace keeps
+          only position and rest); the confirm is its one safety net. */}
+      <ConfirmDialog
+        body={
+          doneCount === 1
+            ? "The set you logged for it will be removed. The new exercise starts with empty sets in the same spot, with the same rest timer."
+            : `The ${doneCount} sets you logged for it will be removed. The new exercise starts with empty sets in the same spot, with the same rest timer.`
+        }
+        confirmLabel="Replace exercise"
+        destructive
+        onCancel={() => setConfirmingReplace(false)}
+        onConfirm={() => {
+          setConfirmingReplace(false);
+          goToPicker();
+        }}
+        open={confirmingReplace}
+        title={`Replace ${wex.name}?`}
       />
     </WCard>
   );
@@ -804,7 +992,8 @@ export function SessionPlayer({
   // Reorder = one drag (owner S5 #2). Mouse drags after 4px of travel so a
   // plain click still clicks; touch lifts after a long-press (250ms) so
   // scrolling never starts a drag; keyboard gets the full pick-up/move/drop
-  // path (WCAG 2.5.7, the Move up/down menu items are gone).
+  // path. The menu's Move up/down rows (restored by S6 as a quiet secondary
+  // path) cover WCAG 2.5.7's single-pointer non-drag alternative.
   const dragSensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 4 } }),
     useSensor(TouchSensor, {
@@ -1280,9 +1469,11 @@ export function SessionPlayer({
           <Trash2 aria-hidden className="size-4" />
           Discard workout
         </WButton>
+        {/* One verb for one action (copy audit F-6): a live workout is
+            discarded; "delete" stays reserved for saved records. */}
         <p className="mt-2 text-center text-[12px] text-muted-foreground/80 sm:text-left">
-          Deletes this workout without saving. Your saved workouts and history
-          are untouched.
+          Discards this workout without saving. Your saved workouts and
+          history are untouched.
         </p>
       </div>
 
@@ -1315,12 +1506,14 @@ export function SessionPlayer({
         />
       )}
 
-      {/* Discard confirm */}
+      {/* Discard confirm: same title shape and consequence sentence as the
+          mini bar's discard (copy audit F-5; canon 04 §132: one action, one
+          dialog everywhere). */}
       <ConfirmDialog
         body={
           doneSets > 0
-            ? `The ${doneSets} ${doneSets === 1 ? "set" : "sets"} you logged in this workout will be permanently deleted.`
-            : "This workout will be deleted. Nothing has been logged yet."
+            ? `The ${doneSets} ${doneSets === 1 ? "set" : "sets"} you logged will not be saved.`
+            : "Its timer will be cleared. Nothing has been saved yet."
         }
         confirmLabel="Discard workout"
         destructive
@@ -1331,7 +1524,7 @@ export function SessionPlayer({
           router.push("/workouts");
         }}
         open={discarding}
-        title="Discard this workout?"
+        title={`Discard "${session.name}"?`}
       />
     </>
   );

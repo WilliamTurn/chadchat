@@ -75,6 +75,16 @@ function playBegun() {
   }
 }
 
+/** Rest-over completion cue (S6 flow audit F-6; canon 03 §130: completion
+ * signals through every appropriate channel, members are mid-set with the
+ * phone face-down). Reuses the primed AudioContext from the Play press; if
+ * it was never primed the cue is silent and the visual state still carries
+ * it. Silent mode wins on iOS; vibration is Android-only best effort. */
+export function playRestOverCue() {
+  playBegun();
+  buzz([120, 60, 120]);
+}
+
 /** Android Chrome vibrates; iOS browsers expose no vibration API, so the
  * optional call simply never runs there. */
 function buzz(pattern: number | number[]) {
