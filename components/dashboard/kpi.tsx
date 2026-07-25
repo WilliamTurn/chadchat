@@ -72,13 +72,18 @@ export function KpiHelp({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        {/* The glyph stays small but the hit area is 44px (negative margins
-            keep the layout unchanged) so a thumb can actually land on it. */}
+        {/* The glyph stays small but the hit area is 44px: an absolutely
+            positioned pseudo-element bleeds the tap zone invisibly (02 #16)
+            without inflating the button's layout box. The old size-11 +
+            negative-margin version overhung its container by ~13px and was
+            what the smoke clipped-text gate kept flagging (W3). */}
         <button
           aria-label={`What does "${label}" mean?`}
-          className="-m-3 inline-flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground/50 transition-colors hover:text-foreground"
+          className="relative inline-flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground/50 transition-colors hover:text-foreground"
           type="button"
         >
+          {/* The invisible 44px tap bleed (02 #16). */}
+          <span aria-hidden className="absolute -inset-3" />
           <HelpCircle className="size-3.5" />
         </button>
       </PopoverTrigger>

@@ -151,7 +151,14 @@ export function ChartFrame({
       case "error":
         return (
           <div
-            className="flex flex-col items-center justify-center gap-3 rounded-xl bg-surface-inset px-6 text-center"
+            className={cn(
+              "flex flex-col items-center justify-center gap-3 px-6 text-center",
+              // The inset tint exists only INSIDE the card shell; an
+              // uncontained zone's states stay on the zone's own rung
+              // (01 #73; a floating rounded tint is a borderless card,
+              // 06 #24).
+              chrome && "rounded-xl bg-surface-inset"
+            )}
             style={{ minHeight: Math.min(height, 200) }}
           >
             <p className="text-body text-muted-foreground">
@@ -172,7 +179,12 @@ export function ChartFrame({
       case "empty":
         // Designed empty: no chart furniture, compact budget (doc 05).
         return (
-          <div className="flex min-h-36 flex-col items-center justify-center gap-3 rounded-xl bg-surface-inset px-6 py-8 text-center">
+          <div
+            className={cn(
+              "flex min-h-36 flex-col items-center justify-center gap-3 px-6 py-8 text-center",
+              chrome && "rounded-xl bg-surface-inset"
+            )}
+          >
             <p className="max-w-sm text-body text-muted-foreground">
               {emptyMessage ?? "Nothing logged here yet."}
             </p>
@@ -224,7 +236,7 @@ export function ChartFrame({
             <h3 className="text-card-title text-muted-foreground">{title}</h3>
             {state === "loading" ? (
               <Skeleton aria-hidden className="mt-1 h-8 w-32" />
-            ) : state === "locked" ? null : (
+            ) : state === "locked" || (state === "empty" && !chrome) ? null : (
               <div className="mt-1 flex flex-wrap items-baseline gap-x-2">
                 <span className="text-metric tabular-nums">{headlineText}</span>
                 {headlineLabel && (

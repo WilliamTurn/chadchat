@@ -85,17 +85,19 @@ export function PersonalRecords({
       : null;
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="grid gap-2 sm:grid-cols-2">
-        {records.map((r) => {
-          const isOpen = r.exerciseName === openName;
-          return (
+    /* Flat single-column list (W3 composition audit F-3): a ranked,
+       comparable scan list stays flat rows with hairline dividers (01 #40's
+       browse-vs-act test, #49, #66; the owner-resolved flat-feed default);
+       expandability is carried by the chevron, not edges. Measure-capped so
+       desktop rows keep a readable span (07 #23). */
+    <ul className="max-w-2xl list-none divide-y divide-border">
+      {records.map((r) => {
+        const isOpen = r.exerciseName === openName;
+        return (
+          <li key={r.exerciseName}>
             <button
               aria-expanded={isOpen}
-              className={`flex min-h-11 items-center justify-between gap-3 rounded-xl border bg-card px-4 py-3 text-left transition-colors hover:border-[var(--go)]/50 ${
-                isOpen ? "border-[var(--go)]/60" : "border-border"
-              }`}
-              key={r.exerciseName}
+              className="flex min-h-11 w-full items-center justify-between gap-3 py-3 text-left transition-colors hover:bg-muted/40"
               onClick={() =>
                 isOpen
                   ? setOpenName(null)
@@ -104,7 +106,8 @@ export function PersonalRecords({
               type="button"
             >
               <div className="min-w-0">
-                <div className="truncate font-medium text-sm">
+                {/* Long names wrap, never ellipsize (SYS-08 / 07 #50). */}
+                <div className="font-medium text-sm">
                   {r.exerciseName}
                 </div>
                 <div className="text-muted-foreground text-xs">
@@ -115,22 +118,20 @@ export function PersonalRecords({
                       : "No weights entered yet"}
                 </div>
               </div>
+              {/* Value block only: a trophy on every one of 8 peer rows
+                  differentiates nothing and spends a column (audit F-18;
+                  02 #17). Gold stays on the event rows in the timeline. */}
               <div className="flex shrink-0 items-center gap-2.5 text-right">
                 {r.bestEst1RM != null ? (
-                  <div className="flex items-center gap-1.5">
-                    <Trophy
-                      className={`size-4 text-amber-500 ${TROPHY_GLOW}`}
-                    />
-                    <div>
-                      <div className="font-display font-semibold text-base leading-none">
-                        {r.bestEst1RM}
-                        <span className="ml-0.5 font-normal text-muted-foreground text-xs">
-                          {r.est1RMUnit}
-                        </span>
-                      </div>
-                      <div className="text-meta text-muted-foreground uppercase tracking-wide">
-                        est. 1RM
-                      </div>
+                  <div>
+                    <div className="font-display font-semibold text-base leading-none">
+                      {r.bestEst1RM}
+                      <span className="ml-0.5 font-normal text-muted-foreground text-xs">
+                        {r.est1RMUnit}
+                      </span>
+                    </div>
+                    <div className="text-meta text-muted-foreground uppercase tracking-wide">
+                      est. 1RM
                     </div>
                   </div>
                 ) : null}
@@ -143,90 +144,97 @@ export function PersonalRecords({
                 </motion.span>
               </div>
             </button>
-          );
-        })}
-      </div>
 
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.section
-            animate={reduced ? undefined : { height: "auto", opacity: 1 }}
-            className="overflow-hidden scroll-mt-20"
-            exit={reduced ? undefined : { height: 0, opacity: 0 }}
-            initial={reduced ? false : { height: 0, opacity: 0 }}
-            key={open.exerciseName}
-            onAnimationComplete={() =>
-              panelRef.current?.scrollIntoView({
-                block: "nearest",
-                behavior: reduced ? "auto" : "smooth",
-              })
-            }
-            ref={panelRef}
-            transition={reduced ? { duration: 0 } : SPRING}
-          >
-            <div className="rounded-2xl border border-border bg-card p-5">
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-medium text-sm">{open.exerciseName}</h3>
-                  {gain != null && gain !== 0 && (
-                    <span
-                      className={`rounded-full px-2 py-0.5 font-medium text-meta ${
-                        gain > 0
-                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {gain > 0 ? "+" : "−"}
-                      {Math.abs(gain)} {open.est1RMUnit} since first
-                    </span>
-                  )}
-                </div>
-                <span className="text-muted-foreground text-xs">
-                  est. 1RM over time
-                </span>
-              </div>
-
-              <DrillDownChart
-                prTs={prMarkers[open.exerciseName] ?? []}
-                record={open}
-                todayMs={todayMs}
-              />
-
-              {/* Record-to-source tap-through (the crown-jewel interaction). */}
-              <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
-                {open.bestWeight != null && open.bestWeightWorkoutId && (
-                  <RecordSourceLink
-                    label={`Top set ${open.bestWeight}${open.bestWeightUnit}${open.bestWeightReps != null ? ` × ${open.bestWeightReps}` : ""}`}
-                    workoutId={open.bestWeightWorkoutId}
-                  />
-                )}
-                {open.bestEst1RM != null &&
-                  open.bestEst1RMWorkoutId &&
-                  open.bestEst1RMWorkoutId !== open.bestWeightWorkoutId && (
-                    <RecordSourceLink
-                      label={`Best est. 1RM ${open.bestEst1RM} ${open.est1RMUnit}`}
-                      workoutId={open.bestEst1RMWorkoutId}
-                    />
-                  )}
-                <Link
-                  className="inline-flex min-h-11 items-center gap-1 text-muted-foreground text-xs underline-offset-4 hover:underline sm:min-h-0"
-                  href={`/workouts/exercises/${encodeURIComponent(open.exerciseName)}`}
+            {/* The drill-down expands IN PLACE, directly under its row
+                (audit F-9; 08 #39: detail attached below its subject;
+                the mainstream accordion). */}
+            <AnimatePresence initial={false}>
+              {isOpen && open && (
+                <motion.section
+                  animate={reduced ? undefined : { height: "auto", opacity: 1 }}
+                  className="overflow-hidden scroll-mt-20"
+                  exit={reduced ? undefined : { height: 0, opacity: 0 }}
+                  initial={reduced ? false : { height: 0, opacity: 0 }}
+                  key={open.exerciseName}
+                  onAnimationComplete={() =>
+                    panelRef.current?.scrollIntoView({
+                      block: "nearest",
+                      behavior: reduced ? "auto" : "smooth",
+                    })
+                  }
+                  ref={panelRef}
+                  transition={reduced ? { duration: 0 } : SPRING}
                 >
-                  All records and history
-                  <ArrowUpRight aria-hidden className="size-3.5" />
-                </Link>
-              </div>
+                  <div className="pt-1 pb-5">
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium text-sm">
+                          {open.exerciseName}
+                        </h3>
+                        {gain != null && gain !== 0 && (
+                          <span
+                            className={`rounded-full px-2 py-0.5 font-medium text-meta ${
+                              gain > 0
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                : "bg-muted text-muted-foreground"
+                            }`}
+                          >
+                            {gain > 0 ? "+" : "−"}
+                            {Math.abs(gain)} {open.est1RMUnit} since first
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-muted-foreground text-xs">
+                        est. 1RM over time
+                      </span>
+                    </div>
 
-              <p className="mt-3 text-meta text-muted-foreground">
-                Estimated 1RM: the most Chad estimates you could lift once,
-                calculated from each set's weight and reps with the Epley
-                formula. Gold dots mark the workouts that set a new record.
-              </p>
-            </div>
-          </motion.section>
-        )}
-      </AnimatePresence>
-    </div>
+                    <DrillDownChart
+                      prTs={prMarkers[open.exerciseName] ?? []}
+                      record={open}
+                      todayMs={todayMs}
+                    />
+
+                    {/* Record-to-source tap-through (the crown-jewel
+                        interaction). */}
+                    <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
+                      {open.bestWeight != null && open.bestWeightWorkoutId && (
+                        <RecordSourceLink
+                          label={`Top set ${open.bestWeight}${open.bestWeightUnit}${open.bestWeightReps != null ? ` × ${open.bestWeightReps}` : ""}`}
+                          workoutId={open.bestWeightWorkoutId}
+                        />
+                      )}
+                      {open.bestEst1RM != null &&
+                        open.bestEst1RMWorkoutId &&
+                        open.bestEst1RMWorkoutId !== open.bestWeightWorkoutId && (
+                          <RecordSourceLink
+                            label={`Best est. 1RM ${open.bestEst1RM} ${open.est1RMUnit}`}
+                            workoutId={open.bestEst1RMWorkoutId}
+                          />
+                        )}
+                      <Link
+                        className="inline-flex min-h-11 items-center gap-1 text-muted-foreground text-xs underline-offset-4 hover:underline sm:min-h-0"
+                        href={`/workouts/exercises/${encodeURIComponent(open.exerciseName)}`}
+                      >
+                        All records and history
+                        <ArrowUpRight aria-hidden className="size-3.5" />
+                      </Link>
+                    </div>
+
+                    <p className="mt-3 text-meta text-muted-foreground">
+                      Estimated 1RM: the most Chad estimates you could lift
+                      once, calculated from each set's weight and reps with
+                      the Epley formula. Gold dots mark the workouts that set
+                      a new record.
+                    </p>
+                  </div>
+                </motion.section>
+              )}
+            </AnimatePresence>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 

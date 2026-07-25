@@ -2,29 +2,13 @@ import localFont from "next/font/local";
 
 /* Design-system display faces (self-hosted, OFL) — ported 1:1 from
    chadlatest/app/design-system/fonts.ts (the approved sheet's wiring).
-   Bodoni Moda is the canonical display face; Playfair Display stays loaded
-   for the sheet's section-02 comparison row.
+   Bodoni Moda moved to app/fonts.ts and app/layout.tsx in W3, when
+   /progress/training became the first member surface composed from
+   --f-display (the move this file's original note called for). Playfair
+   stays registered here ONLY: it exists for the sheet's section-02
+   comparison row, never for member surfaces. */
 
-   DELIBERATELY imported ONLY by the /dev/design-system fixture: the fonts
-   must not load on any member surface until the design waves compose real
-   screens from --f-display. When that happens, move these registrations to
-   app/layout.tsx so --ds-bodoni / --ds-playfair resolve app-wide. */
-
-export const bodoni = localFont({
-  src: [
-    {
-      path: "../../fonts/BodoniModa-Variable.ttf",
-      weight: "400 900",
-      style: "normal",
-    },
-    {
-      path: "../../fonts/BodoniModa-Italic-Variable.ttf",
-      weight: "400 900",
-      style: "italic",
-    },
-  ],
-  variable: "--ds-bodoni",
-});
+export { bodoni } from "@/app/fonts";
 
 export const playfair = localFont({
   src: [

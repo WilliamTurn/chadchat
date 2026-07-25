@@ -20,7 +20,7 @@
  *     the member's full real history on first view, never zeroed.
  */
 
-import { ArrowUpRight, Flag, Medal, Trophy } from "lucide-react";
+import { ArrowUpRight, Flag, Trophy } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { KpiHelp } from "@/components/dashboard/kpi";
@@ -66,7 +66,16 @@ function interleave(
   return entries.sort((a, b) => b.t - a.t);
 }
 
+/* Row grammar (member-copy-writer W3, canon 04 §129-130): in the list the
+ * exercise name IS the headline - the section header and per-row "beat X lb"
+ * already say "record", so a repeated "New record:" prefix burns both scan
+ * words on every row. The celebration hero keeps the prefix: there it is
+ * the news, and the aria-live announcement needs the event framing. */
 function prHeadline(pr: PrEvent): string {
+  return pr.exerciseName;
+}
+
+function prHeroHeadline(pr: PrEvent): string {
   return `New record: ${pr.exerciseName}`;
 }
 
@@ -78,7 +87,9 @@ function prDetail(pr: PrEvent): string {
   if (pr.beatE1rm && pr.e1rmLb != null) {
     return `${set} · est. 1RM ${pr.e1rmLb} lb, beat ${pr.previousE1rmLb} lb`;
   }
-  return set;
+  // The words, not the trophy icon, must say this is a record (a11y;
+  // member-copy-writer W3).
+  return `${set} · personal best`;
 }
 
 export function RewardsTimeline({
@@ -111,11 +122,15 @@ export function RewardsTimeline({
 
   return (
     <section className="min-w-0">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-          <Medal className="size-4 text-amber-500" />
-          Records and milestones
-          <KpiHelp label="Records and milestones">
+      {/* Zone header on the shared grammar (06 #15/#16: one header style per
+          level, quiet, no icon decoration 04 §6 #77); wraps instead of
+          clipping at 320-384 (07 #50; burns the smoke clipped-text pin). */}
+      {/* Measure-capped column (audit F-11; 07 #23: width buys margin for
+          reading; a record and its date must share one eye span). */}
+      <div className="mb-3 flex max-w-2xl flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h2 className="flex min-w-0 flex-wrap items-center gap-x-1.5 text-card-title text-muted-foreground">
+          <span>Record and milestone timeline</span>
+          <KpiHelp label="Record and milestone timeline">
             Every set that beat one of your records and every training
             milestone you have reached, in the order they happened. All of it
             is earned: entries come straight from your logged workouts (your
@@ -138,7 +153,9 @@ export function RewardsTimeline({
       )}
 
       {entries.length === 0 ? (
-        <div className="flex min-h-36 flex-col items-center justify-center gap-2 rounded-2xl border border-border bg-surface-card px-6 py-8 text-center">
+        /* Designed empty in the rows' position, uncontained like every
+           sibling zone state (01 #66/#73; 05 #68). */
+        <div className="flex min-h-36 flex-col items-center justify-center gap-2 px-6 py-8 text-center">
           <Trophy aria-hidden className="size-5 text-muted-foreground" />
           <p className="max-w-md text-body text-muted-foreground">
             {totalPrEvents > 0
@@ -153,7 +170,7 @@ export function RewardsTimeline({
           )}
         </div>
       ) : (
-        <ol className="relative flex list-none flex-col">
+        <ol className="relative flex max-w-2xl list-none flex-col">
           {visible.map((entry, i) => (
             <TimelineRow
               entry={entry}
@@ -226,14 +243,19 @@ function TimelineRow({
       >
         {icon}
       </span>
-      <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 gap-y-0.5 py-1.5">
-        <span className="font-medium text-sm">{headline}</span>
-        {detail && (
-          <span className="text-muted-foreground text-xs tabular-nums">
-            {detail}
-          </span>
-        )}
-        <span className="ml-auto flex items-center gap-1 text-muted-foreground text-xs tabular-nums">
+      {/* Stable row anatomy (audit F-5; 08 #34-38): identity top-left,
+          detail always directly beneath it, date in one trailing slot --
+          never a wrap-dependent position. */}
+      <span className="flex min-w-0 flex-1 items-start justify-between gap-x-4 py-1.5">
+        <span className="min-w-0">
+          <span className="block font-medium text-sm">{headline}</span>
+          {detail && (
+            <span className="block text-muted-foreground text-xs tabular-nums">
+              {detail}
+            </span>
+          )}
+        </span>
+        <span className="mt-0.5 flex shrink-0 items-center gap-1 text-muted-foreground text-xs tabular-nums">
           {formatShortDate(entry.t)}
           {href && <ArrowUpRight aria-hidden className="size-3.5" />}
         </span>
@@ -281,9 +303,12 @@ function CelebrationHero({
   todayMs: number;
 }) {
   const isPr = entry.kind === "pr";
+  /* The hero keeps the event framing the list rows drop ("New record:" /
+     "Milestone reached:"): it appears once, and it is what the aria-live
+     region announces (member-copy-writer W3). */
   const headline = isPr
-    ? prHeadline(entry.pr)
-    : (entry as Extract<TimelineEntry, { kind: "milestone" }>).milestone.label;
+    ? prHeroHeadline(entry.pr)
+    : `Milestone reached: ${(entry as Extract<TimelineEntry, { kind: "milestone" }>).milestone.label}`;
   const detail = isPr
     ? prDetail(entry.pr)
     : (entry as Extract<TimelineEntry, { kind: "milestone" }>).milestone.detail;
@@ -296,17 +321,35 @@ function CelebrationHero({
   const daysAgo = Math.max(0, Math.round((todayMs - entry.t) / MS_PER_DAY));
 
   return (
-    <div className="relative mb-4 overflow-hidden rounded-2xl border border-amber-500/25 bg-surface-card">
-      {/* Deferred WebGL flourish behind the words; static gradient fallback. */}
-      <CelebrationScene className="absolute inset-0" />
+    /* UNCONTAINED celebration moment (W3 composition audit F-4): the hero
+       is the timeline's own newest entry promoted, so no earning test holds
+       (01 #41: the app quoting its own stats earns nothing). The newest-win
+       difference is carried by scale, gold, and a soft glow whose wash and
+       WebGL flourish fade to nothing before their box edges, so no boundary
+       rectangle exists (06 #24). */
+    <div className="relative mb-4 max-w-2xl">
+      {/* Deferred WebGL flourish behind the words; static gradient fallback.
+          Masked to fade out before the edges. */}
       <div
         aria-hidden
         className="absolute inset-0"
         style={{
-          background: `linear-gradient(90deg, ${REWARD_GOLD_WASH}, transparent 55%)`,
+          maskImage:
+            "radial-gradient(130% 150% at 15% 50%, black 35%, transparent 92%)",
+          WebkitMaskImage:
+            "radial-gradient(130% 150% at 15% 50%, black 35%, transparent 92%)",
+        }}
+      >
+        <CelebrationScene className="h-full w-full" />
+      </div>
+      <div
+        aria-hidden
+        className="absolute inset-0"
+        style={{
+          background: `radial-gradient(120% 140% at 0% 50%, ${REWARD_GOLD_WASH}, transparent 70%)`,
         }}
       />
-      <div className="relative flex min-h-28 flex-wrap items-center gap-x-6 gap-y-3 p-5 md:min-h-32 md:p-6">
+      <div className="relative flex min-h-28 flex-wrap items-center gap-x-6 gap-y-3 py-5 md:min-h-32 md:py-6">
         <span
           className={`flex size-12 shrink-0 items-center justify-center rounded-full border ${
             isPr

@@ -1,27 +1,37 @@
 "use client";
 
 /**
- * PROGRESS > TRAINING (FIX-33): the client composition. One GLOBAL range
- * control drives every windowed view (the Hevy pattern; per-card range
- * chrome is the failure state the teardown names), URL-synced as `?range`
- * per the mount contract. Sections follow the spec order (doc 03): status,
- * frequency/consistency, plan adherence, volume, muscle focus, strength +
- * records, then the records-and-milestones timeline (the wave's signature
- * reward surface, rewards-timeline.tsx).
+ * PROGRESS > TRAINING (W3 overhaul, 2026-07-25): the client composition,
+ * rebuilt to the stats/progress recipe (comp-canon 05 §7) on the ds token
+ * layer (globals.css W2 port; this surface is the first member consumer of
+ * --f-display per the port plan).
+ *
+ * Skeleton (comp-canon 05 §7): one global range control governing every
+ * windowed view (05 #64, URL-synced as `?range`) → ONE hero insight with a
+ * plain-sentence interpretation (05 #61, #65) → an uncontained key-facts
+ * band (05 #63) → supporting chart+context zones, each an assembled unit
+ * (05 #62) → strength records → the records-and-milestones timeline →
+ * links out (05 #67). Zones separate by whitespace and quiet headers only
+ * (01 #11 rungs 1-3; gap table 06 #8, --zone-gap); no zone is boxed -
+ * static info displays pass no container-earning test (01 §4, north star).
+ *
+ * The plan-adherence card that used to sit beside consistency was DELETED
+ * by owner ruling Q-G, 2026-07-17 ("remove it, no replacement"; register
+ * TRN-16) - executed here. The data assembly still computes adherence for
+ * its other consumers; this surface no longer renders it.
  *
  * Every displayed number is a registered metric computed by
  * lib/workouts/training-data.ts getTrainingAnalytics (one-canonical-value
  * law); this file is presentation and windowing only.
  */
 
-import { ArrowUpRight, Dumbbell, Trophy } from "lucide-react";
+import { ArrowUpRight, Dumbbell } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
 import { CalendarHeatmap } from "@/components/charts/calendar-heatmap";
 import { BreakdownBars } from "@/components/charts/breakdown-bars";
 import { ChartFrame } from "@/components/charts/chart-frame";
 import { ChartRangeControl } from "@/components/charts/chart-range-control";
-import { RingGauge } from "@/components/charts/ring-gauge";
 import { TrendChart, trendChartLegend } from "@/components/charts/trend-chart";
 import { useChartWindow } from "@/components/charts/use-chart-window";
 import { PersonalRecords } from "@/components/workouts/personal-records";
@@ -30,10 +40,11 @@ import { MetricValue } from "@/components/dashboard/metric-value";
 import { GoalProgressBar, WeekBars } from "@/components/panels/visuals";
 import { Button } from "@/components/ui/button";
 import { useUrlChartWindow } from "@/hooks/use-url-chart-range";
+import { formatShortDate } from "@/lib/chart/format";
 import { buildChartSummary } from "@/lib/chart/summary";
 import { MS_PER_DAY } from "@/lib/chart/trend";
 import { clampToWindow } from "@/lib/chart/window";
-import { DOMAIN, GOAL_EMERALD } from "@/lib/chart/palette";
+import { DOMAIN } from "@/lib/chart/palette";
 import {
   type Coverage,
   loggedReading,
@@ -68,7 +79,8 @@ export function TrainingAnalyticsView({
   urlState?: boolean;
 }) {
   // THE global range control (one per page; every windowed section below
-  // consumes this window). URL-synced ?range per the mount contract.
+  // consumes this window - comp-canon 05 #64). URL-synced ?range per the
+  // mount contract.
   const urlWindow = useUrlChartWindow(data.sessionDays, {
     todayMs: data.todayMs,
     minPoints: 6,
@@ -101,107 +113,116 @@ export function TrainingAnalyticsView({
   const empty = data.totalSessions === 0;
 
   return (
-    <div className="flex flex-col gap-8 pb-24">
-      {/* ------------------------------------------------------ status band */}
-      <div className="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-4">
-        <StatTile>
-          <MetricValue
-            captionFirst
-            help="Every workout you have ever finished, all time. The header counts real saved workouts, never estimates."
-            label="Workouts logged"
-            layout="pieces"
-            scope="all time"
-            unit="count"
-            value={data.totalSessions}
-            valueClassName="sm:text-2xl"
-          />
-        </StatTile>
-        <StatTile>
-          <MetricValue
-            captionFirst
-            help="Workouts you logged this calendar week, Sunday through Saturday, in your time zone. Resets every Sunday."
-            label={
-              data.adherence
-                ? `Workouts · ${data.adherence.plannedPerWeek} planned`
-                : "Workouts"
-            }
-            layout="pieces"
-            scope="this week"
-            unit="count"
-            value={data.sessionsThisWeek}
-            valueClassName="sm:text-2xl"
-          />
-        </StatTile>
-        <StatTile>
-          <MetricValue
-            captionFirst
-            help="Volume is the total weight you moved: weight times reps, added up across every set. This is your total for this calendar week."
-            label="Volume"
-            layout="pieces"
-            scope="this week"
-            unit="lb"
-            value={data.volumeThisWeek}
-            valueClassName="sm:text-2xl"
-          />
-        </StatTile>
-        <StatTile
-          help="Workout-count milestones are earned at real thresholds (10th, 25th, 50th workout and up). This is your progress toward the next one."
-          label={
-            data.nextMilestone
-              ? `Next milestone · ${ordinalLabel(data.nextMilestone.threshold)} workout`
-              : "Milestones"
-          }
-        >
-          <div className="font-semibold text-xl tracking-tight tabular-nums sm:text-2xl">
-            {data.nextMilestone ? (
-              <div className="flex w-full flex-col gap-1.5">
-                <span className="tabular-nums">
-                  {data.nextMilestone.remaining} to go
-                </span>
-                <GoalProgressBar
-                  className="bg-[var(--chart-3)]"
-                  fraction={
-                    (data.nextMilestone.threshold -
-                      data.nextMilestone.remaining) /
-                    data.nextMilestone.threshold
-                  }
-                />
-              </div>
-            ) : (
-              <span className="tabular-nums">{data.milestones.length}</span>
-            )}
+    <div className="flex flex-col gap-[var(--zone-gap)] pb-24">
+      {/* ------------------------------------------------- hero insight zone
+          One hero, display scale, with its interpreting sentence (05 #61,
+          #65) and the range control that governs the whole surface (05 #64).
+          The serif numeral is the ds display face: serif = measured result
+          (06 #33/#35); it is the screen's only display element (06 #34). */}
+      <section className="flex flex-col items-start gap-4">
+        {/* The range control opens the surface (05 §7 skeleton: control at
+            top, governing everything below) and stays proximity-bound to
+            the hero at every width (F-11/F-17, composition audit). */}
+        {!empty && <ChartRangeControl control={control} />}
+        {empty ? (
+          /* First-run: the empty state takes the hero's position - teach
+             content, no display-scale zero (canon 03 §62; 05 #68). Strings:
+             member-copy-writer W3. */
+          <div className="min-w-0">
+            <h2 className="text-card-title">No workouts logged yet</h2>
+            <p className="mt-2 max-w-prose text-body text-muted-foreground">
+              Finish your first workout and your training numbers start here:
+              how often you train, your volume, and every record you set.
+            </p>
+            <div className="mt-4">
+              <StartWorkoutButton />
+            </div>
           </div>
-        </StatTile>
-      </div>
+        ) : (
+          <div className="min-w-0">
+            {/* Caps only for the label; the scope stays sentence case
+               (Q-DS-4; canon 05 #25). Strings: member-copy-writer W3. */}
+            <p className="text-muted-foreground">
+              <span className="text-eyebrow">Workouts logged</span>
+              <span className="text-meta"> · {control.rangeLabel}</span>
+            </p>
+            <p className="mt-1 text-display-hero">
+              {windowedSessionDays.length}
+            </p>
+            <p className="mt-2 max-w-prose text-body text-muted-foreground">
+              <HeroSentence
+                count={windowedSessionDays.length}
+                rangeLabel={control.rangeLabel}
+                sessionDays={data.sessionDays}
+                todayMs={data.todayMs}
+                totalSessions={data.totalSessions}
+                windowDays={w.days}
+              />
+            </p>
+          </div>
+        )}
+      </section>
 
-      {/* ------------------------------------------- global range + actions */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-body-sm text-muted-foreground">
-          {windowedSessionDays.length > 0
-            ? `${windowedSessionDays.length} ${windowedSessionDays.length === 1 ? "workout" : "workouts"} ${inRange(control.rangeLabel)}`
-            : `No workouts ${inRange(control.rangeLabel)}`}
-        </p>
-        <ChartRangeControl control={control} />
-      </div>
+      {/* -------------------------------------------------- key-facts band
+          Numbers first, charts second (05 #63): the summary figures as an
+          uncontained band - figures + labels, no boxes (rung 0/1; the old
+          bordered tile grid was the canonical stats defect, 05 #13). */}
+      {/* Two facts only, so no slot ever duplicates the hero's count at any
+          range and the band never leaves a half-empty row (composition
+          audit F-7/F-14; 02 #12). Workout counts live in the hero and the
+          consistency zone; the milestone slot already encodes the all-time
+          total as its bar fraction. Value-first so the numerals share one
+          baseline across the row (F-6; 06 #29). */}
+      <section className="grid max-w-2xl grid-cols-2 gap-x-6 gap-y-5">
+        <MetricValue
+          help="Volume is the total weight you moved: weight times reps, added up across every set. This is your total for this calendar week."
+          label="Volume"
+          scope="this week"
+          unit="lb"
+          value={data.volumeThisWeek}
+          valueClassName="text-2xl"
+        />
+        <NextMilestoneFact
+          milestonesReached={data.milestones.length}
+          nextMilestone={data.nextMilestone}
+        />
+      </section>
 
-      {/* -------------------------------------- consistency + plan adherence */}
-      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-12">
+      {/* ---------------------------------- consistency + muscle focus zones
+          Supporting zones may pair two-across on desktop; the hero never
+          shares its row (05 #69). Each zone is an assembled chart+context
+          unit (05 #62), uncontained (01 §4: no earning test passes for a
+          static info display). */}
+      <div className="grid grid-cols-1 gap-y-[var(--zone-gap)] xl:grid-cols-12 xl:gap-x-12">
+        <div className="min-w-0 xl:col-span-7">
         <ChartFrame
-          className="min-w-0 xl:col-span-7"
+          chrome={false}
+          className="min-w-0"
           coverage={coverage}
+          /* One CTA per screen: the hero owns "Start a workout" on first
+             run; zone empties teach without repeating it (F-2; 08 #51). */
           emptyMessage="Finish your first workout and your training calendar starts filling in."
-          emptyAction={<StartWorkoutButton />}
+          /* Days-trained coverage, not the workout count: the hero already
+             carries that number, and two zones repeating one figure say
+             nothing twice (02 #12). The frame prints the range on its own
+             line, so the label never restates it (F-15). */
           headlineLabel={
-            windowedSessionDays.length > 0 ? "workouts in range" : undefined
+            windowedSessionDays.length > 0
+              ? control.rangeLabel === "all time"
+                ? "days trained"
+                : `of ${coverage.windowDays} days trained`
+              : undefined
           }
-          height={204}
+          /* The calendar's own height: 7 rows of capped cells (~130px)
+             plus breathing room; the week strip lives outside the plot. */
+          height={150}
           rangeLabel={control.rangeLabel}
-          reading={countReading(windowedSessionDays.length, coverage)}
+          reading={countReading(coverage.loggedDays, coverage)}
           state={empty ? "empty" : "populated"}
           summary={buildChartSummary({
             title: "Training consistency",
             rangeLabel: control.rangeLabel,
-            reading: countReading(windowedSessionDays.length, coverage),
+            reading: countReading(coverage.loggedDays, coverage),
             unit: "count",
             extra: [
               `Calendar of training days; ${coverage.loggedDays} of ${coverage.windowDays} days trained`,
@@ -210,125 +231,130 @@ export function TrainingAnalyticsView({
           title="Training consistency"
           unit="count"
         >
-          <div className="flex h-full flex-col justify-between gap-4">
-            <CalendarHeatmap
-              cells={heatmapCells(data, w)}
-              color="var(--progress)"
-              maxLevel={2}
-              tipLabel="workouts"
-              todayMs={data.todayMs}
+          <CalendarHeatmap
+            cells={heatmapCells(data, w)}
+            color="var(--progress)"
+            maxLevel={2}
+            tipLabel="workouts"
+            todayMs={data.todayMs}
+          />
+        </ChartFrame>
+
+        {/* Two figures, one zone: the calendar above is the zone's main
+            figure; the 7-day strip (the habit-streak reward, never removed:
+            owner law s181) follows under its own quiet eyebrow, so the
+            boundary between the figures is named and their scales no longer
+            collide inside one plot box (F-1; 01 #12, 06 #14). Width-capped:
+            day blocks keep phone proportions, never inflate (07 #17). */}
+        {!empty && (
+          <div className="mt-5 sm:max-w-xs">
+            <p className="text-eyebrow text-muted-foreground">This week</p>
+            <WeekBars
+              barClassName="bg-[var(--progress)]"
+              className="mt-2 h-6"
+              days={data.week.map((d) => ({
+                key: d.t,
+                fraction: d.count > 0 ? Math.min(d.count / 2 + 0.5, 1) : null,
+                isToday: d.isToday,
+                isFuture: d.isFuture,
+              }))}
             />
-            {/* The 7-day strip: the habit-streak reward, never removed
-                (owner law s181); the calendar is the chart beside it. */}
-            <div>
-              <WeekBars
-                barClassName="bg-[var(--progress)]"
-                className="h-8"
-                days={data.week.map((d) => ({
-                  key: d.t,
-                  fraction: d.count > 0 ? Math.min(d.count / 2 + 0.5, 1) : null,
-                  isToday: d.isToday,
-                  isFuture: d.isFuture,
-                }))}
-              />
-              <div className="mt-1 flex gap-1.5">
-                {data.week.map((d) => (
-                  <span
-                    className={`flex-1 text-center text-meta leading-none ${d.isToday ? "font-semibold text-foreground" : "text-muted-foreground"}`}
-                    key={d.t}
-                  >
-                    {d.label}
-                  </span>
-                ))}
-              </div>
+            <div className="mt-1 flex gap-1.5">
+              {data.week.map((d) => (
+                <span
+                  className={`flex-1 text-center text-meta leading-none ${d.isToday ? "font-semibold text-foreground" : "text-muted-foreground"}`}
+                  key={d.t}
+                >
+                  {d.label}
+                </span>
+              ))}
             </div>
           </div>
-        </ChartFrame>
+        )}
+        </div>
 
-        <AdherenceCard adherence={data.adherence} className="min-w-0 xl:col-span-5" />
-      </div>
-
-      {/* --------------------------------------------- volume + muscle focus */}
-      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-12">
-        <ChartFrame
-          className="min-w-0 xl:col-span-7"
-          coverage={coverage}
-          emptyMessage="Log weights in a workout and your volume trend starts here."
-          emptyAction={<StartWorkoutButton />}
-          headlineLabel="Latest logged day"
-          height={240}
-          legend={trendChartLegend(
-            "neutral",
-            { raw: "Daily volume", trend: "Trend (smoothed)" },
-            "var(--progress)"
-          )}
-          rangeLabel={control.rangeLabel}
-          reading={volumeReading(windowedVolume, coverage, data.todayMs)}
-          state={
-            empty || data.volumePoints.length === 0
-              ? "empty"
-              : windowedVolume.length < 3
-                ? "sparse"
-                : "populated"
-          }
-          summary={buildChartSummary({
-            title: "Training volume",
-            rangeLabel: control.rangeLabel,
-            reading: volumeReading(windowedVolume, coverage, data.todayMs),
-            unit: "lb",
-          })}
-          title="Training volume"
-          unit="lb"
-        >
-          {windowedVolume.length === 0 ? (
-            <div className="flex h-full items-center justify-center rounded-xl bg-surface-inset px-6 text-center">
-              <p className="text-body text-muted-foreground">
-                No weighted sessions in this range. Pick a wider window to see
-                the trend.
-              </p>
-            </div>
-          ) : (
-            <TrendChart
-              color="var(--progress)"
-              points={data.volumePoints.map((p) => ({ t: p.t, value: p.volume }))}
-              rawLabel="Daily volume"
-              tone="neutral"
-              trendLabel="Trend"
-              unit="lb"
-              window={w}
-            />
-          )}
-        </ChartFrame>
-
-        <MuscleFocusCard
+        <MuscleFocusZone
           className="min-w-0 xl:col-span-5"
           data={data}
           empty={empty}
         />
       </div>
 
-      {/* ------------------------------------------------ strength + records */}
+      {/* ------------------------------------------------ training volume zone */}
+      <ChartFrame
+        chrome={false}
+        className="min-w-0"
+        coverage={coverage}
+        emptyMessage="Log weights in a workout and your volume trend starts here."
+        headlineLabel="Latest logged day"
+        height={240}
+        legend={trendChartLegend(
+          "neutral",
+          { raw: "Daily volume", trend: "Trend (smoothed)" },
+          "var(--progress)"
+        )}
+        rangeLabel={control.rangeLabel}
+        reading={volumeReading(windowedVolume, coverage, data.todayMs)}
+        state={
+          empty || data.volumePoints.length === 0
+            ? "empty"
+            : windowedVolume.length < 3
+              ? "sparse"
+              : "populated"
+        }
+        summary={buildChartSummary({
+          title: "Training volume",
+          rangeLabel: control.rangeLabel,
+          reading: volumeReading(windowedVolume, coverage, data.todayMs),
+          unit: "lb",
+        })}
+        title="Training volume"
+        unit="lb"
+      >
+        {windowedVolume.length === 0 ? (
+          /* Insufficient data renders the zone's frame with a stated
+             threshold, uncontained like every sibling state (05 #68;
+             peer rule 01 #66/#73). */
+          <div className="flex h-full items-center justify-center px-6 text-center">
+            <p className="max-w-sm text-body text-muted-foreground">
+              No weighted workouts in this range. Widen the range to see the
+              trend.
+            </p>
+          </div>
+        ) : (
+          <TrendChart
+            color="var(--progress)"
+            points={data.volumePoints.map((p) => ({ t: p.t, value: p.volume }))}
+            rawLabel="Daily volume"
+            tone="neutral"
+            trendLabel="Trend"
+            unit="lb"
+            window={w}
+          />
+        )}
+      </ChartFrame>
+
+      {/* ------------------------------------------------ strength + records
+          Zone header on the same rung and grammar as every sibling zone
+          (06 #15/#16: one header style per level, headers quiet - no icon
+          decoration, 04 §6 #77). The header wraps instead of clipping at
+          320-384 (07 #50; burns the smoke clipped-text pin). */}
       <section className="min-w-0">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="flex items-center gap-2 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-            <Trophy className="size-4 text-amber-500" />
-            Strength and records
-            <KpiHelp label="Strength and records">
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          {/* "Personal records": the one name this component already has on
+              /workouts and in the metric registry (canon 04 §132;
+              member-copy-writer W3). */}
+          <h2 className="flex min-w-0 flex-wrap items-center gap-x-1.5 text-card-title text-muted-foreground">
+            <span>Personal records</span>
+            <KpiHelp label="Personal records">
               Your best performance on each lift, with records merged across
               name variants of the same exercise. "est. 1RM" is your
               estimated one-rep max, calculated from a set's weight and reps
-              with the Epley formula. Tap a lift for its strength trend; gold
-              dots mark record sessions, and every record links to the
+              with the Epley formula. Select a lift for its strength trend;
+              gold dots mark record workouts, and every record links to the
               workout that set it.
             </KpiHelp>
           </h2>
-          <Link
-            className="inline-flex min-h-11 items-center gap-1 text-muted-foreground text-xs underline-offset-4 hover:underline sm:min-h-0"
-            href="/workouts/exercises"
-          >
-            Exercise library
-            <ArrowUpRight aria-hidden className="size-3.5" />
-          </Link>
         </div>
         {data.strength.length > 0 ? (
           <PersonalRecords
@@ -337,12 +363,12 @@ export function TrainingAnalyticsView({
             todayMs={data.todayMs}
           />
         ) : (
-          <div className="flex min-h-36 flex-col items-center justify-center gap-3 rounded-xl bg-surface-inset px-6 py-8 text-center">
+          /* Teach copy only: the hero owns the screen's one CTA (F-2). */
+          <div className="flex min-h-36 flex-col items-center justify-center gap-3 px-6 py-8 text-center">
             <p className="max-w-sm text-body text-muted-foreground">
               Lift something and your records land here: best sets, estimated
               1RM, and the strength trend for every exercise.
             </p>
-            <StartWorkoutButton />
           </div>
         )}
       </section>
@@ -357,7 +383,10 @@ export function TrainingAnalyticsView({
         totalPrEvents={data.prEvents.length}
       />
 
-      {/* Secondary return action only (rule: analytics never force execution). */}
+      {/* Links out (05 #67). Secondary return action only (rule: analytics
+          never force execution). Hidden on first run: every destination is
+          empty and the hero owns the screen's one CTA (F-2; 08 #51). */}
+      {empty ? null : (
       <div className="flex flex-wrap items-center gap-4">
         <Button
           asChild
@@ -376,130 +405,175 @@ export function TrainingAnalyticsView({
           Full workout history
           <ArrowUpRight aria-hidden className="size-3.5" />
         </Link>
+        {/* Moved out of the Personal records header: one utility max on a
+            header baseline (F-13; 06 #18); it is a links-out slot (05 #67). */}
+        <Link
+          className="inline-flex min-h-11 items-center gap-1 text-muted-foreground text-sm underline-offset-4 hover:underline sm:min-h-0"
+          href="/workouts/exercises"
+        >
+          Exercise library
+          <ArrowUpRight aria-hidden className="size-3.5" />
+        </Link>
       </div>
+      )}
     </div>
   );
 }
 
-/* -------------------------------------------------------------- sub-cards */
+/* --------------------------------------------------------------- sub-zones */
 
-function AdherenceCard({
-  adherence,
-  className,
+/**
+ * The hero's one interpreting sentence (05 #65): a plain statement of what
+ * the number means. "About" marks every derived weekly average
+ * (estimates-labeled); each figure states unit, period, and basis
+ * (numbers-say-what-they-are). Strings: member-copy-writer, W3.
+ */
+function HeroSentence({
+  count,
+  windowDays,
+  rangeLabel,
+  sessionDays,
+  totalSessions,
+  todayMs,
 }: {
-  adherence: TrainingAnalytics["adherence"];
-  className?: string;
+  count: number;
+  windowDays: number;
+  rangeLabel: string;
+  sessionDays: readonly { t: number }[];
+  totalSessions: number;
+  todayMs: number;
 }) {
-  const reading = adherence
-    ? loggedReading(adherence.completedThisWeek, {
-        coverage: {
-          loggedDays: adherence.completedThisWeek,
-          windowDays: 7,
-          points: adherence.completedThisWeek,
-          spanDays: 0,
-        },
-      })
-    : unloggedReading();
+  const firstT = sessionDays.length
+    ? Math.min(...sessionDays.map((d) => d.t))
+    : null;
+  const lastT = sessionDays.length
+    ? Math.max(...sessionDays.map((d) => d.t))
+    : null;
 
-  const recentWeeks = adherence ? adherence.weekly.slice(-8) : [];
+  if (count === 0) {
+    /* Filtered-to-empty says so and offers the way out (canon 03 §66). */
+    return (
+      <>
+        Your last workout was {lastT != null ? formatShortDate(lastT) : "a while ago"}.
+        Widen the range to see more.
+      </>
+    );
+  }
 
+  const spanDays =
+    firstT != null ? Math.max(1, Math.round((todayMs - firstT) / MS_PER_DAY) + 1) : 1;
+
+  if (rangeLabel === "all time") {
+    if (spanDays < 14) {
+      /* A weekly claim at under 2 weeks of data is noise: state the
+         threshold instead of faking a trend (05 #68). */
+      return (
+        <>
+          {count} {count === 1 ? "workout" : "workouts"} over {spanDays} days so
+          far. A weekly average shows up after 2 weeks of logging.
+        </>
+      );
+    }
+    const avg = formatAvg(totalSessions / (spanDays / 7));
+    return (
+      <>
+        About {avg.text} {avg.one ? "workout" : "workouts"} a week since your
+        first workout on {firstT != null ? formatShortDate(firstT) : "day one"}.
+      </>
+    );
+  }
+
+  if (rangeLabel === "last 7 days") {
+    /* Over 7 days the average IS the count; anchor against the all-time
+       average instead (05 #62 comparison anchor). */
+    if (spanDays >= 14) {
+      const avg = formatAvg(totalSessions / (spanDays / 7));
+      return (
+        <>
+          Your all-time average is about {avg.text}{" "}
+          {avg.one ? "workout" : "workouts"} a week.
+        </>
+      );
+    }
+    return (
+      <>
+        {count} {count === 1 ? "workout" : "workouts"} in the last 7 days.
+      </>
+    );
+  }
+
+  const avg = formatAvg(count / (windowDays / 7));
   return (
-    <ChartFrame
-      className={className}
-      emptyMessage="Adherence unlocks when a structured training plan is active: each week scores your completed workouts against the plan."
-      goalText={
-        adherence ? `Plan: ${adherence.plannedPerWeek} workouts a week` : undefined
-      }
-      headlineLabel={
-        adherence ? `of ${adherence.plannedPerWeek} planned this week` : undefined
-      }
-      height={204}
-      rangeLabel="this week"
-      reading={reading}
-      state={adherence ? "populated" : "empty"}
-      summary={
-        adherence
-          ? buildChartSummary({
-              title: "Plan adherence",
-              rangeLabel: "this week",
-              reading,
-              unit: "count",
-              extra: [
-                `${adherence.completedThisWeek} of ${adherence.plannedPerWeek} planned workouts completed`,
-                `${recentWeeks.filter((w) => w.planned > 0 && w.completed >= w.planned).length} perfect weeks in the last ${recentWeeks.length}`,
-              ],
-            })
-          : "Plan adherence: no structured training plan active."
-      }
-      title="Plan adherence"
-      unit="count"
-    >
-      {adherence ? (
-        <div className="flex h-full flex-col justify-center gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-          <RingGauge
-            color={
-              adherence.completedThisWeek >= adherence.plannedPerWeek
-                ? GOAL_EMERALD
-                : "var(--progress)"
-            }
-            fraction={
-              adherence.plannedPerWeek > 0
-                ? adherence.completedThisWeek / adherence.plannedPerWeek
-                : 0
-            }
-            size={120}
-            strokeWidth={11}
-          >
-            <div className="flex flex-col items-center leading-none">
-              <span className="font-semibold text-2xl tabular-nums">
-                {adherence.completedThisWeek}
-                <span className="text-muted-foreground text-sm">
-                  /{adherence.plannedPerWeek}
-                </span>
-              </span>
-              <span className="mt-1 text-meta text-muted-foreground uppercase tracking-wide">
-                this week
-              </span>
-            </div>
-          </RingGauge>
-          <div className="flex min-w-0 flex-1 flex-col gap-2">
-            <span className="text-meta text-muted-foreground">
-              {recentWeeks.length === 1
-                ? "This week"
-                : `Last ${recentWeeks.length} weeks`}
-            </span>
-            <div className="flex flex-wrap items-end gap-1.5">
-              {recentWeeks.map((week) => {
-                const perfect = week.planned > 0 && week.completed >= week.planned;
-                return (
-                  <div
-                    className="flex flex-1 flex-col items-center gap-1"
-                    key={week.t}
-                    title={`Week of ${new Date(week.t).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })}: ${week.completed} of ${week.planned}`}
-                  >
-                    <RingGauge
-                      color={perfect ? GOAL_EMERALD : "var(--progress)"}
-                      fraction={week.planned > 0 ? week.completed / week.planned : 0}
-                      size={26}
-                      strokeWidth={4}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-            <span className="text-meta text-muted-foreground">
-              A full ring is a perfect plan week.
-            </span>
-          </div>
-        </div>
-      ) : (
-        <div />
-      )}
-    </ChartFrame>
+    <>
+      About {avg.text} {avg.one ? "workout" : "workouts"} a week across the{" "}
+      {rangeLabel}.
+    </>
   );
 }
 
-function MuscleFocusCard({
+/** One-decimal average, integer-flattened ("3.5", "3"); flags exact 1. */
+function formatAvg(perWeek: number): { text: string; one: boolean } {
+  const rounded = Math.round(perWeek * 10) / 10;
+  return { text: String(rounded), one: rounded === 1 };
+}
+
+/**
+ * Next-milestone fact in the key-facts band. A milestone is a TARGET until
+ * it is reached: the bar takes faint white, never gold - gold is earned,
+ * never promised (owner ruling 2026-07-19; canon 05 #88; --reward comment
+ * in globals.css). Earned milestones keep their gold in the timeline.
+ */
+function NextMilestoneFact({
+  nextMilestone,
+  milestonesReached,
+}: {
+  nextMilestone: { threshold: number; remaining: number } | null;
+  milestonesReached: number;
+}) {
+  /* Caption grammar matches MetricValue's label · scope pieces; the scope
+     names the target ("50th workout"). Strings: member-copy-writer W3. */
+  const label = nextMilestone ? "Next milestone" : "Milestones reached";
+  const scope = nextMilestone
+    ? `${ordinalLabel(nextMilestone.threshold)} workout`
+    : "all time";
+  return (
+    <div className="flex min-w-0 flex-col gap-0.5">
+      {nextMilestone ? (
+        <span className="font-semibold text-2xl tabular-nums tracking-tight">
+          {nextMilestone.remaining}
+          <span className="ml-1.5 font-normal text-muted-foreground text-sm">
+            {nextMilestone.remaining === 1 ? "workout" : "workouts"} to go
+          </span>
+        </span>
+      ) : (
+        <span className="font-semibold text-2xl tabular-nums tracking-tight">
+          {milestonesReached}
+        </span>
+      )}
+      <div className="flex items-center gap-1 text-muted-foreground text-xs">
+        <span className="min-w-0">
+          {label}
+          <span className="ml-1 text-muted-foreground/70">· {scope}</span>
+        </span>
+        <KpiHelp label={`${label} · ${scope}`}>
+          Workout-count milestones are earned at real thresholds (10th, 25th,
+          50th workout and up). This is your progress toward the next one.
+        </KpiHelp>
+      </div>
+      {nextMilestone && (
+        <GoalProgressBar
+          className="bg-[var(--faint)]"
+          fraction={
+            (nextMilestone.threshold - nextMilestone.remaining) /
+            nextMilestone.threshold
+          }
+        />
+      )}
+    </div>
+  );
+}
+
+function MuscleFocusZone({
   data,
   empty,
   className,
@@ -535,6 +609,7 @@ function MuscleFocusCard({
 
   return (
     <ChartFrame
+      chrome={false}
       className={className}
       caption={
         supported && unspecified
@@ -581,31 +656,6 @@ function MuscleFocusCard({
 }
 
 /* ---------------------------------------------------------------- helpers */
-
-/** The status-band tile shell. Numeric tiles pass a scope-required
- *  {@link MetricValue} (RC-8) as their only child; the milestone tile, which
- *  renders a progress bar rather than a single number, keeps `label`/`help`. */
-function StatTile({
-  label,
-  help,
-  children,
-}: {
-  label?: string;
-  help?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col justify-between gap-1 rounded-xl border border-border bg-surface-card px-4 py-3.5">
-      {label != null && (
-        <div className="flex items-center gap-1 text-muted-foreground text-xs">
-          {label}
-          {help && <KpiHelp label={label}>{help}</KpiHelp>}
-        </div>
-      )}
-      {children}
-    </div>
-  );
-}
 
 function StartWorkoutButton() {
   return (

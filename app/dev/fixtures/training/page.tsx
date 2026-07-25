@@ -42,7 +42,9 @@ import {
  *   - sparse: one session; facts without trend claims.
  *   - consistent: the full rewarding treatment (PR events across the fixture
  *     "Bench Press" alias, milestones, a recent-win celebration hero, and a
- *     synthetic-but-labeled plan adherence stream).
+ *     synthetic-but-labeled plan-completion stream feeding the perfect-week
+ *     milestones; the adherence CARD itself was deleted by owner ruling Q-G,
+ *     executed in W3, so the view renders no adherence zone).
  *   - lapsed / overshoot: old data rendered honestly.
  *   - locked-basic: the locked teaser (rendered via the section contract).
  *

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, Inter, JetBrains_Mono } from "next/font/google";
+import { bodoni } from "@/app/fonts";
 import { TimezoneSync } from "@/components/account/timezone-sync";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
@@ -75,7 +76,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      className={`${inter.variable} ${archivo.variable} ${jetbrainsMono.variable}`}
+      className={`${inter.variable} ${archivo.variable} ${jetbrainsMono.variable} ${bodoni.variable}`}
       lang="en"
       suppressHydrationWarning
     >
