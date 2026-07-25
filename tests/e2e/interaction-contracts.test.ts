@@ -276,7 +276,7 @@ test("bottom nav tabs stay tappable while the active-workout dock is up (SYS-05)
   ).toBeVisible();
   await page.goto("/workouts");
   await expect(
-    page.getByRole("button", { name: "Stop this workout" })
+    page.getByRole("button", { name: "Discard this workout" })
   ).toBeVisible({ timeout: 10_000 });
 
   // The Next.js dev-tools badge (<nextjs-portal>) floats over the bottom-left

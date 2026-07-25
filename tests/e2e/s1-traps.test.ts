@@ -11,7 +11,7 @@
  *                 not summon the mini bar or lock every Start button behind
  *                 "Finish your current workout first".
  *   RUN-01/02     An ENGAGED session (Play pressed) shows the mini bar ABOVE
- *                 the bottom tab bar, with a working stop control.
+ *                 the bottom tab bar, with a working discard control.
  *   XPK-15/16     Adding exercises lands back on the workout in ONE
  *                 navigation, with visible confirmation.
  *   RUN-68/70     The Finish button sits fully inside the viewport and is
@@ -183,7 +183,7 @@ for (const viewport of TRAP_VIEWPORTS) {
       // Leave WITHOUT pressing Play or logging anything.
       await page.goto("/workouts");
       await expect(
-        page.getByRole("button", { name: "Stop this workout" })
+        page.getByRole("button", { name: "Discard this workout" })
       ).toHaveCount(0);
       await expect(
         page.getByText("Finish your current workout first")
@@ -209,7 +209,7 @@ for (const viewport of TRAP_VIEWPORTS) {
       await context.close();
     });
 
-    test(`engaged session shows the mini bar above the tab bar with a stop control (RUN-01/02) @ ${viewport.width}px`, async ({
+    test(`engaged session shows the mini bar above the tab bar with a discard control (RUN-01/02) @ ${viewport.width}px`, async ({
       browser,
     }) => {
       const { context, page } = await openContext(browser, viewport);
@@ -227,11 +227,13 @@ for (const viewport of TRAP_VIEWPORTS) {
       ).toBeVisible();
       await page.goto("/workouts");
 
-      const stop = page.getByRole("button", { name: "Stop this workout" });
-      await expect(stop).toBeVisible();
+      const discard = page.getByRole("button", {
+        name: "Discard this workout",
+      });
+      await expect(discard).toBeVisible();
 
       // The dock must clear the bottom nav entirely, and must itself fit
-      // the viewport (an off-screen stop control is the RUN-01 trap again).
+      // the viewport (an off-screen discard control is the RUN-01 trap again).
       const clear = await page.evaluate(() => {
         const nav = document.querySelector('nav[aria-label="Primary"]');
         const dock = document.querySelector(".bottom-above-tabbar");
@@ -653,7 +655,7 @@ test.describe("finish-flow fixes (2026-07-22)", () => {
 
       // The session ended cleanly: no mini bar resurrecting it.
       await expect(
-        page.getByRole("button", { name: "Stop this workout" })
+        page.getByRole("button", { name: "Discard this workout" })
       ).toHaveCount(0);
 
       const duration = await statTileValue(page, "Duration");
