@@ -199,7 +199,10 @@
 .m-macro .label { font-size: max(2.5cqw, 9px); letter-spacing: 0.2em; line-height: 1.2; }
 .m-macro .num {
   font-family: var(--f-display);
-  font-weight: 400;
+  /* owner 2026-07-19 review #2 ("64" — the 4's diagonal razor thin):
+     every upright DATA numeral takes the hero's no-hairline treatment */
+  font-weight: 500;
+  font-variation-settings: "opsz" 12;
   font-size: 6.8cqw;
   color: var(--ink);
   line-height: 1;
@@ -207,6 +210,7 @@
 }
 .m-macro .num .unit {
   font-size: 4.2cqw;
+  font-variation-settings: normal;
   color: var(--c);
   margin-left: 0.5cqw;
 }
@@ -343,18 +347,20 @@
 }
 .m-sleep .time {
   font-family: var(--f-display);
-  font-weight: 400;
+  font-weight: 500; /* no-hairline numeral treatment (owner 2026-07-19 review #2) */
+  font-variation-settings: "opsz" 12;
   font-size: 11.1cqw; /* mock time digits: 75px943 ink */
   line-height: 1.05;
   color: var(--ink);
   margin-top: 0.7cqw;
   white-space: nowrap;
 }
-.m-sleep .time .unit { font-size: 6.1cqw; color: var(--sleep); margin-left: 0.5cqw; }
+.m-sleep .time .unit { font-size: 6.1cqw; font-variation-settings: normal; color: var(--sleep); margin-left: 0.5cqw; }
 .m-sleep .score-label { margin-top: 1.3cqw; }
 .m-sleep .score {
   font-family: var(--f-display);
-  font-weight: 400;
+  font-weight: 500;
+  font-variation-settings: "opsz" 12;
   font-size: 8cqw;
   line-height: 1;
   color: var(--ink);
@@ -386,6 +392,8 @@
 }
 .orbit-label .big {
   font-family: var(--f-display);
+  font-weight: 500;
+  font-variation-settings: "opsz" 12;
   font-size: 4.4cqw;
   color: var(--reward);
 }
@@ -444,10 +452,10 @@
 .sp-hero { font-family: var(--f-display); font-weight: 500; font-variation-settings: "opsz" 12; font-size: var(--t-hero); letter-spacing: 0.05em; line-height: 1.02; color: var(--ink); }
 .sp-display { font-family: var(--f-display); font-weight: 500; font-variation-settings: "opsz" 12; font-size: var(--t-display); letter-spacing: 0.05em; line-height: 1.05; color: var(--ink); }
 .sp-display span { font-variation-settings: normal; letter-spacing: normal; } /* unit span back to auto */
-.sp-stat-lg { font-family: var(--f-display); font-weight: 400; font-size: var(--t-stat-lg); line-height: 1.1; color: var(--ink); }
-.sp-stat { font-family: var(--f-display); font-weight: 400; font-size: var(--t-stat); line-height: 1.1; color: var(--ink); }
+.sp-stat-lg { font-family: var(--f-display); font-weight: 500; font-variation-settings: "opsz" 12; font-size: var(--t-stat-lg); line-height: 1.1; color: var(--ink); }
+.sp-stat { font-family: var(--f-display); font-weight: 500; font-variation-settings: "opsz" 12; font-size: var(--t-stat); line-height: 1.1; color: var(--ink); }
 .sp-headline { font-family: var(--f-display); font-style: italic; font-weight: 400; font-size: var(--t-headline); color: var(--ink); }
-.sp-value { font-family: var(--f-display); font-size: var(--t-value); color: var(--ink-soft); }
+.sp-value { font-family: var(--f-display); font-weight: 500; font-variation-settings: "opsz" 12; font-size: var(--t-value); color: var(--ink-soft); }
 .sp-body { font-size: var(--t-body); color: var(--ink-soft); max-width: 48ch; }
 .sp-label-lg { font-size: var(--t-label-lg); letter-spacing: 0.16em; color: var(--mute); }
 .sp-label { font-size: var(--t-label); letter-spacing: 0.18em; color: var(--mute); }
@@ -486,7 +494,7 @@
   display: inline-flex; align-items: center; justify-content: center;
   height: 48px; padding: 0 22px;
   border-radius: var(--r-control);
-  font-family: var(--f-body); font-size: 0.9375rem; font-weight: 600;
+  font-family: var(--f-body); font-size: 1.0625rem; font-weight: 600;
   border: none; white-space: nowrap;
 }
 .btn-go { background: var(--go); color: #04170c; box-shadow: 0 0 26px rgba(47, 212, 120, 0.22); }
@@ -577,8 +585,8 @@
 .metric-col .num { font-family: var(--f-display); font-weight: 400; font-size: var(--t-stat); color: var(--ink); line-height: 1; margin-top: var(--sp-2); }
 .metric-col .num .unit { font-size: 0.62em; color: var(--c); }
 .metric-col .track { position: relative; height: 4px; border-radius: 999px; background: rgba(255,255,255,0.13); margin-top: var(--sp-3); }
-.metric-col .target { font-size: 0.8125rem; color: var(--mute); margin-top: var(--sp-3); }
-.metric-col .pct { font-size: 0.875rem; font-weight: 600; color: var(--energy); margin-top: 4px; }
+.metric-col .target { font-size: 1rem; color: var(--mute); margin-top: var(--sp-3); }
+.metric-col .pct { font-size: 1rem; font-weight: 600; color: var(--energy); margin-top: 4px; }
 
 .gauge { position: relative; width: 168px; }
 .gauge svg { width: 100%; height: auto; }
@@ -630,7 +638,7 @@
   color: var(--faint);
 }
 .nav-prim .item svg { width: 19px; height: 19px; }
-.nav-prim .item .nav-label { font-size: 10px; letter-spacing: 0.06em; font-weight: 500; }
+.nav-prim .item .nav-label { font-size: 14px; letter-spacing: 0.06em; font-weight: 500; }
 .nav-prim .item.active { color: #eeb95c; }
 .nav-prim .item.log .disc {
   display: flex; align-items: center; justify-content: center;

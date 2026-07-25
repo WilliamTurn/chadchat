@@ -39,7 +39,7 @@ Known expected failures: the old template suites (`api.test.ts`, `model-selector
 - Dialogs: Cancel on the left, confirming action on the right (top in stacked layouts); the SAFE action is the focused default; destructive actions use the destructive style.
 - Reordering uses visible drag handles (a menu path may exist as secondary).
 - Every empty state says why it is empty and offers the action that fills it, and never strands the user without a way back.
-- Type floor is 12px, labels 13px+ on phones (permanent owner order; the floors live in the `app/globals.css` tokens (ds.css port pending — re-point on land)).
+- Type floor is 12px, labels 13px+ on phones (permanent owner order; the floors live in the `app/globals.css` tokens (ds.css port landed, W2 2026-07-24)).
 
 The full canon lives in `docs/ux-canon/` (ten files, landed via S0b-3) and `docs/composition-canon/` (ten files, landed via D2 — grouping/containers, density, forms, overlays, screen recipes, rhythm, responsive, placement); the chadlatest copies are the frozen research artifacts. The skills load the relevant domain automatically (`ux-*` for element behavior/rendering, `composition-*` for assembly); read the owning section before building anything it covers. "Overhaul page X" sessions follow `docs/overhaul-session-template.md`.
 
@@ -61,4 +61,4 @@ Before calling a member-facing surface done: run the UX auditors whose domain yo
 
 ## Precedence note
 
-Vercel Web Interface Guidelines (installed) are the mechanics floor. Where they conflict with the `app/globals.css` tokens (ds.css port pending — re-point on land) or an owner decision, the owner's decision wins; log the conflict in the decision log.
+Vercel Web Interface Guidelines (installed) are the mechanics floor. Where they conflict with the `app/globals.css` tokens (ds.css port landed, W2 2026-07-24) or an owner decision, the owner's decision wins; log the conflict in the decision log.

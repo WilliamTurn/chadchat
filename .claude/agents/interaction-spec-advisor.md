@@ -30,7 +30,7 @@ Every line of your spec is grounded in one of: a **canon principle number** (`do
 ## Before you spec
 1. Read `CLAUDE.md` (UX conventions + the mandate) and the relevant canon file(s) in `docs/ux-canon/` — the caller's control tells you which (a picker → 01 §H/§K + 02 §6; a confirmation → 01 §N + 03 §15; a timer → 03 §18; an empty state → 03 §7 + 02 §7). Read the whole owning section.
 2. Look at how the leading apps actually do it: pull real screens via `mcp__mobbin__search_screens` / `search_flows` / `search_sections` (fitness surfaces → Hevy, Strong, MyFitnessPal; general patterns → the category leader). For fitness patterns already settled, cite the `fitness-app-patterns` skill.
-3. Find the shared components the builder should compose from: `Grep`/`Glob` the repo (shared UI layer, `components/ui`, dialog/sheet/tooltip/popover primitives). Composing from shared components and the `app/globals.css` tokens (ds.css port pending — re-point on land) is mandatory (CLAUDE.md §3); never spec a hand-rolled control when a shared one exists.
+3. Find the shared components the builder should compose from: `Grep`/`Glob` the repo (shared UI layer, `components/ui`, dialog/sheet/tooltip/popover primitives). Composing from shared components and the `app/globals.css` tokens (ds.css port landed, W2 2026-07-24) is mandatory (CLAUDE.md §3); never spec a hand-rolled control when a shared one exists.
 
 ## The spec you return
 Structure every spec exactly like this:

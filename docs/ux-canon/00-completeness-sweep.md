@@ -46,7 +46,7 @@ Severity key: **MISSING** = no file owns it and a leading team would need it. **
 | Ch8: **Multilevel Undo, Command History, Macros** | **GAP (THIN)** | Canon's undo = toast-undo + trash (01 §N, 03 §15). Editor-grade undo stacks, redo, history absent. See Gaps #5 |
 | Ch9 Complex Data: Sortable Table, Datatips, Dynamic Queries, Small Multiples, brushing/zoom | 08 §B1–B2, §B10; 04 §8 | Core covered; advanced analytic interaction (brushing) OK to skip for consumer apps |
 | Ch10 Forms: Forgiving Format, Structured Format, Input Hints/Prompt, Autocompletion, Dropdown Chooser, Good Defaults, Error Messages, Password Meter | 01 §B–F, §O, §R; 03 §6 | Covered exhaustively |
-| Ch11 UI Systems / atomic design | Out of scope (design-ops) + project tokens (app/globals.css; ds.css port pending) cover | OK |
+| Ch11 UI Systems / atomic design | Out of scope (design-ops) + project tokens (app/globals.css; ds.css port landed W2 2026-07-24) cover | OK |
 
 ### Map 2 — *About Face* 4th ed.
 

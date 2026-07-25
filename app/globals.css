@@ -293,9 +293,14 @@
  * sheet, the original). Values are theme-independent by design: the
  * approved system is the dark editorial canvas; there is no light variant.
  *
- * RAILS ONLY (design-system-port session): no member-facing surface reads
- * these yet, and the shadcn/FIX-13 variables below are NOT repointed at
- * them — that migration is the design waves' own owner-approved work.
+ * W2 ds-token port (2026-07-24): this block is reconciled 1:1 against the
+ * approved ds.css (fat = rose, the training family, the raised fluid type
+ * ladder) and extended with the three composition-canon DS-gap token
+ * groups (surface ramp, input-component geometry, rung-to-meaning map —
+ * at the end of this block). Member surfaces MAY and DO read these tokens
+ * (the workouts/celebration surfaces already do); the shadcn/FIX-13
+ * variables above are still NOT repointed at them — that migration is
+ * W3–W5's own owner-approved work.
  *
  * MAPPING — what each token will eventually replace or feed, so the
  * design waves can migrate deliberately instead of rediscovering it:
@@ -357,7 +362,11 @@
   --danger: #ff4f43;   /* destructive + warning ONLY */
   --go: #2fd478;       /* begin / advance actions */
   --progress: #3ce6a4; /* movement toward a goal, may glow */
-  --reward: #f5c95c;   /* celebrations only, glows */
+  --reward: #f5c95c;   /* EARNED only — streaks, milestones, records,
+                          celebrations. Never a target: gold is earned,
+                          never promised (owner ruling 2026-07-19).
+                          Targets take faint white, usually dashed or
+                          etched (ink at low opacity, or --faint). */
   /* S2 (workout complete): the forged-gold ramp — metallic shades and
      alpha glows derived from --reward for the struck-medal celebration.
      Celebration surfaces only; gold stays EARNED (Q-C / owner 2026-07-19). */
@@ -373,8 +382,14 @@
   /* ---- atmosphere families (zone + data) ---- */
   --energy: #ffa14f;
   --energy-deep: #ff7a38;
+  /* training family (owner-approved 2026-07-19): ember red-orange
+     anchored on the approved muscle glow; the DS-18 answer */
+  --training: #ff6828;
+  --training-deep: #e43814;
   --carbs: #3fe3cb;
-  --fat: #b78bff;
+  /* fat = rose (owner-approved 2026-07-19); purple belongs to sleep
+     EXCLUSIVELY — never reuse it for a macro or any other family */
+  --fat: #ff8fb0;
   --hydro: #46c2ff;
   --hydro-soft: #9bd6ff;
   --sleep: #a68bfa;
@@ -388,17 +403,26 @@
   --f-body: var(--font-inter), system-ui, sans-serif;
   --f-spec: var(--font-jetbrains), ui-monospace, monospace;
 
-  /* ---- fluid type scale (the proposal for real surfaces) ---- */
+  /* ---- fluid type scale (the proposal for real surfaces) ----
+     TYPE FLOOR (owner order, 2026-07-19, permanent): nothing a user
+     reads may render below 12px, and labels/captions sit at 13px+ on
+     phones. The owner has rejected tiny type on every review; raising
+     an existing size is always safe, shrinking below these floors is
+     a defect.
+     RAISED AGAIN 2026-07-19 (owner punch list): the floors were the
+     minimum, not the target — the whole ladder moved up so phone type
+     reads at mainstream app sizes (body 17px, labels 15px, captions
+     14px). Do not lower any tier; the floors above still bind. */
   --t-hero: clamp(3.5rem, 1.9rem + 7.6vw, 6.75rem);
   --t-display: clamp(3.25rem, 1.9rem + 6.4vw, 5.75rem);
-  --t-stat-lg: clamp(2.125rem, 1.45rem + 3vw, 3.375rem);
-  --t-stat: clamp(1.625rem, 1.2rem + 1.9vw, 2.375rem);
-  --t-headline: clamp(1.375rem, 1.08rem + 1.3vw, 2rem);
-  --t-value: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
-  --t-body: 0.9375rem;
-  --t-label-lg: 0.8125rem;
-  --t-label: 0.6875rem;
-  --t-micro: 0.625rem;
+  --t-stat-lg: clamp(2.25rem, 1.5rem + 3.2vw, 3.5rem);
+  --t-stat: clamp(1.75rem, 1.25rem + 2.1vw, 2.5rem);
+  --t-headline: clamp(1.5rem, 1.15rem + 1.5vw, 2.125rem);
+  --t-value: clamp(1.125rem, 1.05rem + 0.35vw, 1.3125rem);
+  --t-body: 1.0625rem;
+  --t-label-lg: 1rem;
+  --t-label: 0.9375rem;
+  --t-micro: 0.8125rem;
 
   /* ---- spacing (4px base) ---- */
   --sp-1: 4px;
@@ -414,6 +438,78 @@
   --gutter: clamp(1.5rem, 6vw, 3rem);
 
   --r-control: 12px;
+
+  /* ==================================================================
+   * W2 GAP-CLOSURE TOKENS (composition-canon DS gaps, 2026-07-24).
+   * The three gaps the canon flagged for the port session
+   * (docs/composition-canon/00-index.md §"DS gaps"). Each encodes a
+   * decision already shipped or already ruled — no new inventions.
+   * ================================================================ */
+
+  /* (1) Surface ramp (canon 06 #23; rung 5 of the separation ladder,
+     01 #11). The ramp has exactly two levels: --bg, and this one step
+     up. A tint zone is --bg-raised applied FULL-BLEED — viewport edge
+     to viewport edge, square, borderless, shadowless (06 #24: the
+     moment it gains a radius, border, or shadow it has become a card).
+     Tint at most one or two regions per screen (06 #25). Alpha ink
+     from the hairline family so the step composites over the zone
+     atmospheres; lands ≈rgb(17,19,24) on the raw canvas — comparable
+     to one step of the shipped dark surface ladder (page → card). */
+  --bg-raised: rgba(233, 238, 255, 0.05);
+
+  /* (2) Input-component tokens (canon 03 #45/#46: one input system,
+     one control height per row). These encode the SHIPPED geometry of
+     ui/input.tsx + input-group.tsx (the W1 C3 affix slot), and those
+     components — plus select and button row heights — now read them,
+     so a mixed control row can never misalign.
+       --control-h       36px — default (pointer-density) control height
+       --control-h-lg    44px on phones (target-size law, FIX-38);
+                         40px under a pointer (the 48rem override below)
+       --control-pad-x   the control text inset and the affix-slot
+                         inset (input px, addon pl/pr)
+       --control-ring-w  focus / invalid ring width
+     Control radius stays the shipped pill (rounded-4xl) for now;
+     --r-control (12px) takes over in the W3–W5 surface migration. */
+  --control-h: 2.25rem;
+  --control-h-lg: 2.75rem;
+  --control-pad-x: 0.75rem;
+  --control-ring-w: 3px;
+
+  /* (3) Rung-to-meaning map (canon 01 #68): one containment vocabulary;
+     each rung means ONE thing everywhere. Numbering = 01 #11's ladder.
+       rung 0  shared flow        same group; no separator at all
+       rung 1  whitespace step    group boundary inside a zone (gap
+                                  table 06 #8: --sp-2 within a group,
+                                  --sp-4/--sp-5 between groups)
+       rung 2  alignment shift    register change on the spine (e.g.
+                                  centered lockup → left spine)
+       rung 3  section header     a named zone begins (uppercase
+                                  --f-label eyebrow in --mute)
+       rung 4  hairline divider   peer separation inside a zone — row
+                                  boundaries, column splits (--hairline)
+       rung 5  tint zone          MODE change: the one live/active
+                                  region of a screen (an in-progress
+                                  workout, a footer register shift).
+                                  Never decoration (--bg-raised,
+                                  full-bleed only)
+       rung 6  bordered container an earned, usually tappable unit —
+                                  01 §4 tests pass (--hairline-2 stroke)
+       rung 7  elevated card      floating transient chrome above the
+                                  page: docks, rest timer, popovers
+                                  (--shadow-float)
+       rung 8  separate surface   overlays with their own contract:
+                                  sheet, dialog, route
+     A rung never borrows a sibling's meaning: tint never means
+     "disabled", hairline boxes never decorate (01 #68). */
+}
+
+/* The lg control drops from 44px (touch-target law) to 40px under a
+   pointer — same 48rem breakpoint the md: utilities use (FIX-38), so
+   token-height controls and legacy md:h-10 controls stay in lockstep. */
+@media (min-width: 48rem) {
+  :root {
+    --control-h-lg: 2.5rem;
+  }
 }
 
 /* FIX-19 reduced-motion law: looping utility animations stop too (state

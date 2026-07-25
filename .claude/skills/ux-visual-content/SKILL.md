@@ -5,7 +5,7 @@ description: Building or changing typography, spacing/layout, color, visual hier
 
 # Visual design, motion, and content (canon 04)
 
-Owning file: `docs/ux-canon/04-visual-motion-content.md` (168 principles). **[M]** mechanical, **[J]** judgment. Cite numbers (e.g. `// canon 04 §127`). This domain composes UNDER the `app/globals.css` tokens (ds.css port pending — re-point on land) and the `/design-system` reference sheet — where a rule here conflicts with an approved token or owner decision, the token/decision wins (log it).
+Owning file: `docs/ux-canon/04-visual-motion-content.md` (168 principles). **[M]** mechanical, **[J]** judgment. Cite numbers (e.g. `// canon 04 §127`). This domain composes UNDER the `app/globals.css` tokens (ds.css port landed, W2 2026-07-24) and the `/design-system` reference sheet — where a rule here conflicts with an approved token or owner decision, the token/decision wins (log it).
 
 ## Hard-rule digest
 
@@ -41,4 +41,4 @@ Owning file: `docs/ux-canon/04-visual-motion-content.md` (168 principles). **[M]
 1 typography · 2 spacing/layout · 3 color · 4 visual hierarchy · 5 elevation/shadows/borders/radii · 6 iconography · 7 imagery/illustration · 8 data viz · 9 motion · 10 dark mode · 11 UX writing/microcopy · 12 content structure · 13 brand-voice boundaries · 14 i18n/RTL. Ends with Cross-references and a substantial Contested list (Title vs sentence case, pure-black dark, APCA vs WCAG, skeletons, disabled buttons, springs vs curves, em-dash = house rule).
 
 ## Binding instruction
-Before building anything this domain covers, **Read the owning sections of `docs/ux-canon/04-visual-motion-content.md` in full**, and reconcile against `app/globals.css` (ds.css port pending — re-point on land) + the `/design-system` sheet (tokens win). New surface → read the whole file. For member-facing copy specifically, also load the `member-copy` skill. Cite principle numbers in code comments and closing reports.
+Before building anything this domain covers, **Read the owning sections of `docs/ux-canon/04-visual-motion-content.md` in full**, and reconcile against `app/globals.css` (ds.css port landed, W2 2026-07-24) + the `/design-system` sheet (tokens win). New surface → read the whole file. For member-facing copy specifically, also load the `member-copy` skill. Cite principle numbers in code comments and closing reports.

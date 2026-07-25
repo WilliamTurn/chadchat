@@ -261,7 +261,7 @@ export default function DesignSystemSheet() {
                 <div className="m-macros">
                   <MacroCol label="Protein" value={128} target="160g" pct={80} color="#ffa14f" />
                   <MacroCol label="Carbs" value={210} target="250g" pct={84} color="#3fe3cb" />
-                  <MacroCol label="Fat" value={64} target="90g" pct={71} color="#b78bff" />
+                  <MacroCol label="Fat" value={64} target="90g" pct={71} color="#ff8fb0" />
                 </div>
 
                 {/* hydration scene */}
@@ -569,7 +569,7 @@ export default function DesignSystemSheet() {
             {[
               { name: "Energy", c: "#ffa14f", v: "2,140", u: "", w: 78 },
               { name: "Carbs", c: "#3fe3cb", v: "210", u: "g", w: 84 },
-              { name: "Fat", c: "#b78bff", v: "64", u: "g", w: 71 },
+              { name: "Fat", c: "#ff8fb0", v: "64", u: "g", w: 71 },
               { name: "Hydration", c: "#46c2ff", v: "56", u: "oz", w: 70 },
               { name: "Sleep", c: "#a68bfa", v: "85", u: "", w: 92 },
             ].map((f) => (
@@ -845,12 +845,13 @@ export default function DesignSystemSheet() {
               ["--danger", "#ff4f43", "destructive + warning only"],
               ["--go", "#2fd478", "start / advance"],
               ["--progress", "#3ce6a4", "toward goal, may glow"],
-              ["--reward", "#f5c95c", "celebrations, glows"],
-              ["--energy", "#ffa14f", "calories, training effort"],
+              ["--reward", "#f5c95c", "earned only: streaks, milestones, records — never targets (those take faint white, dashed)"],
+              ["--energy", "#ffa14f", "calories, nutrition energy"],
+              ["--training", "#ff6828", "training family: effort, muscle heat"],
               ["--carbs", "#3fe3cb", "carbohydrate data"],
-              ["--fat", "#b78bff", "fat data"],
+              ["--fat", "#ff8fb0", "fat data (rose; purple is sleep's alone)"],
               ["--hydro", "#46c2ff", "hydration zone + data"],
-              ["--sleep", "#a68bfa", "sleep zone + data"],
+              ["--sleep", "#a68bfa", "sleep zone + data (exclusive hue)"],
             ].map(([name, hex, meaning]) => (
               <div key={name} style={{ display: "contents" }}>
                 <span>
