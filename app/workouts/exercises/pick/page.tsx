@@ -8,7 +8,18 @@ import {
 import { WorkoutPageHeader } from "@/components/workouts/v2/page-header";
 import { loadWorkoutContext, requireWorkoutsUser } from "../../data";
 
-export const metadata = { title: "Add exercises" };
+// The tab title matches the label the user selected (flow audit F-14;
+// canon 02 §33): "Replace exercise" in replace mode, "Add exercises" else.
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ target?: string }>;
+}) {
+  const params = await searchParams;
+  return {
+    title: params.target === "replace" ? "Replace exercise" : "Add exercises",
+  };
+}
 
 /**
  * The Add Exercises page, a dedicated full page (never a cramped panel).

@@ -179,6 +179,9 @@ function MobileSheet({
             <X aria-hidden className="size-5" />
           </button>
         </div>
+        {/* The footer scrolls WITH the rows (placement audit F-3): pinned
+            outside the scroller, passive reference content held the sheet's
+            bottom and clipped the destructive row at 320px (comp 08 §2). */}
         <div className="flex max-h-[60dvh] flex-col gap-0.5 overflow-y-auto">
           {actions.map((action) => (
             <div className="contents" key={action.label}>
@@ -186,18 +189,26 @@ function MobileSheet({
                 <div aria-hidden className="my-1 h-px shrink-0 bg-border/70" />
               )}
               <button
-                // shrink-0: rows in the scrolling flex column must never be
-                // compressed into each other when the list exceeds the
-                // sheet's max height; the column scrolls instead.
-                className={`flex min-h-[52px] w-full shrink-0 cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-left transition disabled:cursor-default disabled:opacity-50 ${
+                // aria-disabled, not native disabled (flow audit F-4): a Move
+                // row that disables at the end of the range must keep the
+                // focus it holds, or the keyboard user is dropped to <body>
+                // mid-sheet (canon 01 §89). shrink-0: rows in the scrolling
+                // flex column must never be compressed into each other when
+                // the list exceeds the sheet's max height; it scrolls instead.
+                aria-disabled={action.disabled || undefined}
+                className={`flex min-h-[52px] w-full shrink-0 cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-left transition ${
+                  action.disabled ? "cursor-default opacity-50" : ""
+                } ${
                   action.danger
                     ? "text-blood hover:bg-blood/10"
                     : action.selected
                       ? "bg-[var(--go)]/12 text-foreground"
                       : "text-foreground hover:bg-muted/60"
                 }`}
-                disabled={action.disabled}
                 onClick={() => {
+                  if (action.disabled) {
+                    return;
+                  }
                   action.onSelect();
                   if (!action.keepOpen) {
                     onClose();
@@ -232,8 +243,8 @@ function MobileSheet({
               </button>
             </div>
           ))}
+          {footer && <div className="shrink-0">{footer}</div>}
         </div>
-        {footer}
         {/* Position feedback for act-in-place rows (canon 03 §137: calm,
             polite, announces the settled result). */}
         <div aria-live="polite" className="sr-only">
@@ -260,6 +271,7 @@ export function ActionMenu({
   open,
   onOpenChange,
   liveMessage,
+  align = "end",
 }: {
   trigger: ReactNode;
   title: string;
@@ -271,8 +283,18 @@ export function ActionMenu({
   footer?: ReactNode;
   /** Politely announced to screen readers while open (Move up/down feedback). */
   liveMessage?: string;
+  /** Desktop anchoring. "end" for trailing-edge ⋯ triggers; "start" for a
+   * leading-edge trigger like the set number, so the menu hangs over its
+   * own row instead of the sidebar (placement audit F-4; comp 08 §21). */
+  align?: "start" | "end";
 }) {
   const isMobile = useIsMobile();
+  // The moment the last act-in-place row fired (flow audit F-3): a move
+  // reorders the list live, the anchored menu follows its trigger to the
+  // card's new slot, and the user's next click lands where the menu WAS.
+  // Within a short grace window that stranded click is a mis-aim caused by
+  // us moving the control (canon 01 §15), so it must not dismiss the menu.
+  const lastKeepOpenAt = useRef(0);
 
   if (isMobile) {
     return (
@@ -295,12 +317,17 @@ export function ActionMenu({
     <DropdownMenu modal onOpenChange={onOpenChange} open={open}>
       <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
       <DropdownMenuContent
-        align="end"
+        align={align}
         // w-auto overrides the shared content's trigger-width sizing, which
         // would produce a 44px-wide menu from a 44px kebab trigger. Popover
         // cap ~360px (comp 04 §48); collision handling stays on.
         className="w-auto min-w-64 max-w-80 p-1.5"
         collisionPadding={12}
+        onInteractOutside={(e) => {
+          if (Date.now() - lastKeepOpenAt.current < 1200) {
+            e.preventDefault();
+          }
+        }}
         sideOffset={6}
       >
         {/* The header keeps information parity with the phone sheet
@@ -319,20 +346,30 @@ export function ActionMenu({
           <div className="contents" key={action.label}>
             {action.dividerBefore && <DropdownMenuSeparator />}
             <DropdownMenuItem
+              // aria-disabled, not the Radix disabled prop (flow audit F-4):
+              // a Move row that disables at the end of the range keeps its
+              // roving focus instead of dropping the keyboard user to <body>.
+              aria-disabled={action.disabled || undefined}
               className={`cursor-pointer items-start py-2 ${
+                action.disabled ? "cursor-default opacity-50" : ""
+              } ${
                 action.danger
                   ? "text-blood"
                   : action.selected
                     ? "bg-emerald-500/10"
                     : ""
               }`}
-              disabled={action.disabled}
               onSelect={(e) => {
+                if (action.disabled) {
+                  e.preventDefault();
+                  return;
+                }
                 // keepOpen rows act in place: the menu stays open and roving
                 // focus stays on the row, so repeated Enter keeps moving
                 // (Radix-documented preventDefault contract).
                 if (action.keepOpen) {
                   e.preventDefault();
+                  lastKeepOpenAt.current = Date.now();
                 }
                 action.onSelect();
               }}

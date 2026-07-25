@@ -68,11 +68,16 @@ export function RestTimerPicker({
   open,
   onOpenChange,
   onSave,
+  returnFocusTo,
 }: {
   wex: SessionExercise;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (seconds: number) => void;
+  /** Where focus lands on close (flow audit F-5): the menu row that opened
+   * this picker unmounts with its menu, so without an explicit home the
+   * dialog's default return target is gone and focus falls to <body>. */
+  returnFocusTo?: React.RefObject<HTMLElement | null>;
 }) {
   const isPreset = REST_OPTIONS.some((o) => o.seconds === wex.restSeconds);
   // Staged selection (canon 01 §80/§82: batched commit, explicit Save).
@@ -87,6 +92,7 @@ export function RestTimerPicker({
   );
   const [error, setError] = useState<string | null>(null);
   const chipRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const customFieldRef = useRef<HTMLInputElement>(null);
 
   // Re-stage from the store value when it changes underneath (a different
   // exercise instance, or a save that landed elsewhere). An accidental
@@ -124,21 +130,34 @@ export function RestTimerPicker({
       return;
     }
     if (customSeconds == null) {
-      setError("Enter the time as minutes and seconds, like 2:30.");
+      fail("Enter the time as minutes and seconds, like 2:30.");
       return;
     }
     if (customSeconds < REST_MIN_SECONDS) {
-      setError("Enter 5 sec or more.");
+      fail("Enter 5 sec or more.");
       return;
     }
     if (customSeconds > REST_MAX_SECONDS) {
-      setError("Enter 10 min or less.");
+      fail("Enter 10 min or less.");
       return;
     }
     commit(customSeconds);
   }
 
+  // A failed Save moves focus to the erred field (canon 01 §44).
+  function fail(message: string) {
+    setError(message);
+    customFieldRef.current?.focus();
+  }
+
   function commit(seconds: number) {
+    // Save with nothing changed just closes: no receipt for a change that
+    // did not happen (flow audit F-19; canon 01 §5/§82).
+    if (seconds === wex.restSeconds) {
+      setError(null);
+      onOpenChange(false);
+      return;
+    }
     onSave(seconds);
     // The owner-required receipt (S6 #3): the sheet occluded the card, so
     // the result was not observed at the locus of action (canon 03 §33).
@@ -171,14 +190,46 @@ export function RestTimerPicker({
     }
   }
 
+  // The echo confirms only values that will be ACCEPTED (flow audit F-8;
+  // canon 01 §140/§49: a positive echo for a value Save will reject reads
+  // as acceptance).
   const echo =
-    preset == null && customSeconds != null && customSeconds > 0 && !error
+    preset == null &&
+    customSeconds != null &&
+    customSeconds >= REST_MIN_SECONDS &&
+    customSeconds <= REST_MAX_SECONDS &&
+    !error
       ? formatRestSeconds(customSeconds)
       : null;
+  // Staged-but-unsaved is said in words (flow audit F-2; canon 01 §82: the
+  // member must be able to answer "have I saved?" at a glance), because an
+  // abandoned draft survives dismissal (canon 01 §22) and would otherwise
+  // masquerade as the saved value on reopen.
+  const staged = preset ?? (echo ? customSeconds : null);
+  const dirty = staged != null && staged !== wex.restSeconds;
+  // The staged zero case is phrased as an action on the timer (copy audit
+  // F-10): "No rest timer selected." garden-paths into its opposite.
+  const feedback =
+    error ??
+    (dirty
+      ? staged === 0
+        ? "Rest timer will be turned off. Not saved yet."
+        : `${echo ?? formatRestSeconds(staged)} selected. Not saved yet.`
+      : echo);
 
   return (
     <AdaptiveDialog onOpenChange={onOpenChange} open={open}>
-      <AdaptiveDialogContent className="sm:max-w-md">
+      <AdaptiveDialogContent
+        className="sm:max-w-md"
+        // Focus home on close (flow audit F-5; canon 01 §89): the opening
+        // menu row is gone, so the default return target would be <body>.
+        onCloseAutoFocus={(e) => {
+          if (returnFocusTo?.current) {
+            e.preventDefault();
+            returnFocusTo.current.focus();
+          }
+        }}
+      >
         <AdaptiveDialogHeader>
           <AdaptiveDialogTitle>Rest timer for {wex.name}</AdaptiveDialogTitle>
           <AdaptiveDialogDescription>
@@ -198,7 +249,10 @@ export function RestTimerPicker({
             return (
               <WButton
                 aria-checked={isSelected}
-                className={`min-h-11 w-full px-2 text-sm ${
+                // h-11, not min-h-11 (placement audit F-9): size="sm" sets
+                // its own 40px min-height and two min-heights race in the
+                // cascade; an explicit height wins and holds the 44px floor.
+                className={`h-11 w-full px-2 text-sm ${
                   o.seconds === 0 ? "col-span-2 sm:col-span-3" : ""
                 } ${
                   isSelected
@@ -248,6 +302,7 @@ export function RestTimerPicker({
             }}
             onFocus={(e) => e.target.select()}
             placeholder="2:30"
+            ref={customFieldRef}
             type="text"
             value={customText}
           />
@@ -263,7 +318,7 @@ export function RestTimerPicker({
             id="custom-rest-feedback"
             role={error ? "alert" : undefined}
           >
-            {error ?? echo}
+            {feedback}
           </p>
         </div>
 
@@ -273,10 +328,12 @@ export function RestTimerPicker({
               (comp 04 §28). */}
           <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <WButton
-              onClick={() => {
-                reset();
-                onOpenChange(false);
-              }}
+              // Cancel closes without applying, same as every other
+              // dismissal (copy audit F-16: two same-looking exits must not
+              // behave differently). The staged draft survives (canon 01
+              // §22) and the "Not saved yet." line owns the disambiguation
+              // on reopen; the store value is untouched either way.
+              onClick={() => onOpenChange(false)}
               variant="ghost"
             >
               Cancel
@@ -299,23 +356,38 @@ export function RestTimerPicker({
  */
 export function RpePicker({
   setIndex,
+  exerciseName,
   current,
   open,
   onOpenChange,
   onSelect,
+  returnFocusTo,
 }: {
   setIndex: number;
+  /** Carried in the title (copy audit F-17): three exercises can each have
+   * a set 2, so "Effort for set 2" alone is ambiguous. */
+  exerciseName: string;
   current: number | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelect: (rpe: number | null) => void;
+  /** Where focus lands on close (flow audit F-5), same as RestTimerPicker. */
+  returnFocusTo?: React.RefObject<HTMLElement | null>;
 }) {
   return (
     <AdaptiveDialog onOpenChange={onOpenChange} open={open}>
-      <AdaptiveDialogContent className="sm:max-w-md">
+      <AdaptiveDialogContent
+        className="sm:max-w-md"
+        onCloseAutoFocus={(e) => {
+          if (returnFocusTo?.current) {
+            e.preventDefault();
+            returnFocusTo.current.focus();
+          }
+        }}
+      >
         <AdaptiveDialogHeader>
           <AdaptiveDialogTitle>
-            Effort for set {setIndex + 1}
+            Effort for set {setIndex + 1} · {exerciseName}
           </AdaptiveDialogTitle>
           <AdaptiveDialogDescription>
             Rate of perceived exertion, how hard the set felt.

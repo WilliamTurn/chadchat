@@ -142,6 +142,13 @@ async function Content({
             {fromWorkout ? "Back to your workout" : "Back to Exercises"}
           </WButton>
         </Link>
+        {/* The body's next step (search the library) needs a control on the
+            page (copy audit F-20; canon 03 §51 never strand). */}
+        {fromWorkout && (
+          <Link className="mt-3 block" href="/workouts/exercises">
+            <WButton variant="ghost">Back to Exercises</WButton>
+          </Link>
+        )}
       </div>
     );
   }

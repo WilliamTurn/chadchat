@@ -9,8 +9,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ConfirmActionDialog } from "@/components/ui/confirm-undo";
+import { ConfirmDialog } from "./confirm";
 import { formatClock, sessionCompletedSets, sessionEngaged } from "./format";
+import { playRestOverCue } from "./start-countdown";
 import { useWorkouts } from "./store";
 
 /** Ticks once a second while mounted. Starts at 0 (not the real clock) so
@@ -51,6 +52,7 @@ function SessionMiniBar() {
   const { session, ready, discardSession } = useWorkouts();
   const pathname = usePathname();
   const now = useNowTick();
+  const [discarding, setDiscarding] = useState(false);
   // Hidden on the player itself, and on every page with its own fixed
   // bottom action bar (picker confirm, builder/custom-exercise save): the
   // shell's stacking context paints this dock above those bars, so it would
@@ -79,7 +81,9 @@ function SessionMiniBar() {
     ? `${elapsedInUnits(elapsed)} elapsed`
     : "not started yet";
   return (
-    <div className="pointer-events-auto flex items-center gap-1 rounded-2xl border border-[var(--go)]/40 bg-card py-2 pr-1.5 pl-4 shadow-[var(--shadow-float)]">
+    // gap-2: ≥8px between the return target's chevron and the destructive
+    // X (placement audit F-6; canon 06 §82, canon 01 §134).
+    <div className="pointer-events-auto flex items-center gap-2 rounded-2xl border border-[var(--go)]/40 bg-card py-2 pr-1.5 pl-4 shadow-[var(--shadow-float)]">
       {/* One tappable return action (music-player pattern): no decorative
           Play square, since a control-shaped icon must be a control (canon 01
           §2) and the ticking clock is already the liveness signal (canon 03
@@ -94,8 +98,10 @@ function SessionMiniBar() {
           <span className="block truncate font-semibold text-[15px] text-foreground">
             {session.name}
           </span>
+          {/* The count leads and the static prefix is gone (copy audit
+              F-12): the bar's presence already says a workout is running,
+              and truncation must never eat the one variable fact. */}
           <span className="block truncate text-[12.5px] text-muted-foreground">
-            Workout in progress ·{" "}
             {done === 0
               ? "No sets done yet"
               : `${done} ${done === 1 ? "set" : "sets"} done`}
@@ -113,10 +119,13 @@ function SessionMiniBar() {
               Not started
             </span>
           )}
-          {/* The number says what it is (canon 04 §93). */}
-          <span className="block font-semibold text-[11px] text-[var(--go)]/70 uppercase tracking-wider">
-            Elapsed
-          </span>
+          {/* The number says what it is (canon 04 §93); suppressed pre-start
+              so "Elapsed" never labels "Not started" (copy audit F-13). */}
+          {started && (
+            <span className="block font-semibold text-[11px] text-[var(--go)]/70 uppercase tracking-wider">
+              Elapsed
+            </span>
+          )}
         </span>
         <ChevronRight
           aria-hidden
@@ -124,28 +133,36 @@ function SessionMiniBar() {
         />
       </Link>
       {/* The one way OUT of a live workout from the bar (flaws RUN-02):
-          confirmed, never silent, since logged sets are unsaved until Finish. */}
-      <ConfirmActionDialog
-        confirmLabel="Discard workout"
-        consequence={
+          confirmed, never silent, since logged sets are unsaved until Finish.
+          Same ConfirmDialog primitive, title, and consequence as the player's
+          discard (placement audit F-7; canon 02 §171: one action, one dialog
+          layout everywhere). */}
+      <Button
+        aria-label="Discard this workout"
+        className="size-11 shrink-0 text-muted-foreground hover:text-foreground"
+        onClick={() => setDiscarding(true)}
+        size="icon"
+        variant="ghost"
+      >
+        <X aria-hidden className="size-5" />
+      </Button>
+      <ConfirmDialog
+        body={
           done > 0
             ? `The ${done} ${done === 1 ? "set" : "sets"} you logged will not be saved.`
             : "Its timer will be cleared. Nothing has been saved yet."
         }
-        onConfirm={() => discardSession()}
+        confirmLabel="Discard workout"
+        destructive
+        onCancel={() => setDiscarding(false)}
+        onConfirm={() => {
+          discardSession();
+          setDiscarding(false);
+        }}
+        open={discarding}
         // One verb per action (canon 04 §132; canon 01 §131-132): the X
         // discards, it does not also "stop".
         title={`Discard "${session.name}"?`}
-        trigger={
-          <Button
-            aria-label="Discard this workout"
-            className="size-11 shrink-0 text-muted-foreground hover:text-foreground"
-            size="icon"
-            variant="ghost"
-          >
-            <X aria-hidden className="size-5" />
-          </Button>
-        }
       />
     </div>
   );
@@ -166,10 +183,14 @@ function RestTimerDock() {
     ? (restTimer.pausedRemaining ?? Math.ceil((restTimer.endsAt - now) / 1000))
     : 0;
 
-  // When the countdown hits zero, show a brief "rest over" flash then clear.
+  // When the countdown hits zero: sound + vibration alongside the visual
+  // flash (S6 flow audit F-6; canon 03 §130: completion signals through
+  // every appropriate channel at once), held long enough to be seen (5s)
+  // before the dock clears.
   useEffect(() => {
     if (restTimer && remaining <= 0) {
-      const t = setTimeout(() => skipRest(), 2600);
+      playRestOverCue();
+      const t = setTimeout(() => skipRest(), 5000);
       return () => clearTimeout(t);
     }
   }, [restTimer, remaining <= 0]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -209,8 +230,10 @@ function RestTimerDock() {
         role="status"
       >
         <Timer aria-hidden className="size-5 text-emerald-500" />
+        {/* Calm fact, no exclamation (copy audit F-1; copy.ts
+            exclamation-copy). */}
         <span className="font-semibold text-[15px] text-emerald-600 dark:text-emerald-400">
-          Rest over. Next set!
+          Rest over.
         </span>
       </div>
     );
@@ -284,7 +307,8 @@ function RestTimerDock() {
               onClick={skipRest}
               type="button"
             >
-              Skip
+              {/* Verb + object like its siblings (copy audit F-11). */}
+              Skip rest
             </button>
           </div>
         </div>

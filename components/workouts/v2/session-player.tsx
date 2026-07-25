@@ -223,10 +223,14 @@ function SetRow({
   const [rpeOpen, setRpeOpen] = useState(false);
   const meta = SET_TYPE_META[set.type];
   const timed = wex.kind === "timed";
+  // Focus home for the RPE picker (flow audit F-5): back to the set-number
+  // trigger on close, never <body> (canon 01 §89).
+  const setTriggerRef = useRef<HTMLButtonElement>(null);
 
   // Undo toast: the set menu's destructive row gets exactly one safety net
   // (frequent, single item, so undo beats a confirm; CLAUDE.md destructive
-  // rule). Restore puts the row back at its old position.
+  // rule). Restore puts the row back at its old position. 8s window: an
+  // action-carrying toast needs reachable time (canon 01 §130, 03 §38).
   function handleRemoveSet() {
     const snapshot = { ...set };
     const at = wex.sets.findIndex((s) => s.id === set.id);
@@ -236,6 +240,7 @@ function SetRow({
         label: "Undo",
         onClick: () => restoreSet(wex.id, snapshot, at),
       },
+      duration: 8000,
     });
   }
 
@@ -319,6 +324,9 @@ function SetRow({
               </div>
             ) : undefined
           }
+          // The set number is a leading-edge trigger: the desktop menu hangs
+          // toward its own row (placement audit F-4).
+          align="start"
           onOpenChange={setMenuOpen}
           open={menuOpen}
           subtitle="Change the set type, rate the effort, or remove it."
@@ -328,6 +336,7 @@ function SetRow({
               aria-label={`Options for set ${index + 1} of ${wex.name}`}
               className="flex h-[52px] w-8 cursor-pointer items-center justify-center rounded-lg transition hover:bg-muted/60"
               onClick={() => setMenuOpen(true)}
+              ref={setTriggerRef}
               type="button"
             >
               {meta.tag ? (
@@ -444,9 +453,11 @@ function SetRow({
 
       <RpePicker
         current={set.rpe}
+        exerciseName={wex.name}
         onOpenChange={setRpeOpen}
         onSelect={(rpe) => setSetRpe(wex.id, set.id, rpe)}
         open={rpeOpen}
+        returnFocusTo={setTriggerRef}
         setIndex={index}
       />
     </>
@@ -493,8 +504,17 @@ function ExerciseCard({
   const [confirmingReplace, setConfirmingReplace] = useState(false);
   const [editingNote, setEditingNote] = useState(false);
   const [noteDraft, setNoteDraft] = useState(wex.note ?? "");
+  // Typed note text survives Escape and scrim dismissal (flow audit F-1;
+  // canon 01 §22, the house useOverlayDraft contract): the draft is only
+  // re-seeded from the store while it is untouched, and a successful save
+  // marks it clean again.
+  const noteDraftDirty = useRef(false);
   // Screen-reader receipt for the act-in-place Move rows (canon 03 §137).
   const [moveAnnouncement, setMoveAnnouncement] = useState("");
+  // Focus home for the pickers (flow audit F-5): they open from a menu row
+  // that unmounts with the menu, so on close they hand focus back to the
+  // card's ⋯ trigger instead of dropping it on <body> (canon 01 §89).
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
 
   const previous = useMemo(
     () =>
@@ -622,7 +642,9 @@ function ExerciseCard({
       hint: "Saved with this exercise in today's workout.",
       icon: <StickyNote aria-hidden className="size-4.5" />,
       onSelect: () => {
-        setNoteDraft(wex.note ?? "");
+        if (!noteDraftDirty.current) {
+          setNoteDraft(wex.note ?? "");
+        }
         setEditingNote(true);
       },
     },
@@ -749,6 +771,7 @@ function ExerciseCard({
                 aria-label={`Options for ${wex.name}`}
                 className="flex size-11 cursor-pointer items-center justify-center rounded-xl text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
                 onClick={() => setMenuOpen(true)}
+                ref={menuTriggerRef}
                 type="button"
               >
                 <MoreHorizontal aria-hidden className="size-5" />
@@ -817,6 +840,7 @@ function ExerciseCard({
         onOpenChange={setRestOpen}
         onSave={(seconds) => setExerciseRest(wex.id, seconds)}
         open={restOpen}
+        returnFocusTo={menuTriggerRef}
         wex={wex}
       />
       {editingNote && (
@@ -825,6 +849,7 @@ function ExerciseCard({
           onCancel={() => setEditingNote(false)}
           onConfirm={() => {
             setExerciseNote(wex.id, noteDraft);
+            noteDraftDirty.current = false;
             setEditingNote(false);
           }}
           open
@@ -841,7 +866,10 @@ function ExerciseCard({
             className="mt-1.5 min-h-20 w-full rounded-xl border border-input bg-background px-3 py-2.5 text-[15px] text-foreground placeholder:text-muted-foreground/60 focus:border-blood/60 focus:outline-none"
             id={noteFieldId}
             maxLength={1000}
-            onChange={(e) => setNoteDraft(e.target.value)}
+            onChange={(e) => {
+              noteDraftDirty.current = true;
+              setNoteDraft(e.target.value);
+            }}
             placeholder="Felt heavy, drop to 185 next time."
             value={noteDraft}
           />
@@ -849,11 +877,11 @@ function ExerciseCard({
               limit). Space is reserved so nothing jumps; the count appears
               from 900 characters (the goal-form precedent) so it is not
               permanent noise. */}
+          {/* Advisory, not an error (flow audit F-10): the note saves fine. */}
           <div className="mt-1 flex min-h-5 items-center justify-between gap-2">
-            <span className="text-blood text-xs" role="status">
-              {noteDraft.length >= 1000
-                ? "1,000 character limit reached. Your note is saved as written."
-                : ""}
+            <span className="text-muted-foreground text-xs" role="status">
+              {/* No "saved" claim before Save is pressed (copy audit F-2). */}
+              {noteDraft.length >= 1000 ? "1,000 character limit reached." : ""}
             </span>
             {noteDraft.length >= 900 && (
               <span className="shrink-0 text-muted-foreground text-xs tabular-nums">
@@ -1413,9 +1441,11 @@ export function SessionPlayer({
           <Trash2 aria-hidden className="size-4" />
           Discard workout
         </WButton>
+        {/* One verb for one action (copy audit F-6): a live workout is
+            discarded; "delete" stays reserved for saved records. */}
         <p className="mt-2 text-center text-[12px] text-muted-foreground/80 sm:text-left">
-          Deletes this workout without saving. Your saved workouts and history
-          are untouched.
+          Discards this workout without saving. Your saved workouts and
+          history are untouched.
         </p>
       </div>
 
@@ -1448,12 +1478,14 @@ export function SessionPlayer({
         />
       )}
 
-      {/* Discard confirm */}
+      {/* Discard confirm: same title shape and consequence sentence as the
+          mini bar's discard (copy audit F-5; canon 04 §132: one action, one
+          dialog everywhere). */}
       <ConfirmDialog
         body={
           doneSets > 0
-            ? `The ${doneSets} ${doneSets === 1 ? "set" : "sets"} you logged in this workout will be permanently deleted.`
-            : "This workout will be deleted. Nothing has been logged yet."
+            ? `The ${doneSets} ${doneSets === 1 ? "set" : "sets"} you logged will not be saved.`
+            : "Its timer will be cleared. Nothing has been saved yet."
         }
         confirmLabel="Discard workout"
         destructive
@@ -1464,7 +1496,7 @@ export function SessionPlayer({
           router.push("/workouts");
         }}
         open={discarding}
-        title="Discard this workout?"
+        title={`Discard "${session.name}"?`}
       />
     </>
   );
