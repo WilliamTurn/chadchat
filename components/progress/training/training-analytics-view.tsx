@@ -553,7 +553,9 @@ function NextMilestoneFact({
       <div className="flex items-center gap-1 text-muted-foreground text-xs">
         <span className="min-w-0">
           {label}
-          <span className="ml-1 text-muted-foreground/70">· {scope}</span>
+          {/* Full-strength muted ink: opacity-thinned text is the DS-25
+              contrast-pin class (fix prescribed by the pin's re-attribution). */}
+          <span className="ml-1">· {scope}</span>
         </span>
         <KpiHelp label={`${label} · ${scope}`}>
           Workout-count milestones are earned at real thresholds (10th, 25th,

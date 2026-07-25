@@ -123,7 +123,9 @@ export function MetricValue(props: MetricValueProps) {
       <span>
         {label}
         {scope && (
-          <span className="ml-1 text-muted-foreground/70">· {scope}</span>
+          /* Full-strength muted ink: /70-thinned text is the DS-25
+             contrast-pin class on the ink surfaces (W3 call-site fix). */
+          <span className="ml-1">· {scope}</span>
         )}
       </span>
       {help && <KpiHelp label={label}>{help}</KpiHelp>}
