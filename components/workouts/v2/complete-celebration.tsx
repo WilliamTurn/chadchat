@@ -62,7 +62,11 @@ const REEDING = Array.from({ length: 56 }, (_, i) => {
 
 /* The app's own barbell mark (app/icon.svg geometry) engraved on the face:
    a medal carries its issuer's mark. Rendered twice: a warm highlight
-   copy offset 1.1px below the dark cut, the classic engraving bevel. */
+   copy offset 1.2px below the dark cut, the classic engraving bevel.
+   Scale 3.0 puts the mark at 48px of the 98px face (~49%), the Apple
+   Fitness emblem band (taste-audit F-11: 1.9 left ~70% of the face
+   empty). Far corner sits 26.6px from center, well inside the r=43.5
+   engraved ring, so the reeded edge stays clear of the mark. */
 function EngravedMark({ variant }: { variant: "cut" | "bevel" }) {
   return (
     <g
@@ -71,8 +75,8 @@ function EngravedMark({ variant }: { variant: "cut" | "bevel" }) {
       strokeLinecap="round"
       strokeLinejoin="round"
       strokeOpacity={variant === "cut" ? 0.85 : 0.5}
-      strokeWidth={1.8}
-      transform={`translate(29.6 ${variant === "cut" ? 29.6 : 30.7}) scale(1.9)`}
+      strokeWidth={1.25}
+      transform={`translate(12 ${variant === "cut" ? 12 : 13.2}) scale(3)`}
     >
       <path d="M10 16 H22" />
       <path d="M8 11.5 V20.5" />
@@ -98,22 +102,64 @@ function MedalCoin() {
           <stop offset="0.7" style={{ stopColor: "var(--reward)" }} />
           <stop offset="1" style={{ stopColor: "var(--reward-hot)" }} />
         </linearGradient>
+        {/* Face base, lit top-left. The dark half ends at --reward-ember,
+            never --reward-shadow: dark yellow at the ramp's hue reads
+            olive at low luminance (taste-audit F-11); ember pulls the
+            shadow toward warm bronze. Shadow stays on cuts and the rim. */}
         <linearGradient id="cc-face" x1="0" x2="1" y1="0" y2="1">
           <stop offset="0" style={{ stopColor: "var(--reward-hot)" }} />
-          <stop offset="0.42" style={{ stopColor: "var(--reward)" }} />
-          <stop offset="0.8" style={{ stopColor: "var(--reward-deep)" }} />
-          <stop offset="1" style={{ stopColor: "var(--reward-shadow)" }} />
+          <stop offset="0.4" style={{ stopColor: "var(--reward)" }} />
+          <stop offset="0.75" style={{ stopColor: "var(--reward-deep)" }} />
+          <stop offset="1" style={{ stopColor: "var(--reward-ember)" }} />
         </linearGradient>
-        <radialGradient cx="0.38" cy="0.32" id="cc-face-light" r="0.75">
+        {/* Specular structure (F-11): a defined highlight lobe with tight
+            falloff, painted as a tilted ellipse offset toward the
+            top-left light source - not a centered radial wash. Reused at
+            low opacity lower-right as the bounce light off the rim. */}
+        <radialGradient id="cc-lobe">
           <stop
             offset="0"
-            style={{ stopColor: "var(--reward-hot)", stopOpacity: 0.55 }}
+            style={{ stopColor: "var(--reward-hot)", stopOpacity: 0.95 }}
+          />
+          <stop
+            offset="0.32"
+            style={{ stopColor: "var(--reward-hot)", stopOpacity: 0.5 }}
+          />
+          <stop
+            offset="0.68"
+            style={{ stopColor: "var(--reward-hot)", stopOpacity: 0.12 }}
           />
           <stop
             offset="1"
             style={{ stopColor: "var(--reward-hot)", stopOpacity: 0 }}
           />
         </radialGradient>
+        {/* Broad low ambient so the face keeps a soft sheen outside the
+            lobe (the old wash, demoted). */}
+        <radialGradient cx="0.36" cy="0.3" id="cc-ambient" r="0.85">
+          <stop
+            offset="0"
+            style={{ stopColor: "var(--reward-hot)", stopOpacity: 0.15 }}
+          />
+          <stop
+            offset="1"
+            style={{ stopColor: "var(--reward-hot)", stopOpacity: 0 }}
+          />
+        </radialGradient>
+        {/* Edge occlusion: the face curves away toward the rim. */}
+        <radialGradient id="cc-vin">
+          <stop
+            offset="0.72"
+            style={{ stopColor: "var(--reward-ember)", stopOpacity: 0 }}
+          />
+          <stop
+            offset="1"
+            style={{ stopColor: "var(--reward-ember)", stopOpacity: 0.5 }}
+          />
+        </radialGradient>
+        <clipPath id="cc-face-clip">
+          <circle cx="60" cy="60" r="49" />
+        </clipPath>
       </defs>
       {/* rim (bevel gradient runs opposite the face) */}
       <circle cx="60" cy="60" fill="url(#cc-rim)" r="57" />
@@ -138,9 +184,28 @@ function MedalCoin() {
           />
         ))}
       </g>
-      {/* polished face */}
+      {/* polished face: base, then the lighting stack clipped to the face
+          (the lobe kisses the upper-left rim like a real reflection),
+          then the edge occlusion. Lighting sits under the engraving so
+          the cuts stay crisp. */}
       <circle cx="60" cy="60" fill="url(#cc-face)" r="49" />
-      <circle cx="60" cy="60" fill="url(#cc-face-light)" r="49" />
+      <g clipPath="url(#cc-face-clip)">
+        <circle cx="60" cy="60" fill="url(#cc-ambient)" r="49" />
+        <ellipse
+          fill="url(#cc-lobe)"
+          rx="26"
+          ry="15"
+          transform="translate(41 36) rotate(-33)"
+        />
+        <ellipse
+          fill="url(#cc-lobe)"
+          opacity="0.16"
+          rx="21"
+          ry="10"
+          transform="translate(77 83) rotate(-33)"
+        />
+      </g>
+      <circle cx="60" cy="60" fill="url(#cc-vin)" r="49" />
       {/* engraved inner ring: dark cut with a light lower bevel */}
       <circle
         cx="60"

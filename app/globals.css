@@ -373,6 +373,11 @@
   --reward-hot: #ffedbe;
   --reward-deep: #c98e2f;
   --reward-shadow: #6e4d14;
+  --reward-ember: #8a5420; /* warm bronze for the medal face's shadow half
+                              (taste-audit F-11): hue pulled toward orange
+                              (~29 deg) so darkening gold never reads olive.
+                              Face gradients end here; --reward-shadow stays
+                              for engraving cuts and the rim. */
   --reward-hot-glow: rgba(255, 237, 190, 0.75);
   --reward-glow-strong: rgba(245, 201, 92, 0.6);
   --reward-glow-soft: rgba(245, 201, 92, 0.32);
